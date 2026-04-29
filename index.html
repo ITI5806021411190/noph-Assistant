@@ -340,9 +340,16 @@
               <input type="email" class="form-control" id="regEmail" required>
             </div>
           </div>
+          <div class="alert alert-info border-0 small mb-3">
+            <div class="fw-bold mb-1"><i class="bi bi-shield-lock"></i> ประกาศคุ้มครองข้อมูลส่วนบุคคล</div>
+            กรุณาอ่านประกาศก่อนสมัครสมาชิก:
+            <a href="https://nayok.moph.go.th/web/wp-content/uploads/2026/02/17-%E0%B8%84%E0%B8%B3%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B2%E0%B8%A8%E0%B8%84%E0%B8%B8%E0%B9%89%E0%B8%A1%E0%B8%84%E0%B8%A3%E0%B8%AD%E0%B8%87%E0%B8%82%E0%B9%89%E0%B8%AD%E0%B8%A1%E0%B8%B9%E0%B8%A5%E0%B8%AA%E0%B9%88%E0%B8%A7%E0%B8%99%E0%B8%9A%E0%B8%B8%E0%B8%84%E0%B8%84%E0%B8%A5.pdf" target="_blank" rel="noopener" class="fw-bold">เปิดอ่านเอกสาร PDF</a>
+          </div>
           <div class="form-check mb-4 bg-light p-3 rounded border">
             <input class="form-check-input ms-1" type="checkbox" id="regPDPA" required>
-            <label class="form-check-label ms-2 small text-muted">ข้าพเจ้ายินยอมเงื่อนไข PDPA</label>
+            <label class="form-check-label ms-2 small text-muted">
+              ข้าพเจ้าอ่านและยินยอมตามประกาศคุ้มครองข้อมูลส่วนบุคคล (PDPA) แล้ว
+            </label>
           </div>
           <button type="submit" class="btn btn-success w-100 fw-bold" id="btnRegister">
              <span class="spinner-border spinner-border-sm d-none" id="regSpinner"></span> ยืนยันการลงทะเบียน
@@ -419,6 +426,9 @@
             <button class="btn btn-outline-secondary btn-sm" onclick="exportSchedules()"><i class="bi bi-calendar2-week"></i> โหลด CSV ตารางงาน</button>
             <button class="btn btn-outline-success btn-sm" onclick="openOnePageSummary()"><i class="bi bi-file-earmark-bar-graph"></i> One-page Summary</button>
             <button class="btn btn-outline-dark btn-sm" onclick="generateAiExecutiveSummary()"><i class="bi bi-stars"></i> AI สรุปผู้บริหาร</button>
+            <button class="btn btn-warning btn-sm text-dark" onclick="seedDemoDataUI()"><i class="bi bi-database-add"></i> สร้างข้อมูลทดสอบ</button>
+            <button class="btn btn-outline-warning btn-sm" onclick="resetAndSeedDemoDataUI()"><i class="bi bi-arrow-repeat"></i> รีเซ็ต Demo</button>
+            <button class="btn btn-outline-danger btn-sm" onclick="clearDemoDatabaseUI()"><i class="bi bi-trash3"></i> เคลียร์ฐานข้อมูล</button>
             <button class="btn btn-outline-info btn-sm" onclick="connectTelegram()"><i class="bi bi-telegram"></i> ผูก Telegram</button>
             <button class="btn btn-success btn-sm" onclick="toggleSystem('on')"><i class="bi bi-play-circle"></i> เปิดแจ้งเตือน/บอท</button>
             <button class="btn btn-outline-danger btn-sm" onclick="toggleSystem('off')"><i class="bi bi-stop-circle"></i> ปิดแจ้งเตือน/บอท</button>
@@ -2645,6 +2655,82 @@
       }).Setup(); 
     }
     
+
+
+    function seedDemoDataUI() {
+      if (!user || user.role !== 'Super Admin') return Swal.fire('ไม่มีสิทธิ์', 'ใช้ได้เฉพาะ Super Admin เท่านั้น', 'warning');
+      Swal.fire({
+        title: 'สร้างข้อมูลทดสอบ?',
+        html: 'ระบบจะสร้าง <b>5 ผู้ใช้ทดสอบ</b>, <b>5 ตารางงาน</b>, และ <b>5 รายงานประจำวัน</b><br><small class="text-muted">บัญชีทดสอบใช้ PIN: 123456</small>',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'สร้างข้อมูลทดสอบ',
+        cancelButtonText: 'ยกเลิก'
+      }).then(result => {
+        if (!result.isConfirmed) return;
+        Swal.fire({ title:'กำลังสร้างข้อมูลทดสอบ...', allowOutsideClick:false, didOpen:() => Swal.showLoading() });
+        google.script.run.withSuccessHandler(res => {
+          if (res.success) {
+            Swal.fire('สำเร็จ', res.message, 'success');
+            initDashboard();
+          } else Swal.fire('ผิดพลาด', res.message, 'error');
+        }).withFailureHandler(err => Swal.fire('ผิดพลาด', err.message || String(err), 'error')).seedDemoData(user.phone);
+      });
+    }
+
+    function resetAndSeedDemoDataUI() {
+      if (!user || user.role !== 'Super Admin') return Swal.fire('ไม่มีสิทธิ์', 'ใช้ได้เฉพาะ Super Admin เท่านั้น', 'warning');
+      Swal.fire({
+        title: 'รีเซ็ต Demo และสร้างข้อมูลใหม่?',
+        html: 'ระบบจะเคลียร์ข้อมูลตารางงาน/รายงาน/แจ้งเตือน/งานประจำ/ประวัติอนุมัติ และลบ user ทดสอบเดิม จากนั้นสร้างข้อมูลทดสอบใหม่ 5 users<br><b class="text-danger">ข้อมูลผู้ใช้จริงและบัญชี Super Admin จะไม่ถูกลบ</b>',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'รีเซ็ตและสร้าง Demo',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#f59e0b'
+      }).then(result => {
+        if (!result.isConfirmed) return;
+        Swal.fire({ title:'กำลังรีเซ็ต Demo...', allowOutsideClick:false, didOpen:() => Swal.showLoading() });
+        google.script.run.withSuccessHandler(res => {
+          if (res.success) {
+            Swal.fire('สำเร็จ', res.message, 'success');
+            initDashboard();
+          } else Swal.fire('ผิดพลาด', res.message, 'error');
+        }).withFailureHandler(err => Swal.fire('ผิดพลาด', err.message || String(err), 'error')).resetAndSeedDemoData(user.phone);
+      });
+    }
+
+    function clearDemoDatabaseUI() {
+      if (!user || user.role !== 'Super Admin') return Swal.fire('ไม่มีสิทธิ์', 'ใช้ได้เฉพาะ Super Admin เท่านั้น', 'warning');
+      Swal.fire({
+        title: 'เคลียร์ฐานข้อมูล?',
+        html: 'ระบบจะลบข้อมูลปฏิบัติงาน เช่น ตารางงาน รายงาน แจ้งเตือน งานประจำ ประวัติอนุมัติ และ user ทดสอบ<br><b class="text-danger">ไม่ลบผู้ใช้จริง/บัญชี Super Admin</b><br><br>พิมพ์ <b>CLEAR</b> เพื่อยืนยัน',
+        input: 'text',
+        inputPlaceholder: 'พิมพ์ CLEAR',
+        icon: 'error',
+        showCancelButton: true,
+        confirmButtonText: 'เคลียร์ฐานข้อมูล',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#dc2626',
+        preConfirm: value => {
+          if (value !== 'CLEAR') {
+            Swal.showValidationMessage('กรุณาพิมพ์ CLEAR ให้ถูกต้อง');
+            return false;
+          }
+          return true;
+        }
+      }).then(result => {
+        if (!result.isConfirmed) return;
+        Swal.fire({ title:'กำลังเคลียร์ฐานข้อมูล...', allowOutsideClick:false, didOpen:() => Swal.showLoading() });
+        google.script.run.withSuccessHandler(res => {
+          if (res.success) {
+            Swal.fire('สำเร็จ', res.message, 'success');
+            initDashboard();
+          } else Swal.fire('ผิดพลาด', res.message, 'error');
+        }).withFailureHandler(err => Swal.fire('ผิดพลาด', err.message || String(err), 'error')).clearDemoDatabase(user.phone, 'demo');
+      });
+    }
+
     function toggleSystem(s) { 
       google.script.run.withSuccessHandler(res => Swal.fire('สำเร็จ', res.message, 'success')).manageAutomation(s); 
     }
