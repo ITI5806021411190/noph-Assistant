@@ -1,38 +1,69 @@
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST');
-    return res.status(405).json({ __bridgeError: true, success: false, message: 'Method not allowed' });
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
+    return res.status(204).end();
   }
-  const gasUrl = process.env.GAS_WEB_APP_URL;
-  const apiSecret = process.env.GAS_API_SECRET;
-  if (!gasUrl || !apiSecret) {
-    return res.status(500).json({ __bridgeError: true, success: false, message: 'Vercel env is missing GAS_WEB_APP_URL or GAS_API_SECRET' });
-  }
-  const body = req.body || {};
-  const fn = body.fn;
-  const args = body.args || [];
-  if (!fn || typeof fn !== 'string') {
-    return res.status(400).json({ __bridgeError: true, success: false, message: 'Missing function name' });
-  }
-  try {
-    const forwardedProto = req.headers['x-forwarded-proto'] || 'https';
-    const host = req.headers['x-forwarded-host'] || req.headers.host;
-    const publicBaseUrl = forwardedProto + '://' + host;
-    const gasResponse = await fetch(gasUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ _vercelBridge: true, secret: apiSecret, fn, args, publicBaseUrl }),
-      redirect: 'follow'
+
+  if (req.method === "GET") {
+    return res.status(200).json({
+      success: true,
+      message: "Vercel GAS proxy is running",
+      hasGasUrl: !!process.env.GAS_WEB_APP_URL,
+      hasSecret: !!process.env.GAS_API_SECRET
     });
-    const text = await gasResponse.text();
-    let data;
-    try { data = text ? JSON.parse(text) : {}; }
-    catch (parseError) { return res.status(502).json({ __bridgeError: true, success: false, message: 'Apps Script returned non-JSON response: ' + text.slice(0, 500) }); }
-    if (fn === 'getSchedulePublicUrlServer' && data && data.success && args[0]) {
-      data.url = publicBaseUrl + '/public?publicId=' + encodeURIComponent(args[0]);
+  }
+
+  if (req.method !== "POST") {
+    return res.status(405).json({
+      success: false,
+      message: "Method not allowed"
+    });
+  }
+
+  try {
+    const gasUrl = process.env.GAS_WEB_APP_URL;
+    const apiSecret = process.env.GAS_API_SECRET;
+
+    if (!gasUrl || !apiSecret) {
+      return res.status(500).json({
+        success: false,
+        message: "Missing GAS_WEB_APP_URL or GAS_API_SECRET in Vercel Environment Variables"
+      });
     }
-    return res.status(gasResponse.ok ? 200 : 502).json(data);
+
+    const payload = {
+      ...(req.body || {}),
+      apiSecret: apiSecret
+    };
+
+    const gasResponse = await fetch(gasUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const text = await gasResponse.text();
+
+    try {
+      const json = JSON.parse(text);
+      return res.status(200).json(json);
+    } catch (parseError) {
+      return res.status(502).json({
+        success: false,
+        message: "Invalid JSON response from Apps Script",
+        raw: text
+      });
+    }
+
   } catch (error) {
-    return res.status(500).json({ __bridgeError: true, success: false, message: error.message || String(error) });
+    return res.status(500).json({
+      success: false,
+      message: error.message || String(error)
+    });
   }
 }
