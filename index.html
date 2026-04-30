@@ -2638,6 +2638,13 @@
       document.getElementById('btnSaveEvent').innerHTML = '<i class="bi bi-save"></i> บันทึกกำหนดการ';
       document.getElementById('btnSaveEvent').classList.replace('btn-warning', 'btn-success');
       document.getElementById('btnCancelEditEvent').classList.add('d-none');
+
+      // เมื่อผู้ใช้กดยกเลิกการแก้ไข ให้ปิด popup และกลับไปยังหน้า Dashboard/ภาพรวมทันที
+      closeScheduleFormModal();
+      setTimeout(() => {
+        const hero = document.getElementById('dashboardHero');
+        if (hero) hero.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 120);
     }
 
     function loadMySchedules() {
@@ -2883,8 +2890,11 @@
     }
 
     function viewScheduleDetail(id) {
-      const item = mySchedulesGlobal.find(i => i.id === id);
-      if (!item) return;
+      const item = (mySchedulesGlobal || []).concat(departmentSchedulesGlobal || []).find(i => i.id === id);
+      if (!item) {
+        Swal.fire('ไม่พบข้อมูล', 'ไม่พบรายละเอียดตารางงานนี้ กรุณากดโหลดรายการใหม่อีกครั้ง', 'warning');
+        return;
+      }
 
       document.getElementById('sdTitle').innerText = item.eventName;
       document.getElementById('sdCaptureTitle').innerText = item.eventName;
