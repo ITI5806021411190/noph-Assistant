@@ -229,6 +229,47 @@
       gap: 4px;
     }
 
+    .section-actionbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      border: 1px solid #e2e8f0;
+      border-radius: 18px;
+      background: rgba(255,255,255,.86);
+      box-shadow: 0 10px 28px rgba(15,23,42,.06);
+      backdrop-filter: blur(8px);
+    }
+    .section-actionbar .title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .section-actionbar .title-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.35rem;
+      flex: 0 0 auto;
+    }
+    .section-actionbar.report .title-icon { background:#e0f2fe; color:#0284c7; }
+    .section-actionbar.schedule .title-icon { background:#dcfce7; color:#16a34a; }
+    .section-actionbar h6 { margin:0; font-weight:700; }
+    .section-actionbar small { color:#64748b; display:block; }
+    .section-actionbar .actions { display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; }
+    @media (max-width:768px){
+      .section-actionbar { align-items: stretch; flex-direction: column; }
+      .section-actionbar .actions { justify-content: stretch; }
+      .section-actionbar .actions .btn { flex: 1 1 auto; }
+    }
+
+
 
 
     .focus-launch-card {
@@ -1365,15 +1406,29 @@
       const repCol = repCard?.closest('.col-lg-5');
       if (repCard && repCol) {
         document.getElementById('reportFormMount').appendChild(repCard);
-        repCol.innerHTML = `
-          <div class="card focus-launch-card border-top border-4 border-primary h-100">
-            <div class="card-body p-4">
-              <div class="focus-icon report"><i class="bi bi-journal-plus"></i></div>
-              <h5 class="fw-bold text-primary mb-2">บันทึกรายงานเมื่อพร้อม</h5>
-              <p class="text-muted small mb-4">ซ่อนฟอร์มไว้ก่อน เพื่อให้หน้าแรกอ่านง่าย และเปิด popup เมื่อต้องการกรอกจริง</p>
-              <button type="button" class="btn btn-primary fw-bold shadow-sm" onclick="goToReportForm()"><i class="bi bi-pencil-square me-1"></i> เปิดฟอร์มบันทึกรายงาน</button>
-            </div>
-          </div>`;
+        const reportRow = repCol.closest('.row.g-4');
+        const reportDataCol = reportRow ? reportRow.querySelector('.col-lg-7') : null;
+        if (reportRow && !document.getElementById('reportActionBar')) {
+          reportRow.insertAdjacentHTML('beforebegin', `
+            <div class="section-actionbar report" id="reportActionBar">
+              <div class="title-wrap">
+                <div class="title-icon"><i class="bi bi-journal-plus"></i></div>
+                <div>
+                  <h6>รายงานการปฏิบัติงาน</h6>
+                  <small>เปิดฟอร์มเฉพาะตอนต้องการบันทึก แล้วให้ข้อมูลทีมและประวัติใช้พื้นที่เต็มหน้า</small>
+                </div>
+              </div>
+              <div class="actions">
+                <button type="button" class="btn btn-primary fw-bold" onclick="goToReportForm()"><i class="bi bi-pencil-square me-1"></i> บันทึกรายงาน</button>
+                <button type="button" class="btn btn-outline-secondary" onclick="loadMyReports(); loadTeamReports();"><i class="bi bi-arrow-clockwise me-1"></i> รีเฟรช</button>
+              </div>
+            </div>`);
+        }
+        repCol.remove();
+        if (reportDataCol) {
+          reportDataCol.classList.remove('col-lg-7');
+          reportDataCol.classList.add('col-12');
+        }
       }
 
       const eventCard = document.getElementById('eventEditId')?.closest('.card');
@@ -1397,15 +1452,30 @@
         if (fileBox && aiBox) {
           scheduleMount.insertBefore(fileBox, eventCard);
         }
-        scheduleCol.innerHTML = `
-          <div class="card focus-launch-card border-top border-4 border-success h-100">
-            <div class="card-body p-4">
-              <div class="focus-icon schedule"><i class="bi bi-calendar2-plus"></i></div>
-              <h5 class="fw-bold text-success mb-2">สร้างตารางงานแบบมีสมาธิ</h5>
-              <p class="text-muted small mb-4">เปิดฟอร์มเฉพาะตอนต้องการบันทึก ลดความรกของหน้า และช่วยให้กรอกข้อมูลครบถ้วน</p>
-              <button type="button" class="btn btn-success fw-bold shadow-sm" onclick="goToScheduleForm()"><i class="bi bi-calendar-plus me-1"></i> เปิดฟอร์มสร้างตารางงาน</button>
-            </div>
-          </div>`;
+        const scheduleRow = scheduleCol.closest('.row.g-4');
+        const scheduleDataCol = scheduleRow ? scheduleRow.querySelector('.col-lg-7') : null;
+        if (scheduleRow && !document.getElementById('scheduleActionBar')) {
+          scheduleRow.insertAdjacentHTML('beforebegin', `
+            <div class="section-actionbar schedule" id="scheduleActionBar">
+              <div class="title-wrap">
+                <div class="title-icon"><i class="bi bi-calendar2-plus"></i></div>
+                <div>
+                  <h6>ตารางงาน & นัดหมาย</h6>
+                  <small>สร้างงานผ่าน popup แล้วให้ตารางงาน งานประจำ กลุ่มงาน และปฏิทินใช้พื้นที่เต็มหน้าจอ</small>
+                </div>
+              </div>
+              <div class="actions">
+                <button type="button" class="btn btn-success fw-bold" onclick="goToScheduleForm()"><i class="bi bi-calendar-plus me-1"></i> สร้างตารางงาน</button>
+                <button type="button" class="btn btn-outline-success" onclick="generateDueRecurringNow()"><i class="bi bi-play-circle me-1"></i> งานประจำที่ถึงกำหนด</button>
+                <button type="button" class="btn btn-outline-secondary" onclick="loadMySchedules(); loadDepartmentSchedules(); loadRecurringRules();"><i class="bi bi-arrow-clockwise me-1"></i> รีเฟรช</button>
+              </div>
+            </div>`);
+        }
+        scheduleCol.remove();
+        if (scheduleDataCol) {
+          scheduleDataCol.classList.remove('col-lg-7');
+          scheduleDataCol.classList.add('col-12');
+        }
       }
 
       reportFocusModalObj = new bootstrap.Modal(document.getElementById('reportFocusModal'));
