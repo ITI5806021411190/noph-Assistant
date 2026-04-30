@@ -667,6 +667,16 @@
                   <form onsubmit="handleSaveEvent(); return false;">
                     <input type="hidden" id="eventEditId">
 
+                    <div class="section-label"><i class="bi bi-people"></i>ขอบเขตการมองเห็น</div>
+                    <div class="mb-3">
+                      <label class="small fw-bold text-muted">ประเภทตารางงาน</label>
+                      <select id="scheduleScope" class="form-select border-primary">
+                        <option value="Personal">ส่วนตัว / เฉพาะผู้ได้รับมอบหมาย</option>
+                        <option value="Department">สำหรับกลุ่มงานของฉัน</option>
+                      </select>
+                      <small class="text-muted d-block mt-1">ถ้าเลือก “สำหรับกลุ่มงาน” สมาชิกในกลุ่มงานเดียวกันจะเห็นรายการนี้ในตารางงานของกลุ่มงาน</small>
+                    </div>
+
                     <div class="section-label"><i class="bi bi-flag"></i>สถานะและหัวข้องาน</div>
                     <div class="mb-3">
                       <label class="small fw-bold text-muted">สถานะงาน (Work Status)</label>
@@ -889,6 +899,32 @@
                     </div>
                   </div>
                   <div id="calendarDiv"></div>
+                </div>
+              </div>
+
+              <div class="card mt-4 border-info">
+                <div class="card-header bg-info bg-opacity-10 d-flex justify-content-between align-items-center pt-3 pb-3">
+                  <h6 class="mb-0 fw-bold text-info-emphasis"><i class="bi bi-people-fill"></i> ตารางงาน/นัดหมายของกลุ่มงาน</h6>
+                  <button class="btn btn-sm btn-outline-info text-dark" onclick="loadDepartmentSchedules()"><i class="bi bi-arrow-clockwise"></i> โหลดใหม่</button>
+                </div>
+                <div class="card-body p-0">
+                  <div id="departmentScheduleMobileCards"></div>
+                  <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small">
+                      <thead class="table-light">
+                        <tr>
+                          <th class="ps-4">ชื่องาน</th>
+                          <th>เวลาเริ่ม</th>
+                          <th>ผู้สร้าง</th>
+                          <th>สถานะงาน</th>
+                          <th class="pe-4 text-end">จัดการ</th>
+                        </tr>
+                      </thead>
+                      <tbody id="departmentScheduleTable">
+                        <tr><td colspan="5" class="text-center py-4 text-muted">กำลังโหลด...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1214,6 +1250,7 @@
     let user = null;
     let myReportsGlobal = []; 
     let mySchedulesGlobal = []; 
+    let departmentSchedulesGlobal = [];
     let todayTeamReports = []; 
     let userModalObj = null;
     let resModalObj = null;
@@ -1422,7 +1459,7 @@
           title: 'หน้าหลัก / Dashboard',
           icon: 'speedometer2',
           items: [
-            'ดูภาพรวมรายงานของฉัน งานของฉัน งานรออนุมัติ และสถานะทีมวันนี้',
+            'ดูภาพรวมรายงานของฉัน งานของฉัน งานกลุ่มงาน งานรออนุมัติ และสถานะทีมวันนี้',
             'ปุ่ม “บันทึกรายงาน” เปิด popup เพื่อกรอกรายงานประจำวันแบบโฟกัส',
             'ปุ่ม “สร้างตารางงาน” เปิด popup สำหรับสร้าง/แก้ไขกำหนดการ',
             'ปุ่ม “แจ้งเตือน” เปิดรายการแจ้งเตือนใหม่ และปุ่ม “ปฏิทิน” สลับไปดูงานแบบ Calendar'
@@ -1579,7 +1616,7 @@
 
     function bindDraftAutosave() {
       const reportFields = ['repStartTime','repEndTime','repLeave','repDetails','repRemarks'];
-      const eventFields = ['eventWorkStatus','eventName','eventDetails','startTime','leadTime','eventLocation','meetingLink','resourceId','approverPhone','chatId','recurringFrequency','recurringInterval','recurringByDay','recurringEndDate'];
+      const eventFields = ['scheduleScope','eventWorkStatus','eventName','eventDetails','startTime','leadTime','eventLocation','meetingLink','resourceId','approverPhone','chatId','recurringFrequency','recurringInterval','recurringByDay','recurringEndDate'];
       const saveReport = debounce_(() => saveDraft_('haos_report_draft', reportFields, 'reportDraftHint'), 500);
       const saveEvent = debounce_(() => saveDraft_('haos_event_draft', eventFields, 'eventDraftHint'), 500);
       reportFields.forEach(id => document.getElementById(id)?.addEventListener('input', saveReport));
@@ -1590,7 +1627,7 @@
 
     function restoreDrafts() {
       restoreDraft_('haos_report_draft', ['repStartTime','repEndTime','repLeave','repDetails','repRemarks']);
-      restoreDraft_('haos_event_draft', ['eventWorkStatus','eventName','eventDetails','startTime','leadTime','eventLocation','meetingLink','resourceId','approverPhone','chatId','recurringFrequency','recurringInterval','recurringByDay','recurringEndDate']);
+      restoreDraft_('haos_event_draft', ['scheduleScope','eventWorkStatus','eventName','eventDetails','startTime','leadTime','eventLocation','meetingLink','resourceId','approverPhone','chatId','recurringFrequency','recurringInterval','recurringByDay','recurringEndDate']);
     }
 
     function clearReportDraft() { localStorage.removeItem('haos_report_draft'); }
@@ -1798,6 +1835,7 @@
       loadResources();
       loadUsersList();
       loadMySchedules();
+      loadDepartmentSchedules();
       loadPendingApprovals();
       loadMyRecurringRules();
       loadMyReports();
@@ -2457,6 +2495,8 @@
       const data = {
         eventEditId: document.getElementById('eventEditId').value, // ดึง ID สำหรับการแก้ไข
         workStatus: document.getElementById('eventWorkStatus').value, // ดึงสถานะงาน
+        scheduleScope: document.getElementById('scheduleScope') ? document.getElementById('scheduleScope').value : 'Personal',
+        ownerDepartment: user.department || '',
         eventName: document.getElementById('eventName').value, 
         details: document.getElementById('eventDetails').value,
         startTime: document.getElementById('startTime').value,
@@ -2511,6 +2551,7 @@
             cancelEditEvent();
             closeScheduleFormModal();
             loadMySchedules();
+            loadDepartmentSchedules();
             loadMyRecurringRules();
           } else { 
             Swal.fire('ข้อผิดพลาด', res.message, 'error'); 
@@ -2527,6 +2568,7 @@
             cancelEditEvent(); // เคลียร์ฟอร์ม
             closeScheduleFormModal();
             loadMySchedules();
+            loadDepartmentSchedules();
             loadNotifications();
             loadMyRecurringRules();
           } else { 
@@ -2538,7 +2580,7 @@
 
     // 3) ฟังก์ชันสำหรับดึงข้อมูลลงฟอร์มเพื่อแก้ไข
     function editSchedule(id) {
-      const item = mySchedulesGlobal.find(i => i.id === id);
+      const item = (mySchedulesGlobal || []).concat(departmentSchedulesGlobal || []).find(i => i.id === id);
       if (!item) return;
 
       document.getElementById('eventEditId').value = item.id;
@@ -2557,6 +2599,9 @@
       
       if (item.workStatus) {
         document.getElementById('eventWorkStatus').value = item.workStatus;
+      }
+      if (document.getElementById('scheduleScope')) {
+        document.getElementById('scheduleScope').value = item.scheduleScope === 'Department' ? 'Department' : 'Personal';
       }
 
       // ซ่อนส่วน Assign เพราะการแก้ อาจจะกระทบกับ Flow ของคนอื่นที่ Assign ไปแล้ว
@@ -2583,6 +2628,7 @@
       document.getElementById('lineTextPaste').value = ''; 
       document.getElementById('chatId').value = '';
       document.getElementById('eventWorkStatus').value = 'อยู่ระหว่างการดำเนินการ';
+      if (document.getElementById('scheduleScope')) document.getElementById('scheduleScope').value = 'Personal';
       const recurringEnabledEl = document.getElementById('recurringEnabled'); if (recurringEnabledEl) recurringEnabledEl.checked = false;
       const recurringOptionsEl = document.getElementById('recurringOptions'); if (recurringOptionsEl) recurringOptionsEl.classList.add('d-none');
       
@@ -2609,6 +2655,68 @@
         applyScheduleFilters();
         syncOverviewCards();
       }).getUserSchedules(user.phone);
+    }
+
+
+    function loadDepartmentSchedules() {
+      const tbody = document.getElementById('departmentScheduleTable');
+      const mobile = document.getElementById('departmentScheduleMobileCards');
+      if (tbody) tbody.innerHTML = loadingRow(5, 'กำลังโหลดตารางงานของกลุ่มงาน...');
+      if (mobile) mobile.innerHTML = '';
+      if (!user || !user.phone) return;
+      google.script.run.withSuccessHandler(res => {
+        if (!res.success) {
+          if (tbody) tbody.innerHTML = emptyRow(5, 'exclamation-triangle', 'โหลดตารางงานกลุ่มงานไม่สำเร็จ', res.message || 'กรุณาลองใหม่');
+          return;
+        }
+        departmentSchedulesGlobal = res.data || [];
+        renderDepartmentScheduleRows(departmentSchedulesGlobal);
+      }).getDepartmentSchedules(user.phone, user.department || '');
+    }
+
+    function renderDepartmentScheduleRows(list) {
+      const tbody = document.getElementById('departmentScheduleTable');
+      const mobile = document.getElementById('departmentScheduleMobileCards');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      if (mobile) mobile.innerHTML = '';
+      if (!list || list.length === 0) {
+        tbody.innerHTML = emptyRow(5, 'people', 'ยังไม่มีตารางงานของกลุ่มงาน', 'เมื่อสร้างงานและเลือก “สำหรับกลุ่มงาน” รายการจะแสดงตรงนี้');
+        if (mobile) mobile.innerHTML = '<div class="empty-state"><i class="bi bi-people"></i><div class="fw-bold text-dark">ยังไม่มีตารางงานของกลุ่มงาน</div><small>รายการที่แชร์ให้กลุ่มงานจะมาแสดงที่นี่</small></div>';
+        return;
+      }
+      list.forEach(item => {
+        const badgeClass = getScheduleBadgeClass(item.workStatus);
+        const canEdit = String(item.ownerPhone || '').replace(/'/g, '') === String(user.phone || '').replace(/'/g, '');
+        const editBtn = canEdit ? `<button class="btn btn-outline-warning btn-sm me-1 text-dark" onclick="editSchedule('${item.id}')" title="แก้ไข"><i class="bi bi-pencil"></i></button>` : '';
+        const deleteBtn = canEdit ? `<button class="btn btn-outline-danger btn-sm" onclick="handleDelete('${item.id}')" title="ลบ"><i class="bi bi-trash"></i></button>` : '';
+        const fileIcon = item.fileUrl ? '<i class="bi bi-paperclip text-primary ms-1" title="มีไฟล์แนบ"></i>' : '';
+        tbody.innerHTML += `
+          <tr>
+            <td class="ps-4 fw-medium text-primary">${item.eventName} ${fileIcon}<div class="small text-muted text-truncate" style="max-width:320px;">${item.location || '-'}</div></td>
+            <td class="small text-muted">${item.startTime}</td>
+            <td class="small text-muted">${item.ownerName || '-'}</td>
+            <td><span class="badge ${badgeClass}">${item.workStatus || '-'}</span></td>
+            <td class="pe-4 text-end action-menu">
+              <button class="btn btn-outline-info btn-sm text-dark me-1" onclick="viewScheduleDetail('${item.id}')" title="รายละเอียด"><i class="bi bi-eye"></i></button>
+              ${editBtn}${deleteBtn}
+            </td>
+          </tr>`;
+        if (mobile) {
+          mobile.innerHTML += `
+            <div class="schedule-card-mobile">
+              <div class="d-flex justify-content-between gap-2 align-items-start">
+                <div class="fw-bold text-primary">${item.eventName} ${fileIcon}</div>
+                <span class="badge ${badgeClass}">${item.workStatus || '-'}</span>
+              </div>
+              <div class="schedule-meta"><span><i class="bi bi-clock"></i> ${item.startTime}</span><span><i class="bi bi-person"></i> ${item.ownerName || '-'}</span></div>
+              <div class="mt-3 d-flex gap-2 flex-wrap">
+                <button class="btn btn-outline-info btn-sm text-dark" onclick="viewScheduleDetail('${item.id}')"><i class="bi bi-eye"></i> ดู</button>
+                ${canEdit ? `<button class="btn btn-outline-warning btn-sm text-dark" onclick="editSchedule('${item.id}')"><i class="bi bi-pencil"></i> แก้ไข</button><button class="btn btn-outline-danger btn-sm" onclick="handleDelete('${item.id}')"><i class="bi bi-trash"></i> ลบ</button>` : ''}
+              </div>
+            </div>`;
+        }
+      });
     }
 
     function getScheduleBadgeClass(status) {
@@ -3266,6 +3374,7 @@
             Swal.fire({icon:'success', title:'สำเร็จ', text:res.message});
             loadMyRecurringRules();
             loadMySchedules();
+            loadDepartmentSchedules();
             loadMyRecurringRules();
           } else {
             Swal.fire('ข้อผิดพลาด', res.message, 'error');
@@ -3323,6 +3432,7 @@
             Swal.fire({icon:'success', title:'สำเร็จ', text:res.message, timer:1500, showConfirmButton:false});
             loadPendingApprovals();
             loadMySchedules();
+            loadDepartmentSchedules();
             loadNotifications();
             loadMyRecurringRules();
           } else {
