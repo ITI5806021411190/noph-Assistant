@@ -2292,7 +2292,63 @@
     // ==========================================
     // 🚀 JS: AI สกัดข้อความจาก LINE & วิเคราะห์ไฟล์แนบ
     // ==========================================
+
+
+    function getAiClientCooldownSeconds_() {
+      try {
+        const until = parseInt(localStorage.getItem('healthAssistant_aiCooldownUntil') || '0', 10);
+        return Math.max(0, Math.ceil((until - Date.now()) / 1000));
+      } catch (e) {
+        return 0;
+      }
+    }
+
+    function setAiClientCooldown_(seconds) {
+      try {
+        const safeSeconds = Math.max(30, Math.min(parseInt(seconds || 60, 10), 300));
+        localStorage.setItem('healthAssistant_aiCooldownUntil', String(Date.now() + safeSeconds * 1000));
+      } catch (e) {}
+    }
+
+    function extractAiRetrySeconds_(message) {
+      const text = String(message || '');
+      const match = text.match(/ประมาณ\s+(\d+)\s+วินาที|รอ\s*(\d+)\s*วินาที|retry in\s+([0-9.]+)s/i);
+      if (!match) return 60;
+      return Math.ceil(parseFloat(match[1] || match[2] || match[3] || '60'));
+    }
+
+    function showAiError_(message) {
+      const text = String(message || 'AI ใช้งานไม่ได้ชั่วคราว กรุณาลองใหม่อีกครั้ง');
+      if (/โควต้า|พักคิว|quota|rate limit|429/i.test(text)) {
+        const retry = extractAiRetrySeconds_(text);
+        setAiClientCooldown_(retry);
+        return Swal.fire({
+          icon: 'warning',
+          title: 'AI ใช้งานเกินโควต้าชั่วคราว',
+          html: `<div class="text-start small">${escapeHtml(text).replace(/\n/g, '<br>')}</div>`,
+          confirmButtonText: 'รับทราบ'
+        });
+      }
+      return Swal.fire('ผิดพลาด', text, 'error');
+    }
+
+    function guardAiCooldown_() {
+      const remain = getAiClientCooldownSeconds_();
+      if (remain > 0) {
+        Swal.fire({
+          icon: 'info',
+          title: 'AI กำลังพักคิวชั่วคราว',
+          text: `กรุณารออีกประมาณ ${remain} วินาที แล้วลองใหม่อีกครั้ง`,
+          timer: Math.min(remain * 1000, 5000),
+          showConfirmButton: true
+        });
+        return false;
+      }
+      return true;
+    }
+
     function analyzeLineData() {
+      if (!guardAiCooldown_()) return;
       const txt = document.getElementById('lineTextPaste').value;
       if (!txt || txt.trim() === '') {
         return Swal.fire('แจ้งเตือน', 'กรุณาวางข้อความจาก LINE ก่อนครับ', 'warning');
@@ -2321,19 +2377,27 @@
             
             Swal.fire({ icon: 'success', title: 'วิเคราะห์สำเร็จ', text: 'AI เติมข้อมูลลงฟอร์มให้แล้วครับ', timer: 1500, showConfirmButton: false });
          } else {
-            Swal.fire('Error', res.message, 'error');
+            showAiError_(res.message);
          }
+      }).withFailureHandler(err => {
+         btn.disabled = false;
+         spin.classList.add('d-none');
+         showAiError_(err && err.message ? err.message : String(err));
       }).analyzeLineMessage(txt);
     }
 
     // 2) เพิ่มระบบ AI วิเคราะห์ไฟล์แนบ
     function analyzeAttachedFile() {
+      if (!guardAiCooldown_()) return;
       const fileInput = document.getElementById('schedFile');
       if (fileInput.files.length === 0) {
         return Swal.fire('แจ้งเตือน', 'กรุณาแนบไฟล์ (PDF หรือรูปภาพ) ก่อนให้ AI วิเคราะห์ครับ', 'warning');
       }
 
       const file = fileInput.files[0];
+      if (file.size > 8 * 1024 * 1024) {
+        return Swal.fire('ไฟล์ใหญ่เกินไป', 'กรุณาใช้ไฟล์ไม่เกินประมาณ 8 MB เพื่อประหยัดโควต้า AI และลดโอกาสวิเคราะห์ไม่สำเร็จ', 'warning');
+      }
       const btn = document.getElementById('btnAnalyzeFile');
       const spin = document.getElementById('fileSpinner');
       
@@ -2359,8 +2423,12 @@
             }
             Swal.fire({ icon: 'success', title: 'วิเคราะห์สำเร็จ', text: 'AI เติมข้อมูลลงฟอร์มตารางงานให้แล้วครับ', timer: 1500, showConfirmButton: false });
           } else {
-            Swal.fire('ผิดพลาด', res.message, 'error');
+            showAiError_(res.message);
           }
+        }).withFailureHandler(err => {
+          btn.disabled = false;
+          spin.classList.add('d-none');
+          showAiError_(err && err.message ? err.message : String(err));
         }).processDocument(base64Data, file.name, file.type);
       };
       reader.readAsDataURL(file);
