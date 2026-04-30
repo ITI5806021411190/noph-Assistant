@@ -262,6 +262,52 @@
     .focus-modal .ai-paste-box { margin-bottom: 16px !important; }
     @media (max-width:768px){ .focus-modal .modal-dialog{margin:.5rem;} .focus-modal .modal-body{padding:12px; max-height:calc(100vh - 100px);} .focus-launch-card{min-height:210px;} }
 
+
+    .ai-choice-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(14,165,233,.12), rgba(34,197,94,.10));
+      border: 1px solid rgba(14,165,233,.18);
+    }
+    .ai-choice-title i { font-size: 1.3rem; color: #0284c7; }
+    .ai-choice-title small { color: #64748b; }
+    #scheduleAiFileBox {
+      background: #f0fdf4 !important;
+      border: 1px dashed rgba(34,197,94,.45) !important;
+      border-radius: 14px !important;
+      padding: 14px !important;
+    }
+    #scheduleFormMount > .ai-paste-box,
+    #scheduleFormMount > #scheduleAiFileBox { margin-bottom: 14px !important; }
+    .guide-modal-wrap { text-align: left; }
+    .guide-role-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 10px; border-radius: 999px;
+      background: #eff6ff; color: #0369a1; font-weight: 700; font-size: .82rem;
+      margin-bottom: 10px;
+    }
+    .guide-section {
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 12px 14px;
+      background: #fff;
+      margin-bottom: 10px;
+    }
+    .guide-section h6 { margin: 0 0 8px; font-weight: 800; color: #0f172a; }
+    .guide-section ul { margin: 0; padding-left: 1.15rem; color: #475569; }
+    .guide-section li { margin-bottom: 4px; }
+    .guide-option-box {
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+      border-radius: 14px;
+      padding: 10px 12px;
+      margin-top: 12px;
+    }
+
   </style>
 </head>
 <body>
@@ -410,6 +456,7 @@
               <button class="btn btn-sm fw-bold" onclick="goToScheduleForm()"><i class="bi bi-calendar-plus me-1"></i>สร้างตารางงาน</button>
               <button class="btn btn-sm fw-bold" onclick="openNotifModal()"><i class="bi bi-bell me-1"></i>แจ้งเตือน</button>
               <button class="btn btn-sm fw-bold" onclick="document.getElementById('schedule-tab').click(); setTimeout(() => toggleCalendarView('calendar'), 120);"><i class="bi bi-calendar3 me-1"></i>ปฏิทิน</button>
+              <button class="btn btn-sm fw-bold" onclick="openProgramGuide(true)"><i class="bi bi-compass me-1"></i>แนะนำโปรแกรม</button>
             </div>
           </div>
           <div class="col-lg-5"><div class="row g-3">
@@ -708,8 +755,9 @@
                     </div>
 
                     
-                    <div class="mb-3 p-2 bg-light border rounded">
-                      <label class="small fw-bold text-muted">แนบไฟล์ (PDF, รูปภาพ)</label>
+                    <div class="mb-3 p-2 bg-light border rounded" id="scheduleAiFileBox">
+                      <label class="small fw-bold text-success"><i class="bi bi-file-earmark-arrow-up me-1"></i>แนบไฟล์ (PDF, รูปภาพ)</label>
+                      <div class="small text-muted mb-2">อีกทางลัดสำหรับให้ AI ช่วยอ่านเอกสาร/รูปภาพ แล้วเติมรายละเอียดให้ ลดเวลาพิมพ์เอง</div>
                       <input type="file" id="schedFile" class="form-control form-control-sm" accept="application/pdf,image/*">
                       <button type="button" class="btn btn-outline-info btn-sm mt-2 w-100 fw-bold" onclick="analyzeAttachedFile()" id="btnAnalyzeFile">
                         <span class="spinner-border spinner-border-sm d-none" id="fileSpinner"></span> <i class="bi bi-robot"></i> ให้ AI ช่วยวิเคราะห์ไฟล์แนบ
@@ -1180,6 +1228,7 @@
     let filteredSchedulesGlobal = [];
     let reportFocusModalObj = null;
     let scheduleFocusModalObj = null;
+    let guideShownThisSession = false;
 
     window.onload = () => {
       showSection('loginSection');
@@ -1293,8 +1342,23 @@
       const scheduleCol = eventCard?.closest('.col-lg-5');
       const aiBox = scheduleCol?.querySelector('.ai-paste-box');
       if (eventCard && scheduleCol) {
-        if (aiBox) document.getElementById('scheduleFormMount').appendChild(aiBox);
+        const scheduleMount = document.getElementById('scheduleFormMount');
+        if (aiBox) {
+          scheduleMount.insertAdjacentHTML('beforeend', `
+            <div class="ai-choice-title">
+              <i class="bi bi-magic"></i>
+              <div>
+                <div class="fw-bold text-dark">AI ช่วยกรอกข้อมูลได้ 2 แบบ</div>
+                <small>เลือกวางข้อความจาก LINE หรือแนบ PDF/รูปภาพให้ AI วิเคราะห์ก่อนกรอกฟอร์ม</small>
+              </div>
+            </div>`);
+          scheduleMount.appendChild(aiBox);
+        }
         document.getElementById('scheduleFormMount').appendChild(eventCard);
+        const fileBox = document.getElementById('scheduleAiFileBox');
+        if (fileBox && aiBox) {
+          scheduleMount.insertBefore(fileBox, eventCard);
+        }
         scheduleCol.innerHTML = `
           <div class="card focus-launch-card border-top border-4 border-success h-100">
             <div class="card-body p-4">
@@ -1332,6 +1396,163 @@
     function closeScheduleFormModal() { if (scheduleFocusModalObj) scheduleFocusModalObj.hide(); }
     function goToReportForm() { openReportFormModal('create'); }
     function goToScheduleForm() { openScheduleFormModal('create'); }
+
+    function getGuideStorageKeys_() {
+      const phone = user && user.phone ? String(user.phone).replace(/'/g, '') : 'guest';
+      const today = new Date().toISOString().split('T')[0];
+      return {
+        today,
+        hideToday: `haos_guide_hide_today_${phone}`,
+        never: `haos_guide_never_${phone}`
+      };
+    }
+
+    function shouldAutoShowGuide_() {
+      if (!user || guideShownThisSession) return false;
+      const keys = getGuideStorageKeys_();
+      if (localStorage.getItem(keys.never) === '1') return false;
+      if (localStorage.getItem(keys.hideToday) === keys.today) return false;
+      return true;
+    }
+
+    function getRoleGuideSections_() {
+      const role = (user && user.role) ? user.role : 'User';
+      const sections = [
+        {
+          title: 'หน้าหลัก / Dashboard',
+          icon: 'speedometer2',
+          items: [
+            'ดูภาพรวมรายงานของฉัน งานของฉัน งานรออนุมัติ และสถานะทีมวันนี้',
+            'ปุ่ม “บันทึกรายงาน” เปิด popup เพื่อกรอกรายงานประจำวันแบบโฟกัส',
+            'ปุ่ม “สร้างตารางงาน” เปิด popup สำหรับสร้าง/แก้ไขกำหนดการ',
+            'ปุ่ม “แจ้งเตือน” เปิดรายการแจ้งเตือนใหม่ และปุ่ม “ปฏิทิน” สลับไปดูงานแบบ Calendar'
+          ]
+        },
+        {
+          title: 'รายงานประจำวัน',
+          icon: 'journal-text',
+          items: [
+            'เลือกสถานะการปฏิบัติงาน เช่น ปฏิบัติงานปกติ ลาป่วย ลากิจ หรือนอกสถานที่',
+            'ใช้เทมเพลตรายงานหรือปุ่มคัดลอกจากรายงานล่าสุดเพื่อลดการพิมพ์ซ้ำ',
+            'แนบไฟล์ผลงาน/รูปภาพได้ และระบบบันทึกแบบร่างบนเครื่องผู้ใช้ให้อัตโนมัติ',
+            'ดูประวัติรายงาน แก้ไข หรือลบย้อนหลังตามเงื่อนไขที่ระบบกำหนด'
+          ]
+        },
+        {
+          title: 'ตารางงาน / นัดหมาย',
+          icon: 'calendar2-check',
+          items: [
+            'ใช้ AI ได้ 2 แบบ: วางข้อความจาก LINE หรือแนบ PDF/รูปภาพให้ AI วิเคราะห์ก่อนกรอกฟอร์ม',
+            'สร้างงาน กำหนดสถานะ วันเวลา สถานที่ ลิงก์ประชุม ผู้รับมอบหมาย และผู้อนุมัติ',
+            'ค้นหา กรองสถานะ กรองช่วงเวลา เรียงลำดับ และดูงานแบบรายการหรือปฏิทิน',
+            'ในรายละเอียดงานสามารถพิมพ์ คัดลอกข้อความ ดาวน์โหลดรูป สร้าง QR และสร้างลิงก์สาธารณะได้'
+          ]
+        },
+        {
+          title: 'งานซ้ำ / งานประจำ',
+          icon: 'arrow-repeat',
+          items: [
+            'ตั้งงานซ้ำรายวัน รายวันทำการ รายสัปดาห์ หรือรายเดือนได้',
+            'ดูรายการงานประจำของตนเอง พักงาน เปิดใช้งานต่อ ลบ หรือสร้างงานที่ถึงกำหนด',
+            'เหมาะกับประชุมประจำ รายงานรอบเดือน หรือกิจกรรมที่ต้องสร้างซ้ำ'
+          ]
+        },
+        {
+          title: 'Public Link / QR / Export',
+          icon: 'qr-code',
+          items: [
+            'สร้างลิงก์สาธารณะแบบมีวันหมดอายุ เพื่อส่งต่อให้คนนอกระบบดูรายละเอียดได้',
+            'สร้าง QR Code สำหรับติดประกาศหรือส่งต่อใน LINE',
+            'ดาวน์โหลด One-page Summary / Export CSV รายงานและตารางงานตามสิทธิ์ที่มี'
+          ]
+        }
+      ];
+
+      if (role === 'Head' || role === 'Super Admin') {
+        sections.push({
+          title: 'ฟังก์ชันหัวหน้า',
+          icon: 'people-fill',
+          items: [
+            'ดูสถานะการส่งรายงานของคนในกลุ่มงานวันนี้',
+            'เปิดดูรายละเอียดรายงานทีม และให้ AI สรุปภาพรวมรายงานประจำวัน',
+            'อนุมัติ ไม่อนุมัติ หรือขอแก้ไขตารางงาน พร้อมแจ้งเหตุผลกลับเจ้าของงาน'
+          ]
+        });
+      }
+
+      if (role === 'Super Admin') {
+        sections.push({
+          title: 'เครื่องมือ Super Admin',
+          icon: 'shield-lock',
+          items: [
+            'จัดการผู้ใช้ เปลี่ยนสิทธิ์ รีเซ็ต PIN เปิด/ปิดบัญชี และลบบัญชีที่ไม่ใช่ Master Admin',
+            'จัดการทรัพยากรส่วนกลาง เช่น ห้อง รถ Zoom และอุปกรณ์',
+            'ตรวจ System Health, ดู Audit Log, เปิด/ปิดระบบแจ้งเตือน และส่งออกข้อมูล',
+            'สร้างข้อมูลทดสอบ รีเซ็ต Demo และเคลียร์ฐานข้อมูลสำหรับเตรียมนำเสนอหัวหน้า'
+          ]
+        });
+      }
+
+      return sections;
+    }
+
+    function buildGuideHtml_() {
+      const role = (user && user.role) ? user.role : 'User';
+      const sections = getRoleGuideSections_();
+      const sectionHtml = sections.map(sec => `
+        <div class="guide-section">
+          <h6><i class="bi bi-${sec.icon} me-1 text-primary"></i>${sec.title}</h6>
+          <ul>${sec.items.map(item => `<li>${item}</li>`).join('')}</ul>
+        </div>
+      `).join('');
+      return `
+        <div class="guide-modal-wrap">
+          <div class="guide-role-badge"><i class="bi bi-person-badge"></i>คู่มือสำหรับสิทธิ์: ${role}</div>
+          <p class="text-muted small mb-3">ทัวร์นี้ออกแบบให้เหมือนคำแนะนำตอนเข้าเกมครั้งแรก: ดูภาพรวมว่าแต่ละปุ่มทำอะไร และปิดได้ทุกเมื่อ</p>
+          ${sectionHtml}
+          <div class="guide-option-box">
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" id="guideHideToday">
+              <label class="form-check-label small" for="guideHideToday">ไม่แสดงคำแนะนำนี้อีกในวันนี้</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="guideNeverShow">
+              <label class="form-check-label small" for="guideNeverShow">ไม่แสดงอัตโนมัติอีก จนกว่าจะกดปุ่ม “แนะนำโปรแกรม” เอง</label>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function openProgramGuide(force) {
+      if (!force && !shouldAutoShowGuide_()) return;
+      guideShownThisSession = true;
+      Swal.fire({
+        title: 'ยินดีต้อนรับสู่ Health Assistant OS',
+        html: buildGuideHtml_(),
+        width: 820,
+        confirmButtonText: 'เริ่มใช้งาน',
+        showCloseButton: true,
+        focusConfirm: false,
+        customClass: { popup: 'rounded-4' },
+        didOpen: () => {
+          const keys = getGuideStorageKeys_();
+          const hideToday = document.getElementById('guideHideToday');
+          const never = document.getElementById('guideNeverShow');
+          if (hideToday && localStorage.getItem(keys.hideToday) === keys.today) hideToday.checked = true;
+          if (never && localStorage.getItem(keys.never) === '1') never.checked = true;
+        },
+        preConfirm: () => {
+          const keys = getGuideStorageKeys_();
+          const hideToday = document.getElementById('guideHideToday')?.checked;
+          const never = document.getElementById('guideNeverShow')?.checked;
+          if (hideToday) localStorage.setItem(keys.hideToday, keys.today);
+          else localStorage.removeItem(keys.hideToday);
+          if (never) localStorage.setItem(keys.never, '1');
+          else localStorage.removeItem(keys.never);
+          return true;
+        }
+      });
+    }
 
 
     function debounce_(fn, delay) {
@@ -1437,6 +1658,8 @@
           }
           initDashboard();
           showSection('appSection');
+          updateDashboardHeader();
+          setTimeout(() => openProgramGuide(false), 650);
           updateDashboardHeader();
           syncOverviewCards();
         } else { 
