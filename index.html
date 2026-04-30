@@ -2317,6 +2317,15 @@
       return Math.ceil(parseFloat(match[1] || match[2] || match[3] || '60'));
     }
 
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/\x27/g, "&#039;");
+    }
+
     function showAiError_(message) {
       const text = String(message || 'AI ใช้งานไม่ได้ชั่วคราว กรุณาลองใหม่อีกครั้ง');
       if (/โควต้า|พักคิว|quota|rate limit|429/i.test(text)) {
