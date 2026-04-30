@@ -1481,7 +1481,9 @@
           items: [
             'ใช้ AI ได้ 2 แบบ: วางข้อความจาก LINE หรือแนบ PDF/รูปภาพให้ AI วิเคราะห์ก่อนกรอกฟอร์ม',
             'สร้างงาน กำหนดสถานะ วันเวลา สถานที่ ลิงก์ประชุม ผู้รับมอบหมาย และผู้อนุมัติ',
-            'ค้นหา กรองสถานะ กรองช่วงเวลา เรียงลำดับ และดูงานแบบรายการหรือปฏิทิน',
+            'เลือกประเภทงานได้ว่าเป็น “ส่วนตัว” หรือ “สำหรับกลุ่มงาน” ถ้าเลือกกลุ่มงาน สมาชิกในกลุ่มงานเดียวกันจะเห็นร่วมกัน',
+            'ดู “ตารางงาน/นัดหมายของคุณ” และ “ตารางงาน/นัดหมายของกลุ่มงาน” แยกกันชัดเจน',
+            'ค้นหา กรองสถานะ กรองช่วงเวลา เรียงลำดับ และดูงานส่วนตัวพร้อมงานกลุ่มงานในปฏิทินเดียวกัน',
             'ในรายละเอียดงานสามารถพิมพ์ คัดลอกข้อความ ดาวน์โหลดรูป สร้าง QR และสร้างลิงก์สาธารณะได้'
           ]
         },
@@ -2253,6 +2255,13 @@
       toggleLeaveFields();
       document.getElementById('btnSaveReport').classList.replace('btn-warning', 'btn-primary');
       document.getElementById('btnCancelEditRep').classList.add('d-none');
+
+      // UX: ถ้าผู้ใช้กดยกเลิกจากโหมดแก้ไข ให้ปิด popup และกลับไป Dashboard/ภาพรวม
+      closeReportFormModal();
+      setTimeout(() => {
+        const hero = document.getElementById('dashboardHero');
+        if (hero) hero.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 120);
     }
 
     function loadTeamReports() {
@@ -2678,6 +2687,8 @@
         }
         departmentSchedulesGlobal = res.data || [];
         renderDepartmentScheduleRows(departmentSchedulesGlobal);
+        // ปฏิทินต้องรวมงานกลุ่มงานด้วย จึง re-render หลังโหลดข้อมูลกลุ่มงาน
+        applyScheduleFilters();
       }).getDepartmentSchedules(user.phone, user.department || '');
     }
 
@@ -2755,26 +2766,38 @@
       return true;
     }
 
-    function applyScheduleFilters() {
-      const q = (document.getElementById('scheduleSearch')?.value || '').toLowerCase().trim();
-      const status = document.getElementById('scheduleStatusFilter')?.value || '';
-      const period = document.getElementById('schedulePeriodFilter')?.value || '';
-      const sort = document.getElementById('scheduleSort')?.value || 'newest';
-      filteredSchedulesGlobal = (mySchedulesGlobal || []).filter(item => {
-        const hay = [item.eventName, item.details, item.location, item.workStatus, item.startTime].join(' ').toLowerCase();
-        if (q && !hay.includes(q)) return false;
-        if (status && item.workStatus !== status) return false;
-        if (!schedulePassesPeriod(item, period)) return false;
-        return true;
-      });
-      filteredSchedulesGlobal.sort((a,b) => {
+    function schedulePassesSearchFilters_(item, q, status, period) {
+      const hay = [item.eventName, item.details, item.location, item.workStatus, item.startTime, item.ownerName, item.scheduleScope].join(' ').toLowerCase();
+      if (q && !hay.includes(q)) return false;
+      if (status && item.workStatus !== status) return false;
+      if (!schedulePassesPeriod(item, period)) return false;
+      return true;
+    }
+
+    function sortScheduleList_(list, sort) {
+      list.sort((a,b) => {
         if (sort === 'name') return (a.eventName || '').localeCompare(b.eventName || '', 'th');
         const da = a.rawStartTime ? new Date(a.rawStartTime) : new Date(0);
         const db = b.rawStartTime ? new Date(b.rawStartTime) : new Date(0);
         return sort === 'oldest' ? da - db : db - da;
       });
+      return list;
+    }
+
+    function applyScheduleFilters() {
+      const q = (document.getElementById('scheduleSearch')?.value || '').toLowerCase().trim();
+      const status = document.getElementById('scheduleStatusFilter')?.value || '';
+      const period = document.getElementById('schedulePeriodFilter')?.value || '';
+      const sort = document.getElementById('scheduleSort')?.value || 'newest';
+
+      filteredSchedulesGlobal = (mySchedulesGlobal || []).filter(item => schedulePassesSearchFilters_(item, q, status, period));
+      sortScheduleList_(filteredSchedulesGlobal, sort);
       renderScheduleRows(filteredSchedulesGlobal);
-      renderCalendar(filteredSchedulesGlobal);
+
+      // ปฏิทินรวมทั้ง “ตารางงานของคุณ” และ “ตารางงานของกลุ่มงาน” เพื่อให้มองภาพรวมงานทั้งกลุ่มได้ในที่เดียว
+      const filteredDepartmentForCalendar = (departmentSchedulesGlobal || []).filter(item => schedulePassesSearchFilters_(item, q, status, period));
+      sortScheduleList_(filteredDepartmentForCalendar, sort);
+      renderCalendar(filteredSchedulesGlobal.concat(filteredDepartmentForCalendar));
     }
 
     function resetScheduleFilters() {
@@ -2864,17 +2887,23 @@
       let calendarEl = document.getElementById('calendarDiv');
       if (!calendarEl) return;
       if (calendarObj) calendarObj.destroy();
-      const list = sourceList || filteredSchedulesGlobal || mySchedulesGlobal || [];
-      let eventsArray = list.map(ev => {
-        const color = getScheduleColor(ev.workStatus);
+      const list = sourceList || (filteredSchedulesGlobal || []).concat(departmentSchedulesGlobal || []) || [];
+      const seen = new Set();
+      let eventsArray = list.filter(ev => {
+        if (!ev || !ev.id || seen.has(ev.id)) return false;
+        seen.add(ev.id);
+        return true;
+      }).map(ev => {
+        const isDept = ev.scheduleScope === 'Department';
+        const color = isDept ? '#7c3aed' : getScheduleColor(ev.workStatus);
         return {
           id: ev.id,
-          title: ev.eventName,
+          title: (isDept ? '[กลุ่มงาน] ' : '') + (ev.eventName || '-'),
           start: ev.rawStartTime || parseDateToISO(ev.startTime),
           backgroundColor: color,
           borderColor: color,
           textColor: '#ffffff',
-          extendedProps: { status: ev.workStatus, location: ev.location }
+          extendedProps: { status: ev.workStatus, location: ev.location, scope: ev.scheduleScope }
         };
       });
       calendarObj = new FullCalendar.Calendar(calendarEl, {
