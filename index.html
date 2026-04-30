@@ -228,6 +228,40 @@
       gap: 4px;
     }
 
+
+
+    .focus-launch-card {
+      border: 1px solid rgba(14,165,233,.18);
+      background: linear-gradient(145deg, #ffffff, #f8fbff);
+      min-height: 280px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .focus-launch-card .focus-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      margin-bottom: 14px;
+      box-shadow: 0 16px 30px rgba(2,132,199,.16);
+    }
+    .focus-icon.report { background: #e0f2fe; color: #0284c7; }
+    .focus-icon.schedule { background: #dcfce7; color: #16a34a; }
+    .focus-modal .modal-dialog { max-width: 760px; }
+    .focus-modal .modal-content { border: 0; border-radius: 24px; overflow: hidden; box-shadow: 0 26px 80px rgba(15,23,42,.28); }
+    .focus-modal .modal-header { color: #fff; border: 0; padding: 18px 22px; }
+    .focus-modal.report-modal .modal-header { background: linear-gradient(135deg,#0284c7,#0ea5e9); }
+    .focus-modal.schedule-modal .modal-header { background: linear-gradient(135deg,#16a34a,#22c55e); }
+    .focus-modal .modal-body { background: #f8fafc; padding: 18px; max-height: calc(100vh - 140px); overflow-y: auto; }
+    .focus-modal .card { margin-bottom: 0; box-shadow: none; border-radius: 18px; }
+    .focus-modal .ai-paste-box { margin-bottom: 16px !important; }
+    @media (max-width:768px){ .focus-modal .modal-dialog{margin:.5rem;} .focus-modal .modal-body{padding:12px; max-height:calc(100vh - 100px);} .focus-launch-card{min-height:210px;} }
+
   </style>
 </head>
 <body>
@@ -1144,11 +1178,14 @@
     let auditLogModalObj = null;
     let PUBLIC_WEB_APP_URL = '';
     let filteredSchedulesGlobal = [];
+    let reportFocusModalObj = null;
+    let scheduleFocusModalObj = null;
 
     window.onload = () => {
       showSection('loginSection');
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('repDate').value = today;
+      setupFocusModals();
       
       google.script.run
         .withSuccessHandler(url => { PUBLIC_WEB_APP_URL = url || ''; })
@@ -1203,8 +1240,98 @@
     }
     function emptyRow(colspan, icon, text, hint) { return `<tr><td colspan="${colspan}" class="empty-state"><i class="bi bi-${icon}"></i><div class="fw-bold text-dark">${text}</div><small>${hint || ''}</small></td></tr>`; }
     function loadingRow(colspan, text) { return `<tr><td colspan="${colspan}" class="text-center py-4"><span class="loading-soft"><span class="spinner-border spinner-border-sm"></span>${text || 'กำลังโหลดข้อมูล...'}</span></td></tr>`; }
-    function goToReportForm() { const tab = document.getElementById('report-tab'); if (tab) tab.click(); setTimeout(() => document.getElementById('repDetails')?.scrollIntoView({ behavior:'smooth', block:'center' }), 150); }
-    function goToScheduleForm() { const tab = document.getElementById('schedule-tab'); if (tab) tab.click(); setTimeout(() => document.getElementById('eventName')?.scrollIntoView({ behavior:'smooth', block:'center' }), 150); }
+    function setupFocusModals() {
+      if (document.getElementById('reportFocusModal')) return;
+
+      document.body.insertAdjacentHTML('beforeend', `
+        <div class="modal fade focus-modal report-modal" id="reportFocusModal" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+              <div class="modal-header">
+                <div>
+                  <h5 class="modal-title fw-bold mb-0"><i class="bi bi-pencil-square me-2"></i>บันทึกรายงานประจำวัน</h5>
+                  <small class="opacity-75">กรอกข้อมูลให้ครบ จบในหน้าต่างเดียว</small>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body"><div id="reportFormMount"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="modal fade focus-modal schedule-modal" id="scheduleFocusModal" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+              <div class="modal-header">
+                <div>
+                  <h5 class="modal-title fw-bold mb-0"><i class="bi bi-calendar-plus me-2"></i>สร้าง/แก้ไขตารางงาน</h5>
+                  <small class="opacity-75">โฟกัสกับกำหนดการ มอบหมายงาน และไฟล์แนบ</small>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body"><div id="scheduleFormMount"></div></div>
+            </div>
+          </div>
+        </div>
+      `);
+
+      const repCard = document.getElementById('repEditId')?.closest('.card');
+      const repCol = repCard?.closest('.col-lg-5');
+      if (repCard && repCol) {
+        document.getElementById('reportFormMount').appendChild(repCard);
+        repCol.innerHTML = `
+          <div class="card focus-launch-card border-top border-4 border-primary h-100">
+            <div class="card-body p-4">
+              <div class="focus-icon report"><i class="bi bi-journal-plus"></i></div>
+              <h5 class="fw-bold text-primary mb-2">บันทึกรายงานเมื่อพร้อม</h5>
+              <p class="text-muted small mb-4">ซ่อนฟอร์มไว้ก่อน เพื่อให้หน้าแรกอ่านง่าย และเปิด popup เมื่อต้องการกรอกจริง</p>
+              <button type="button" class="btn btn-primary fw-bold shadow-sm" onclick="goToReportForm()"><i class="bi bi-pencil-square me-1"></i> เปิดฟอร์มบันทึกรายงาน</button>
+            </div>
+          </div>`;
+      }
+
+      const eventCard = document.getElementById('eventEditId')?.closest('.card');
+      const scheduleCol = eventCard?.closest('.col-lg-5');
+      const aiBox = scheduleCol?.querySelector('.ai-paste-box');
+      if (eventCard && scheduleCol) {
+        if (aiBox) document.getElementById('scheduleFormMount').appendChild(aiBox);
+        document.getElementById('scheduleFormMount').appendChild(eventCard);
+        scheduleCol.innerHTML = `
+          <div class="card focus-launch-card border-top border-4 border-success h-100">
+            <div class="card-body p-4">
+              <div class="focus-icon schedule"><i class="bi bi-calendar2-plus"></i></div>
+              <h5 class="fw-bold text-success mb-2">สร้างตารางงานแบบมีสมาธิ</h5>
+              <p class="text-muted small mb-4">เปิดฟอร์มเฉพาะตอนต้องการบันทึก ลดความรกของหน้า และช่วยให้กรอกข้อมูลครบถ้วน</p>
+              <button type="button" class="btn btn-success fw-bold shadow-sm" onclick="goToScheduleForm()"><i class="bi bi-calendar-plus me-1"></i> เปิดฟอร์มสร้างตารางงาน</button>
+            </div>
+          </div>`;
+      }
+
+      reportFocusModalObj = new bootstrap.Modal(document.getElementById('reportFocusModal'));
+      scheduleFocusModalObj = new bootstrap.Modal(document.getElementById('scheduleFocusModal'));
+    }
+
+    function openReportFormModal(mode) {
+      const tab = document.getElementById('report-tab');
+      if (tab) tab.click();
+      if (mode === 'create' && document.getElementById('repEditId')?.value) cancelEditReport();
+      if (!reportFocusModalObj && document.getElementById('reportFocusModal')) reportFocusModalObj = new bootstrap.Modal(document.getElementById('reportFocusModal'));
+      if (reportFocusModalObj) reportFocusModalObj.show();
+      setTimeout(() => document.getElementById('repDetails')?.focus(), 250);
+    }
+
+    function openScheduleFormModal(mode) {
+      const tab = document.getElementById('schedule-tab');
+      if (tab) tab.click();
+      if (mode === 'create' && document.getElementById('eventEditId')?.value) cancelEditEvent();
+      if (!scheduleFocusModalObj && document.getElementById('scheduleFocusModal')) scheduleFocusModalObj = new bootstrap.Modal(document.getElementById('scheduleFocusModal'));
+      if (scheduleFocusModalObj) scheduleFocusModalObj.show();
+      setTimeout(() => document.getElementById('eventName')?.focus(), 250);
+    }
+
+    function closeReportFormModal() { if (reportFocusModalObj) reportFocusModalObj.hide(); }
+    function closeScheduleFormModal() { if (scheduleFocusModalObj) scheduleFocusModalObj.hide(); }
+    function goToReportForm() { openReportFormModal('create'); }
+    function goToScheduleForm() { openScheduleFormModal('create'); }
 
 
     function debounce_(fn, delay) {
@@ -1766,6 +1893,7 @@
         if (res.success) { 
           Swal.fire({ icon: 'success', title: 'สำเร็จ', text: res.message, timer: 1500, showConfirmButton: false }); 
           cancelEditReport(); 
+          closeReportFormModal();
           loadMyReports(); 
           loadTeamReports(); 
         } else { 
@@ -1849,6 +1977,7 @@
       toggleLeaveFields();
       document.getElementById('btnSaveReport').classList.replace('btn-primary', 'btn-warning');
       document.getElementById('btnCancelEditRep').classList.remove('d-none');
+      openReportFormModal('edit');
     }
 
     function cancelEditReport() {
@@ -2080,6 +2209,7 @@
             Swal.fire({ icon: 'success', title: 'สำเร็จ', text: res.message });
             clearEventDraft();
             cancelEditEvent();
+            closeScheduleFormModal();
             loadMySchedules();
             loadMyRecurringRules();
           } else { 
@@ -2095,6 +2225,7 @@
             Swal.fire({ icon: 'success', title: 'สำเร็จ', text: res.message });
             clearEventDraft();
             cancelEditEvent(); // เคลียร์ฟอร์ม
+            closeScheduleFormModal();
             loadMySchedules();
             loadNotifications();
             loadMyRecurringRules();
@@ -2136,7 +2267,7 @@
       document.getElementById('btnSaveEvent').classList.replace('btn-success', 'btn-warning');
       document.getElementById('btnCancelEditEvent').classList.remove('d-none');
       
-      window.scrollTo({ top: document.querySelector('.ai-paste-box').offsetTop, behavior: 'smooth' });
+      openScheduleFormModal('edit');
     }
 
     // ฟังก์ชันยกเลิกการแก้ไข
