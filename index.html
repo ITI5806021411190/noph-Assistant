@@ -37,6 +37,7 @@
   
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
   <style>
     body { 
@@ -2443,6 +2444,36 @@
     }
 
     // 2) เพิ่มระบบ AI วิเคราะห์ไฟล์แนบ
+    function applyAiScheduleData_(data) {
+      data = data || {};
+      if (data.event_name) document.getElementById('eventName').value = data.event_name;
+      if (data.summary) document.getElementById('eventDetails').value = data.summary;
+      if (data.action_details) document.getElementById('eventDetails').value = data.action_details;
+      if (data.draft_memo && !document.getElementById('eventDetails').value) document.getElementById('eventDetails').value = data.draft_memo;
+      if (data.meeting_link) document.getElementById('meetingLink').value = data.meeting_link;
+      if (data.date_time && data.date_time !== "") {
+        try { document.getElementById('startTime').value = data.date_time.substring(0, 16); } catch(err) {}
+      }
+    }
+
+    async function extractPdfTextClient_(file) {
+      if (!window.pdfjsLib) throw new Error('ยังโหลด PDF parser ไม่สำเร็จ กรุณารีเฟรชหน้าเว็บแล้วลองใหม่');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const maxPages = Math.min(pdf.numPages, 8);
+      let chunks = [];
+      for (let pageNo = 1; pageNo <= maxPages; pageNo++) {
+        const page = await pdf.getPage(pageNo);
+        const textContent = await page.getTextContent();
+        const text = textContent.items.map(item => item.str || '').join(' ').replace(/\s+/g, ' ').trim();
+        if (text) chunks.push('หน้า ' + pageNo + ': ' + text);
+      }
+      let out = chunks.join('\n\n').trim();
+      if (pdf.numPages > maxPages) out += '\n\n[อ่านเฉพาะ ' + maxPages + ' หน้าแรกจากทั้งหมด ' + pdf.numPages + ' หน้า เพื่อควบคุมโควต้า AI]';
+      return out;
+    }
+
     function analyzeAttachedFile() {
       if (!guardAiCooldown_()) return;
       const fileInput = document.getElementById('schedFile');
@@ -2451,32 +2482,54 @@
       }
 
       const file = fileInput.files[0];
-      if (file.size > 8 * 1024 * 1024) {
-        return Swal.fire('ไฟล์ใหญ่เกินไป', 'กรุณาใช้ไฟล์ไม่เกินประมาณ 8 MB เพื่อประหยัดโควต้า AI และลดโอกาสวิเคราะห์ไม่สำเร็จ', 'warning');
+      if (file.size > 10 * 1024 * 1024) {
+        return Swal.fire('ไฟล์ใหญ่เกินไป', 'กรุณาใช้ไฟล์ไม่เกินประมาณ 10 MB เพื่อประหยัดโควต้า AI และลดโอกาสวิเคราะห์ไม่สำเร็จ', 'warning');
       }
       const btn = document.getElementById('btnAnalyzeFile');
       const spin = document.getElementById('fileSpinner');
-      
       btn.disabled = true;
       spin.classList.remove('d-none');
 
+      // v21: PDF ที่มี text จะถอดข้อความใน browser ก่อน แล้วส่งเป็น text-only
+      // วิธีนี้ประหยัดโควต้ากว่าและเลี่ยงปัญหา inline PDF บาง API key ติด billing/quota
+      if (file.type === 'application/pdf') {
+        extractPdfTextClient_(file).then(text => {
+          if (text && text.length >= 80) {
+            google.script.run.withSuccessHandler(res => {
+              btn.disabled = false;
+              spin.classList.add('d-none');
+              if (res.success) {
+                applyAiScheduleData_(res.data);
+                Swal.fire({ icon: 'success', title: 'วิเคราะห์ PDF สำเร็จ', text: 'ระบบถอดข้อความจาก PDF แล้วให้ AI ช่วยสรุปลงฟอร์มให้แล้วครับ', timer: 1800, showConfirmButton: false });
+              } else {
+                showAiError_(res.message);
+              }
+            }).withFailureHandler(err => {
+              btn.disabled = false;
+              spin.classList.add('d-none');
+              showAiError_(err && err.message ? err.message : String(err));
+            }).analyzeDocumentText(text, file.name);
+          } else {
+            analyzeAttachedFileMultimodal_(file, btn, spin);
+          }
+        }).catch(err => {
+          analyzeAttachedFileMultimodal_(file, btn, spin);
+        });
+        return;
+      }
+
+      analyzeAttachedFileMultimodal_(file, btn, spin);
+    }
+
+    function analyzeAttachedFileMultimodal_(file, btn, spin) {
       const reader = new FileReader();
       reader.onload = e => {
         const base64Data = e.target.result.split(',')[1];
-        
         google.script.run.withSuccessHandler(res => {
           btn.disabled = false;
           spin.classList.add('d-none');
           if (res.success) {
-            if (res.data.event_name) document.getElementById('eventName').value = res.data.event_name;
-            if (res.data.summary) document.getElementById('eventDetails').value = res.data.summary;
-            if (res.data.meeting_link) document.getElementById('meetingLink').value = res.data.meeting_link;
-            
-            if (res.data.date_time && res.data.date_time !== "") {
-               try { 
-                 document.getElementById('startTime').value = res.data.date_time.substring(0, 16); 
-               } catch(err) {}
-            }
+            applyAiScheduleData_(res.data);
             Swal.fire({ icon: 'success', title: 'วิเคราะห์สำเร็จ', text: 'AI เติมข้อมูลลงฟอร์มตารางงานให้แล้วครับ', timer: 1500, showConfirmButton: false });
           } else {
             showAiError_(res.message);
@@ -2486,6 +2539,11 @@
           spin.classList.add('d-none');
           showAiError_(err && err.message ? err.message : String(err));
         }).processDocument(base64Data, file.name, file.type);
+      };
+      reader.onerror = () => {
+        btn.disabled = false;
+        spin.classList.add('d-none');
+        showAiError_('อ่านไฟล์ไม่สำเร็จ กรุณาลองเลือกไฟล์ใหม่');
       };
       reader.readAsDataURL(file);
     }
