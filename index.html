@@ -530,6 +530,13 @@
               </button>
             </div>
             <div class="col-md-6 col-xl-3">
+              <button class="admin-action-card w-100" onclick="openWorkStatusManagement()">
+                <i class="bi bi-tags-fill text-success"></i>
+                <span class="fw-bold">สถานะงาน</span>
+                <small>เพิ่ม/ลบตัวเลือก Work Status ในฟอร์มตารางงาน</small>
+              </button>
+            </div>
+            <div class="col-md-6 col-xl-3">
               <button class="admin-action-card w-100" onclick="openSystemHealthModal()">
                 <i class="bi bi-activity text-success"></i>
                 <span class="fw-bold">System Health</span>
@@ -1192,6 +1199,45 @@
     </div>
   </div>
 
+  <div class="modal fade" id="workStatusManageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title fw-bold"><i class="bi bi-tags-fill"></i> จัดการสถานะงาน (Work Status)</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body bg-light">
+          <div class="alert alert-info small mb-3">
+            Super Admin สามารถเพิ่มหรือปิดใช้งานสถานะงานได้เอง รายการที่เปิดใช้งานจะไปแสดงในฟอร์ม “สร้าง/แก้ไขตารางงาน” ทันที
+          </div>
+          <form onsubmit="adminSubmitWorkStatus(); return false;" class="row g-2 align-items-end mb-3">
+            <div class="col-md-8">
+              <label class="small text-muted fw-bold">ชื่อสถานะงานใหม่</label>
+              <input type="text" id="addWorkStatusName" class="form-control" placeholder="เช่น รอติดตามผล / ส่งต่อหน่วยงานอื่น" maxlength="80" required>
+            </div>
+            <div class="col-md-4">
+              <button type="submit" class="btn btn-success w-100 fw-bold" id="btnAdminAddWorkStatus"><i class="bi bi-plus-circle"></i> เพิ่มสถานะงาน</button>
+            </div>
+          </form>
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-0">
+              <div class="table-responsive" style="max-height: 360px;">
+                <table class="table table-hover align-middle small mb-0">
+                  <thead class="table-light"><tr><th class="ps-3">สถานะงาน</th><th>สถานะใช้งาน</th><th class="pe-3 text-end">จัดการ</th></tr></thead>
+                  <tbody id="workStatusManageTable"><tr><td colspan="3" class="text-center py-4 text-muted">กำลังโหลด...</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer bg-light border-top-0">
+          <button type="button" class="btn btn-outline-secondary" onclick="restoreDefaultWorkStatusesUI()"><i class="bi bi-arrow-counterclockwise"></i> คืนค่ามาตรฐาน</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="modal fade" id="systemHealthModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
       <div class="modal-content border-0 shadow">
@@ -1301,6 +1347,8 @@
     let calendarObj = null;
     let notifModalObj = null;
     let headSummaryModalObj = null;
+    let workStatusModalObj = null;
+    let workStatusOptionsGlobal = [];
     let systemHealthModalObj = null;
     let auditLogModalObj = null;
     let PUBLIC_WEB_APP_URL = '';
@@ -1906,6 +1954,7 @@
 
     function initDashboard() {
       loadResources();
+      loadWorkStatusOptions();
       loadUsersList();
       loadMySchedules();
       loadDepartmentSchedules();
@@ -1945,6 +1994,115 @@
       }
       resModalObj.show();
       loadAdminResourceList();
+    }
+
+    function openWorkStatusManagement() {
+      if (!workStatusModalObj) {
+        workStatusModalObj = new bootstrap.Modal(document.getElementById('workStatusManageModal'));
+      }
+      workStatusModalObj.show();
+      loadWorkStatusOptions(true);
+    }
+
+    function loadWorkStatusOptions(renderAdminTable = false) {
+      google.script.run.withSuccessHandler(res => {
+        if (!res || !res.success) {
+          console.warn('โหลดสถานะงานไม่สำเร็จ', res && res.message);
+          return;
+        }
+        workStatusOptionsGlobal = res.data || [];
+        renderWorkStatusSelect();
+        if (renderAdminTable) renderWorkStatusAdminTable();
+      }).getWorkStatuses(renderAdminTable);
+    }
+
+    function renderWorkStatusSelect() {
+      const sel = document.getElementById('eventWorkStatus');
+      if (!sel) return;
+      const current = sel.value || 'อยู่ระหว่างการดำเนินการ';
+      const activeList = (workStatusOptionsGlobal || []).filter(s => s.active !== false);
+      if (activeList.length === 0) return;
+      sel.innerHTML = activeList.map(s => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}</option>`).join('');
+      if (activeList.some(s => s.name === current)) sel.value = current;
+      else sel.value = activeList[0].name;
+    }
+
+    function renderWorkStatusAdminTable() {
+      const tbody = document.getElementById('workStatusManageTable');
+      if (!tbody) return;
+      if (!workStatusOptionsGlobal || workStatusOptionsGlobal.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-muted">ยังไม่มีสถานะงาน</td></tr>';
+        return;
+      }
+      tbody.innerHTML = workStatusOptionsGlobal.map(s => {
+        const badge = s.active ? '<span class="badge bg-success">ใช้งาน</span>' : '<span class="badge bg-secondary">ปิดใช้งาน</span>';
+        const action = s.active
+          ? `<button class="btn btn-outline-danger btn-sm" onclick="deactivateWorkStatusUI('${s.id}', '${escapeJs(s.name)}')"><i class="bi bi-x-circle"></i> ปิดใช้งาน</button>`
+          : '<span class="text-muted small">เพิ่มชื่อเดิมอีกครั้งเพื่อเปิดใช้งาน</span>';
+        return `<tr><td class="ps-3 fw-bold">${escapeHtml(s.name)}</td><td>${badge}</td><td class="pe-3 text-end">${action}</td></tr>`;
+      }).join('');
+    }
+
+    function adminSubmitWorkStatus() {
+      const input = document.getElementById('addWorkStatusName');
+      const btn = document.getElementById('btnAdminAddWorkStatus');
+      const name = (input.value || '').trim();
+      if (!name) return;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังบันทึก...';
+      google.script.run.withSuccessHandler(res => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-plus-circle"></i> เพิ่มสถานะงาน';
+        if (res.success) {
+          input.value = '';
+          Swal.fire({icon:'success', title:'สำเร็จ', text:res.message, timer:1300, showConfirmButton:false});
+          loadWorkStatusOptions(true);
+        } else {
+          Swal.fire('ผิดพลาด', res.message, 'error');
+        }
+      }).adminAddWorkStatus(name, user.phone);
+    }
+
+    function deactivateWorkStatusUI(id, name) {
+      Swal.fire({
+        title: 'ปิดใช้งานสถานะนี้?',
+        text: name,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'ปิดใช้งาน',
+        cancelButtonText: 'ยกเลิก'
+      }).then(result => {
+        if (!result.isConfirmed) return;
+        google.script.run.withSuccessHandler(res => {
+          if (res.success) {
+            Swal.fire({icon:'success', title:'สำเร็จ', text:res.message, timer:1300, showConfirmButton:false});
+            loadWorkStatusOptions(true);
+          } else {
+            Swal.fire('ผิดพลาด', res.message, 'error');
+          }
+        }).adminDeactivateWorkStatus(id, user.phone);
+      });
+    }
+
+    function restoreDefaultWorkStatusesUI() {
+      Swal.fire({
+        title: 'คืนค่าสถานะงานมาตรฐาน?',
+        text: 'ระบบจะเปิดใช้งานสถานะงานพื้นฐาน 4 รายการกลับมา',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'คืนค่า',
+        cancelButtonText: 'ยกเลิก'
+      }).then(result => {
+        if (!result.isConfirmed) return;
+        google.script.run.withSuccessHandler(res => {
+          if (res.success) {
+            Swal.fire({icon:'success', title:'สำเร็จ', text:res.message, timer:1300, showConfirmButton:false});
+            loadWorkStatusOptions(true);
+          } else {
+            Swal.fire('ผิดพลาด', res.message, 'error');
+          }
+        }).adminRestoreDefaultWorkStatuses(user.phone);
+      });
     }
 
     function adminSubmitNewUser() {
@@ -2443,6 +2601,11 @@
         .replace(/"/g, "&quot;")
         .replace(/\x27/g, "&#039;");
     }
+
+    function escapeJs(value) {
+      return String(value ?? "").replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/\n/g, "\\n").replace(/\r/g, "");
+    }
+
 
     function showAiError_(message) {
       const text = String(message || 'AI ใช้งานไม่ได้ชั่วคราว กรุณาลองใหม่อีกครั้ง');
