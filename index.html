@@ -1027,6 +1027,27 @@
                   </div>
                 </div>
               </div>
+
+              <div class="card mt-4 border-success">
+                <div class="card-header bg-success bg-opacity-10 d-flex justify-content-between align-items-center flex-wrap gap-2 pt-3 pb-3">
+                  <div>
+                    <h6 class="mb-0 fw-bold text-success"><i class="bi bi-table"></i> พื้นที่ทำงานร่วมกัน</h6>
+                    <small class="text-muted">สร้างตารางทำงานร่วมกันจากลิงก์ แยกสิทธิ์ดูอย่างเดียว/แก้ไขได้/ต้องล็อกอินก่อนแก้ไข</small>
+                  </div>
+                  <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-success fw-bold" onclick="openWorkspaceCreateModal()"><i class="bi bi-plus-circle"></i> สร้างพื้นที่</button>
+                    <button class="btn btn-sm btn-outline-success" onclick="loadSharedWorkspaces()"><i class="bi bi-arrow-clockwise"></i> โหลดใหม่</button>
+                  </div>
+                </div>
+                <div class="card-body p-0">
+                  <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small">
+                      <thead class="table-light"><tr><th class="ps-4">ชื่อพื้นที่</th><th>สิทธิ์ลิงก์</th><th>การแก้ไข</th><th>อัปเดตล่าสุด</th><th class="pe-4 text-end">จัดการ</th></tr></thead>
+                      <tbody id="workspaceTableBody"><tr><td colspan="5" class="text-center py-4 text-muted">กำลังโหลด...</td></tr></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1429,6 +1450,60 @@
     </div></div>
   </div>
 
+
+  <div class="modal fade" id="workspaceCreateModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title fw-bold"><i class="bi bi-table"></i> สร้างพื้นที่ทำงานร่วมกัน</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body bg-light">
+          <div class="alert alert-info small"><i class="bi bi-info-circle"></i> เหมาะสำหรับทำตารางร่วมกันแบบเบา ๆ คล้าย Google Sheet ผู้สร้างกำหนดได้ว่าคนมีลิงก์ดูอย่างเดียวหรือแก้ไขร่วมกันได้</div>
+          <div class="mb-3"><label class="small fw-bold text-muted">ชื่อพื้นที่ / ชื่อแบบฟอร์ม</label><input id="wsCreateTitle" class="form-control" placeholder="เช่น รายงานภารกิจกลุ่มงาน"></div>
+          <div class="mb-3"><label class="small fw-bold text-muted">คำอธิบาย</label><textarea id="wsCreateDescription" class="form-control" rows="2" placeholder="อธิบายวัตถุประสงค์ของตารางนี้"></textarea></div>
+          <div class="mb-3"><label class="small fw-bold text-muted">หัวคอลัมน์</label><textarea id="wsCreateColumns" class="form-control" rows="3">ลำดับ
+ระดับตัวชี้วัด/สั่งการ
+หัวข้อ/เรื่อง
+กิจกรรม/รายละเอียด
+กลุ่มเป้าหมาย/หน่วยงานที่เกี่ยวข้อง
+ระยะเวลา/ช่วงเวลา
+ผู้รับผิดชอบ
+หมายเหตุ</textarea><small class="text-muted">ใส่ 1 คอลัมน์ต่อ 1 บรรทัด</small></div>
+          <div class="row g-2">
+            <div class="col-md-6"><label class="small fw-bold text-muted">สิทธิ์สำหรับคนมีลิงก์</label><select id="wsAccessMode" class="form-select"><option value="view">ดูอย่างเดียว</option><option value="edit">ดูและแก้ไขร่วมกันได้</option></select></div>
+            <div class="col-md-6"><label class="small fw-bold text-muted">เงื่อนไขการแก้ไข</label><select id="wsRequireLogin" class="form-select"><option value="false">ไม่ต้องล็อกอินก็แก้ไขได้</option><option value="true">ต้องล็อกอินก่อนถึงจะแก้ไขได้</option></select></div>
+          </div>
+        </div>
+        <div class="modal-footer bg-light border-top-0">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+          <button class="btn btn-success fw-bold" onclick="createWorkspaceUI()"><i class="bi bi-save"></i> สร้างพื้นที่</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="workspaceTableModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-success text-white">
+          <div><h5 class="modal-title fw-bold" id="workspaceModalTitle"><i class="bi bi-table"></i> พื้นที่ทำงานร่วมกัน</h5><small id="workspaceModalSub" class="opacity-75"></small></div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body bg-light">
+          <div class="d-flex gap-2 flex-wrap mb-3">
+            <button class="btn btn-outline-primary btn-sm" onclick="copyCurrentWorkspaceLink()"><i class="bi bi-link-45deg"></i> คัดลอกลิงก์</button>
+            <button class="btn btn-outline-success btn-sm" onclick="addWorkspaceRowApp()"><i class="bi bi-plus-circle"></i> เพิ่มแถว</button>
+            <button class="btn btn-success btn-sm" onclick="saveWorkspaceRowsApp()"><i class="bi bi-save"></i> บันทึก</button>
+          </div>
+          <div class="table-responsive bg-white rounded border" style="max-height:60vh;">
+            <table class="table table-bordered table-sm mb-0" id="workspaceEditTable"></table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     let user = null;
     let myReportsGlobal = []; 
@@ -1458,6 +1533,10 @@
     let reportFocusModalObj = null;
     let scheduleFocusModalObj = null;
     let guideShownThisSession = false;
+    let workspaceCreateModalObj = null;
+    let workspaceTableModalObj = null;
+    let sharedWorkspacesGlobal = [];
+    let currentWorkspace = null;
 
     window.onload = () => {
       showSection('loginSection');
@@ -2069,7 +2148,8 @@
       loadMyReports();
       loadTeamReports();
       loadNotifications();
-      loadAnalyticsSummary(); 
+      loadAnalyticsSummary();
+      loadSharedWorkspaces(); 
       
       if (user.role === 'Super Admin') {
         google.script.run.withSuccessHandler(res => {
@@ -4099,6 +4179,119 @@
       make('chartPriority','doughnut', d.priorityCounts || {});
       make('chartTags','bar', d.tagCounts || {});
       make('chartMonthly','line', d.monthlyCounts || {});
+    }
+
+
+    // ==========================================
+    // Collaborative Workspaces
+    // ==========================================
+    function openWorkspaceCreateModal() {
+      if (!workspaceCreateModalObj) workspaceCreateModalObj = new bootstrap.Modal(document.getElementById('workspaceCreateModal'));
+      document.getElementById('wsCreateTitle').value = '';
+      document.getElementById('wsCreateDescription').value = '';
+      workspaceCreateModalObj.show();
+    }
+
+    function createWorkspaceUI() {
+      const title = document.getElementById('wsCreateTitle').value.trim();
+      if (!title) return Swal.fire('แจ้งเตือน', 'กรุณาระบุชื่อพื้นที่ทำงาน', 'warning');
+      const columns = document.getElementById('wsCreateColumns').value.split(/\n|,/).map(x=>x.trim()).filter(Boolean);
+      const data = {
+        title,
+        description: document.getElementById('wsCreateDescription').value.trim(),
+        columns,
+        accessMode: document.getElementById('wsAccessMode').value,
+        requireLoginToEdit: document.getElementById('wsRequireLogin').value === 'true'
+      };
+      google.script.run.withSuccessHandler(res => {
+        if (res.success) {
+          if (workspaceCreateModalObj) workspaceCreateModalObj.hide();
+          Swal.fire({icon:'success', title:'สร้างพื้นที่แล้ว', html:'<div class="small text-muted mb-2">คัดลอกลิงก์ส่งต่อให้ผู้ร่วมงานได้ทันที</div><input class="form-control" value="'+escapeHtml(res.url || '')+'" readonly>', confirmButtonText:'ตกลง'});
+          loadSharedWorkspaces();
+        } else Swal.fire('ผิดพลาด', res.message, 'error');
+      }).createSharedWorkspace(data, user.phone);
+    }
+
+    function loadSharedWorkspaces() {
+      const tbody = document.getElementById('workspaceTableBody');
+      if (!tbody || !user) return;
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm"></span> กำลังโหลด...</td></tr>';
+      google.script.run.withSuccessHandler(res => {
+        if (!res.success) { tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-danger">'+escapeHtml(res.message)+'</td></tr>'; return; }
+        sharedWorkspacesGlobal = res.data || [];
+        if (!sharedWorkspacesGlobal.length) { tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">ยังไม่มีพื้นที่ทำงานร่วมกัน</td></tr>'; return; }
+        tbody.innerHTML = '';
+        sharedWorkspacesGlobal.forEach(ws => {
+          const mode = ws.accessMode === 'edit' ? '<span class="badge bg-success">แก้ไขได้</span>' : '<span class="badge bg-secondary">ดูอย่างเดียว</span>';
+          const login = ws.requireLoginToEdit ? '<span class="badge bg-warning text-dark">ต้องล็อกอินก่อนแก้ไข</span>' : '<span class="badge bg-info">ไม่ต้องล็อกอิน</span>';
+          tbody.innerHTML += `<tr><td class="ps-4"><div class="fw-bold">${escapeHtml(ws.title)}</div><small class="text-muted">${escapeHtml(ws.description || '')}</small></td><td>${mode}</td><td>${login}</td><td>${escapeHtml(ws.updatedAt || '-')}</td><td class="pe-4 text-end"><button class="btn btn-sm btn-outline-primary me-1" onclick="copyWorkspaceLink('${ws.id}')"><i class="bi bi-link-45deg"></i></button><button class="btn btn-sm btn-outline-success me-1" onclick="openWorkspaceEditor('${ws.id}')"><i class="bi bi-pencil-square"></i></button><button class="btn btn-sm btn-outline-danger" onclick="deleteWorkspaceUI('${ws.id}')"><i class="bi bi-trash"></i></button></td></tr>`;
+        });
+      }).getMySharedWorkspaces(user.phone);
+    }
+
+    function copyWorkspaceLink(id) {
+      const ws = sharedWorkspacesGlobal.find(w=>w.id===id);
+      if (!ws) return;
+      navigator.clipboard.writeText(ws.url).then(()=>Swal.fire({icon:'success', title:'คัดลอกลิงก์แล้ว', timer:1200, showConfirmButton:false}));
+    }
+
+    function copyCurrentWorkspaceLink() {
+      if (!currentWorkspace || !currentWorkspace.url) return;
+      navigator.clipboard.writeText(currentWorkspace.url).then(()=>Swal.fire({icon:'success', title:'คัดลอกลิงก์แล้ว', timer:1200, showConfirmButton:false}));
+    }
+
+    function openWorkspaceEditor(id) {
+      const ws = sharedWorkspacesGlobal.find(w=>w.id===id);
+      if (!ws) return;
+      const url = new URL(ws.url);
+      const token = url.searchParams.get('token') || '';
+      google.script.run.withSuccessHandler(res => {
+        if (!res.success) return Swal.fire('ผิดพลาด', res.message, 'error');
+        currentWorkspace = Object.assign({}, res.data, { id, token, url: ws.url });
+        document.getElementById('workspaceModalTitle').innerText = currentWorkspace.title || 'พื้นที่ทำงานร่วมกัน';
+        document.getElementById('workspaceModalSub').innerText = currentWorkspace.description || '';
+        renderWorkspaceEditorTable();
+        if (!workspaceTableModalObj) workspaceTableModalObj = new bootstrap.Modal(document.getElementById('workspaceTableModal'));
+        workspaceTableModalObj.show();
+      }).getPublicWorkspace(id, token);
+    }
+
+    function renderWorkspaceEditorTable() {
+      const table = document.getElementById('workspaceEditTable');
+      const cols = currentWorkspace.columns || [];
+      const rows = currentWorkspace.rows || [];
+      let html = '<thead class="table-light"><tr>'+cols.map(c=>'<th>'+escapeHtml(c)+'</th>').join('')+'</tr></thead><tbody>';
+      rows.forEach((row,r)=>{ html += '<tr>'+cols.map((c,i)=>`<td><div contenteditable="true" class="p-1 rounded workspace-app-cell" data-r="${r}" data-c="${i}" style="min-width:140px;min-height:28px;outline:1px solid transparent;">${escapeHtml(row[i]||'')}</div></td>`).join('')+'</tr>'; });
+      html += '</tbody>';
+      table.innerHTML = html;
+    }
+
+    function collectWorkspaceRowsApp() {
+      const rows = (currentWorkspace.rows || []).map(r=>r.slice());
+      document.querySelectorAll('.workspace-app-cell').forEach(cell=>{ rows[Number(cell.dataset.r)][Number(cell.dataset.c)] = cell.innerText.trim(); });
+      return rows;
+    }
+
+    function addWorkspaceRowApp() {
+      if (!currentWorkspace) return;
+      currentWorkspace.rows.push(new Array((currentWorkspace.columns || []).length).fill(''));
+      renderWorkspaceEditorTable();
+    }
+
+    function saveWorkspaceRowsApp() {
+      if (!currentWorkspace) return;
+      const rows = collectWorkspaceRowsApp();
+      google.script.run.withSuccessHandler(res => {
+        if (res.success) { currentWorkspace.rows = rows; Swal.fire({icon:'success', title:'บันทึกแล้ว', timer:1200, showConfirmButton:false}); loadSharedWorkspaces(); }
+        else Swal.fire('ผิดพลาด', res.message, 'error');
+      }).updateSharedWorkspaceRows(currentWorkspace.id, rows, user.phone);
+    }
+
+    function deleteWorkspaceUI(id) {
+      Swal.fire({title:'ปิดพื้นที่ทำงานนี้?', text:'ลิงก์เดิมจะใช้งานไม่ได้', icon:'warning', showCancelButton:true, confirmButtonText:'ปิดพื้นที่'}).then(r=>{
+        if (!r.isConfirmed) return;
+        google.script.run.withSuccessHandler(res=>{ if(res.success){ Swal.fire('สำเร็จ',res.message,'success'); loadSharedWorkspaces(); } else Swal.fire('ผิดพลาด',res.message,'error'); }).deleteSharedWorkspace(id, user.phone);
+      });
     }
 
   </script>
