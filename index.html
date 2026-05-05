@@ -39,6 +39,7 @@
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
   <style>
     body { 
@@ -361,7 +362,7 @@
       <span class="navbar-brand fw-bold"><i class="bi bi-hospital me-2"></i>Health Assistant OS</span>
       <div class="d-flex align-items-center text-white">
         
-        <div class="position-relative me-4" style="cursor: pointer;" onclick="openNotifModal()">
+        <div class="position-relative me-4" style="cursor: pointer;" onclick="openNotificationCenterModal()">
           <i class="bi bi-bell-fill fs-5"></i>
           <span id="notifBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display:none; font-size: 0.6em;">0</span>
         </div>
@@ -497,7 +498,7 @@
             <div class="quick-actions d-flex flex-wrap gap-2 mt-4">
               <button class="btn btn-sm fw-bold" onclick="goToReportForm()"><i class="bi bi-pencil-square me-1"></i>บันทึกรายงาน</button>
               <button class="btn btn-sm fw-bold" onclick="goToScheduleForm()"><i class="bi bi-calendar-plus me-1"></i>สร้างตารางงาน</button>
-              <button class="btn btn-sm fw-bold" onclick="openNotifModal()"><i class="bi bi-bell me-1"></i>แจ้งเตือน</button>
+              <button class="btn btn-sm fw-bold" onclick="openNotificationCenterModal()"><i class="bi bi-bell me-1"></i>แจ้งเตือน</button>
               <button class="btn btn-sm fw-bold" onclick="document.getElementById('schedule-tab').click(); setTimeout(() => toggleCalendarView('calendar'), 120);"><i class="bi bi-calendar3 me-1"></i>ปฏิทิน</button>
               <button class="btn btn-sm fw-bold" onclick="openProgramGuide(true)"><i class="bi bi-compass me-1"></i>แนะนำโปรแกรม</button>
             </div>
@@ -513,8 +514,11 @@
 
       
       <div id="adminPanel" class="card d-none border-primary mb-4">
-        <div class="card-header bg-primary text-white"><h6 class="mb-0 fw-bold"><i class="bi bi-gear-fill"></i> เครื่องมือผู้ดูแลระบบ (Super Admin)</h6></div>
-        <div class="card-body bg-light">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <h6 class="mb-0 fw-bold"><i class="bi bi-gear-fill"></i> เครื่องมือผู้ดูแลระบบ (Super Admin)</h6>
+          <button class="btn btn-light btn-sm fw-bold text-primary" type="button" onclick="toggleAdminPanelBody()" id="btnToggleAdminPanel"><i class="bi bi-eye-slash"></i> ซ่อนเครื่องมือ</button>
+        </div>
+        <div class="card-body bg-light" id="adminPanelBody">
           <div class="row g-3 text-start">
             <div class="col-md-6 col-xl-3">
               <button class="admin-action-card w-100" onclick="openUserManagement()">
@@ -549,6 +553,27 @@
                 <i class="bi bi-shield-check text-info"></i>
                 <span class="fw-bold">Audit Log</span>
                 <small>ดูประวัติการเพิ่ม แก้ไข ลบ อนุมัติ</small>
+              </button>
+            </div>
+            <div class="col-md-6 col-xl-3">
+              <button class="admin-action-card w-100" onclick="openErrorLogModal()">
+                <i class="bi bi-bug-fill text-danger"></i>
+                <span class="fw-bold">Error Log</span>
+                <small>ดูข้อผิดพลาดของระบบแบบละเอียด</small>
+              </button>
+            </div>
+            <div class="col-md-6 col-xl-3">
+              <button class="admin-action-card w-100" onclick="openWorkTagManagement()">
+                <i class="bi bi-bookmark-star text-primary"></i>
+                <span class="fw-bold">ประเภทงาน / Tag</span>
+                <small>เพิ่ม/ปิดประเภทงานสำหรับจัดหมวดหมู่</small>
+              </button>
+            </div>
+            <div class="col-md-6 col-xl-3">
+              <button class="admin-action-card w-100" onclick="openAnalyticsDashboard()">
+                <i class="bi bi-graph-up-arrow text-success"></i>
+                <span class="fw-bold">Analytics</span>
+                <small>กราฟภาพรวมงาน รายงาน และสถานะ</small>
               </button>
             </div>
           </div>
@@ -594,8 +619,9 @@
                     <input type="hidden" id="repEditId">
                     
                     <div class="mb-3">
-                      <label class="small fw-bold text-muted">วันที่ (ล็อกอัตโนมัติ)</label>
-                      <input type="date" id="repDate" class="form-control bg-light" readonly required>
+                      <label class="small fw-bold text-muted">วันที่รายงาน (ย้อนหลังได้สูงสุด 7 วัน)</label>
+                      <input type="date" id="repDate" class="form-control" required>
+                      <small class="text-muted">เลือกย้อนหลังได้ไม่เกิน 7 วัน และไม่สามารถเลือกวันล่วงหน้า</small>
                     </div>
                     
                     <label class="small fw-bold text-muted">ช่วงเวลาทำงาน</label>
@@ -744,6 +770,22 @@
                         <option value="ยกเลิกสถานะ">ยกเลิกสถานะ</option>
                         <option value="เสร็จสิ้นแต่ยังไม่สมบูรณ์">เสร็จสิ้นแต่ยังไม่สมบูรณ์</option>
                       </select>
+                    </div>
+                    <div class="row g-2 mb-3">
+                      <div class="col-md-5">
+                        <label class="small fw-bold text-muted">ความสำคัญ / Priority</label>
+                        <select id="eventPriority" class="form-select border-warning">
+                          <option value="ปกติ">ปกติ</option>
+                          <option value="ต่ำ">ต่ำ</option>
+                          <option value="ด่วน">ด่วน</option>
+                          <option value="ด่วนมาก">ด่วนมาก</option>
+                        </select>
+                      </div>
+                      <div class="col-md-7">
+                        <label class="small fw-bold text-muted">ประเภทงาน / Tags</label>
+                        <select id="eventTags" class="form-select" multiple size="3"></select>
+                        <small class="text-muted">เลือกได้มากกว่า 1 ประเภท</small>
+                      </div>
                     </div>
 
                     <div class="mb-3">
@@ -1343,6 +1385,50 @@
   </div>
 
 
+
+  <div class="modal fade" id="errorLogModal" tabindex="-1">
+    <div class="modal-dialog modal-xl"><div class="modal-content">
+      <div class="modal-header bg-danger text-white"><h5 class="modal-title fw-bold"><i class="bi bi-bug-fill"></i> Error Log</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body bg-light">
+        <div class="d-flex gap-2 mb-3"><button class="btn btn-outline-danger btn-sm" onclick="clearErrorLogsUI()"><i class="bi bi-trash"></i> ล้าง Error Logs</button><button class="btn btn-outline-primary btn-sm" onclick="loadErrorLogs()"><i class="bi bi-arrow-repeat"></i> รีเฟรช</button></div>
+        <div class="table-responsive"><table class="table table-sm table-hover bg-white"><thead><tr><th>เวลา</th><th>ฟังก์ชัน</th><th>ผู้ใช้</th><th>ข้อความ</th><th>Context</th></tr></thead><tbody id="errorLogTable"><tr><td colspan="5" class="text-center py-4 text-muted">กำลังโหลด...</td></tr></tbody></table></div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="modal fade" id="workTagManageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg"><div class="modal-content">
+      <div class="modal-header bg-primary text-white"><h5 class="modal-title fw-bold"><i class="bi bi-bookmark-star"></i> จัดการประเภทงาน / Tags</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body bg-light">
+        <form onsubmit="adminSubmitWorkTag(); return false;" class="row g-2 align-items-end mb-3">
+          <div class="col-md-9"><label class="small fw-bold text-muted">ชื่อประเภทงานใหม่</label><input id="addWorkTagName" class="form-control" placeholder="เช่น งานประชุมผู้บริหาร"></div>
+          <div class="col-md-3"><button id="btnAdminAddWorkTag" class="btn btn-primary w-100"><i class="bi bi-plus-circle"></i> เพิ่ม</button></div>
+        </form>
+        <div class="table-responsive"><table class="table table-sm table-hover bg-white"><thead><tr><th>ประเภทงาน</th><th>สถานะ</th><th class="text-end">จัดการ</th></tr></thead><tbody id="workTagManageTable"></tbody></table></div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="modal fade" id="notificationCenterModal" tabindex="-1">
+    <div class="modal-dialog modal-lg"><div class="modal-content">
+      <div class="modal-header bg-primary text-white"><h5 class="modal-title fw-bold"><i class="bi bi-bell-fill"></i> Notification Center</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body bg-light">
+        <div class="d-flex flex-wrap gap-2 mb-3"><select id="notifFilter" class="form-select form-select-sm" style="max-width:160px" onchange="loadNotificationCenter()"><option value="all">ทั้งหมด</option><option value="unread">ยังไม่อ่าน</option><option value="read">อ่านแล้ว</option></select><button class="btn btn-outline-success btn-sm" onclick="markAllNotificationsAsReadUI()"><i class="bi bi-check2-all"></i> อ่านทั้งหมด</button><button class="btn btn-outline-primary btn-sm" onclick="loadNotificationCenter()"><i class="bi bi-arrow-repeat"></i> รีเฟรช</button></div>
+        <div id="notificationCenterList" class="list-group"></div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="modal fade" id="analyticsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl"><div class="modal-content">
+      <div class="modal-header bg-success text-white"><h5 class="modal-title fw-bold"><i class="bi bi-graph-up-arrow"></i> Dashboard Analytics</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body bg-light">
+        <div class="row g-3 mb-3"><div class="col-md-3"><div class="stat-card border-primary"><h4 id="anaTotalSchedules">0</h4><small>ตารางงาน</small></div></div><div class="col-md-3"><div class="stat-card border-success"><h4 id="anaTotalReports">0</h4><small>รายงาน</small></div></div></div>
+        <div class="row g-3"><div class="col-lg-6"><div class="card p-3"><h6 class="fw-bold">สถานะงาน</h6><canvas id="chartStatus"></canvas></div></div><div class="col-lg-6"><div class="card p-3"><h6 class="fw-bold">ความสำคัญ</h6><canvas id="chartPriority"></canvas></div></div><div class="col-lg-6"><div class="card p-3"><h6 class="fw-bold">ประเภทงาน</h6><canvas id="chartTags"></canvas></div></div><div class="col-lg-6"><div class="card p-3"><h6 class="fw-bold">งานรายเดือน</h6><canvas id="chartMonthly"></canvas></div></div></div>
+      </div>
+    </div></div>
+  </div>
+
   <script>
     let user = null;
     let myReportsGlobal = []; 
@@ -1356,11 +1442,17 @@
     let profileModalObj = null;
     let calendarObj = null;
     let notifModalObj = null;
+    let notificationCenterModalObj = null;
     let headSummaryModalObj = null;
     let workStatusModalObj = null;
     let workStatusOptionsGlobal = [];
     let systemHealthModalObj = null;
     let auditLogModalObj = null;
+    let errorLogModalObj = null;
+    let workTagModalObj = null;
+    let analyticsModalObj = null;
+    let analyticsCharts = [];
+    let workTagOptionsGlobal = [];
     let PUBLIC_WEB_APP_URL = '';
     let filteredSchedulesGlobal = [];
     let reportFocusModalObj = null;
@@ -1371,6 +1463,7 @@
       showSection('loginSection');
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('repDate').value = today;
+      setReportDateBounds();
       setupFocusModals();
       
       google.script.run
@@ -1747,7 +1840,7 @@
 
     function bindDraftAutosave() {
       const reportFields = ['repStartTime','repEndTime','repLeave','repDetails','repRemarks'];
-      const eventFields = ['scheduleScope','eventWorkStatus','eventName','eventDetails','startTime','leadTime','eventLocation','meetingLink','resourceId','approverPhone','chatId','recurringFrequency','recurringInterval','recurringByDay','recurringEndDate'];
+      const eventFields = ['scheduleScope','eventWorkStatus','eventPriority','eventTags','eventName','eventDetails','startTime','leadTime','eventLocation','meetingLink','resourceId','approverPhone','chatId','recurringFrequency','recurringInterval','recurringByDay','recurringEndDate'];
       const saveReport = debounce_(() => saveDraft_('haos_report_draft', reportFields, 'reportDraftHint'), 500);
       const saveEvent = debounce_(() => saveDraft_('haos_event_draft', eventFields, 'eventDraftHint'), 500);
       reportFields.forEach(id => document.getElementById(id)?.addEventListener('input', saveReport));
@@ -1758,7 +1851,7 @@
 
     function restoreDrafts() {
       restoreDraft_('haos_report_draft', ['repStartTime','repEndTime','repLeave','repDetails','repRemarks']);
-      restoreDraft_('haos_event_draft', ['scheduleScope','eventWorkStatus','eventName','eventDetails','startTime','leadTime','eventLocation','meetingLink','resourceId','approverPhone','chatId','recurringFrequency','recurringInterval','recurringByDay','recurringEndDate']);
+      restoreDraft_('haos_event_draft', ['scheduleScope','eventWorkStatus','eventPriority','eventTags','eventName','eventDetails','startTime','leadTime','eventLocation','meetingLink','resourceId','approverPhone','chatId','recurringFrequency','recurringInterval','recurringByDay','recurringEndDate']);
     }
 
     function clearReportDraft() { localStorage.removeItem('haos_report_draft'); }
@@ -1823,6 +1916,7 @@
           document.getElementById('userDeptDisplay').innerText = user.department + (user.role !== 'User' ? ' ('+user.role+')' : '');
           if (user.role === 'Super Admin') {
             document.getElementById('adminPanel').classList.remove('d-none');
+            setTimeout(restoreAdminPanelState_, 50);
           }
           initDashboard();
           showSection('appSection');
@@ -1910,6 +2004,7 @@
     function readNotif(id) {
       google.script.run.withSuccessHandler(res => {
         loadNotifications();
+      loadAnalyticsSummary();
       }).markNotifAsRead(id);
     }
 
@@ -1965,6 +2060,7 @@
     function initDashboard() {
       loadResources();
       loadWorkStatusOptions();
+      loadWorkTags();
       loadUsersList();
       loadMySchedules();
       loadDepartmentSchedules();
@@ -1972,7 +2068,8 @@
       loadMyRecurringRules();
       loadMyReports();
       loadTeamReports();
-      loadNotifications(); 
+      loadNotifications();
+      loadAnalyticsSummary(); 
       
       if (user.role === 'Super Admin') {
         google.script.run.withSuccessHandler(res => {
@@ -2484,7 +2581,7 @@
 
     function cancelEditReport() {
       document.getElementById('repEditId').value = '';
-      document.getElementById('repDate').value = new Date().toISOString().split('T')[0];
+      setReportDateBounds();
       document.getElementById('repStartTime').value = ''; 
       document.getElementById('repEndTime').value = '';
       document.getElementById('repLeave').value = 'ปฏิบัติงานปกติ';
@@ -2848,6 +2945,8 @@
       const data = {
         eventEditId: document.getElementById('eventEditId').value, // ดึง ID สำหรับการแก้ไข
         workStatus: document.getElementById('eventWorkStatus').value, // ดึงสถานะงาน
+        priority: document.getElementById('eventPriority') ? document.getElementById('eventPriority').value : 'ปกติ',
+        tags: document.getElementById('eventTags') ? Array.from(document.getElementById('eventTags').selectedOptions).map(o => o.value) : [],
         scheduleScope: document.getElementById('scheduleScope') ? document.getElementById('scheduleScope').value : 'Personal',
         ownerDepartment: user.department || '',
         eventName: document.getElementById('eventName').value, 
@@ -2923,6 +3022,7 @@
             loadMySchedules();
             loadDepartmentSchedules();
             loadNotifications();
+      loadAnalyticsSummary();
             loadMyRecurringRules();
           } else { 
             Swal.fire('ข้อผิดพลาด', res.message, 'error'); 
@@ -2952,6 +3052,8 @@
       
       if (item.workStatus) {
         document.getElementById('eventWorkStatus').value = item.workStatus;
+      if (document.getElementById('eventPriority')) document.getElementById('eventPriority').value = item.priority || 'ปกติ';
+      if (document.getElementById('eventTags')) { const tags = String(item.tags || '').split(',').map(t => t.trim()).filter(Boolean); Array.from(document.getElementById('eventTags').options).forEach(o => o.selected = tags.includes(o.value)); }
       }
       if (document.getElementById('scheduleScope')) {
         document.getElementById('scheduleScope').value = item.scheduleScope === 'Department' ? 'Department' : 'Personal';
@@ -2981,6 +3083,8 @@
       document.getElementById('lineTextPaste').value = ''; 
       document.getElementById('chatId').value = '';
       document.getElementById('eventWorkStatus').value = 'อยู่ระหว่างการดำเนินการ';
+      if (document.getElementById('eventPriority')) document.getElementById('eventPriority').value = 'ปกติ';
+      if (document.getElementById('eventTags')) Array.from(document.getElementById('eventTags').options).forEach(o => o.selected = false);
       if (document.getElementById('scheduleScope')) document.getElementById('scheduleScope').value = 'Personal';
       const recurringEnabledEl = document.getElementById('recurringEnabled'); if (recurringEnabledEl) recurringEnabledEl.checked = false;
       const recurringOptionsEl = document.getElementById('recurringOptions'); if (recurringOptionsEl) recurringOptionsEl.classList.add('d-none');
@@ -3817,12 +3921,184 @@
             loadMySchedules();
             loadDepartmentSchedules();
             loadNotifications();
+      loadAnalyticsSummary();
             loadMyRecurringRules();
           } else {
             Swal.fire('ข้อผิดพลาด', res.message, 'error');
           }
         }).updateApprovalStatus(id, status, user.phone, r.value || '');
       });
+    }
+
+
+    // ==========================================
+    // v27: Admin collapse, date bounds, tags, notifications, error log, analytics
+    // ==========================================
+    function toggleAdminPanelBody() {
+      const body = document.getElementById('adminPanelBody');
+      const btn = document.getElementById('btnToggleAdminPanel');
+      if (!body || !btn) return;
+      const hidden = body.style.display === 'none';
+      body.style.display = hidden ? '' : 'none';
+      btn.innerHTML = hidden ? '<i class="bi bi-eye-slash"></i> ซ่อนเครื่องมือ' : '<i class="bi bi-eye"></i> แสดงเครื่องมือ';
+      localStorage.setItem('haos_admin_panel_hidden', hidden ? '0' : '1');
+    }
+
+    function restoreAdminPanelState_() {
+      const body = document.getElementById('adminPanelBody');
+      const btn = document.getElementById('btnToggleAdminPanel');
+      if (!body || !btn) return;
+      if (localStorage.getItem('haos_admin_panel_hidden') === '1') {
+        body.style.display = 'none';
+        btn.innerHTML = '<i class="bi bi-eye"></i> แสดงเครื่องมือ';
+      }
+    }
+
+    function setReportDateBounds() {
+      const input = document.getElementById('repDate');
+      if (!input) return;
+      const today = new Date();
+      const min = new Date(today); min.setDate(min.getDate() - 7);
+      const fmt = d => d.toISOString().split('T')[0];
+      input.max = fmt(today);
+      input.min = fmt(min);
+      if (!input.value) input.value = fmt(today);
+    }
+
+    function loadWorkTags(renderAdminTable = false) {
+      google.script.run.withSuccessHandler(res => {
+        if (!res || !res.success) { console.warn('โหลดประเภทงานไม่สำเร็จ', res && res.message); return; }
+        workTagOptionsGlobal = res.data || [];
+        renderWorkTagSelect();
+        if (renderAdminTable) renderWorkTagAdminTable();
+      }).getWorkTags(renderAdminTable);
+    }
+
+    function renderWorkTagSelect() {
+      const sel = document.getElementById('eventTags');
+      if (!sel) return;
+      const selected = Array.from(sel.selectedOptions || []).map(o => o.value);
+      const active = (workTagOptionsGlobal || []).filter(t => t.active !== false);
+      sel.innerHTML = active.map(t => `<option value="${escapeHtml(t.name)}">${escapeHtml(t.name)}</option>`).join('');
+      Array.from(sel.options).forEach(o => o.selected = selected.includes(o.value));
+    }
+
+    function openWorkTagManagement() {
+      if (!workTagModalObj) workTagModalObj = new bootstrap.Modal(document.getElementById('workTagManageModal'));
+      workTagModalObj.show();
+      loadWorkTags(true);
+    }
+
+    function renderWorkTagAdminTable() {
+      const tbody = document.getElementById('workTagManageTable');
+      if (!tbody) return;
+      if (!workTagOptionsGlobal || !workTagOptionsGlobal.length) { tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-muted">ยังไม่มีประเภทงาน</td></tr>'; return; }
+      tbody.innerHTML = workTagOptionsGlobal.map(t => {
+        const badge = t.active ? '<span class="badge bg-success">ใช้งาน</span>' : '<span class="badge bg-secondary">ปิดใช้งาน</span>';
+        const action = t.active ? `<button class="btn btn-outline-danger btn-sm" onclick="deactivateWorkTagUI('${t.id}','${escapeJs(t.name)}')"><i class="bi bi-x-circle"></i> ปิดใช้งาน</button>` : '<span class="text-muted small">เพิ่มชื่อเดิมเพื่อเปิดใช้งาน</span>';
+        return `<tr><td class="ps-3 fw-bold">${escapeHtml(t.name)}</td><td>${badge}</td><td class="text-end pe-3">${action}</td></tr>`;
+      }).join('');
+    }
+
+    function adminSubmitWorkTag() {
+      const input = document.getElementById('addWorkTagName');
+      const btn = document.getElementById('btnAdminAddWorkTag');
+      const name = (input.value || '').trim();
+      if (!name) return;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังบันทึก...';
+      google.script.run.withSuccessHandler(res => {
+        btn.disabled = false; btn.innerHTML = '<i class="bi bi-plus-circle"></i> เพิ่ม';
+        if (res.success) { input.value=''; Swal.fire({icon:'success', title:'สำเร็จ', text:res.message, timer:1200, showConfirmButton:false}); loadWorkTags(true); }
+        else Swal.fire('ผิดพลาด', res.message, 'error');
+      }).adminAddWorkTag(name, user.phone);
+    }
+
+    function deactivateWorkTagUI(id, name) {
+      Swal.fire({ title:'ปิดใช้งานประเภทงาน?', text:name, icon:'warning', showCancelButton:true, confirmButtonText:'ปิดใช้งาน' }).then(r => {
+        if (!r.isConfirmed) return;
+        google.script.run.withSuccessHandler(res => { if (res.success) loadWorkTags(true); else Swal.fire('ผิดพลาด', res.message, 'error'); }).adminDeactivateWorkTag(id, user.phone);
+      });
+    }
+
+    function openErrorLogModal() {
+      if (!errorLogModalObj) errorLogModalObj = new bootstrap.Modal(document.getElementById('errorLogModal'));
+      errorLogModalObj.show();
+      loadErrorLogs();
+    }
+
+    function loadErrorLogs() {
+      const tbody = document.getElementById('errorLogTable');
+      if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">กำลังโหลด...</td></tr>';
+      google.script.run.withSuccessHandler(res => {
+        if (!tbody) return;
+        if (!res.success) { tbody.innerHTML = `<tr><td colspan="5" class="text-danger text-center">${escapeHtml(res.message)}</td></tr>`; return; }
+        if (!res.data.length) { tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">ยังไม่มี Error Log</td></tr>'; return; }
+        tbody.innerHTML = res.data.map(e => `<tr><td>${escapeHtml(e.time)}</td><td><span class="badge bg-danger">${escapeHtml(e.functionName)}</span></td><td>${escapeHtml(e.actorPhone || '-')}</td><td class="text-break">${escapeHtml(e.message)}</td><td><small class="text-muted text-break">${escapeHtml(e.context || '')}</small></td></tr>`).join('');
+      }).getErrorLogs(100);
+    }
+
+    function clearErrorLogsUI() {
+      Swal.fire({ title:'ล้าง Error Logs?', text:'พิมพ์ CLEAR_ERRORS เพื่อยืนยัน', input:'text', icon:'warning', showCancelButton:true, confirmButtonText:'ล้าง' }).then(r => {
+        if (!r.isConfirmed) return;
+        google.script.run.withSuccessHandler(res => { if (res.success) { Swal.fire('สำเร็จ', res.message, 'success'); loadErrorLogs(); } else Swal.fire('ผิดพลาด', res.message, 'error'); }).clearErrorLogs(user.phone, r.value);
+      });
+    }
+
+    function openNotificationCenterModal() {
+      if (!notificationCenterModalObj) notificationCenterModalObj = new bootstrap.Modal(document.getElementById('notificationCenterModal'));
+      notificationCenterModalObj.show();
+      loadNotificationCenter();
+    }
+
+    function loadNotificationCenter() {
+      const list = document.getElementById('notificationCenterList');
+      const filter = document.getElementById('notifFilter') ? document.getElementById('notifFilter').value : 'all';
+      if (list) list.innerHTML = '<div class="text-center py-4 text-muted">กำลังโหลด...</div>';
+      google.script.run.withSuccessHandler(res => {
+        if (!list) return;
+        if (!res.success) { list.innerHTML = `<div class="text-danger p-3">${escapeHtml(res.message)}</div>`; return; }
+        if (!res.data.length) { list.innerHTML = '<div class="text-center py-4 text-muted">ไม่มีแจ้งเตือน</div>'; return; }
+        list.innerHTML = res.data.map(n => `<div class="list-group-item ${n.isRead ? '' : 'list-group-item-info'}"><div class="d-flex justify-content-between gap-2"><div><div class="fw-bold">${escapeHtml(n.message)}</div><small class="text-muted">${escapeHtml(n.time)} • ${escapeHtml(n.type || 'ทั่วไป')} • ${escapeHtml(n.priority || 'ปกติ')}</small></div><div class="text-nowrap"><button class="btn btn-sm btn-outline-success" onclick="readNotif('${n.id}'); setTimeout(loadNotificationCenter,300)"><i class="bi bi-check"></i></button> <button class="btn btn-sm btn-outline-danger" onclick="deleteNotificationUI('${n.id}')"><i class="bi bi-trash"></i></button></div></div></div>`).join('');
+      }).getNotificationCenter(user.phone, filter);
+    }
+
+    function markAllNotificationsAsReadUI() {
+      google.script.run.withSuccessHandler(res => { loadNotifications(); loadNotificationCenter(); }).markAllNotificationsAsRead(user.phone);
+    }
+
+    function deleteNotificationUI(id) {
+      google.script.run.withSuccessHandler(res => { loadNotifications(); loadNotificationCenter(); }).deleteNotification(id, user.phone);
+    }
+
+    function openAnalyticsDashboard() {
+      if (!analyticsModalObj) analyticsModalObj = new bootstrap.Modal(document.getElementById('analyticsModal'));
+      analyticsModalObj.show();
+      loadAnalyticsSummary(true);
+    }
+
+    function loadAnalyticsSummary(renderCharts = false) {
+      if (!user) return;
+      google.script.run.withSuccessHandler(res => {
+        if (!res || !res.success) return;
+        const d = res.data || {};
+        if (document.getElementById('anaTotalSchedules')) document.getElementById('anaTotalSchedules').innerText = d.totalSchedules || 0;
+        if (document.getElementById('anaTotalReports')) document.getElementById('anaTotalReports').innerText = d.totalReports || 0;
+        if (renderCharts && window.Chart) renderAnalyticsCharts_(d);
+      }).getDashboardAnalytics(user.phone, user.role, user.department);
+    }
+
+    function renderAnalyticsCharts_(d) {
+      analyticsCharts.forEach(c => { try { c.destroy(); } catch(e) {} }); analyticsCharts = [];
+      const make = (id, type, obj) => {
+        const ctx = document.getElementById(id); if (!ctx) return;
+        const labels = Object.keys(obj || {}); const values = labels.map(k => obj[k]);
+        analyticsCharts.push(new Chart(ctx, { type:type, data:{ labels:labels, datasets:[{ label:'จำนวน', data:values }] }, options:{ responsive:true, plugins:{ legend:{ display:false } } } }));
+      };
+      make('chartStatus','bar', d.statusCounts || {});
+      make('chartPriority','doughnut', d.priorityCounts || {});
+      make('chartTags','bar', d.tagCounts || {});
+      make('chartMonthly','line', d.monthlyCounts || {});
     }
 
   </script>
