@@ -124,7 +124,7 @@
   </div>
 
   <script>
-    let workspaceState = { id:'', token:'', columns:[], rows:[], canEdit:false };
+    let workspaceState = { id:'', token:'', columns:[], rows:[], canEdit:false, workspaceType:'table' };
 
     window.onload = function() {
       const urlParams = new URLSearchParams(window.location.search);
@@ -181,31 +181,67 @@
           return;
         }
         const d = res.data;
-        workspaceState = { id:workspaceId, token:token, columns:d.columns||[], rows:d.rows||[], canEdit:(d.accessMode==='edit' && !d.requireLoginToEdit) };
+        workspaceState = { id:workspaceId, token:token, columns:d.columns||[], rows:d.rows||[], canEdit:(d.accessMode==='edit' && !d.requireLoginToEdit), workspaceType:d.workspaceType || 'table' };
         document.querySelector('.public-mark').innerHTML = '<i class="bi bi-table"></i>';
-        document.querySelector('.card-header h4').innerText = 'พื้นที่ทำงานร่วมกัน';
+        document.querySelector('.card-header h4').innerText = workspaceState.workspaceType === 'form' ? 'แบบฟอร์มออนไลน์' : 'พื้นที่ทำงานร่วมกัน';
         document.getElementById('workspaceDiv').style.display='block';
         document.getElementById('footerDiv').style.display='block';
         document.getElementById('wsTitle').innerText = d.title || '-';
         document.getElementById('wsDescription').innerText = d.description || '';
-        document.getElementById('wsModeBadge').innerText = workspaceState.canEdit ? 'แก้ไขร่วมกันได้' : 'ดูอย่างเดียว';
-        document.getElementById('wsUpdated').innerText = d.updatedAt ? ('อัปเดตล่าสุด ' + d.updatedAt) : '';
-        document.getElementById('workspaceEditToolbar').style.display = workspaceState.canEdit ? 'flex' : 'none';
+        const typeText = workspaceState.workspaceType === 'form' ? 'แบบฟอร์มออนไลน์' : (workspaceState.workspaceType === 'checklist' ? 'Checklist' : 'ตารางร่วมกัน');
+        document.getElementById('wsModeBadge').innerText = typeText + ' • ' + (workspaceState.canEdit ? 'แก้ไขร่วมกันได้' : 'ดูอย่างเดียว');
+        document.getElementById('wsUpdated').innerText = (d.updatedAt ? ('อัปเดตล่าสุด ' + d.updatedAt) : '') + (d.expiresAt ? (' • หมดอายุ ' + d.expiresAt) : '');
+        document.getElementById('workspaceEditToolbar').style.display = (workspaceState.canEdit && workspaceState.workspaceType !== 'form') ? 'flex' : 'none';
         document.getElementById('workspaceLoginNotice').style.display = (d.accessMode==='edit' && d.requireLoginToEdit) ? 'block' : 'none';
         renderWorkspaceTablePublic();
       }).getPublicWorkspace(workspaceId, token);
     }
 
     function escapeHtmlPublic(value){ return String(value ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\x27/g,'&#039;'); }
+
     function renderWorkspaceTablePublic(){
+      if (workspaceState.workspaceType === 'form') return renderWorkspaceFormPublic();
       const table = document.getElementById('workspaceTable');
       const cols = workspaceState.columns || [];
       const rows = workspaceState.rows || [];
       let html = '<thead><tr>' + cols.map(c=>'<th>'+escapeHtmlPublic(c)+'</th>').join('') + '</tr></thead><tbody>';
+      if (!rows.length) html += '<tr><td colspan="'+Math.max(cols.length,1)+'" class="text-center text-muted py-4">ยังไม่มีข้อมูล</td></tr>';
       rows.forEach((row,r)=>{ html += '<tr>' + cols.map((c,i)=>'<td><div class="workspace-cell" '+(workspaceState.canEdit?'contenteditable="true"':'')+' data-r="'+r+'" data-c="'+i+'">'+escapeHtmlPublic(row[i]||'')+'</div></td>').join('') + '</tr>'; });
       html += '</tbody>';
       table.innerHTML = html;
     }
+
+    function renderWorkspaceFormPublic(){
+      const table = document.getElementById('workspaceTable');
+      const cols = workspaceState.columns || [];
+      const fields = cols.map((c,i)=>({ label:c, index:i })).filter(f => !(f.index === 0 && String(f.label).toLowerCase().includes('timestamp')));
+      let html = '<tbody><tr><td><div class="p-3 text-start">';
+      fields.forEach(f => {
+        html += '<div class="mb-3"><label class="form-label small fw-bold text-muted">'+escapeHtmlPublic(f.label)+'</label>';
+        if (String(f.label).includes('รายละเอียด') || String(f.label).includes('หมายเหตุ')) html += '<textarea class="form-control workspace-form-field" rows="3" data-c="'+f.index+'"></textarea>';
+        else html += '<input class="form-control workspace-form-field" data-c="'+f.index+'">';
+        html += '</div>';
+      });
+      html += '<div class="text-center"><button class="btn btn-success fw-bold" onclick="submitWorkspaceFormPublic()"><i class="bi bi-send"></i> ส่งข้อมูล</button></div>';
+      if ((workspaceState.rows || []).length) html += '<div class="alert alert-light border small text-muted mt-3 mb-0">มีข้อมูลที่ส่งแล้ว '+workspaceState.rows.length+' รายการ ผู้สร้างพื้นที่สามารถดูผลลัพธ์ในระบบหลัก</div>';
+      html += '</div></td></tr></tbody>';
+      table.innerHTML = html;
+    }
+
+    function submitWorkspaceFormPublic(){
+      const row = new Array((workspaceState.columns || []).length).fill('');
+      document.querySelectorAll('.workspace-form-field').forEach(el => { row[Number(el.dataset.c)] = el.value.trim(); });
+      const hasData = row.some(v => String(v || '').trim());
+      if (!hasData) return Swal.fire('แจ้งเตือน','กรุณากรอกข้อมูลอย่างน้อย 1 ช่อง','warning');
+      google.script.run.withSuccessHandler(function(res){
+        if(res.success){
+          Swal.fire({icon:'success', title:'ส่งข้อมูลแล้ว', text:res.message, timer:1600, showConfirmButton:false});
+          document.querySelectorAll('.workspace-form-field').forEach(el => el.value='');
+          workspaceState.rows.push(row);
+        } else Swal.fire('ผิดพลาด', res.message, 'error');
+      }).submitPublicWorkspaceForm(workspaceState.id, workspaceState.token, row);
+    }
+
     function collectWorkspaceRowsPublic(){
       const rows = workspaceState.rows.map(r=>r.slice());
       document.querySelectorAll('.workspace-cell').forEach(cell=>{ rows[Number(cell.dataset.r)][Number(cell.dataset.c)] = cell.innerText.trim(); });
