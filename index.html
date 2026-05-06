@@ -619,9 +619,9 @@
                     <input type="hidden" id="repEditId">
                     
                     <div class="mb-3">
-                      <label class="small fw-bold text-muted">วันที่รายงาน (ย้อนหลังได้สูงสุด 7 วัน)</label>
+                      <label class="small fw-bold text-muted">วันที่รายงาน</label>
                       <input type="date" id="repDate" class="form-control" required>
-                      <small class="text-muted">เลือกย้อนหลังได้ไม่เกิน 7 วัน และไม่สามารถเลือกวันล่วงหน้า</small>
+                      <small class="text-muted">เลือกวันที่ได้อิสระตามวันที่ต้องการบันทึกรายงาน</small>
                     </div>
                     
                     <label class="small fw-bold text-muted">ช่วงเวลาทำงาน</label>
@@ -644,6 +644,20 @@
                         <option value="ลากิจ">ลากิจ</option>
                       </select>
                     </div>
+                    <div class="ai-paste-box mb-3">
+                      <label class="small fw-bold text-primary mb-2"><i class="bi bi-robot"></i> AI ช่วยกรอกรายงานได้ 2 แบบ</label>
+                      <textarea id="reportAiTextPaste" class="form-control form-control-sm mb-2" rows="3" placeholder="วางข้อความจาก LINE / บันทึกประชุม / ข้อความดิบ ให้ AI ช่วยเรียบเรียงเป็นรายงาน..."></textarea>
+                      <div class="row g-2 align-items-end">
+                        <div class="col-md-7">
+                          <input type="file" id="reportAiFile" class="form-control form-control-sm" accept="application/pdf,image/*">
+                        </div>
+                        <div class="col-md-5 d-grid gap-2">
+                          <button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="analyzeReportTextAI()" id="btnAnalyzeReportText"><span class="spinner-border spinner-border-sm d-none" id="reportTextSpinner"></span> วิเคราะห์ข้อความ</button>
+                          <button type="button" class="btn btn-outline-info btn-sm fw-bold" onclick="analyzeReportFileAI()" id="btnAnalyzeReportFile"><span class="spinner-border spinner-border-sm d-none" id="reportFileSpinner"></span> วิเคราะห์ไฟล์</button>
+                        </div>
+                      </div>
+                    </div>
+
                     <div class="report-tools">
                       <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
                         <div class="section-label mb-0"><i class="bi bi-magic"></i>เครื่องมือช่วยกรอกรายงาน</div>
@@ -660,15 +674,24 @@
 
                     <div class="mb-3">
                       <label class="small fw-bold text-muted">รายละเอียดการทำงาน</label>
-                      <textarea id="repDetails" class="form-control" rows="4" placeholder="ระบุงานที่ทำในช่วงเวลานี้..." required></textarea>
+                      <div class="btn-group btn-group-sm mb-2 flex-wrap" role="group" aria-label="เครื่องมือจัดรูปแบบรายงาน">
+                        <button type="button" class="btn btn-outline-secondary" onclick="formatReportDetail('number')"><i class="bi bi-list-ol"></i> เลขข้อ</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="formatReportDetail('bold')"><b>B</b></button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="formatReportDetail('italic')"><i>I</i></button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="formatReportDetail('underline')"><u>U</u></button>
+                        <button type="button" class="btn btn-outline-warning" onclick="formatReportDetail('highlight')"><i class="bi bi-highlighter"></i> ไฮไลต์</button>
+                      </div>
+                      <textarea id="repDetails" class="form-control" rows="6" placeholder="ระบุงานที่ทำในช่วงเวลานี้..." required></textarea>
+                      <small class="text-muted">รองรับรูปแบบ Markdown/HTML เบื้องต้น เช่น **ตัวหนา**, _ตัวเอียง_, &lt;u&gt;ขีดเส้นใต้&lt;/u&gt;, &lt;mark&gt;ไฮไลต์&lt;/mark&gt;</small>
                     </div>
                     <div class="mb-3">
                       <label class="small fw-bold text-muted">หมายเหตุเพิ่มเติม</label>
                       <input type="text" id="repRemarks" class="form-control" placeholder="เช่น ไปประชุมที่ สสจ.">
                     </div>
                     <div class="mb-4">
-                      <label class="small fw-bold text-muted">แนบไฟล์ผลงาน/รูปภาพ (ทางเลือก)</label>
-                      <input class="form-control form-control-sm" type="file" id="repFile">
+                      <label class="small fw-bold text-muted">แนบไฟล์ผลงาน/รูปภาพ (ทางเลือก) สูงสุด 10 ไฟล์</label>
+                      <input class="form-control form-control-sm" type="file" id="repFile" multiple accept="application/pdf,image/*,.doc,.docx,.xls,.xlsx">
+                      <small class="text-muted">เลือกได้หลายไฟล์ ระบบจะบันทึกลิงก์รวมไว้ในรายงาน</small>
                     </div>
                     <div class="d-flex gap-2">
                       <button type="submit" class="btn btn-primary w-100 fw-bold" id="btnSaveReport"><i class="bi bi-send-fill"></i> ส่งรายงาน</button>
@@ -684,12 +707,15 @@
                 <div class="card-header bg-transparent border-info d-flex justify-content-between align-items-center flex-wrap gap-2">
                   <h6 class="fw-bold text-info-emphasis mb-0"><i class="bi bi-people-fill"></i> สถานะของกลุ่มงานวันนี้</h6>
                   <div id="headSummaryTools" class="d-none d-flex align-items-center gap-2 flex-wrap">
-                    <select id="headSummaryPeriod" class="form-select form-select-sm" style="width: 150px;">
+                    <select id="headSummaryPeriod" class="form-select form-select-sm" style="width: 150px;" onchange="toggleHeadSummaryCustomRange()">
                       <option value="today">รายวัน</option>
                       <option value="week">รายสัปดาห์</option>
                       <option value="month">รายเดือน</option>
                       <option value="all">ทั้งหมด</option>
+                      <option value="custom">กำหนดช่วงวันที่</option>
                     </select>
+                    <input type="date" id="headSummaryStartDate" class="form-control form-control-sm d-none" style="width: 140px;">
+                    <input type="date" id="headSummaryEndDate" class="form-control form-control-sm d-none" style="width: 140px;">
                     <button id="btnHeadSummary" class="btn btn-sm btn-primary fw-bold shadow-sm" onclick="generateHeadSummary()"><i class="bi bi-magic"></i> สรุปรายงาน (AI)</button>
                   </div>
                 </div>
@@ -697,21 +723,36 @@
                   <div id="teamStatsBox" class="row g-2"></div>
                   
                   <div id="headReportView" class="mt-4 d-none">
-                    <h6 class="fw-bold text-dark border-bottom pb-2">รายละเอียดรายงานของคนในทีม</h6>
-                    <div class="table-responsive" style="max-height: 300px;">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 border-bottom pb-2 mb-2">
+                      <h6 class="fw-bold text-dark mb-0">รายละเอียดรายงานของคนในทีม</h6>
+                      <div class="d-flex gap-2 align-items-center flex-wrap">
+                        <button class="btn btn-sm btn-outline-primary" onclick="setHeadReportViewMode('list')"><i class="bi bi-list"></i> รายการ</button>
+                        <button class="btn btn-sm btn-outline-primary" onclick="setHeadReportViewMode('calendar')"><i class="bi bi-calendar3"></i> ปฏิทิน</button>
+                        <select id="headReportPageSize" class="form-select form-select-sm" style="width:120px" onchange="renderHeadReports()"><option value="20">20 รายการ</option><option value="50">50 รายการ</option><option value="all">ทั้งหมด</option></select>
+                      </div>
+                    </div>
+                    <div id="headReportListView" class="table-responsive" style="max-height: 360px;">
                       <table class="table table-sm table-hover small">
                         <thead class="table-light"><tr><th>ชื่อ</th><th>สถานะ/เวลา</th><th>รายละเอียด</th><th>ไฟล์</th></tr></thead>
                         <tbody id="headReportTable"></tbody>
                       </table>
                     </div>
+                    <div id="headReportCalendarView" class="d-none bg-white rounded p-2 border" style="min-height:420px;"></div>
                   </div>
                 </div>
               </div>
 
               <div class="card">
-                <div class="card-header bg-white"><h6 class="mb-0 fw-bold"><i class="bi bi-clock-history text-primary"></i> ประวัติรายงานของฉัน</h6></div>
+                <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+                  <h6 class="mb-0 fw-bold"><i class="bi bi-clock-history text-primary"></i> ประวัติรายงานของฉัน</h6>
+                  <div class="d-flex gap-2 align-items-center flex-wrap">
+                    <button class="btn btn-sm btn-outline-primary" onclick="setMyReportViewMode('list')"><i class="bi bi-list"></i> รายการ</button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="setMyReportViewMode('calendar')"><i class="bi bi-calendar3"></i> ปฏิทิน</button>
+                    <select id="myReportPageSize" class="form-select form-select-sm" style="width:120px" onchange="renderMyReports()"><option value="20">20 รายการ</option><option value="50">50 รายการ</option><option value="all">ทั้งหมด</option></select>
+                  </div>
+                </div>
                 <div class="card-body p-0">
-                  <div class="table-responsive" style="max-height: 400px;">
+                  <div id="myReportListView" class="table-responsive" style="max-height: 420px;">
                     <table class="table table-hover align-middle mb-0 small">
                       <thead class="table-light"><tr><th>วันที่/เวลา</th><th>สถานะ</th><th>รายละเอียด</th><th>จัดการ</th></tr></thead>
                       <tbody id="myReportTable">
@@ -719,6 +760,7 @@
                       </tbody>
                     </table>
                   </div>
+                  <div id="myReportCalendarView" class="d-none bg-white p-3" style="min-height:420px;"></div>
                 </div>
               </div>
             </div>
@@ -800,12 +842,16 @@
                     
                     <div class="section-label"><i class="bi bi-clock-history"></i>วันเวลาและสถานที่</div>
                     <div class="row g-2 mb-3">
-                      <div class="col-sm-7">
-                        <label class="small fw-bold text-muted">วัน-เวลา</label>
+                      <div class="col-sm-5">
+                        <label class="small fw-bold text-muted">เริ่มวันที่/เวลา</label>
                         <input type="datetime-local" id="startTime" class="form-control" required>
                       </div>
                       <div class="col-sm-5">
-                        <label class="small fw-bold text-muted">เตือนก่อน (นาที)</label>
+                        <label class="small fw-bold text-muted">สิ้นสุดวันที่/เวลา</label>
+                        <input type="datetime-local" id="endTime" class="form-control">
+                      </div>
+                      <div class="col-sm-2">
+                        <label class="small fw-bold text-muted">เตือนก่อน</label>
                         <input type="number" id="leadTime" class="form-control" value="15" required>
                       </div>
                     </div>
@@ -1460,6 +1506,18 @@
         </div>
         <div class="modal-body bg-light">
           <div class="alert alert-info small"><i class="bi bi-info-circle"></i> สร้างพื้นที่ทำงานได้ 3 แบบ: ตารางร่วมกัน, checklist โครงการ, หรือแบบฟอร์มออนไลน์ โดยกำหนดได้ว่าจะเป็นส่วนตัวหรือของกลุ่มงาน</div>
+          <div class="ai-paste-box mb-3">
+            <label class="small fw-bold text-primary mb-2"><i class="bi bi-robot"></i> AI ช่วยออกแบบพื้นที่ทำงานได้ 2 แบบ</label>
+            <textarea id="workspaceAiTextPaste" class="form-control form-control-sm mb-2" rows="3" placeholder="วางข้อความจาก LINE / โครงการ / รายการงาน ให้ AI ช่วยออกแบบคอลัมน์ checklist หรือแบบฟอร์ม..."></textarea>
+            <div class="row g-2 align-items-end">
+              <div class="col-md-7"><input type="file" id="workspaceAiFile" class="form-control form-control-sm" accept="application/pdf,image/*"></div>
+              <div class="col-md-5 d-grid gap-2">
+                <button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="analyzeWorkspaceTextAI()" id="btnAnalyzeWorkspaceText"><span class="spinner-border spinner-border-sm d-none" id="workspaceTextSpinner"></span> วิเคราะห์ข้อความ</button>
+                <button type="button" class="btn btn-outline-info btn-sm fw-bold" onclick="analyzeWorkspaceFileAI()" id="btnAnalyzeWorkspaceFile"><span class="spinner-border spinner-border-sm d-none" id="workspaceFileSpinner"></span> วิเคราะห์ไฟล์</button>
+              </div>
+            </div>
+          </div>
+
           <div class="row g-2 mb-3">
             <div class="col-md-6"><label class="small fw-bold text-muted">ชื่อพื้นที่ / ชื่อแบบฟอร์ม</label><input id="wsCreateTitle" class="form-control" placeholder="เช่น รายงานภารกิจกลุ่มงาน"></div>
             <div class="col-md-3"><label class="small fw-bold text-muted">ขอบเขตการใช้งาน</label><select id="wsScope" class="form-select"><option value="personal">ส่วนตัว</option><option value="department">ภายในกลุ่มงาน</option></select></div>
@@ -1478,7 +1536,8 @@
 กลุ่มเป้าหมาย/หน่วยงานที่เกี่ยวข้อง
 ระยะเวลา/ช่วงเวลา
 ผู้รับผิดชอบ
-หมายเหตุ</textarea><small class="text-muted">ใส่ 1 คอลัมน์หรือ 1 ช่องคำถามต่อ 1 บรรทัด</small></div>
+หมายเหตุ</textarea><small class="text-muted">ใส่ 1 คอลัมน์หรือ 1 ช่องคำถามต่อ 1 บรรทัด / แบบฟอร์มใส่ตัวเลือกได้ เช่น สถานะ [ตัวเลือก: รอดำเนินการ, กำลังดำเนินการ, เสร็จสิ้น]</small></div>
+          <div class="mb-3"><label class="small fw-bold text-muted">ค่าตั้งต้น / ตัวอย่างแถวแรก (ไม่บังคับ)</label><textarea id="wsDefaultRows" class="form-control" rows="3" placeholder="ใส่ข้อมูลตัวอย่าง 1 แถวต่อบรรทัด คั่นคอลัมน์ด้วย | เช่น 1 | ตรวจเอกสาร | นาย ก | วันนี้ | รอดำเนินการ"></textarea></div>
           <div class="d-flex gap-2 flex-wrap">
             <button type="button" class="btn btn-outline-secondary btn-sm" onclick="applyWorkspaceTypeTemplate()"><i class="bi bi-magic"></i> ใช้แม่แบบตามชนิด</button>
             <button type="button" class="btn btn-outline-primary btn-sm" onclick="previewWorkspaceCreate()"><i class="bi bi-eye"></i> พรีวิวก่อนสร้าง</button>
@@ -1546,6 +1605,10 @@
     let workspaceTableModalObj = null;
     let sharedWorkspacesGlobal = [];
     let currentWorkspace = null;
+    let myReportViewMode = "list";
+    let headReportViewMode = "list";
+    let myReportCalendarObj = null;
+    let headReportCalendarObj = null;
 
     window.onload = () => {
       showSection('loginSection');
@@ -1928,7 +1991,7 @@
 
     function bindDraftAutosave() {
       const reportFields = ['repStartTime','repEndTime','repLeave','repDetails','repRemarks'];
-      const eventFields = ['scheduleScope','eventWorkStatus','eventPriority','eventTags','eventName','eventDetails','startTime','leadTime','eventLocation','meetingLink','resourceId','approverPhone','chatId','recurringFrequency','recurringInterval','recurringByDay','recurringEndDate'];
+      const eventFields = ['scheduleScope','eventWorkStatus','eventPriority','eventTags','eventName','eventDetails','startTime','endTime','leadTime','eventLocation','meetingLink','resourceId','approverPhone','chatId','recurringFrequency','recurringInterval','recurringByDay','recurringEndDate'];
       const saveReport = debounce_(() => saveDraft_('haos_report_draft', reportFields, 'reportDraftHint'), 500);
       const saveEvent = debounce_(() => saveDraft_('haos_event_draft', eventFields, 'eventDraftHint'), 500);
       reportFields.forEach(id => document.getElementById(id)?.addEventListener('input', saveReport));
@@ -1939,7 +2002,7 @@
 
     function restoreDrafts() {
       restoreDraft_('haos_report_draft', ['repStartTime','repEndTime','repLeave','repDetails','repRemarks']);
-      restoreDraft_('haos_event_draft', ['scheduleScope','eventWorkStatus','eventPriority','eventTags','eventName','eventDetails','startTime','leadTime','eventLocation','meetingLink','resourceId','approverPhone','chatId','recurringFrequency','recurringInterval','recurringByDay','recurringEndDate']);
+      restoreDraft_('haos_event_draft', ['scheduleScope','eventWorkStatus','eventPriority','eventTags','eventName','eventDetails','startTime','endTime','leadTime','eventLocation','meetingLink','resourceId','approverPhone','chatId','recurringFrequency','recurringInterval','recurringByDay','recurringEndDate']);
     }
 
     function clearReportDraft() { localStorage.removeItem('haos_report_draft'); }
@@ -2529,7 +2592,7 @@
     // ==========================================
     // JS: Daily Reports 
     // ==========================================
-    function handleSaveDailyReport() {
+    async function handleSaveDailyReport() {
       const fileInput = document.getElementById('repFile');
       const btn = document.getElementById('btnSaveReport');
       btn.disabled = true; 
@@ -2552,23 +2615,31 @@
         fileUrl: ""
       };
 
-      if (fileInput.files.length > 0) {
-        const file = fileInput.files[0];
-        const reader = new FileReader();
-        reader.onload = e => {
-          const base64Data = e.target.result.split(',')[1];
-          google.script.run.withSuccessHandler(uploadRes => {
-            if (uploadRes.success) { 
-              data.fileUrl = uploadRes.url; 
-              submitReportData(data, btn); 
-            } else { 
-              Swal.fire('Error', 'อัปโหลดไฟล์ล้มเหลว', 'error'); 
-              btn.disabled = false; 
-              btn.innerHTML = '<i class="bi bi-send-fill"></i> ส่งรายงาน'; 
-            }
-          }).uploadFileToDrive(base64Data, file.name, file.type);
-        };
-        reader.readAsDataURL(file);
+      const files = Array.from(fileInput.files || []);
+      if (files.length > 10) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-send-fill"></i> ส่งรายงาน';
+        return Swal.fire('แนบไฟล์มากเกินไป', 'ระบบอนุญาตให้แนบได้สูงสุด 10 ไฟล์ต่อรายงาน', 'warning');
+      }
+
+      if (files.length > 0) {
+        try {
+          const urls = [];
+          for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> กำลังอัปโหลดไฟล์ ${i+1}/${files.length}...`;
+            const base64Data = await readFileBase64_(file);
+            const uploadRes = await gasRunPromise_('uploadFileToDrive', [base64Data, file.name, file.type || 'application/octet-stream']);
+            if (!uploadRes.success) throw new Error(uploadRes.message || 'อัปโหลดไฟล์ล้มเหลว');
+            urls.push(uploadRes.url);
+          }
+          data.fileUrl = urls.join('\n');
+          submitReportData(data, btn);
+        } catch (err) {
+          Swal.fire('Error', err.message || String(err), 'error');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="bi bi-send-fill"></i> ส่งรายงาน';
+        }
       } else { 
         submitReportData(data, btn); 
       }
@@ -2592,33 +2663,46 @@
 
     function loadMyReports() {
       google.script.run.withSuccessHandler(res => {
-        const tbody = document.getElementById('myReportTable');
-        tbody.innerHTML = '';
         if (res.success) {
-          myReportsGlobal = res.data;
-          document.getElementById('dashMyReports').innerText = res.data.length;
+          myReportsGlobal = res.data || [];
+          document.getElementById('dashMyReports').innerText = myReportsGlobal.length;
           syncOverviewCards(); 
-          if (res.data.length === 0) {
-            return tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted">ยังไม่มีประวัติ</td></tr>';
-          }
-          
-          res.data.forEach(r => {
-            let badge = r.leaveType === 'ปฏิบัติงานปกติ' ? 'bg-success' : 'bg-warning text-dark';
-            let fLink = r.fileUrl ? `<a href="${r.fileUrl}" target="_blank" class="ms-1 text-primary"><i class="bi bi-paperclip"></i></a>` : '';
-            
-            let reportDate = new Date(r.date);
-            let diffDays = Math.floor((new Date() - reportDate) / (1000 * 60 * 60 * 24));
-            let actionButtons = "";
-            if (diffDays <= 7) {
-              actionButtons = `<button class="btn btn-light btn-sm border text-primary" onclick="editReport('${r.id}')" title="แก้ไข"><i class="bi bi-pencil"></i></button> <button class="btn btn-light btn-sm border text-danger" onclick="deleteReport('${r.id}')" title="ลบ"><i class="bi bi-trash"></i></button>`;
-            } else {
-              actionButtons = `<span class="badge bg-secondary">หมดเขตแก้ไข</span>`;
-            }
-
-            tbody.innerHTML += `<tr><td>${r.date}<br><small class="text-muted">${r.time}</small></td><td><span class="status-badge ${badge}">${r.leaveType}</span></td><td class="text-truncate" style="max-width: 150px;">${r.details} ${fLink}</td><td>${actionButtons}</td></tr>`;
-          });
+          renderMyReports();
         }
       }).getMyReports(user.phone);
+    }
+
+    function renderMyReports() {
+      const tbody = document.getElementById('myReportTable');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      const reports = myReportsGlobal || [];
+      if (myReportViewMode === 'calendar') {
+        document.getElementById('myReportListView')?.classList.add('d-none');
+        document.getElementById('myReportCalendarView')?.classList.remove('d-none');
+        renderReportCalendar_('myReportCalendarView', reports, 'my');
+        return;
+      }
+      document.getElementById('myReportListView')?.classList.remove('d-none');
+      document.getElementById('myReportCalendarView')?.classList.add('d-none');
+      if (reports.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted">ยังไม่มีประวัติ</td></tr>';
+        return;
+      }
+      const pageSize = getReportPageSize_('myReportPageSize');
+      const display = pageSize === 'all' ? reports : reports.slice(0, pageSize);
+      display.forEach(r => {
+        let badge = r.leaveType === 'ปฏิบัติงานปกติ' ? 'bg-success' : 'bg-warning text-dark';
+        let fLink = renderFileLinks_(r.fileUrl);
+        let actionButtons = `<button class="btn btn-light btn-sm border text-primary" onclick="editReport('${r.id}')" title="แก้ไข"><i class="bi bi-pencil"></i></button> <button class="btn btn-light btn-sm border text-danger" onclick="deleteReport('${r.id}')" title="ลบ"><i class="bi bi-trash"></i></button>`;
+        tbody.innerHTML += `<tr><td>${escapeHtml(r.date)}<br><small class="text-muted">${escapeHtml(r.time || '')}</small></td><td><span class="status-badge ${badge}">${escapeHtml(r.leaveType || '-')}</span></td><td class="text-truncate" style="max-width: 220px;">${escapeHtml(stripHtml_(r.details || '')).slice(0,120)} ${fLink}</td><td>${actionButtons}</td></tr>`;
+      });
+      if (display.length < reports.length) tbody.innerHTML += `<tr><td colspan="4" class="text-center text-muted small py-2">แสดง ${display.length} จาก ${reports.length} รายการ</td></tr>`;
+    }
+
+    function setMyReportViewMode(mode) {
+      myReportViewMode = mode === 'calendar' ? 'calendar' : 'list';
+      renderMyReports();
     }
 
     function deleteReport(reportId) {
@@ -2735,9 +2819,85 @@
       }).getTeamReports(user.department, user.role);
     }
 
+    function renderHeadReports() {
+      const tbody = document.getElementById('headReportTable');
+      if (!tbody) return;
+      const reports = teamReportsGlobal || [];
+      if (headReportViewMode === 'calendar') {
+        document.getElementById('headReportListView')?.classList.add('d-none');
+        document.getElementById('headReportCalendarView')?.classList.remove('d-none');
+        renderReportCalendar_('headReportCalendarView', reports, 'team');
+        return;
+      }
+      document.getElementById('headReportListView')?.classList.remove('d-none');
+      document.getElementById('headReportCalendarView')?.classList.add('d-none');
+      tbody.innerHTML = '';
+      if (!reports.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted">ยังไม่มีรายงานในทีม</td></tr>';
+        return;
+      }
+      const pageSize = getReportPageSize_('headReportPageSize');
+      const display = pageSize === 'all' ? reports : reports.slice(0, pageSize);
+      display.forEach(r => {
+        let badge = r.leaveType === 'ปฏิบัติงานปกติ' ? 'bg-success' : 'bg-warning text-dark';
+        let fLink = renderFileLinks_(r.fileUrl) || '-';
+        tbody.innerHTML += `<tr><td>${escapeHtml(r.name || '-')}</td><td><span class="status-badge ${badge}">${escapeHtml(r.leaveType || '-')}</span><br><small class="text-muted">${escapeHtml(r.time || '')}</small></td><td><small>${escapeHtml(stripHtml_(r.details || '')).slice(0,180)}<br><span class="text-muted">${escapeHtml(r.remarks || '')}</span></small></td><td>${fLink}</td></tr>`;
+      });
+      if (display.length < reports.length) tbody.innerHTML += `<tr><td colspan="4" class="text-center text-muted small py-2">แสดง ${display.length} จาก ${reports.length} รายการ</td></tr>`;
+    }
+
+    function setHeadReportViewMode(mode) {
+      headReportViewMode = mode === 'calendar' ? 'calendar' : 'list';
+      renderHeadReports();
+    }
+
+    function getReportPageSize_(selectId) {
+      const val = document.getElementById(selectId)?.value || '20';
+      return val === 'all' ? 'all' : Number(val || 20);
+    }
+
+    function renderReportCalendar_(elementId, reports, type) {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+      el.innerHTML = '';
+      const events = (reports || []).filter(r => r.date).map(r => ({
+        title: (type === 'team' ? (r.name || '') + ' - ' : '') + (r.leaveType || 'รายงาน'),
+        start: r.date,
+        allDay: true,
+        extendedProps: { details: r.details || '', time: r.time || '', remarks: r.remarks || '' }
+      }));
+      const cal = new FullCalendar.Calendar(el, {
+        initialView: 'dayGridMonth',
+        height: 420,
+        locale: 'th',
+        events,
+        eventClick: info => {
+          const p = info.event.extendedProps || {};
+          Swal.fire({ title: info.event.title, html: `<div class="text-start"><b>เวลา:</b> ${escapeHtml(p.time || '-')}<br><b>รายละเอียด:</b><br>${escapeHtml(stripHtml_(p.details || '-')).replace(/\n/g,'<br>')}<br><span class="text-muted">${escapeHtml(p.remarks || '')}</span></div>`, width: 650 });
+        }
+      });
+      cal.render();
+      if (type === 'my') myReportCalendarObj = cal; else headReportCalendarObj = cal;
+    }
+
+    function renderFileLinks_(fileUrl) {
+      if (!fileUrl) return '';
+      return String(fileUrl).split(/\n|,\s*/).filter(Boolean).map((url,i)=>`<a href="${escapeHtml(url)}" target="_blank" class="ms-1 text-primary" title="ไฟล์แนบ ${i+1}"><i class="bi bi-paperclip"></i>${i+1}</a>`).join(' ');
+    }
+
+    function stripHtml_(value) {
+      return String(value || '').replace(/<[^>]*>/g, '');
+    }
+
     // ==========================================
     // 🚀 JS: AI สรุปงานสำหรับหัวหน้า
     // ==========================================
+    function toggleHeadSummaryCustomRange() {
+      const isCustom = document.getElementById('headSummaryPeriod')?.value === 'custom';
+      document.getElementById('headSummaryStartDate')?.classList.toggle('d-none', !isCustom);
+      document.getElementById('headSummaryEndDate')?.classList.toggle('d-none', !isCustom);
+    }
+
     function getHeadSummaryPeriodInfo() {
       const select = document.getElementById('headSummaryPeriod');
       const value = select ? select.value : 'today';
@@ -2753,6 +2913,11 @@
       if (value === 'week') return { value, label: 'รายสัปดาห์', start: monday, end: null };
       if (value === 'month') return { value, label: 'รายเดือน', start: monthStart, end: null };
       if (value === 'all') return { value, label: 'ทั้งหมด', start: null, end: null };
+      if (value === 'custom') {
+        const s = document.getElementById('headSummaryStartDate')?.value || '';
+        const e = document.getElementById('headSummaryEndDate')?.value || '';
+        return { value, label: 'ช่วงวันที่ ' + (s || '-') + ' ถึง ' + (e || '-'), start: s ? new Date(s + 'T00:00:00') : null, end: e || null };
+      }
       return { value: 'today', label: 'รายวัน', start: today, end: todayStr };
     }
 
@@ -2766,6 +2931,11 @@
         const d = new Date(r.date + 'T00:00:00');
         if (periodInfo.value === 'today') {
           return r.date === periodInfo.end;
+        }
+        if (periodInfo.value === 'custom') {
+          const afterStart = !periodInfo.start || d >= periodInfo.start;
+          const beforeEnd = !periodInfo.end || r.date <= periodInfo.end;
+          return afterStart && beforeEnd;
         }
         if (periodInfo.start) {
           return d >= periodInfo.start;
@@ -2926,6 +3096,9 @@
       if (data.date_time && data.date_time !== "") {
         try { document.getElementById('startTime').value = data.date_time.substring(0, 16); } catch(err) {}
       }
+      if ((data.end_datetime || data.end_time) && document.getElementById('endTime')) {
+        try { document.getElementById('endTime').value = String(data.end_datetime || data.end_time).substring(0, 16); } catch(err) {}
+      }
     }
 
     async function extractPdfTextClient_(file) {
@@ -3041,6 +3214,7 @@
         eventName: document.getElementById('eventName').value, 
         details: document.getElementById('eventDetails').value,
         startTime: document.getElementById('startTime').value,
+        endTime: document.getElementById('endTime') ? document.getElementById('endTime').value : '',
         location: document.getElementById('eventLocation').value,
         resourceId: document.getElementById('resourceId').value, 
         approverPhone: document.getElementById('approverPhone').value,
@@ -3132,6 +3306,9 @@
       if (item.rawStartTime) {
         document.getElementById('startTime').value = item.rawStartTime;
       }
+      if (document.getElementById('endTime')) {
+        document.getElementById('endTime').value = item.rawEndTime || item.rawStartTime || '';
+      }
       
       document.getElementById('eventLocation').value = item.location;
       document.getElementById('meetingLink').value = item.meetingLink;
@@ -3165,6 +3342,7 @@
       document.getElementById('eventName').value = ''; 
       document.getElementById('eventDetails').value = ''; 
       document.getElementById('startTime').value = '';
+      if (document.getElementById('endTime')) document.getElementById('endTime').value = '';
       document.getElementById('meetingLink').value = ''; 
       document.getElementById('eventLocation').value = ''; 
       document.getElementById('schedFile').value = ''; 
@@ -3437,6 +3615,7 @@
           id: ev.id,
           title: (isDept ? '[กลุ่มงาน] ' : '') + (ev.eventName || '-'),
           start: ev.rawStartTime || parseDateToISO(ev.startTime),
+          end: ev.rawEndTime || null,
           backgroundColor: color,
           borderColor: color,
           textColor: '#ffffff',
@@ -4046,12 +4225,9 @@
     function setReportDateBounds() {
       const input = document.getElementById('repDate');
       if (!input) return;
-      const today = new Date();
-      const min = new Date(today); min.setDate(min.getDate() - 7);
-      const fmt = d => d.toISOString().split('T')[0];
-      input.max = fmt(today);
-      input.min = fmt(min);
-      if (!input.value) input.value = fmt(today);
+      input.removeAttribute('min');
+      input.removeAttribute('max');
+      if (!input.value) input.value = new Date().toISOString().split('T')[0];
     }
 
     function loadWorkTags(renderAdminTable = false) {
@@ -4195,8 +4371,8 @@
     // Collaborative Workspaces
     // ==========================================
     function workspaceTemplateColumns(type) {
-      if (type === 'checklist') return ['ลำดับ','รายการตรวจสอบ','ผู้รับผิดชอบ','กำหนดเสร็จ','สถานะ','หมายเหตุ'];
-      if (type === 'form') return ['Timestamp','ชื่อผู้กรอก','หน่วยงาน','หัวข้อ/เรื่อง','รายละเอียด','หมายเหตุ'];
+      if (type === 'checklist') return ['เสร็จแล้ว','ลำดับ','รายการตรวจสอบ','ผู้รับผิดชอบ','กำหนดเสร็จ','สถานะ [ตัวเลือก: ยังไม่เริ่ม, กำลังดำเนินการ, เสร็จสิ้น, ติดปัญหา]','หมายเหตุ'];
+      if (type === 'form') return ['Timestamp','ชื่อผู้กรอก','หน่วยงาน','ประเภทคำขอ [ตัวเลือก: ขอข้อมูล, แจ้งปัญหา, เสนอแนะ, อื่นๆ]','หัวข้อ/เรื่อง','รายละเอียด','ระดับความเร่งด่วน [ตัวเลือก: ปกติ, ด่วน, ด่วนมาก]','หมายเหตุ'];
       return ['ลำดับ','ระดับตัวชี้วัด/สั่งการ','หัวข้อ/เรื่อง','กิจกรรม/รายละเอียด','กลุ่มเป้าหมาย/หน่วยงานที่เกี่ยวข้อง','ระยะเวลา/ช่วงเวลา','ผู้รับผิดชอบ','หมายเหตุ'];
     }
 
@@ -4218,6 +4394,7 @@
       document.getElementById('wsAccessMode').value = 'view';
       document.getElementById('wsRequireLogin').value = 'false';
       document.getElementById('wsExpiresAt').value = '';
+      if (document.getElementById('wsDefaultRows')) document.getElementById('wsDefaultRows').value = '';
       applyWorkspaceTypeTemplate();
       workspaceCreateModalObj.show();
     }
@@ -4245,7 +4422,8 @@
       const modeText = data.accessMode === 'edit' ? 'ดูและแก้ไขได้' : 'ดูอย่างเดียว';
       const loginText = data.requireLoginToEdit ? 'ต้องล็อกอินก่อนแก้ไข' : 'ไม่ต้องล็อกอิน';
       let sample = '<div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr>'+data.columns.map(c=>'<th>'+escapeHtml(c)+'</th>').join('')+'</tr></thead><tbody>';
-      sample += '<tr>'+data.columns.map((c,i)=>'<td class="text-muted">'+(data.workspaceType==='form' ? (i===0?'ระบบบันทึกเวลาอัตโนมัติ':'ช่องกรอกข้อมูล') : 'ตัวอย่าง')+'</td>').join('')+'</tr></tbody></table></div>';
+      const previewRows = data.rows && data.rows.length ? data.rows : [data.columns.map((c,i)=> data.workspaceType==='form' ? (i===0?'ระบบบันทึกเวลาอัตโนมัติ':'ช่องกรอกข้อมูล') : 'ตัวอย่าง')];
+      sample += previewRows.slice(0,3).map(row => '<tr>'+data.columns.map((c,i)=>'<td class="text-muted">'+escapeHtml((row && row[i]) || '')+'</td>').join('')+'</tr>').join('') + '</tbody></table></div>';
       Swal.fire({
         title: 'พรีวิวพื้นที่ทำงาน',
         width: 900,
@@ -4316,13 +4494,32 @@
       }).getPublicWorkspace(id, token);
     }
 
+    function parseWorkspaceOptions_(label) {
+      const m = String(label || '').match(/\[ตัวเลือก:\s*([^\]]+)\]/);
+      return m ? m[1].split(',').map(x=>x.trim()).filter(Boolean) : [];
+    }
+
+    function renderWorkspaceCellApp_(columnName, value, r, i) {
+      const can = currentWorkspace && currentWorkspace.canManage;
+      const name = String(columnName || '');
+      const options = parseWorkspaceOptions_(name);
+      if (currentWorkspace.workspaceType === 'checklist' && (name.includes('เสร็จ') || name.includes('ติ๊ก'))) {
+        const checked = ['true','1','✓','✔','เสร็จ','เสร็จแล้ว'].includes(String(value || '').trim());
+        return `<div class="text-center"><input type="checkbox" class="form-check-input workspace-check-cell" data-r="${r}" data-c="${i}" ${checked?'checked':''} ${can?'':'disabled'}></div>`;
+      }
+      if (options.length) {
+        return `<select class="form-select form-select-sm workspace-select-cell" data-r="${r}" data-c="${i}" ${can?'':'disabled'}>${options.map(o=>`<option value="${escapeHtml(o)}" ${String(value)===o?'selected':''}>${escapeHtml(o)}</option>`).join('')}</select>`;
+      }
+      return `<div contenteditable="${can ? 'true':'false'}" class="p-1 rounded workspace-app-cell" data-r="${r}" data-c="${i}" style="min-width:140px;min-height:28px;outline:1px solid transparent;">${escapeHtml(value||'')}</div>`;
+    }
+
     function renderWorkspaceEditorTable() {
       const table = document.getElementById('workspaceEditTable');
       const cols = currentWorkspace.columns || [];
       const rows = currentWorkspace.rows || [];
       let html = '<thead class="table-light"><tr>'+cols.map(c=>'<th>'+escapeHtml(c)+'</th>').join('')+'</tr></thead><tbody>';
       if (!rows.length) html += '<tr><td colspan="'+Math.max(cols.length,1)+'" class="text-center text-muted py-4">ยังไม่มีข้อมูล</td></tr>';
-      rows.forEach((row,r)=>{ html += '<tr>'+cols.map((c,i)=>`<td><div contenteditable="${currentWorkspace.canManage ? 'true':'false'}" class="p-1 rounded workspace-app-cell" data-r="${r}" data-c="${i}" style="min-width:140px;min-height:28px;outline:1px solid transparent;">${escapeHtml(row[i]||'')}</div></td>`).join('')+'</tr>'; });
+      rows.forEach((row,r)=>{ html += '<tr>'+cols.map((c,i)=>`<td>${renderWorkspaceCellApp_(c, row[i] || '', r, i)}</td>`).join('')+'</tr>'; });
       html += '</tbody>';
       table.innerHTML = html;
     }
@@ -4330,6 +4527,8 @@
     function collectWorkspaceRowsApp() {
       const rows = (currentWorkspace.rows || []).map(r=>r.slice());
       document.querySelectorAll('.workspace-app-cell').forEach(cell=>{ rows[Number(cell.dataset.r)][Number(cell.dataset.c)] = cell.innerText.trim(); });
+      document.querySelectorAll('.workspace-select-cell').forEach(cell=>{ rows[Number(cell.dataset.r)][Number(cell.dataset.c)] = cell.value; });
+      document.querySelectorAll('.workspace-check-cell').forEach(cell=>{ rows[Number(cell.dataset.r)][Number(cell.dataset.c)] = cell.checked ? '✓' : ''; });
       return rows;
     }
 
@@ -4343,8 +4542,10 @@
       if (!currentWorkspace || !currentWorkspace.canManage) return Swal.fire('แจ้งเตือน','คุณไม่มีสิทธิ์แก้ไขพื้นที่นี้','warning');
       const cols = currentWorkspace.columns || [];
       const row = new Array(cols.length).fill('');
+      const idxCheck = cols.findIndex(c=>String(c).includes('เสร็จ'));
       const idxNo = cols.findIndex(c=>String(c).includes('ลำดับ'));
       const idxStatus = cols.findIndex(c=>String(c).includes('สถานะ'));
+      if (idxCheck >= 0) row[idxCheck] = '';
       if (idxNo >= 0) row[idxNo] = String((currentWorkspace.rows || []).length + 1);
       if (idxStatus >= 0) row[idxStatus] = 'ยังไม่เริ่ม';
       currentWorkspace.rows.push(row);
