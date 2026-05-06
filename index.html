@@ -690,8 +690,9 @@
                     </div>
                     <div class="mb-4">
                       <label class="small fw-bold text-muted">แนบไฟล์ผลงาน/รูปภาพ (ทางเลือก) สูงสุด 10 ไฟล์</label>
-                      <input class="form-control form-control-sm" type="file" id="repFile" multiple accept="application/pdf,image/*,.doc,.docx,.xls,.xlsx">
-                      <small class="text-muted">เลือกได้หลายไฟล์ ระบบจะบันทึกลิงก์รวมไว้ในรายงาน</small>
+                      <div id="reportFileList" class="d-grid gap-2 mb-2"></div>
+                      <button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="addReportFileInput()"><i class="bi bi-plus-circle"></i> เพิ่มไฟล์ที่จะอัปโหลด</button>
+                      <small class="text-muted d-block mt-1">เพิ่มไฟล์ทีละรายการ เพื่อลดโอกาสเลือกผิดและตรวจสอบไฟล์ก่อนส่ง</small>
                     </div>
                     <div class="d-flex gap-2">
                       <button type="submit" class="btn btn-primary w-100 fw-bold" id="btnSaveReport"><i class="bi bi-send-fill"></i> ส่งรายงาน</button>
@@ -1536,7 +1537,7 @@
 กลุ่มเป้าหมาย/หน่วยงานที่เกี่ยวข้อง
 ระยะเวลา/ช่วงเวลา
 ผู้รับผิดชอบ
-หมายเหตุ</textarea><small class="text-muted">ใส่ 1 คอลัมน์หรือ 1 ช่องคำถามต่อ 1 บรรทัด / แบบฟอร์มใส่ตัวเลือกได้ เช่น สถานะ [ตัวเลือก: รอดำเนินการ, กำลังดำเนินการ, เสร็จสิ้น]</small></div>
+หมายเหตุ</textarea><small class="text-muted">ใส่ 1 คอลัมน์หรือ 1 ช่องคำถามต่อ 1 บรรทัด / ใส่ตัวเลือกได้ เช่น สถานะ [ตัวเลือก: รอดำเนินการ, กำลังดำเนินการ, เสร็จสิ้น] / dropdown เช่น หน่วยงาน [dropdown: รพ., สสอ., รพ.สต.] / แนบรูป เช่น รูปภาพผลงาน [รูปภาพ]</small></div>
           <div class="mb-3"><label class="small fw-bold text-muted">ค่าตั้งต้น / ตัวอย่างแถวแรก (ไม่บังคับ)</label><textarea id="wsDefaultRows" class="form-control" rows="3" placeholder="ใส่ข้อมูลตัวอย่าง 1 แถวต่อบรรทัด คั่นคอลัมน์ด้วย | เช่น 1 | ตรวจเอกสาร | นาย ก | วันนี้ | รอดำเนินการ"></textarea></div>
           <div class="d-flex gap-2 flex-wrap">
             <button type="button" class="btn btn-outline-secondary btn-sm" onclick="applyWorkspaceTypeTemplate()"><i class="bi bi-magic"></i> ใช้แม่แบบตามชนิด</button>
@@ -1615,6 +1616,7 @@
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('repDate').value = today;
       setReportDateBounds();
+      resetReportFileInputs();
       setupFocusModals();
       
       google.script.run
@@ -2593,7 +2595,7 @@
     // JS: Daily Reports 
     // ==========================================
     async function handleSaveDailyReport() {
-      const fileInput = document.getElementById('repFile');
+      const fileInputs = Array.from(document.querySelectorAll('.report-file-input')).filter(input => input.files && input.files.length > 0);
       const btn = document.getElementById('btnSaveReport');
       btn.disabled = true; 
       btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังบันทึก...';
@@ -2615,7 +2617,7 @@
         fileUrl: ""
       };
 
-      const files = Array.from(fileInput.files || []);
+      const files = fileInputs.map(input => input.files[0]).filter(Boolean);
       if (files.length > 10) {
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-send-fill"></i> ส่งรายงาน';
@@ -2708,7 +2710,7 @@
     function deleteReport(reportId) {
       Swal.fire({
         title: 'ยืนยันการลบ?',
-        text: "คุณกำลังลบรายงานประจำวัน (ย้อนหลังได้ไม่เกิน 7 วัน)",
+        text: "คุณกำลังลบรายงานประจำวัน รายการนี้จะถูกลบออกจากระบบ",
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
@@ -2760,7 +2762,7 @@
       document.getElementById('repLeave').value = 'ปฏิบัติงานปกติ';
       document.getElementById('repDetails').value = '';
       document.getElementById('repRemarks').value = '';
-      document.getElementById('repFile').value = '';
+      resetReportFileInputs();
       toggleLeaveFields();
       document.getElementById('btnSaveReport').classList.replace('btn-warning', 'btn-primary');
       document.getElementById('btnCancelEditRep').classList.add('d-none');
@@ -3539,11 +3541,7 @@
         const isToday = itemDate ? isSameDate_(itemDate, today) : false;
         const rowClass = isToday ? 'row-today' : '';
         const todayBadge = isToday ? '<br><span class="badge bg-danger mt-1"><i class="bi bi-star-fill"></i> งานวันนี้</span>' : '';
-        let editBtn = '';
-        if (itemDate) {
-          const diffDays = Math.floor((new Date() - itemDate) / (1000 * 60 * 60 * 24));
-          if (diffDays <= 7) editBtn = `<button class="btn btn-outline-warning btn-sm me-1 text-dark" onclick="editSchedule('${item.id}')" title="แก้ไข"><i class="bi bi-pencil"></i></button>`;
-        }
+        let editBtn = `<button class="btn btn-outline-warning btn-sm me-1 text-dark" onclick="editSchedule('${item.id}')" title="แก้ไข"><i class="bi bi-pencil"></i></button>`;
         const approvalBadge = item.approval ? `<span class="badge ${item.approval === 'Approved' ? 'bg-success' : item.approval === 'Rejected' ? 'bg-danger' : 'bg-warning text-dark'} ms-1">${item.approval}</span>` : '';
         const fileIcon = item.fileUrl ? '<i class="bi bi-paperclip text-primary ms-1" title="มีไฟล์แนบ"></i>' : '';
         tbody.innerHTML += `
@@ -4198,6 +4196,164 @@
       });
     }
 
+
+
+
+    // ==========================================
+    // v33: Report AI, formatting, dynamic files, workspace AI helpers
+    // ==========================================
+    function addReportFileInput() {
+      const list = document.getElementById('reportFileList');
+      if (!list) return;
+      const count = list.querySelectorAll('.report-file-input').length;
+      if (count >= 10) return Swal.fire('แนบไฟล์ครบแล้ว', 'ระบบอนุญาตให้แนบได้สูงสุด 10 ไฟล์ต่อรายงาน', 'warning');
+      const rowId = 'repFile_' + Date.now() + '_' + count;
+      const row = document.createElement('div');
+      row.className = 'input-group input-group-sm report-file-row';
+      row.innerHTML = `<input class="form-control report-file-input" type="file" id="${rowId}" accept="application/pdf,image/*,.doc,.docx,.xls,.xlsx"><button class="btn btn-outline-danger" type="button" onclick="removeReportFileInput(this)" title="ลบไฟล์นี้"><i class="bi bi-x-lg"></i></button>`;
+      list.appendChild(row);
+    }
+
+    function removeReportFileInput(btn) {
+      const row = btn && btn.closest ? btn.closest('.report-file-row') : null;
+      if (row) row.remove();
+      const list = document.getElementById('reportFileList');
+      if (list && list.children.length === 0) addReportFileInput();
+    }
+
+    function resetReportFileInputs() {
+      const list = document.getElementById('reportFileList');
+      if (!list) return;
+      list.innerHTML = '';
+      addReportFileInput();
+    }
+
+    function formatReportDetail(mode) {
+      const el = document.getElementById('repDetails');
+      if (!el) return;
+      const start = el.selectionStart || 0;
+      const end = el.selectionEnd || 0;
+      const selected = el.value.substring(start, end);
+      let insert = selected;
+      if (mode === 'number') {
+        const lines = (selected || el.value || '').split(/\n/).filter(x => x.trim());
+        insert = lines.length ? lines.map((line, i) => `${i + 1}. ${line.replace(/^\d+\.\s*/, '')}`).join('\n') : '1. ';
+        if (!selected) {
+          el.value = el.value ? (el.value.trimEnd() + '\n' + insert) : insert;
+          el.focus();
+          autoSaveReportDraft();
+          return;
+        }
+      } else if (mode === 'bold') insert = `**${selected || 'ข้อความตัวหนา'}**`;
+      else if (mode === 'italic') insert = `_${selected || 'ข้อความตัวเอียง'}_`;
+      else if (mode === 'underline') insert = `<u>${selected || 'ข้อความขีดเส้นใต้'}</u>`;
+      else if (mode === 'highlight') insert = `<mark>${selected || 'ข้อความไฮไลต์'}</mark>`;
+      el.value = el.value.substring(0, start) + insert + el.value.substring(end);
+      el.focus();
+      el.selectionStart = start;
+      el.selectionEnd = start + insert.length;
+      autoSaveReportDraft();
+    }
+
+    function applyDailyReportAiData_(data) {
+      data = data || {};
+      if (data.workDetails) document.getElementById('repDetails').value = data.workDetails;
+      if (data.remarks) document.getElementById('repRemarks').value = data.remarks;
+      if (data.leaveType && document.getElementById('repLeave')) document.getElementById('repLeave').value = data.leaveType;
+      if (data.startTime) document.getElementById('repStartTime').value = String(data.startTime).substring(0,5);
+      if (data.endTime) document.getElementById('repEndTime').value = String(data.endTime).substring(0,5);
+      toggleLeaveFields();
+      autoSaveReportDraft();
+    }
+
+    function analyzeReportTextAI() {
+      if (!guardAiCooldown_()) return;
+      const txt = (document.getElementById('reportAiTextPaste')?.value || '').trim();
+      if (!txt) return Swal.fire('แจ้งเตือน', 'กรุณาวางข้อความก่อนให้ AI วิเคราะห์ครับ', 'warning');
+      const btn = document.getElementById('btnAnalyzeReportText');
+      const spin = document.getElementById('reportTextSpinner');
+      btn.disabled = true; spin.classList.remove('d-none');
+      google.script.run.withSuccessHandler(res => {
+        btn.disabled = false; spin.classList.add('d-none');
+        if (res.success) { applyDailyReportAiData_(res.data); Swal.fire({icon:'success', title:'วิเคราะห์สำเร็จ', text:'AI ช่วยเรียบเรียงรายงานให้แล้วครับ', timer:1500, showConfirmButton:false}); }
+        else showAiError_(res.message);
+      }).withFailureHandler(err => { btn.disabled=false; spin.classList.add('d-none'); showAiError_(err && err.message ? err.message : String(err)); }).analyzeDailyReportText(txt);
+    }
+
+    function analyzeReportFileAI() {
+      if (!guardAiCooldown_()) return;
+      const input = document.getElementById('reportAiFile');
+      if (!input || !input.files || !input.files.length) return Swal.fire('แจ้งเตือน', 'กรุณาแนบ PDF หรือรูปภาพก่อนให้ AI วิเคราะห์ครับ', 'warning');
+      const file = input.files[0];
+      const btn = document.getElementById('btnAnalyzeReportFile');
+      const spin = document.getElementById('reportFileSpinner');
+      btn.disabled = true; spin.classList.remove('d-none');
+      const done = () => { btn.disabled=false; spin.classList.add('d-none'); };
+      const handleRes = (res) => { done(); if (res.success) { applyDailyReportAiData_(res.data); Swal.fire({icon:'success', title:'วิเคราะห์ไฟล์สำเร็จ', text:'AI เติมข้อมูลรายงานให้แล้วครับ', timer:1600, showConfirmButton:false}); } else showAiError_(res.message); };
+      if (file.type === 'application/pdf') {
+        extractPdfTextClient_(file).then(text => {
+          if (text && text.length >= 80) google.script.run.withSuccessHandler(handleRes).withFailureHandler(err=>{done();showAiError_(err.message||String(err));}).analyzeDailyReportText(text);
+          else analyzeReportFileMultimodal_(file, handleRes, done);
+        }).catch(() => analyzeReportFileMultimodal_(file, handleRes, done));
+      } else analyzeReportFileMultimodal_(file, handleRes, done);
+    }
+
+    function analyzeReportFileMultimodal_(file, handleRes, done) {
+      const reader = new FileReader();
+      reader.onload = e => google.script.run.withSuccessHandler(handleRes).withFailureHandler(err=>{done();showAiError_(err.message||String(err));}).processDailyReportDocument(e.target.result.split(',')[1], file.name, file.type || 'application/octet-stream');
+      reader.onerror = () => { done(); Swal.fire('ผิดพลาด', 'อ่านไฟล์ไม่สำเร็จ', 'error'); };
+      reader.readAsDataURL(file);
+    }
+
+    function applyWorkspaceAiData_(data) {
+      data = data || {};
+      if (data.title) document.getElementById('wsCreateTitle').value = data.title;
+      if (data.description) document.getElementById('wsCreateDescription').value = data.description;
+      if (Array.isArray(data.columns) && data.columns.length) document.getElementById('wsCreateColumns').value = data.columns.join('\n');
+      if (Array.isArray(data.sampleRows) && data.sampleRows.length) document.getElementById('wsDefaultRows').value = data.sampleRows.map(r => Array.isArray(r) ? r.join(' | ') : String(r)).join('\n');
+      if (data.workspaceType && document.getElementById('wsWorkspaceType')) document.getElementById('wsWorkspaceType').value = data.workspaceType;
+    }
+
+    function analyzeWorkspaceTextAI() {
+      if (!guardAiCooldown_()) return;
+      const txt = (document.getElementById('workspaceAiTextPaste')?.value || '').trim();
+      if (!txt) return Swal.fire('แจ้งเตือน', 'กรุณาวางข้อความก่อนให้ AI วิเคราะห์ครับ', 'warning');
+      const type = document.getElementById('wsWorkspaceType')?.value || 'table';
+      const btn = document.getElementById('btnAnalyzeWorkspaceText');
+      const spin = document.getElementById('workspaceTextSpinner');
+      btn.disabled = true; spin.classList.remove('d-none');
+      google.script.run.withSuccessHandler(res => {
+        btn.disabled = false; spin.classList.add('d-none');
+        if (res.success) { applyWorkspaceAiData_(res.data); Swal.fire({icon:'success', title:'วิเคราะห์สำเร็จ', text:'AI ช่วยออกแบบพื้นที่ทำงานให้แล้วครับ', timer:1500, showConfirmButton:false}); }
+        else showAiError_(res.message);
+      }).withFailureHandler(err => { btn.disabled=false; spin.classList.add('d-none'); showAiError_(err && err.message ? err.message : String(err)); }).analyzeWorkspaceText(txt, type);
+    }
+
+    function analyzeWorkspaceFileAI() {
+      if (!guardAiCooldown_()) return;
+      const input = document.getElementById('workspaceAiFile');
+      if (!input || !input.files || !input.files.length) return Swal.fire('แจ้งเตือน', 'กรุณาแนบ PDF หรือรูปภาพก่อนให้ AI วิเคราะห์ครับ', 'warning');
+      const file = input.files[0];
+      const type = document.getElementById('wsWorkspaceType')?.value || 'table';
+      const btn = document.getElementById('btnAnalyzeWorkspaceFile');
+      const spin = document.getElementById('workspaceFileSpinner');
+      btn.disabled = true; spin.classList.remove('d-none');
+      const done = () => { btn.disabled=false; spin.classList.add('d-none'); };
+      const handleRes = (res) => { done(); if (res.success) { applyWorkspaceAiData_(res.data); Swal.fire({icon:'success', title:'วิเคราะห์ไฟล์สำเร็จ', text:'AI ช่วยออกแบบพื้นที่ทำงานให้แล้วครับ', timer:1600, showConfirmButton:false}); } else showAiError_(res.message); };
+      if (file.type === 'application/pdf') {
+        extractPdfTextClient_(file).then(text => {
+          if (text && text.length >= 80) google.script.run.withSuccessHandler(handleRes).withFailureHandler(err=>{done();showAiError_(err.message||String(err));}).analyzeWorkspaceText(text, type);
+          else analyzeWorkspaceFileMultimodal_(file, type, handleRes, done);
+        }).catch(() => analyzeWorkspaceFileMultimodal_(file, type, handleRes, done));
+      } else analyzeWorkspaceFileMultimodal_(file, type, handleRes, done);
+    }
+
+    function analyzeWorkspaceFileMultimodal_(file, type, handleRes, done) {
+      const reader = new FileReader();
+      reader.onload = e => google.script.run.withSuccessHandler(handleRes).withFailureHandler(err=>{done();showAiError_(err.message||String(err));}).processWorkspaceDocument(e.target.result.split(',')[1], file.name, file.type || 'application/octet-stream', type);
+      reader.onerror = () => { done(); Swal.fire('ผิดพลาด', 'อ่านไฟล์ไม่สำเร็จ', 'error'); };
+      reader.readAsDataURL(file);
+    }
 
     // ==========================================
     // v27: Admin collapse, date bounds, tags, notifications, error log, analytics
