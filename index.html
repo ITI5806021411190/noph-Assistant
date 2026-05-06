@@ -1537,7 +1537,15 @@
 กลุ่มเป้าหมาย/หน่วยงานที่เกี่ยวข้อง
 ระยะเวลา/ช่วงเวลา
 ผู้รับผิดชอบ
-หมายเหตุ</textarea><small class="text-muted">ใส่ 1 คอลัมน์หรือ 1 ช่องคำถามต่อ 1 บรรทัด / ใส่ตัวเลือกได้ เช่น สถานะ [ตัวเลือก: รอดำเนินการ, กำลังดำเนินการ, เสร็จสิ้น] / dropdown เช่น หน่วยงาน [dropdown: รพ., สสอ., รพ.สต.] / แนบรูป เช่น รูปภาพผลงาน [รูปภาพ]</small></div>
+หมายเหตุ</textarea>
+              <div class="d-flex gap-2 flex-wrap mt-2">
+                <button type="button" class="btn btn-light btn-sm border" onclick="insertWorkspaceFieldTemplate('text')"><i class="bi bi-fonts"></i> เพิ่มช่องข้อความ</button>
+                <button type="button" class="btn btn-light btn-sm border" onclick="insertWorkspaceFieldTemplate('dropdown')"><i class="bi bi-menu-button-wide"></i> เพิ่ม Dropdown</button>
+                <button type="button" class="btn btn-light btn-sm border" onclick="insertWorkspaceFieldTemplate('radio')"><i class="bi bi-record-circle"></i> เพิ่ม Radio</button>
+                <button type="button" class="btn btn-light btn-sm border" onclick="insertWorkspaceFieldTemplate('checkbox')"><i class="bi bi-check2-square"></i> เพิ่ม Checkbox</button>
+                <button type="button" class="btn btn-light btn-sm border" onclick="insertWorkspaceFieldTemplate('image')"><i class="bi bi-image"></i> เพิ่มรูปภาพ</button>
+              </div>
+              <small class="text-muted d-block mt-2">ใส่ 1 คอลัมน์หรือ 1 ช่องคำถามต่อ 1 บรรทัด • ตัวอย่าง: สถานะ [ตัวเลือก: รอดำเนินการ, กำลังดำเนินการ, เสร็จสิ้น] • หน่วยงาน [dropdown: รพ., สสอ., รพ.สต.] • เสร็จแล้ว [checkbox] • รูปภาพผลงาน [รูปภาพ]</small></div>
           <div class="mb-3"><label class="small fw-bold text-muted">ค่าตั้งต้น / ตัวอย่างแถวแรก (ไม่บังคับ)</label><textarea id="wsDefaultRows" class="form-control" rows="3" placeholder="ใส่ข้อมูลตัวอย่าง 1 แถวต่อบรรทัด คั่นคอลัมน์ด้วย | เช่น 1 | ตรวจเอกสาร | นาย ก | วันนี้ | รอดำเนินการ"></textarea></div>
           <div class="d-flex gap-2 flex-wrap">
             <button type="button" class="btn btn-outline-secondary btn-sm" onclick="applyWorkspaceTypeTemplate()"><i class="bi bi-magic"></i> ใช้แม่แบบตามชนิด</button>
@@ -4536,9 +4544,40 @@
     // Collaborative Workspaces
     // ==========================================
     function workspaceTemplateColumns(type) {
-      if (type === 'checklist') return ['เสร็จแล้ว','ลำดับ','รายการตรวจสอบ','ผู้รับผิดชอบ','กำหนดเสร็จ','สถานะ [ตัวเลือก: ยังไม่เริ่ม, กำลังดำเนินการ, เสร็จสิ้น, ติดปัญหา]','หมายเหตุ'];
-      if (type === 'form') return ['Timestamp','ชื่อผู้กรอก','หน่วยงาน','ประเภทคำขอ [ตัวเลือก: ขอข้อมูล, แจ้งปัญหา, เสนอแนะ, อื่นๆ]','หัวข้อ/เรื่อง','รายละเอียด','ระดับความเร่งด่วน [ตัวเลือก: ปกติ, ด่วน, ด่วนมาก]','หมายเหตุ'];
-      return ['ลำดับ','ระดับตัวชี้วัด/สั่งการ','หัวข้อ/เรื่อง','กิจกรรม/รายละเอียด','กลุ่มเป้าหมาย/หน่วยงานที่เกี่ยวข้อง','ระยะเวลา/ช่วงเวลา','ผู้รับผิดชอบ','หมายเหตุ'];
+      if (type === 'checklist') return [
+        'เสร็จแล้ว [checkbox]',
+        'ลำดับ',
+        'รายการตรวจสอบ',
+        'ผู้รับผิดชอบ',
+        'กำหนดเสร็จ',
+        'สถานะ [dropdown: ยังไม่เริ่ม, กำลังดำเนินการ, เสร็จสิ้น, ติดปัญหา]',
+        'หลักฐานรูปภาพ [รูปภาพ]',
+        'หมายเหตุ'
+      ];
+      if (type === 'form') return [
+        'Timestamp',
+        'ชื่อผู้กรอก',
+        'หน่วยงาน [dropdown: สสจ., รพ., สสอ., รพ.สต., อื่นๆ]',
+        'ประเภทคำขอ [ตัวเลือก: ขอข้อมูล, แจ้งปัญหา, เสนอแนะ, อื่นๆ]',
+        'หัวข้อ/เรื่อง',
+        'รายละเอียด',
+        'ระดับความเร่งด่วน [dropdown: ปกติ, ด่วน, ด่วนมาก]',
+        'แนบรูปภาพ [รูปภาพ]',
+        'หมายเหตุ'
+      ];
+      return [
+        'ลำดับ',
+        'ระดับตัวชี้วัด/สั่งการ [dropdown: สั่งการ, ตัวชี้วัด, ติดตาม, ทั่วไป]',
+        'ประเภทงาน [dropdown: Dashboard, HosXP XE, GIS Map, Smart Hospital, Cyber Security, Telemedicine, MOPH, HDC, อื่นๆ]',
+        'หัวข้อ/เรื่อง',
+        'กิจกรรม/รายละเอียด',
+        'กลุ่มเป้าหมาย/หน่วยงานที่เกี่ยวข้อง',
+        'ระยะเวลา/ช่วงเวลา',
+        'ผู้รับผิดชอบ',
+        'สถานะ [ตัวเลือก: ยังไม่เริ่ม, กำลังดำเนินการ, เสร็จสิ้น, ติดปัญหา]',
+        'ไฟล์/รูปภาพ [รูปภาพ]',
+        'หมายเหตุ'
+      ];
     }
 
     function applyWorkspaceTypeTemplate() {
@@ -4550,7 +4589,25 @@
       }
     }
 
-    function openWorkspaceCreateModal() {
+    function insertWorkspaceFieldTemplate(kind) {
+      const ta = document.getElementById('wsCreateColumns');
+      if (!ta) return;
+      const map = {
+        text: 'ช่องข้อความใหม่',
+        dropdown: 'ตัวเลือกแบบดรอปดาวน์ [dropdown: ตัวเลือก 1, ตัวเลือก 2, ตัวเลือก 3]',
+        radio: 'ตัวเลือกแบบปุ่ม [ตัวเลือก: ตัวเลือก 1, ตัวเลือก 2, ตัวเลือก 3]',
+        checkbox: 'ช่องติ๊กถูก [checkbox]',
+        image: 'แนบรูปภาพ [รูปภาพ]',
+        textarea: 'รายละเอียดแบบยาว'
+      };
+      const add = map[kind] || map.text;
+      const v = ta.value.trim();
+      ta.value = v ? (v + '\n' + add) : add;
+      ta.focus();
+    }
+
+    
+function openWorkspaceCreateModal() {
       if (!workspaceCreateModalObj) workspaceCreateModalObj = new bootstrap.Modal(document.getElementById('workspaceCreateModal'));
       document.getElementById('wsCreateTitle').value = '';
       document.getElementById('wsCreateDescription').value = '';
@@ -4659,21 +4716,67 @@
       }).getPublicWorkspace(id, token);
     }
 
-    function parseWorkspaceOptions_(label) {
-      const m = String(label || '').match(/\[ตัวเลือก:\s*([^\]]+)\]/);
-      return m ? m[1].split(',').map(x=>x.trim()).filter(Boolean) : [];
+    function parseWorkspaceFieldApp_(label) {
+      const raw = String(label || '').trim();
+      const dropdown = raw.match(/\[(?:dropdown|ดรอปดาวน์):\s*([^\]]+)\]/i);
+      const radio = raw.match(/\[(?:radio|ตัวเลือก):\s*([^\]]+)\]/i);
+      const checkbox = /\[(?:checkbox|check|ติ๊กถูก)\]/i.test(raw);
+      const image = /\[(?:image|รูปภาพ|แนบรูปภาพ)\]/i.test(raw) || /รูปภาพ|ภาพถ่าย|หลักฐานภาพ/i.test(raw);
+      const cleanLabel = raw
+        .replace(/\[(?:dropdown|ดรอปดาวน์|radio|ตัวเลือก):[^\]]+\]/ig, '')
+        .replace(/\[(?:image|รูปภาพ|แนบรูปภาพ|checkbox|check|ติ๊กถูก)\]/ig, '')
+        .trim();
+      if (dropdown) return { label: cleanLabel, type:'dropdown', options: dropdown[1].split(',').map(x=>x.trim()).filter(Boolean) };
+      if (radio) return { label: cleanLabel, type:'radio', options: radio[1].split(',').map(x=>x.trim()).filter(Boolean) };
+      if (checkbox) return { label: cleanLabel, type:'checkbox', options: [] };
+      if (image) return { label: cleanLabel, type:'image', options: [] };
+      return { label: cleanLabel || raw, type:'text', options: [] };
+    }
+
+    function parseWorkspaceOptions_(label) { return parseWorkspaceFieldApp_(label).options || []; }
+
+    function uploadWorkspaceImageCellApp_(input) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      if (!String(file.type || '').startsWith('image/')) { Swal.fire('แจ้งเตือน','กรุณาเลือกไฟล์รูปภาพเท่านั้น','warning'); input.value=''; return; }
+      const box = input.closest('.workspace-image-box');
+      const hidden = box ? box.querySelector('.workspace-image-cell') : null;
+      const preview = box ? box.querySelector('.workspace-image-preview') : null;
+      input.disabled = true;
+      const reader = new FileReader();
+      reader.onload = e => {
+        const base64 = String(e.target.result || '').split(',')[1] || '';
+        google.script.run.withSuccessHandler(res => {
+          input.disabled = false;
+          if (!res.success) return Swal.fire('ผิดพลาด', res.message || 'อัปโหลดรูปภาพไม่สำเร็จ', 'error');
+          if (hidden) hidden.value = res.url || '';
+          if (preview) preview.innerHTML = '<a href="'+escapeHtml(res.url || '')+'" target="_blank"><img src="'+escapeHtml(res.url || '')+'" style="max-width:90px;max-height:70px;border-radius:8px;border:1px solid #e2e8f0;"></a>';
+          Swal.fire({icon:'success', title:'อัปโหลดรูปแล้ว', timer:900, showConfirmButton:false});
+        }).withFailureHandler(err => { input.disabled=false; Swal.fire('ผิดพลาด', err.message || String(err), 'error'); }).uploadFileToDrive(base64, file.name, file.type || 'image/png');
+      };
+      reader.readAsDataURL(file);
     }
 
     function renderWorkspaceCellApp_(columnName, value, r, i) {
       const can = currentWorkspace && currentWorkspace.canManage;
       const name = String(columnName || '');
-      const options = parseWorkspaceOptions_(name);
-      if (currentWorkspace.workspaceType === 'checklist' && (name.includes('เสร็จ') || name.includes('ติ๊ก'))) {
-        const checked = ['true','1','✓','✔','เสร็จ','เสร็จแล้ว'].includes(String(value || '').trim());
+      const field = parseWorkspaceFieldApp_(name);
+      const checkedValues = ['true','1','✓','✔','เสร็จ','เสร็จแล้ว','done','yes'];
+      if (field.type === 'checkbox' || (currentWorkspace.workspaceType === 'checklist' && (name.includes('เสร็จ') || name.includes('ติ๊ก')))) {
+        const checked = checkedValues.includes(String(value || '').trim().toLowerCase()) || checkedValues.includes(String(value || '').trim());
         return `<div class="text-center"><input type="checkbox" class="form-check-input workspace-check-cell" data-r="${r}" data-c="${i}" ${checked?'checked':''} ${can?'':'disabled'}></div>`;
       }
-      if (options.length) {
-        return `<select class="form-select form-select-sm workspace-select-cell" data-r="${r}" data-c="${i}" ${can?'':'disabled'}>${options.map(o=>`<option value="${escapeHtml(o)}" ${String(value)===o?'selected':''}>${escapeHtml(o)}</option>`).join('')}</select>`;
+      if (field.type === 'dropdown') {
+        return `<select class="form-select form-select-sm workspace-select-cell" data-r="${r}" data-c="${i}" ${can?'':'disabled'}><option value="">-- เลือก --</option>${field.options.map(o=>`<option value="${escapeHtml(o)}" ${String(value)===o?'selected':''}>${escapeHtml(o)}</option>`).join('')}</select>`;
+      }
+      if (field.type === 'radio') {
+        const safeName = `wsradio_${r}_${i}`;
+        return `<div class="d-flex gap-1 flex-wrap">${field.options.map(o=>`<label class="btn btn-outline-primary btn-sm py-1 px-2 ${String(value)===o?'active':''}"><input type="radio" class="workspace-radio-cell me-1" name="${safeName}" data-r="${r}" data-c="${i}" value="${escapeHtml(o)}" ${String(value)===o?'checked':''} ${can?'':'disabled'}>${escapeHtml(o)}</label>`).join('')}</div>`;
+      }
+      if (field.type === 'image') {
+        const url = String(value || '').trim();
+        const img = url ? `<a href="${escapeHtml(url)}" target="_blank"><img src="${escapeHtml(url)}" style="max-width:90px;max-height:70px;border-radius:8px;border:1px solid #e2e8f0;"></a>` : '<span class="text-muted small">ยังไม่มีรูป</span>';
+        return `<div class="workspace-image-box" style="min-width:160px;"><div class="workspace-image-preview mb-1">${img}</div><input type="hidden" class="workspace-image-cell" data-r="${r}" data-c="${i}" value="${escapeHtml(url)}">${can?`<input type="file" class="form-control form-control-sm" accept="image/*" onchange="uploadWorkspaceImageCellApp_(this)">`:''}</div>`;
       }
       return `<div contenteditable="${can ? 'true':'false'}" class="p-1 rounded workspace-app-cell" data-r="${r}" data-c="${i}" style="min-width:140px;min-height:28px;outline:1px solid transparent;">${escapeHtml(value||'')}</div>`;
     }
@@ -4682,7 +4785,7 @@
       const table = document.getElementById('workspaceEditTable');
       const cols = currentWorkspace.columns || [];
       const rows = currentWorkspace.rows || [];
-      let html = '<thead class="table-light"><tr>'+cols.map(c=>'<th>'+escapeHtml(c)+'</th>').join('')+'</tr></thead><tbody>';
+      let html = '<thead class="table-light"><tr>'+cols.map(c=>'<th>'+escapeHtml(parseWorkspaceFieldApp_(c).label || c)+'</th>').join('')+'</tr></thead><tbody>';
       if (!rows.length) html += '<tr><td colspan="'+Math.max(cols.length,1)+'" class="text-center text-muted py-4">ยังไม่มีข้อมูล</td></tr>';
       rows.forEach((row,r)=>{ html += '<tr>'+cols.map((c,i)=>`<td>${renderWorkspaceCellApp_(c, row[i] || '', r, i)}</td>`).join('')+'</tr>'; });
       html += '</tbody>';
@@ -4693,7 +4796,9 @@
       const rows = (currentWorkspace.rows || []).map(r=>r.slice());
       document.querySelectorAll('.workspace-app-cell').forEach(cell=>{ rows[Number(cell.dataset.r)][Number(cell.dataset.c)] = cell.innerText.trim(); });
       document.querySelectorAll('.workspace-select-cell').forEach(cell=>{ rows[Number(cell.dataset.r)][Number(cell.dataset.c)] = cell.value; });
+      document.querySelectorAll('.workspace-radio-cell').forEach(cell=>{ if (cell.checked) rows[Number(cell.dataset.r)][Number(cell.dataset.c)] = cell.value; });
       document.querySelectorAll('.workspace-check-cell').forEach(cell=>{ rows[Number(cell.dataset.r)][Number(cell.dataset.c)] = cell.checked ? '✓' : ''; });
+      document.querySelectorAll('.workspace-image-cell').forEach(cell=>{ rows[Number(cell.dataset.r)][Number(cell.dataset.c)] = cell.value || ''; });
       return rows;
     }
 
