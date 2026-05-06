@@ -2007,6 +2007,15 @@
       restoreDraft_('haos_event_draft', ['scheduleScope','eventWorkStatus','eventPriority','eventTags','eventName','eventDetails','startTime','endTime','leadTime','eventLocation','meetingLink','resourceId','approverPhone','chatId','recurringFrequency','recurringInterval','recurringByDay','recurringEndDate']);
     }
 
+
+    function autoSaveReportDraft() {
+      saveDraft_(
+        'haos_report_draft',
+        ['repDate','repStartTime','repEndTime','repLeave','repDetails','repRemarks'],
+        'reportDraftHint'
+      );
+    }
+
     function clearReportDraft() { localStorage.removeItem('haos_report_draft'); }
     function clearEventDraft() { localStorage.removeItem('haos_event_draft'); }
 
