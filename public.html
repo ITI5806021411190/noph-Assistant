@@ -199,6 +199,24 @@
 
     function escapeHtmlPublic(value){ return String(value ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\x27/g,'&#039;'); }
 
+    function parseWorkspaceOptionsPublic_(label) {
+      const m = String(label || '').match(/\[ตัวเลือก:\s*([^\]]+)\]/);
+      return m ? m[1].split(',').map(x=>x.trim()).filter(Boolean) : [];
+    }
+
+    function renderWorkspaceCellPublic_(columnName, value, r, i) {
+      const name = String(columnName || '');
+      const options = parseWorkspaceOptionsPublic_(name);
+      if (workspaceState.workspaceType === 'checklist' && (name.includes('เสร็จ') || name.includes('ติ๊ก'))) {
+        const checked = ['true','1','✓','✔','เสร็จ','เสร็จแล้ว'].includes(String(value || '').trim());
+        return '<div class="text-center"><input type="checkbox" class="form-check-input workspace-check" data-r="'+r+'" data-c="'+i+'" '+(checked?'checked':'')+' '+(workspaceState.canEdit?'':'disabled')+'></div>';
+      }
+      if (options.length) {
+        return '<select class="form-select form-select-sm workspace-select" data-r="'+r+'" data-c="'+i+'" '+(workspaceState.canEdit?'':'disabled')+'>'+options.map(o=>'<option value="'+escapeHtmlPublic(o)+'" '+(String(value)===o?'selected':'')+'>'+escapeHtmlPublic(o)+'</option>').join('')+'</select>';
+      }
+      return '<div class="workspace-cell" '+(workspaceState.canEdit?'contenteditable="true"':'')+' data-r="'+r+'" data-c="'+i+'">'+escapeHtmlPublic(value||'')+'</div>';
+    }
+
     function renderWorkspaceTablePublic(){
       if (workspaceState.workspaceType === 'form') return renderWorkspaceFormPublic();
       const table = document.getElementById('workspaceTable');
@@ -206,7 +224,7 @@
       const rows = workspaceState.rows || [];
       let html = '<thead><tr>' + cols.map(c=>'<th>'+escapeHtmlPublic(c)+'</th>').join('') + '</tr></thead><tbody>';
       if (!rows.length) html += '<tr><td colspan="'+Math.max(cols.length,1)+'" class="text-center text-muted py-4">ยังไม่มีข้อมูล</td></tr>';
-      rows.forEach((row,r)=>{ html += '<tr>' + cols.map((c,i)=>'<td><div class="workspace-cell" '+(workspaceState.canEdit?'contenteditable="true"':'')+' data-r="'+r+'" data-c="'+i+'">'+escapeHtmlPublic(row[i]||'')+'</div></td>').join('') + '</tr>'; });
+      rows.forEach((row,r)=>{ html += '<tr>' + cols.map((c,i)=>'<td>'+renderWorkspaceCellPublic_(c, row[i]||'', r, i)+'</td>').join('') + '</tr>'; });
       html += '</tbody>';
       table.innerHTML = html;
     }
@@ -218,7 +236,9 @@
       let html = '<tbody><tr><td><div class="p-3 text-start">';
       fields.forEach(f => {
         html += '<div class="mb-3"><label class="form-label small fw-bold text-muted">'+escapeHtmlPublic(f.label)+'</label>';
-        if (String(f.label).includes('รายละเอียด') || String(f.label).includes('หมายเหตุ')) html += '<textarea class="form-control workspace-form-field" rows="3" data-c="'+f.index+'"></textarea>';
+        const opts = parseWorkspaceOptionsPublic_(f.label);
+        if (opts.length) html += '<div class="d-flex gap-2 flex-wrap">'+opts.map(o=>'<label class="btn btn-outline-primary btn-sm"><input type="radio" class="workspace-form-field me-1" name="wsf_'+f.index+'" data-c="'+f.index+'" value="'+escapeHtmlPublic(o)+'">'+escapeHtmlPublic(o)+'</label>').join('')+'</div>';
+        else if (String(f.label).includes('รายละเอียด') || String(f.label).includes('หมายเหตุ')) html += '<textarea class="form-control workspace-form-field" rows="3" data-c="'+f.index+'"></textarea>';
         else html += '<input class="form-control workspace-form-field" data-c="'+f.index+'">';
         html += '</div>';
       });
@@ -230,7 +250,7 @@
 
     function submitWorkspaceFormPublic(){
       const row = new Array((workspaceState.columns || []).length).fill('');
-      document.querySelectorAll('.workspace-form-field').forEach(el => { row[Number(el.dataset.c)] = el.value.trim(); });
+      document.querySelectorAll('.workspace-form-field').forEach(el => { if (el.type === 'radio' && !el.checked) return; row[Number(el.dataset.c)] = (el.value || '').trim(); });
       const hasData = row.some(v => String(v || '').trim());
       if (!hasData) return Swal.fire('แจ้งเตือน','กรุณากรอกข้อมูลอย่างน้อย 1 ช่อง','warning');
       google.script.run.withSuccessHandler(function(res){
@@ -245,6 +265,8 @@
     function collectWorkspaceRowsPublic(){
       const rows = workspaceState.rows.map(r=>r.slice());
       document.querySelectorAll('.workspace-cell').forEach(cell=>{ rows[Number(cell.dataset.r)][Number(cell.dataset.c)] = cell.innerText.trim(); });
+      document.querySelectorAll('.workspace-select').forEach(cell=>{ rows[Number(cell.dataset.r)][Number(cell.dataset.c)] = cell.value; });
+      document.querySelectorAll('.workspace-check').forEach(cell=>{ rows[Number(cell.dataset.r)][Number(cell.dataset.c)] = cell.checked ? '✓' : ''; });
       return rows;
     }
     function addWorkspaceRowPublic(){
