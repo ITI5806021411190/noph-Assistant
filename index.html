@@ -2016,6 +2016,27 @@
     }
 
 
+    function readFileBase64_(file) {
+      return new Promise((resolve, reject) => {
+        if (!file) return reject(new Error('ไม่พบไฟล์ที่ต้องการอ่าน'));
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          try {
+            const result = String(e.target.result || '');
+            const base64 = result.includes(',') ? result.split(',')[1] : result;
+            resolve(base64);
+          } catch (err) {
+            reject(err);
+          }
+        };
+        reader.onerror = function() {
+          reject(reader.error || new Error('อ่านไฟล์ไม่สำเร็จ'));
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+
     function autoSaveReportDraft() {
       saveDraft_(
         'haos_report_draft',
