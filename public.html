@@ -200,34 +200,60 @@
     function escapeHtmlPublic(value){ return String(value ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\x27/g,'&#039;'); }
 
     function parseWorkspaceFieldPublic_(label) {
-      const raw = String(label || '');
+      const raw = String(label || '').trim();
       const dropdown = raw.match(/\[(?:dropdown|ดรอปดาวน์):\s*([^\]]+)\]/i);
       const radio = raw.match(/\[(?:radio|ตัวเลือก):\s*([^\]]+)\]/i);
-      const image = /\[(?:image|รูปภาพ|แนบรูปภาพ)\]/i.test(raw) || raw.includes('รูปภาพ');
-      const cleanLabel = raw.replace(/\[(?:dropdown|ดรอปดาวน์|radio|ตัวเลือก):[^\]]+\]/ig, '').replace(/\[(?:image|รูปภาพ|แนบรูปภาพ)\]/ig, '').trim();
+      const checkbox = /\[(?:checkbox|check|ติ๊กถูก)\]/i.test(raw);
+      const image = /\[(?:image|รูปภาพ|แนบรูปภาพ)\]/i.test(raw) || /รูปภาพ|ภาพถ่าย|หลักฐานภาพ/i.test(raw);
+      const cleanLabel = raw
+        .replace(/\[(?:dropdown|ดรอปดาวน์|radio|ตัวเลือก):[^\]]+\]/ig, '')
+        .replace(/\[(?:image|รูปภาพ|แนบรูปภาพ|checkbox|check|ติ๊กถูก)\]/ig, '')
+        .trim();
       if (dropdown) return { label: cleanLabel, type: 'dropdown', options: dropdown[1].split(',').map(x=>x.trim()).filter(Boolean) };
       if (radio) return { label: cleanLabel, type: 'radio', options: radio[1].split(',').map(x=>x.trim()).filter(Boolean) };
+      if (checkbox) return { label: cleanLabel, type: 'checkbox', options: [] };
       if (image) return { label: cleanLabel, type: 'image', options: [] };
       return { label: cleanLabel || raw, type: 'text', options: [] };
     }
 
-    function parseWorkspaceOptionsPublic_(label) {
-      return parseWorkspaceFieldPublic_(label).options || [];
+    function parseWorkspaceOptionsPublic_(label) { return parseWorkspaceFieldPublic_(label).options || []; }
+
+    function uploadWorkspaceImageCellPublic_(input) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      if (!String(file.type || '').startsWith('image/')) { Swal.fire('แจ้งเตือน','กรุณาเลือกไฟล์รูปภาพเท่านั้น','warning'); input.value=''; return; }
+      const box = input.closest('.workspace-image-box');
+      const hidden = box ? box.querySelector('.workspace-image') : null;
+      const preview = box ? box.querySelector('.workspace-image-preview') : null;
+      input.disabled = true;
+      readFileBase64Public_(file).then(base64 => gasRunPromisePublic_('uploadFileToDrive', [base64, file.name, file.type || 'image/png']))
+      .then(res => {
+        input.disabled = false;
+        if (!res.success) throw new Error(res.message || 'อัปโหลดรูปภาพไม่สำเร็จ');
+        if (hidden) hidden.value = res.url || '';
+        if (preview) preview.innerHTML = '<a href="'+escapeHtmlPublic(res.url || '')+'" target="_blank"><img src="'+escapeHtmlPublic(res.url || '')+'" style="max-width:110px;max-height:80px;border-radius:10px;border:1px solid #e2e8f0;object-fit:cover"></a>';
+        Swal.fire({icon:'success', title:'อัปโหลดรูปแล้ว', timer:900, showConfirmButton:false});
+      }).catch(err => { input.disabled=false; Swal.fire('ผิดพลาด', err.message || String(err), 'error'); });
     }
 
     function renderWorkspaceCellPublic_(columnName, value, r, i) {
       const name = String(columnName || '');
       const field = parseWorkspaceFieldPublic_(name);
-      const options = field.options || [];
-      if (field.type === 'image' && value) {
-        return '<a href="'+escapeHtmlPublic(value)+'" target="_blank"><img src="'+escapeHtmlPublic(value)+'" style="max-width:120px;max-height:80px;border-radius:10px;border:1px solid #e2e8f0;object-fit:cover"></a>';
+      if (field.type === 'image') {
+        const url = String(value || '').trim();
+        const img = url ? '<a href="'+escapeHtmlPublic(url)+'" target="_blank"><img src="'+escapeHtmlPublic(url)+'" style="max-width:110px;max-height:80px;border-radius:10px;border:1px solid #e2e8f0;object-fit:cover"></a>' : '<span class="text-muted small">ยังไม่มีรูป</span>';
+        return '<div class="workspace-image-box"><div class="workspace-image-preview mb-1">'+img+'</div><input type="hidden" class="workspace-image" data-r="'+r+'" data-c="'+i+'" value="'+escapeHtmlPublic(url)+'">'+(workspaceState.canEdit?'<input type="file" class="form-control form-control-sm" accept="image/*" onchange="uploadWorkspaceImageCellPublic_(this)">':'')+'</div>';
       }
-      if (workspaceState.workspaceType === 'checklist' && (name.includes('เสร็จ') || name.includes('ติ๊ก'))) {
-        const checked = ['true','1','✓','✔','เสร็จ','เสร็จแล้ว'].includes(String(value || '').trim());
+      if (field.type === 'checkbox' || (workspaceState.workspaceType === 'checklist' && (name.includes('เสร็จ') || name.includes('ติ๊ก')))) {
+        const checked = ['true','1','✓','✔','เสร็จ','เสร็จแล้ว','done','yes'].includes(String(value || '').trim().toLowerCase()) || ['true','1','✓','✔','เสร็จ','เสร็จแล้ว'].includes(String(value || '').trim());
         return '<div class="text-center"><input type="checkbox" class="form-check-input workspace-check" data-r="'+r+'" data-c="'+i+'" '+(checked?'checked':'')+' '+(workspaceState.canEdit?'':'disabled')+'></div>';
       }
-      if (options.length) {
-        return '<select class="form-select form-select-sm workspace-select" data-r="'+r+'" data-c="'+i+'" '+(workspaceState.canEdit?'':'disabled')+'>'+options.map(o=>'<option value="'+escapeHtmlPublic(o)+'" '+(String(value)===o?'selected':'')+'>'+escapeHtmlPublic(o)+'</option>').join('')+'</select>';
+      if (field.type === 'dropdown') {
+        return '<select class="form-select form-select-sm workspace-select" data-r="'+r+'" data-c="'+i+'" '+(workspaceState.canEdit?'':'disabled')+'><option value="">-- เลือก --</option>'+field.options.map(o=>'<option value="'+escapeHtmlPublic(o)+'" '+(String(value)===o?'selected':'')+'>'+escapeHtmlPublic(o)+'</option>').join('')+'</select>';
+      }
+      if (field.type === 'radio') {
+        const safeName = 'pwsradio_'+r+'_'+i;
+        return '<div class="d-flex gap-1 flex-wrap">'+field.options.map(o=>'<label class="btn btn-outline-primary btn-sm py-1 px-2 '+(String(value)===o?'active':'')+'"><input type="radio" class="workspace-radio me-1" name="'+safeName+'" data-r="'+r+'" data-c="'+i+'" value="'+escapeHtmlPublic(o)+'" '+(String(value)===o?'checked':'')+' '+(workspaceState.canEdit?'':'disabled')+'>'+escapeHtmlPublic(o)+'</label>').join('')+'</div>';
       }
       return '<div class="workspace-cell" '+(workspaceState.canEdit?'contenteditable="true"':'')+' data-r="'+r+'" data-c="'+i+'">'+escapeHtmlPublic(value||'')+'</div>';
     }
@@ -237,7 +263,7 @@
       const table = document.getElementById('workspaceTable');
       const cols = workspaceState.columns || [];
       const rows = workspaceState.rows || [];
-      let html = '<thead><tr>' + cols.map(c=>'<th>'+escapeHtmlPublic(c)+'</th>').join('') + '</tr></thead><tbody>';
+      let html = '<thead><tr>' + cols.map(c=>'<th>'+escapeHtmlPublic(parseWorkspaceFieldPublic_(c).label || c)+'</th>').join('') + '</tr></thead><tbody>';
       if (!rows.length) html += '<tr><td colspan="'+Math.max(cols.length,1)+'" class="text-center text-muted py-4">ยังไม่มีข้อมูล</td></tr>';
       rows.forEach((row,r)=>{ html += '<tr>' + cols.map((c,i)=>'<td>'+renderWorkspaceCellPublic_(c, row[i]||'', r, i)+'</td>').join('') + '</tr>'; });
       html += '</tbody>';
@@ -254,6 +280,7 @@
         const opts = f.meta.options || [];
         if (f.meta.type === 'dropdown') html += '<select class="form-select workspace-form-field" data-c="'+f.index+'"><option value="">-- เลือก --</option>'+opts.map(o=>'<option value="'+escapeHtmlPublic(o)+'">'+escapeHtmlPublic(o)+'</option>').join('')+'</select>';
         else if (f.meta.type === 'radio') html += '<div class="d-flex gap-2 flex-wrap">'+opts.map(o=>'<label class="btn btn-outline-primary btn-sm"><input type="radio" class="workspace-form-field me-1" name="wsf_'+f.index+'" data-c="'+f.index+'" value="'+escapeHtmlPublic(o)+'">'+escapeHtmlPublic(o)+'</label>').join('')+'</div>';
+        else if (f.meta.type === 'checkbox') html += '<div class="form-check"><input type="checkbox" class="form-check-input workspace-form-field" data-c="'+f.index+'" value="✓"><label class="form-check-label">ติ๊กเมื่อดำเนินการแล้ว</label></div>';
         else if (f.meta.type === 'image') html += '<input type="file" class="form-control workspace-form-file" data-c="'+f.index+'" accept="image/*"><small class="text-muted">รองรับการแนบรูปภาพ 1 รูปต่อช่อง</small>';
         else if (String(f.meta.label).includes('รายละเอียด') || String(f.meta.label).includes('หมายเหตุ')) html += '<textarea class="form-control workspace-form-field" rows="3" data-c="'+f.index+'"></textarea>';
         else html += '<input class="form-control workspace-form-field" data-c="'+f.index+'">';
@@ -267,7 +294,7 @@
 
     async function submitWorkspaceFormPublic(){
       const row = new Array((workspaceState.columns || []).length).fill('');
-      document.querySelectorAll('.workspace-form-field').forEach(el => { if (el.type === 'radio' && !el.checked) return; row[Number(el.dataset.c)] = (el.value || '').trim(); });
+      document.querySelectorAll('.workspace-form-field').forEach(el => { if (el.type === 'radio' && !el.checked) return; if (el.type === 'checkbox') { row[Number(el.dataset.c)] = el.checked ? '✓' : ''; return; } row[Number(el.dataset.c)] = (el.value || '').trim(); });
       const fileInputs = Array.from(document.querySelectorAll('.workspace-form-file')).filter(el => el.files && el.files.length);
       try {
         for (const input of fileInputs) {
@@ -283,7 +310,7 @@
       google.script.run.withSuccessHandler(function(res){
         if(res.success){
           Swal.fire({icon:'success', title:'ส่งข้อมูลแล้ว', text:res.message, timer:1600, showConfirmButton:false});
-          document.querySelectorAll('.workspace-form-field').forEach(el => { if (el.type === 'radio') el.checked = false; else el.value=''; });
+          document.querySelectorAll('.workspace-form-field').forEach(el => { if (el.type === 'radio' || el.type === 'checkbox') el.checked = false; else el.value=''; });
           document.querySelectorAll('.workspace-form-file').forEach(el => el.value='');
           workspaceState.rows.push(row);
         } else Swal.fire('ผิดพลาด', res.message, 'error');
@@ -301,9 +328,12 @@
       const rows = workspaceState.rows.map(r=>r.slice());
       document.querySelectorAll('.workspace-cell').forEach(cell=>{ rows[Number(cell.dataset.r)][Number(cell.dataset.c)] = cell.innerText.trim(); });
       document.querySelectorAll('.workspace-select').forEach(cell=>{ rows[Number(cell.dataset.r)][Number(cell.dataset.c)] = cell.value; });
+      document.querySelectorAll('.workspace-radio').forEach(cell=>{ if (cell.checked) rows[Number(cell.dataset.r)][Number(cell.dataset.c)] = cell.value; });
       document.querySelectorAll('.workspace-check').forEach(cell=>{ rows[Number(cell.dataset.r)][Number(cell.dataset.c)] = cell.checked ? '✓' : ''; });
+      document.querySelectorAll('.workspace-image').forEach(cell=>{ rows[Number(cell.dataset.r)][Number(cell.dataset.c)] = cell.value || ''; });
       return rows;
     }
+
     function addWorkspaceRowPublic(){
       workspaceState.rows.push(new Array(workspaceState.columns.length).fill(''));
       renderWorkspaceTablePublic();
