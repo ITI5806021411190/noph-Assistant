@@ -1538,7 +1538,7 @@
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body bg-light">
-          <div class="alert alert-info small"><i class="bi bi-info-circle"></i> สร้างพื้นที่ทำงานได้ 3 แบบ: ตารางร่วมกัน, checklist โครงการ, หรือแบบฟอร์มออนไลน์ โดยกำหนดได้ว่าจะเป็นส่วนตัวหรือของกลุ่มงาน</div>
+          <div class="alert alert-info small"><i class="bi bi-info-circle"></i> สร้างพื้นที่ทำงานได้ 5 แบบ: ตาราง/Checklist/แบบฟอร์มเบาในระบบ หรือสร้าง Google Sheet / Google Form จริง สำหรับงานที่ต้องการความสามารถเต็มรูปแบบของ Google Workspace</div>
           <div class="ai-paste-box mb-3">
             <label class="small fw-bold text-primary mb-2"><i class="bi bi-robot"></i> AI ช่วยออกแบบพื้นที่ทำงานได้ 2 แบบ</label>
             <textarea id="workspaceAiTextPaste" class="form-control form-control-sm mb-2" rows="3" placeholder="วางข้อความจาก LINE / โครงการ / รายการงาน ให้ AI ช่วยออกแบบคอลัมน์ checklist หรือแบบฟอร์ม..."></textarea>
@@ -1558,10 +1558,11 @@
           </div>
           <div class="mb-3"><label class="small fw-bold text-muted">คำอธิบาย</label><textarea id="wsCreateDescription" class="form-control" rows="2" placeholder="อธิบายวัตถุประสงค์ของพื้นที่นี้"></textarea></div>
           <div class="row g-2 mb-3">
-            <div class="col-md-4"><label class="small fw-bold text-muted">รูปแบบพื้นที่</label><select id="wsWorkspaceType" class="form-select" onchange="applyWorkspaceTypeTemplate()"><option value="table">ตารางทำงานร่วมกัน</option><option value="checklist">Checklist งาน/โครงการ</option><option value="form">แบบฟอร์มออนไลน์</option></select></div>
+            <div class="col-md-4"><label class="small fw-bold text-muted">รูปแบบพื้นที่</label><select id="wsWorkspaceType" class="form-select" onchange="applyWorkspaceTypeTemplate()"><option value="table">ตารางเบาในระบบ</option><option value="checklist">Checklist ในระบบ</option><option value="form">แบบฟอร์มออนไลน์ในระบบ</option><option value="google_sheet">Google Sheet จริง</option><option value="google_form">Google Form จริง</option></select></div>
             <div class="col-md-4"><label class="small fw-bold text-muted">สิทธิ์สำหรับคนมีลิงก์</label><select id="wsAccessMode" class="form-select"><option value="view">ดูอย่างเดียว</option><option value="edit">ดูและแก้ไขร่วมกันได้</option></select></div>
             <div class="col-md-4"><label class="small fw-bold text-muted">เงื่อนไขการแก้ไข</label><select id="wsRequireLogin" class="form-select"><option value="false">ไม่ต้องล็อกอินก็แก้ไขได้</option><option value="true">ต้องล็อกอินก่อนถึงจะแก้ไขได้</option></select></div>
           </div>
+          <div id="googleWorkspaceHint" class="alert alert-success small d-none"><i class="bi bi-google"></i> โหมดนี้จะสร้างไฟล์ Google จริงใน Drive: ใช้ Google Sheet/Form สำหรับแก้ไขร่วมกันจริงจัง ส่วน Health Assistant OS จะเก็บลิงก์ เจ้าของ ขอบเขต และ Audit ไว้ให้</div>
           <div class="mb-3"><label class="small fw-bold text-muted">หัวคอลัมน์ / ช่องข้อมูล</label><textarea id="wsCreateColumns" class="form-control" rows="5">ลำดับ
 ระดับตัวชี้วัด/สั่งการ
 หัวข้อ/เรื่อง
@@ -4597,6 +4598,8 @@
     // Collaborative Workspaces
     // ==========================================
     function workspaceTemplateColumns(type) {
+      if (type === 'google_sheet') type = 'table';
+      if (type === 'google_form') type = 'form';
       if (type === 'checklist') return [
         'เสร็จแล้ว [checkbox]',
         'ลำดับ',
@@ -4693,7 +4696,7 @@ function openWorkspaceCreateModal() {
       const data = getWorkspaceCreatePayload();
       if (!data.title) return Swal.fire('แจ้งเตือน', 'กรุณาระบุชื่อพื้นที่ทำงานก่อนพรีวิว', 'warning');
       const scopeText = data.scope === 'department' ? 'ภายในกลุ่มงาน' : 'ส่วนตัว';
-      const typeMap = { table:'ตารางทำงานร่วมกัน', checklist:'Checklist งาน/โครงการ', form:'แบบฟอร์มออนไลน์' };
+      const typeMap = { table:'ตารางเบาในระบบ', checklist:'Checklist ในระบบ', form:'แบบฟอร์มออนไลน์ในระบบ', google_sheet:'Google Sheet จริง', google_form:'Google Form จริง' };
       const modeText = data.accessMode === 'edit' ? 'ดูและแก้ไขได้' : 'ดูอย่างเดียว';
       const loginText = data.requireLoginToEdit ? 'ต้องล็อกอินก่อนแก้ไข' : 'ไม่ต้องล็อกอิน';
       let sample = '<div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr>'+data.columns.map(c=>'<th>'+escapeHtml(c)+'</th>').join('')+'</tr></thead><tbody>';
@@ -4711,13 +4714,18 @@ function openWorkspaceCreateModal() {
       const data = getWorkspaceCreatePayload();
       if (!data.title) return Swal.fire('แจ้งเตือน', 'กรุณาระบุชื่อพื้นที่ทำงาน', 'warning');
       if (!data.columns.length) return Swal.fire('แจ้งเตือน', 'กรุณาระบุหัวคอลัมน์หรือช่องข้อมูลอย่างน้อย 1 รายการ', 'warning');
+      const fn = data.workspaceType === 'google_sheet' ? 'createGoogleSheetWorkspace' : (data.workspaceType === 'google_form' ? 'createGoogleFormWorkspace' : 'createSharedWorkspace');
+      Swal.fire({title:'กำลังสร้างพื้นที่ทำงาน...', text: data.workspaceType.indexOf('google_')===0 ? 'ระบบกำลังสร้างไฟล์ Google Workspace จริงใน Drive' : 'กำลังบันทึกข้อมูลในระบบ', allowOutsideClick:false, didOpen:()=>Swal.showLoading()});
       google.script.run.withSuccessHandler(res => {
+        Swal.close();
         if (res.success) {
           if (workspaceCreateModalObj) workspaceCreateModalObj.hide();
-          Swal.fire({icon:'success', title:'สร้างพื้นที่แล้ว', html:'<div class="small text-muted mb-2">คัดลอกลิงก์ส่งต่อให้ผู้ร่วมงานได้ทันที</div><input class="form-control" value="'+escapeHtml(res.url || '')+'" readonly>', confirmButtonText:'ตกลง'});
+          const url = res.url || res.googleSheetUrl || res.googleFormUrl || '';
+          const extra = res.responseSheetUrl ? '<div class="small mt-2">Response Sheet: <a target="_blank" href="'+escapeHtml(res.responseSheetUrl)+'">เปิดผลลัพธ์</a></div>' : '';
+          Swal.fire({icon:'success', title:'สร้างพื้นที่แล้ว', html:'<div class="small text-muted mb-2">คัดลอกลิงก์ส่งต่อให้ผู้ร่วมงานได้ทันที</div><input class="form-control" value="'+escapeHtml(url)+'" readonly>'+extra, confirmButtonText:'ตกลง'});
           loadSharedWorkspaces();
         } else Swal.fire('ผิดพลาด', res.message, 'error');
-      }).createSharedWorkspace(data, user.phone);
+      }).withFailureHandler(err=>{ Swal.close(); Swal.fire('ผิดพลาด', err.message || String(err), 'error'); })[fn](data, user.phone);
     }
 
     function loadSharedWorkspaces() {
@@ -4733,10 +4741,15 @@ function openWorkspaceCreateModal() {
           const mode = ws.accessMode === 'edit' ? '<span class="badge bg-success">แก้ไขได้</span>' : '<span class="badge bg-secondary">ดูอย่างเดียว</span>';
           const login = ws.requireLoginToEdit ? '<span class="badge bg-warning text-dark">ต้องล็อกอิน</span>' : '<span class="badge bg-info">ไม่ต้องล็อกอิน</span>';
           const scope = ws.scope === 'department' ? '<span class="badge bg-primary">กลุ่มงาน</span>' : '<span class="badge bg-light text-dark border">ส่วนตัว</span>';
-          const typeMap = { table:'ตาราง', checklist:'Checklist', form:'แบบฟอร์ม' };
+          const typeMap = { table:'ตาราง', checklist:'Checklist', form:'แบบฟอร์ม', google_sheet:'Google Sheet', google_form:'Google Form' };
           const type = '<span class="badge bg-success-subtle text-success border">'+(typeMap[ws.workspaceType] || 'ตาราง')+'</span>';
           const exp = ws.expiresAt ? (ws.expired ? '<span class="badge bg-danger">หมดอายุ '+escapeHtml(ws.expiresAt)+'</span>' : '<span class="badge bg-light text-dark border">'+escapeHtml(ws.expiresAt)+'</span>') : '<span class="text-muted">ไม่กำหนด</span>';
-          const action = ws.canManage ? `<button class="btn btn-sm btn-outline-primary me-1" onclick="copyWorkspaceLink('${ws.id}')"><i class="bi bi-link-45deg"></i></button><button class="btn btn-sm btn-outline-success me-1" onclick="openWorkspaceEditor('${ws.id}')"><i class="bi bi-pencil-square"></i></button><button class="btn btn-sm btn-outline-danger" onclick="deleteWorkspaceUI('${ws.id}')"><i class="bi bi-trash"></i></button>` : `<button class="btn btn-sm btn-outline-primary me-1" onclick="copyWorkspaceLink('${ws.id}')"><i class="bi bi-link-45deg"></i></button><button class="btn btn-sm btn-outline-secondary" onclick="openWorkspaceEditor('${ws.id}')"><i class="bi bi-eye"></i></button>`;
+          let action;
+          if (ws.workspaceType === 'google_sheet' || ws.workspaceType === 'google_form') {
+            action = `<button class="btn btn-sm btn-outline-primary me-1" onclick="copyWorkspaceLink('${ws.id}')"><i class="bi bi-link-45deg"></i></button><button class="btn btn-sm btn-outline-success me-1" onclick="openWorkspaceEditor('${ws.id}')"><i class="bi bi-box-arrow-up-right"></i></button>${ws.responseSheetUrl ? `<button class="btn btn-sm btn-outline-info me-1" onclick="window.open('${escapeHtml(ws.responseSheetUrl)}','_blank')"><i class="bi bi-table"></i></button>` : ''}${ws.canManage ? `<button class="btn btn-sm btn-outline-danger" onclick="deleteWorkspaceUI('${ws.id}')"><i class="bi bi-trash"></i></button>` : ''}`;
+          } else {
+            action = ws.canManage ? `<button class="btn btn-sm btn-outline-primary me-1" onclick="copyWorkspaceLink('${ws.id}')"><i class="bi bi-link-45deg"></i></button><button class="btn btn-sm btn-outline-success me-1" onclick="openWorkspaceEditor('${ws.id}')"><i class="bi bi-pencil-square"></i></button><button class="btn btn-sm btn-outline-danger" onclick="deleteWorkspaceUI('${ws.id}')"><i class="bi bi-trash"></i></button>` : `<button class="btn btn-sm btn-outline-primary me-1" onclick="copyWorkspaceLink('${ws.id}')"><i class="bi bi-link-45deg"></i></button><button class="btn btn-sm btn-outline-secondary" onclick="openWorkspaceEditor('${ws.id}')"><i class="bi bi-eye"></i></button>`;
+          }
           tbody.innerHTML += `<tr><td class="ps-4"><div class="fw-bold">${escapeHtml(ws.title)}</div><small class="text-muted">${escapeHtml(ws.description || '')}</small><br><small class="text-muted">เจ้าของ: ${escapeHtml(ws.ownerName || '-')}</small></td><td>${scope}</td><td>${type}</td><td>${mode}<br>${login}</td><td>${exp}</td><td class="pe-4 text-end">${action}</td></tr>`;
         });
       }).getMySharedWorkspaces(user.phone);
@@ -4756,6 +4769,7 @@ function openWorkspaceCreateModal() {
     function openWorkspaceEditor(id) {
       const ws = sharedWorkspacesGlobal.find(w=>w.id===id);
       if (!ws) return;
+      if (ws.workspaceType === 'google_sheet' || ws.workspaceType === 'google_form') { window.open(ws.url, '_blank'); return; }
       const url = new URL(ws.url);
       const token = url.searchParams.get('token') || '';
       google.script.run.withSuccessHandler(res => {
