@@ -25,6 +25,151 @@
       }
       window.google = window.google || {}; window.google.script = window.google.script || {}; window.google.script.run = makeRunner(null, null);
     })();
+  
+
+    // ==========================================
+    // IT Services Hub v41
+    // ==========================================
+    function initItServicesHub() {
+      // Reserved for future stats / integration checks.
+      return true;
+    }
+
+    function openItServicesRoadmap() {
+      Swal.fire({
+        title: 'แผนรวม IT Services',
+        html: `<div class="text-start small">
+          <div class="mb-2"><b>v41</b> — เพิ่ม IT Services Hub และเครื่องมือแบ่งไฟล์เสียงแบบเบา</div>
+          <div class="mb-2"><b>v42</b> — รวมระบบจองห้องประชุม / Zoom กับ Resources และ Approval กลาง</div>
+          <div class="mb-2"><b>v43</b> — รวมระบบรายงานการประชุม พร้อม AI สรุปเสียงและสร้างเอกสาร</div>
+          <div class="mb-2"><b>v44</b> — เพิ่มการนำไฟล์เสียงที่แบ่งแล้วไปใช้ต่อกับ AI สรุปรายงานประชุม</div>
+          <hr>
+          <div class="text-muted">แนวทางนี้จะไม่ย้ายระบบ login เดิมเข้ามา แต่ใช้บัญชี สิทธิ์ กลุ่มงาน แจ้งเตือน และ Audit Log ของ Health Assistant OS เป็นศูนย์กลาง</div>
+        </div>`,
+        icon: 'info',
+        confirmButtonText: 'เข้าใจแล้ว'
+      });
+    }
+
+    function openItComingSoon(title, detail) {
+      Swal.fire({
+        icon: 'info',
+        title: title,
+        html: `<div class="text-start">${escapeHtml(detail || 'กำลังเตรียมรวมเข้าระบบหลัก')}</div>`,
+        confirmButtonText: 'รับทราบ'
+      });
+    }
+
+    function toggleItAudioSplitter(show) {
+      const el = document.getElementById('itAudioSplitterPanel');
+      if (!el) return;
+      el.classList.toggle('d-none', !show);
+      if (show) setTimeout(() => el.scrollIntoView({behavior:'smooth', block:'start'}), 100);
+    }
+
+    function itShowAudioFileInfo() {
+      const file = document.getElementById('itSplitAudioInput')?.files?.[0];
+      const info = document.getElementById('itSplitFileInfo');
+      if (!info) return;
+      info.textContent = file ? `ไฟล์ที่เลือก: ${file.name} (${(file.size/1024/1024).toFixed(2)} MB)` : '';
+    }
+
+    function itUpdateSplitLabel() {
+      const mode = document.querySelector('input[name="itSplitMode"]:checked')?.value || 'size';
+      const label = document.getElementById('itSplitValueLabel');
+      if (!label) return;
+      if (mode === 'size') label.textContent = 'ระบุขนาดต่อไฟล์โดยประมาณ (MB)';
+      if (mode === 'count') label.textContent = 'ระบุจำนวนไฟล์ที่ต้องการแบ่ง';
+      if (mode === 'time') label.textContent = 'ระบุระยะเวลาต่อไฟล์ (วินาที)';
+    }
+
+    async function itProcessAudioSplit() {
+      const file = document.getElementById('itSplitAudioInput')?.files?.[0];
+      const mode = document.querySelector('input[name="itSplitMode"]:checked')?.value || 'size';
+      const val = parseFloat(document.getElementById('itSplitValue')?.value || '0');
+      if (!file) return Swal.fire('ยังไม่ได้เลือกไฟล์', 'กรุณาเลือกไฟล์เสียงก่อนครับ', 'warning');
+      if (!val || val <= 0) return Swal.fire('ระบุค่าไม่ถูกต้อง', 'กรุณาระบุค่าการแบ่งไฟล์ให้มากกว่า 0', 'warning');
+
+      const btn = document.getElementById('btnItSplitAudio');
+      if (btn) btn.disabled = true;
+      Swal.fire({title:'กำลังแบ่งไฟล์เสียง...', html:'ระบบประมวลผลในเบราว์เซอร์ของคุณ', allowOutsideClick:false, didOpen:()=>Swal.showLoading()});
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const arrayBuffer = await file.arrayBuffer();
+        const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+        const duration = audioBuffer.duration;
+        let segments = [];
+        if (mode === 'time') {
+          for (let start=0; start<duration; start+=val) segments.push({start, end:Math.min(start+val, duration)});
+        } else if (mode === 'count') {
+          const count = Math.max(1, Math.floor(val));
+          const part = duration / count;
+          for (let i=0; i<count; i++) segments.push({start:i*part, end:Math.min((i+1)*part, duration)});
+        } else {
+          // Approximation for speech WAV 16k mono ~ 32KB/sec; conservative for download parts.
+          const seconds = Math.max(30, (val * 1024 * 1024) / 32000);
+          for (let start=0; start<duration; start+=seconds) segments.push({start, end:Math.min(start+seconds, duration)});
+        }
+        itCreateAudioParts_(audioBuffer, segments, file.name);
+        Swal.close();
+        Swal.fire({icon:'success', title:'แบ่งไฟล์สำเร็จ', text:'ดาวน์โหลดไฟล์ย่อยได้จากรายการด้านล่าง', timer:1400, showConfirmButton:false});
+      } catch (err) {
+        Swal.fire('แบ่งไฟล์ไม่สำเร็จ', err.message || String(err), 'error');
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    function itCreateAudioParts_(audioBuffer, segments, originalName) {
+      const box = document.getElementById('itSplitResults');
+      const list = document.getElementById('itSplitDownloadLinks');
+      if (!box || !list) return;
+      list.innerHTML = '';
+      const base = (originalName || 'audio').replace(/\.[^.]+$/, '');
+      const origRate = audioBuffer.sampleRate;
+      const targetRate = 16000;
+      const channels = audioBuffer.numberOfChannels;
+      segments.forEach((seg, idx) => {
+        const startFrame = Math.floor(seg.start * origRate);
+        const endFrame = Math.floor(seg.end * origRate);
+        const frameCount = Math.max(1, endFrame - startFrame);
+        const mono = new Float32Array(frameCount);
+        for (let ch=0; ch<channels; ch++) {
+          const data = audioBuffer.getChannelData(ch);
+          for (let j=0; j<frameCount; j++) mono[j] += (data[startFrame+j] || 0) / channels;
+        }
+        const ratio = origRate / targetRate;
+        const targetLength = Math.max(1, Math.floor(frameCount / ratio));
+        const down = new Float32Array(targetLength);
+        for (let j=0; j<targetLength; j++) down[j] = mono[Math.floor(j*ratio)] || 0;
+        const blob = itEncodeWav_(down, targetRate);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${base}_part${idx+1}.wav`;
+        a.className = 'btn btn-outline-success text-start';
+        const fmt = sec => `${Math.floor(sec/60)}:${String(Math.floor(sec%60)).padStart(2,'0')}`;
+        a.innerHTML = `<i class="bi bi-download"></i> พาร์ต ${idx+1} • ${fmt(seg.start)} - ${fmt(seg.end)} • ${(blob.size/1024/1024).toFixed(2)} MB`;
+        list.appendChild(a);
+      });
+      box.classList.remove('d-none');
+    }
+
+    function itEncodeWav_(samples, sampleRate) {
+      const buffer = new ArrayBuffer(44 + samples.length * 2);
+      const view = new DataView(buffer);
+      const write = (offset, str) => { for (let i=0; i<str.length; i++) view.setUint8(offset+i, str.charCodeAt(i)); };
+      write(0,'RIFF'); view.setUint32(4,36+samples.length*2,true); write(8,'WAVE'); write(12,'fmt ');
+      view.setUint32(16,16,true); view.setUint16(20,1,true); view.setUint16(22,1,true); view.setUint32(24,sampleRate,true);
+      view.setUint32(28,sampleRate*2,true); view.setUint16(32,2,true); view.setUint16(34,16,true); write(36,'data'); view.setUint32(40,samples.length*2,true);
+      let offset = 44;
+      for (let i=0; i<samples.length; i++, offset+=2) {
+        const s = Math.max(-1, Math.min(1, samples[i]));
+        view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+      }
+      return new Blob([buffer], {type:'audio/wav'});
+    }
+
   </script>
 
   <script>
@@ -391,7 +536,10 @@
     .word-cloud-token { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; line-height: 1.05; }
     .word-cloud-names { font-size: 0.32em; opacity: .68; font-weight: 400; margin-top: 2px; max-width: 240px; text-align: center; white-space: normal; }
 
-  </style>
+  
+    .it-service-card { transition: .2s ease; }
+    .it-service-card:hover { transform: translateY(-3px); box-shadow: 0 12px 24px rgba(15,23,42,.08); }
+</style>
 </head>
 <body>
   <div class="toast-container-ha" id="toastContainerHa"></div>
@@ -637,6 +785,9 @@
         </li>
         <li class="nav-item" role="presentation">
           <button class="nav-link" id="schedule-tab" data-bs-toggle="tab" data-bs-target="#schedule-pane" type="button" role="tab"><i class="bi bi-calendar-event"></i> ตารางงาน & นัดหมาย</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="itservices-tab" data-bs-toggle="tab" data-bs-target="#itservices-pane" type="button" role="tab" onclick="initItServicesHub()"><i class="bi bi-pc-display-horizontal"></i> IT Services</button>
         </li>
       </ul>
 
@@ -1154,6 +1305,88 @@
                     </table>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-pane fade" id="itservices-pane" role="tabpanel">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+            <div>
+              <h5 class="fw-bold mb-1"><i class="bi bi-pc-display-horizontal text-primary"></i> IT Services Hub</h5>
+              <div class="text-muted small">รวมบริการ IT ที่จะผนวกเข้ากับ Health Assistant OS โดยใช้บัญชีผู้ใช้ สิทธิ์ แจ้งเตือน และ Audit Log กลางของระบบ</div>
+            </div>
+            <button class="btn btn-sm btn-outline-primary" onclick="openItServicesRoadmap()"><i class="bi bi-map"></i> แผนรวมระบบ</button>
+          </div>
+
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+              <div class="card h-100 border-success it-service-card">
+                <div class="card-body p-4 d-flex flex-column">
+                  <div class="display-6 text-success mb-3"><i class="bi bi-camera-video"></i></div>
+                  <h6 class="fw-bold">จองห้องประชุม / Zoom</h6>
+                  <p class="text-muted small flex-grow-1">เตรียมรวมระบบจองห้องประชุมและ Zoom เข้ากับ Resources, Approval Workflow, Notification และ Audit Log กลาง</p>
+                  <button class="btn btn-success btn-sm fw-bold" onclick="openItComingSoon('Meeting Room / Zoom Booking', 'v42 จะเพิ่มฟอร์มจองห้อง/Zoom แบบใหม่ โดยใช้ทรัพยากรและระบบอนุมัติกลางของ Health Assistant OS')"><i class="bi bi-calendar-plus"></i> เปิดโมดูลจอง</button>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card h-100 border-primary it-service-card">
+                <div class="card-body p-4 d-flex flex-column">
+                  <div class="display-6 text-primary mb-3"><i class="bi bi-journal-text"></i></div>
+                  <h6 class="fw-bold">รายงานการประชุม</h6>
+                  <p class="text-muted small flex-grow-1">เตรียมเพิ่มระบบบันทึกรายงานการประชุม สรุปเสียงด้วย AI สร้าง Google Doc/PDF และผูกกับตารางงานได้</p>
+                  <button class="btn btn-primary btn-sm fw-bold" onclick="openItComingSoon('Meeting Minutes', 'v43 จะเพิ่มฟอร์มรายงานประชุม พร้อม AI สรุปจากไฟล์เสียง และระบบสร้างเอกสาร Google Doc/PDF')"><i class="bi bi-file-earmark-word"></i> เปิดโมดูลรายงาน</button>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card h-100 border-warning it-service-card">
+                <div class="card-body p-4 d-flex flex-column">
+                  <div class="display-6 text-warning mb-3"><i class="bi bi-scissors"></i></div>
+                  <h6 class="fw-bold">เครื่องมือแบ่งไฟล์เสียง</h6>
+                  <p class="text-muted small flex-grow-1">ใช้งานบนเบราว์เซอร์โดยตรง แบ่งไฟล์เสียงตามขนาด จำนวนไฟล์ หรือระยะเวลา เพื่อเตรียมส่งต่อให้ AI วิเคราะห์</p>
+                  <button class="btn btn-warning btn-sm fw-bold text-dark" onclick="toggleItAudioSplitter(true)"><i class="bi bi-music-note-list"></i> เปิดเครื่องมือแบ่งไฟล์เสียง</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="itAudioSplitterPanel" class="card border-warning shadow-sm d-none">
+            <div class="card-header bg-warning bg-opacity-10 d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <div>
+                <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-scissors"></i> เครื่องมือแบ่งไฟล์เสียง</h6>
+                <small class="text-muted">ประมวลผลในเครื่องผู้ใช้ ไม่อัปโหลดไฟล์เสียงขึ้น server</small>
+              </div>
+              <button class="btn btn-sm btn-outline-secondary" onclick="toggleItAudioSplitter(false)"><i class="bi bi-x-lg"></i> ปิด</button>
+            </div>
+            <div class="card-body">
+              <div class="alert alert-info small"><i class="bi bi-info-circle"></i> เหมาะสำหรับแบ่งไฟล์เสียงประชุม/อบรมเป็นช่วงย่อย ก่อนนำไปใช้กับ AI สรุปประชุมในรอบถัดไป</div>
+              <div class="mb-3">
+                <label class="form-label small fw-bold text-muted">1. เลือกไฟล์เสียง</label>
+                <input class="form-control" type="file" id="itSplitAudioInput" accept="audio/*" onchange="itShowAudioFileInfo()">
+                <small class="text-muted" id="itSplitFileInfo"></small>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-bold text-muted">2. รูปแบบการแบ่งไฟล์</label>
+                <div class="row g-2">
+                  <div class="col-md-4"><label class="form-check border rounded p-2 w-100"><input class="form-check-input ms-1 me-2" type="radio" name="itSplitMode" value="size" checked onchange="itUpdateSplitLabel()"> แบ่งตามขนาดไฟล์</label></div>
+                  <div class="col-md-4"><label class="form-check border rounded p-2 w-100"><input class="form-check-input ms-1 me-2" type="radio" name="itSplitMode" value="count" onchange="itUpdateSplitLabel()"> แบ่งตามจำนวนไฟล์</label></div>
+                  <div class="col-md-4"><label class="form-check border rounded p-2 w-100"><input class="form-check-input ms-1 me-2" type="radio" name="itSplitMode" value="time" onchange="itUpdateSplitLabel()"> แบ่งตามระยะเวลา</label></div>
+                </div>
+              </div>
+              <div class="row g-2 align-items-end mb-3">
+                <div class="col-md-8">
+                  <label class="form-label small fw-bold text-muted" id="itSplitValueLabel">ระบุขนาดต่อไฟล์โดยประมาณ (MB)</label>
+                  <input type="number" class="form-control" id="itSplitValue" min="1" placeholder="เช่น 5">
+                </div>
+                <div class="col-md-4">
+                  <button class="btn btn-warning w-100 fw-bold text-dark" onclick="itProcessAudioSplit()" id="btnItSplitAudio"><i class="bi bi-scissors"></i> เริ่มแบ่งไฟล์</button>
+                </div>
+              </div>
+              <div id="itSplitResults" class="d-none mt-3 border rounded bg-light p-3">
+                <h6 class="fw-bold text-success"><i class="bi bi-check-circle"></i> แบ่งไฟล์สำเร็จ</h6>
+                <div id="itSplitDownloadLinks" class="d-flex flex-column gap-2"></div>
               </div>
             </div>
           </div>
