@@ -387,6 +387,10 @@
 
     .word-cloud-stage{min-height:360px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:14px;padding:24px;background:radial-gradient(circle at top left,rgba(14,165,233,.12),transparent 35%),#fff;border-radius:18px;border:1px solid #e2e8f0;}
     .word-cloud-token{display:inline-block;padding:4px 8px;border-radius:999px;background:#eff6ff;color:#075985;font-weight:700;transition:.2s;}
+  
+    .word-cloud-token { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; line-height: 1.05; }
+    .word-cloud-names { font-size: 0.32em; opacity: .68; font-weight: 400; margin-top: 2px; max-width: 240px; text-align: center; white-space: normal; }
+
   </style>
 </head>
 <body>
@@ -4981,7 +4985,7 @@ function openWorkspaceCreateModal() {
         if (!res.data || !res.data.length) { tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">ยังไม่มีแบบสำรวจความคิดเห็นสด</td></tr>'; return; }
         tbody.innerHTML = '';
         res.data.forEach(s => {
-          const top = (s.top || []).map(x => `<span class="badge bg-light text-dark border me-1">${escapeHtml(x.text)} (${x.count})</span>`).join('') || '<span class="text-muted">-</span>';
+          const top = (s.top || []).map(x => `<span class="badge bg-light text-dark border me-1" title="${escapeHtml(x.namesText || '')}">${escapeHtml(x.text)} (${x.count})</span>`).join('') || '<span class="text-muted">-</span>';
           const status = s.isExpired ? '<span class="badge bg-secondary">หมดอายุ</span>' : (s.status === 'Active' ? '<span class="badge bg-success">เปิดอยู่</span>' : '<span class="badge bg-dark">ปิดแล้ว</span>');
           tbody.innerHTML += `<tr>
             <td class="ps-4"><div class="fw-bold">${escapeHtml(s.title)}</div><small class="text-muted">${status} ${s.scope === 'department' ? 'กลุ่มงาน' : 'ส่วนตัว'}</small></td>
@@ -5005,7 +5009,8 @@ function openWorkspaceCreateModal() {
       const max = Math.max(...items.map(x => x.count || 1));
       return `<div class="word-cloud-stage">${items.map(x => {
         const size = 18 + Math.round(((x.count || 1) / max) * 44);
-        return `<span class="word-cloud-token" style="font-size:${size}px">${escapeHtml(x.text)} <small style="font-size:.45em">${x.count}</small></span>`;
+        const nameLine = x.namesText ? `<div class="word-cloud-names">${escapeHtml(x.namesText)}</div>` : '';
+        return `<span class="word-cloud-token" style="font-size:${size}px"><span>${escapeHtml(x.text)} <small style="font-size:.45em">${x.count}</small></span>${nameLine}</span>`;
       }).join('')}</div><div class="text-center text-muted small mt-2">รวม ${total || 0} ความคิดเห็น • รีเฟรชอัตโนมัติทุก 3 วินาที</div>`;
     }
 
