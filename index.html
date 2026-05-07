@@ -169,7 +169,7 @@
     async function itAnalyzeSplitPartAsMinutes_(partIndex) {
       const part = (window.itSplitParts_ || [])[partIndex];
       if (!part) return Swal.fire('ไม่พบไฟล์ย่อย', 'กรุณาแบ่งไฟล์ใหม่อีกครั้ง', 'warning');
-      if (part.blob.size > 20 * 1024 * 1024) return Swal.fire('ไฟล์ยังใหญ่เกินไป', 'กรุณาแบ่งไฟล์ให้เล็กลงก่อนส่งให้ AI', 'warning');
+      if (part.blob.size > 2.8 * 1024 * 1024) return Swal.fire('ไฟล์ยังใหญ่เกินไปสำหรับส่งผ่าน Vercel', 'กรุณาแบ่งไฟล์ให้เล็กลง เช่น 90-120 วินาทีต่อไฟล์ หรือขนาดไม่เกิน 2.5 MB', 'warning');
       Swal.fire({title:'AI กำลังฟังไฟล์เสียงพาร์ตนี้...', html:`${escapeHtml(part.fileName)}<br><small class="text-muted">เมื่อวิเคราะห์เสร็จ ระบบจะเปิดฟอร์มรายงานการประชุมพร้อมข้อมูลที่เติมให้</small>`, allowOutsideClick:false, didOpen:()=>Swal.showLoading()});
       try {
         const file = new File([part.blob], part.fileName, {type:'audio/wav'});
@@ -5422,11 +5422,12 @@ function openWorkspaceCreateModal() {
     }
 
     function itBookingStatusBadge_(status) {
-      const s = status || 'รออนุมัติ';
+      const s = status || 'รอเจ้าหน้าที่';
       if (s === 'อนุมัติ') return '<span class="badge bg-success">อนุมัติ</span>';
       if (s === 'ไม่อนุญาต') return '<span class="badge bg-danger">ไม่อนุญาต</span>';
       if (s === 'ยกเลิก') return '<span class="badge bg-secondary">ยกเลิก</span>';
-      return '<span class="badge bg-warning text-dark">รออนุมัติ</span>';
+      if (s === 'รอเจ้าหน้าที่') return '<span class="badge bg-info text-dark">รอเจ้าหน้าที่</span>';
+      return '<span class="badge bg-warning text-dark">รอดำเนินการ</span>';
     }
 
     function renderItBookings() {
@@ -5439,7 +5440,7 @@ function openWorkspaceCreateModal() {
       body.innerHTML = itBookingsGlobal.map(item => {
         const room = item.roomName || item.otherLocation || '-';
         const time = `${item.startTime || '-'}<br><span class="text-muted">ถึง ${item.endTime || '-'}</span>`;
-        const canManage = user && (user.role === 'Super Admin' || user.role === 'Admin' || item.approverPhone === user.phone || item.ownerPhone === user.phone);
+        const canManage = isCurrentUserITServiceStaff_();
         return `<tr>
           <td class="ps-4"><div class="fw-bold">${escapeHtml(item.topic || '-')}</div><small class="text-muted">${escapeHtml(item.bookingType || '')}${item.meetingId ? ' • ID: '+escapeHtml(item.meetingId) : ''}</small></td>
           <td>${escapeHtml(room)}</td>
@@ -5460,12 +5461,12 @@ function openWorkspaceCreateModal() {
       const options = ['<option value="">-- เลือกห้อง/ทรัพยากร --</option>'].concat(resources.map(r => `<option value="${escapeHtml(r.id)}" data-name="${escapeHtml(r.name)}">${escapeHtml(r.name)} (${escapeHtml(r.type || '-')})</option>`)).join('');
       Swal.fire({
         title: 'สร้างคำขอจองห้องประชุม / Zoom',
-        width: 760,
+        width: 840,
         html: `<div class="text-start">
           <div class="mb-2"><label class="small fw-bold text-muted">เรื่อง</label><input id="itbTopic" class="form-control" placeholder="เช่น ประชุมคณะทำงาน..." /></div>
           <div class="row g-2 mb-2">
             <div class="col-md-6"><label class="small fw-bold text-muted">ประเภทการจอง</label><select id="itbType" class="form-select"><option value="Host">เป็นผู้จัด / Host</option><option value="Join">เข้าร่วมประชุม</option></select></div>
-            <div class="col-md-6"><label class="small fw-bold text-muted">ผู้อนุมัติ (เบอร์โทร)</label><input id="itbApprover" class="form-control" maxlength="10" placeholder="เว้นว่าง = อนุมัติอัตโนมัติ" /></div>
+            <div class="col-md-6"><label class="small fw-bold text-muted">สถานะ</label><input class="form-control bg-light" value="ส่งให้เจ้าหน้าที่กลุ่มงานสุขภาพดิจิทัลดำเนินการ" readonly /></div>
           </div>
           <div class="row g-2 mb-2">
             <div class="col-md-6"><label class="small fw-bold text-muted">Meeting ID</label><input id="itbMeetingId" class="form-control" placeholder="ถ้ามี" /></div>
@@ -5477,11 +5478,17 @@ function openWorkspaceCreateModal() {
             <div class="col-md-6"><label class="small fw-bold text-muted">เริ่ม</label><input id="itbStart" type="datetime-local" class="form-control" /></div>
             <div class="col-md-6"><label class="small fw-bold text-muted">สิ้นสุด</label><input id="itbEnd" type="datetime-local" class="form-control" /></div>
           </div>
-          <div class="alert alert-info small mb-0">ระบบจะบันทึกเข้าชีต ITBookings และส่งแจ้งเตือนให้ผู้อนุมัติ หากระบุเบอร์ผู้อนุมัติ</div>
+          <div class="mb-2 p-2 border rounded bg-light">
+            <div class="d-flex justify-content-between align-items-center mb-1"><label class="small fw-bold text-muted mb-0">ลงชื่อผู้ขอใช้บริการ</label><button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearItBookingSignature_()">ล้างลายเซ็น</button></div>
+            <canvas id="itbSignatureCanvas" width="720" height="150" style="width:100%;height:150px;border:1px dashed #64748b;border-radius:10px;background:#fff;touch-action:none;"></canvas>
+            <small class="text-muted">สามารถเซ็นสดบนหน้าจอได้ ระบบจะแสดงใน Digital View</small>
+          </div>
+          <div class="alert alert-info small mb-0"><i class="bi bi-info-circle"></i> คำขอนี้จะถูกส่งให้เจ้าหน้าที่กลุ่มงานสุขภาพดิจิทัลเป็นผู้จัดการ ไม่ต้องระบุเบอร์ผู้อนุมัติ</div>
         </div>`,
         showCancelButton: true,
         confirmButtonText: 'บันทึกคำขอ',
         cancelButtonText: 'ยกเลิก',
+        didOpen: () => setupItBookingSignature_('itbSignatureCanvas'),
         preConfirm: () => {
           const resSel = document.getElementById('itbResource');
           const opt = resSel?.options[resSel.selectedIndex];
@@ -5495,7 +5502,8 @@ function openWorkspaceCreateModal() {
             otherLocation: document.getElementById('itbOtherLocation').value.trim(),
             startTime: document.getElementById('itbStart').value,
             endTime: document.getElementById('itbEnd').value,
-            approverPhone: document.getElementById('itbApprover').value.trim(),
+            approverPhone: '',
+            signatureData: getItBookingSignatureData_(),
             ownerPhone: user.phone,
             ownerName: user.fullName,
             department: user.department
@@ -5539,6 +5547,7 @@ function openWorkspaceCreateModal() {
           <div>Passcode: ${escapeHtml(item.adminPasscode || '-')}</div>
           <div>Link: ${item.adminLink ? `<a href="${escapeHtml(item.adminLink)}" target="_blank">${escapeHtml(item.adminLink)}</a>` : '-'}</div>
           ${item.cancelReason ? `<div class="alert alert-warning mt-2 mb-0"><b>เหตุผล:</b> ${escapeHtml(item.cancelReason)}</div>` : ''}
+          <div class="mt-3 d-flex flex-wrap gap-2"><button type="button" class="btn btn-outline-dark btn-sm" onclick="openItBookingDigitalView('${item.id}')"><i class="bi bi-file-earmark-text"></i> Digital View</button></div>
         </div>`,
         confirmButtonText: 'ปิด'
       });
@@ -5563,7 +5572,7 @@ function openWorkspaceCreateModal() {
         confirmButtonText: 'อนุมัติ',
         denyButtonText: 'ไม่อนุญาต',
         cancelButtonText: 'ยกเลิกคำขอ',
-        footer: '<button type="button" class="btn btn-outline-secondary btn-sm" onclick="Swal.close()">ปิดหน้าต่าง</button>'
+        footer: `<button type="button" class="btn btn-outline-dark btn-sm me-2" onclick="openItBookingDigitalView('${id}')">Digital View</button><button type="button" class="btn btn-outline-secondary btn-sm" onclick="Swal.close()">ปิดหน้าต่าง</button>`
       }).then(async r => {
         if (!r.isConfirmed && !r.isDenied && r.dismiss !== Swal.DismissReason.cancel) return;
         const action = r.isConfirmed ? 'approve' : (r.isDenied ? 'reject' : 'cancel');
@@ -5721,16 +5730,97 @@ function openWorkspaceCreateModal() {
     async function itAnalyzeMinutesAudioInModal() {
       const file = document.getElementById('itmAudioFile')?.files?.[0];
       if (!file) return Swal.showValidationMessage ? Swal.showValidationMessage('กรุณาเลือกไฟล์เสียงก่อน') : alert('กรุณาเลือกไฟล์เสียงก่อน');
-      if (file.size > 20 * 1024 * 1024) return Swal.fire('ไฟล์ใหญ่เกินไป', 'แนะนำให้ใช้เครื่องมือแบ่งไฟล์เสียงก่อน แล้วเลือกไฟล์ย่อยไม่เกิน 20MB', 'warning');
       const old = Swal.getConfirmButton(); if (old) old.disabled = true;
       try {
         Swal.showLoading();
+        const data = await itAnalyzeAudioFileSmart_(file);
+        itFillMinutesForm_(data || {});
+        Swal.hideLoading(); if (old) old.disabled = false;
+      } catch(err) { Swal.fire('ผิดพลาด', err.message || String(err), 'error'); }
+    }
+
+    async function itAnalyzeAudioFileSmart_(file) {
+      const SAFE_DIRECT_BYTES = 2.8 * 1024 * 1024; // กัน Vercel FUNCTION_PAYLOAD_TOO_LARGE หลัง base64
+      if (file.size <= SAFE_DIRECT_BYTES) {
         const base64 = await readFileBase64_(file);
         const res = await gasRunPromise_('analyzeMeetingAudio', [base64, file.name, file.type || 'audio/mpeg']);
         if (!res || !res.success) throw new Error(res?.message || 'AI วิเคราะห์เสียงไม่สำเร็จ');
-        itFillMinutesForm_(res.data || {});
-        Swal.hideLoading(); if (old) old.disabled = false;
-      } catch(err) { Swal.fire('ผิดพลาด', err.message || String(err), 'error'); }
+        return res.data || {};
+      }
+
+      const proceed = await Swal.fire({
+        icon:'info',
+        title:'ไฟล์เสียงมีขนาดใหญ่',
+        html:'ระบบจะบีบอัด/แบ่งเสียงในเบราว์เซอร์เป็นช่วงย่อยก่อนส่งให้ AI เพื่อป้องกันข้อผิดพลาด <b>Request Entity Too Large</b><br><small class="text-muted">อาจใช้เวลาหลายนาทีตามความยาวไฟล์</small>',
+        showCancelButton:true,
+        confirmButtonText:'เริ่มแบ่งและวิเคราะห์',
+        cancelButtonText:'ยกเลิก'
+      });
+      if (!proceed.isConfirmed) throw new Error('ยกเลิกการวิเคราะห์ไฟล์เสียง');
+
+      Swal.fire({title:'กำลังถอดรหัสและแบ่งไฟล์เสียง...', html:'กรุณารอสักครู่', allowOutsideClick:false, didOpen:()=>Swal.showLoading()});
+      const chunks = await itCreateAudioChunksForAi_(file, 120);
+      if (!chunks.length) throw new Error('ไม่สามารถแบ่งไฟล์เสียงได้');
+      if (chunks.length > 12) {
+        const ok = await Swal.fire({icon:'warning', title:'ไฟล์เสียงยาวมาก', html:`ระบบแบ่งได้ ${chunks.length} ช่วง อาจชนโควต้า AI ได้<br>แนะนำให้ใช้เครื่องมือแบ่งไฟล์เสียงแล้วเลือกช่วงสำคัญก่อน`, showCancelButton:true, confirmButtonText:'วิเคราะห์ 12 ช่วงแรก', cancelButtonText:'ยกเลิก'});
+        if (!ok.isConfirmed) throw new Error('ยกเลิกการวิเคราะห์ไฟล์เสียง');
+      }
+      const useChunks = chunks.slice(0, 12);
+      const results = [];
+      for (let i=0; i<useChunks.length; i++) {
+        Swal.update({title:`AI กำลังวิเคราะห์เสียงช่วงที่ ${i+1}/${useChunks.length}`, html:`${escapeHtml(useChunks[i].fileName)} • ${(useChunks[i].blob.size/1024/1024).toFixed(2)} MB`});
+        const f = new File([useChunks[i].blob], useChunks[i].fileName, {type:'audio/wav'});
+        const base64 = await readFileBase64_(f);
+        const res = await gasRunPromise_('analyzeMeetingAudio', [base64, useChunks[i].fileName, 'audio/wav']);
+        if (res && res.success && res.data) results.push(res.data);
+      }
+      if (!results.length) throw new Error('AI ไม่สามารถวิเคราะห์เสียงได้ กรุณาลองแบ่งไฟล์ให้สั้นลง');
+      return itMergeMinutesResults_(results);
+    }
+
+    async function itCreateAudioChunksForAi_(file, chunkSeconds) {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const buffer = await file.arrayBuffer();
+      const audioBuffer = await ctx.decodeAudioData(buffer);
+      const duration = audioBuffer.duration;
+      const segments = [];
+      for (let start=0; start<duration; start+=chunkSeconds) segments.push({start, end:Math.min(start+chunkSeconds, duration)});
+      const chunks = [];
+      const origRate = audioBuffer.sampleRate;
+      const targetRate = 8000; // ลดขนาด payload แต่ยังพอใช้กับเสียงพูด
+      const channels = audioBuffer.numberOfChannels;
+      const base = (file.name || 'meeting_audio').replace(/\.[^.]+$/, '');
+      segments.forEach((seg, idx) => {
+        const startFrame = Math.floor(seg.start * origRate);
+        const endFrame = Math.floor(seg.end * origRate);
+        const frameCount = Math.max(1, endFrame - startFrame);
+        const mono = new Float32Array(frameCount);
+        for (let ch=0; ch<channels; ch++) {
+          const data = audioBuffer.getChannelData(ch);
+          for (let j=0; j<frameCount; j++) mono[j] += (data[startFrame+j] || 0) / channels;
+        }
+        const ratio = origRate / targetRate;
+        const targetLength = Math.max(1, Math.floor(frameCount / ratio));
+        const down = new Float32Array(targetLength);
+        for (let j=0; j<targetLength; j++) down[j] = mono[Math.floor(j*ratio)] || 0;
+        const blob = itEncodeWav_(down, targetRate);
+        chunks.push({blob, fileName:`${base}_ai_part${idx+1}.wav`, start:seg.start, end:seg.end});
+      });
+      return chunks;
+    }
+
+    function itMergeMinutesResults_(items) {
+      const first = items.find(x => x && (x.title || x.date || x.location)) || {};
+      const joinUnique = (field) => Array.from(new Set(items.map(x => String(x[field] || '').trim()).filter(Boolean).join('\n').split(/\n+/).map(x=>x.trim()).filter(Boolean))).join('\n');
+      return {
+        title: first.title || 'สรุปรายงานการประชุมจากไฟล์เสียง',
+        date: first.date || '',
+        location: first.location || '',
+        chairman: first.chairman || '',
+        attendees: joinUnique('attendees'),
+        agenda: items.map((x,i)=>`ช่วงที่ ${i+1}:\n${String(x.agenda || '-').trim()}`).join('\n\n'),
+        conclusion: items.map((x,i)=>`ช่วงที่ ${i+1}:\n${String(x.conclusion || '-').trim()}`).join('\n\n')
+      };
     }
 
     function itFillMinutesForm_(data) {
@@ -5752,6 +5842,91 @@ function openWorkspaceCreateModal() {
       } catch(err) { Swal.fire('ผิดพลาด', err.message || String(err), 'error'); }
     }
   </script>
+
+
+<script>
+  function isCurrentUserITServiceStaff_() {
+    try {
+      const role = String(user?.role || '');
+      const dept = String(user?.department || '');
+      return role === 'Super Admin' || role === 'Admin' || dept.includes('สุขภาพดิจิทัล');
+    } catch(e) { return false; }
+  }
+
+  function setupItBookingSignature_(canvasId) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#0f172a';
+    let drawing = false;
+    const pos = (ev) => {
+      const rect = canvas.getBoundingClientRect();
+      const p = ev.touches ? ev.touches[0] : ev;
+      return { x: (p.clientX - rect.left) * (canvas.width / rect.width), y: (p.clientY - rect.top) * (canvas.height / rect.height) };
+    };
+    const start = (ev) => { drawing = true; const p = pos(ev); ctx.beginPath(); ctx.moveTo(p.x, p.y); ev.preventDefault?.(); };
+    const move = (ev) => { if (!drawing) return; const p = pos(ev); ctx.lineTo(p.x, p.y); ctx.stroke(); ev.preventDefault?.(); };
+    const end = () => { drawing = false; };
+    canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', move); window.addEventListener('mouseup', end);
+    canvas.addEventListener('touchstart', start, {passive:false}); canvas.addEventListener('touchmove', move, {passive:false}); canvas.addEventListener('touchend', end);
+  }
+
+  function clearItBookingSignature_() {
+    const canvas = document.getElementById('itbSignatureCanvas');
+    if (!canvas) return;
+    canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  function getItBookingSignatureData_() {
+    const canvas = document.getElementById('itbSignatureCanvas');
+    if (!canvas) return '';
+    try { return canvas.toDataURL('image/png'); } catch(e) { return ''; }
+  }
+
+  function openItBookingDigitalView(id) {
+    const item = (window.itBookingsGlobal || itBookingsGlobal || []).find(x => x.id === id);
+    if (!item) return Swal.fire('ไม่พบข้อมูล', 'กรุณาโหลดข้อมูลใหม่อีกครั้ง', 'warning');
+    const sig = item.signatureData ? `<img src="${item.signatureData}" style="max-height:70px;max-width:240px;">` : '<span class="text-muted">ยังไม่มีลายเซ็น</span>';
+    const adminInfo = item.adminRoomId || item.adminPasscode || item.adminLink ? `
+      <div style="border:1px dashed #94a3b8;background:#f8fafc;padding:10px;margin-top:16px;border-radius:8px">
+        <b>สำหรับเจ้าหน้าที่กลุ่มงานสุขภาพดิจิทัล</b><br>
+        Room/ID: <b>${escapeHtml(item.adminRoomId || '-')}</b><br>
+        Passcode: <b>${escapeHtml(item.adminPasscode || '-')}</b><br>
+        Link: ${item.adminLink ? `<a href="${escapeHtml(item.adminLink)}" target="_blank">${escapeHtml(item.adminLink)}</a>` : '-'}
+      </div>` : '';
+    Swal.fire({
+      title: 'Digital View ใบขอใช้ระบบประชุมออนไลน์',
+      width: 900,
+      html: `<div id="itBookingDigitalPaper" class="text-start" style="background:white;color:#111;padding:22px;border-radius:12px;border:1px solid #e2e8f0;font-family:Sarabun,Prompt,sans-serif;line-height:1.8">
+        <div class="text-center mb-3"><h5 class="fw-bold mb-1">ใบขออนุญาตใช้ระบบการประชุมทางไกล / การประชุมออนไลน์</h5><div class="text-muted small">Health Assistant OS / IT Services</div></div>
+        <div class="row g-2 small">
+          <div class="col-md-6"><b>เลขที่คำขอ:</b> ${escapeHtml(item.id || '-')}</div>
+          <div class="col-md-6"><b>สถานะ:</b> ${itBookingStatusBadge_(item.status)}</div>
+          <div class="col-md-12"><b>เรื่อง:</b> ${escapeHtml(item.topic || '-')}</div>
+          <div class="col-md-6"><b>ผู้ขอใช้บริการ:</b> ${escapeHtml(item.ownerName || '-')}</div>
+          <div class="col-md-6"><b>กลุ่มงาน:</b> ${escapeHtml(item.department || '-')}</div>
+          <div class="col-md-6"><b>ประเภท:</b> ${escapeHtml(item.bookingType || '-')}</div>
+          <div class="col-md-6"><b>ห้อง/สถานที่:</b> ${escapeHtml(item.roomName || item.otherLocation || '-')}</div>
+          <div class="col-md-6"><b>เริ่ม:</b> ${escapeHtml(item.startTime || '-')}</div>
+          <div class="col-md-6"><b>สิ้นสุด:</b> ${escapeHtml(item.endTime || '-')}</div>
+          <div class="col-md-6"><b>Meeting ID:</b> ${escapeHtml(item.meetingId || '-')}</div>
+          <div class="col-md-6"><b>Passcode:</b> ${escapeHtml(item.passcode || '-')}</div>
+        </div>
+        <div class="d-flex justify-content-between text-center mt-4">
+          <div style="width:48%"><div>${sig}</div><div class="border-top pt-1 mt-2">${escapeHtml(item.ownerName || '')}<br><small>ผู้ขอใช้บริการ</small></div></div>
+          <div style="width:48%"><div style="height:70px"></div><div class="border-top pt-1 mt-2">เจ้าหน้าที่กลุ่มงานสุขภาพดิจิทัล<br><small>ผู้ดำเนินการ</small></div></div>
+        </div>
+        ${adminInfo}
+        ${item.cancelReason ? `<div class="alert alert-warning mt-3 mb-0"><b>หมายเหตุ:</b> ${escapeHtml(item.cancelReason)}</div>` : ''}
+      </div>`,
+      showCancelButton: true,
+      confirmButtonText: 'พิมพ์',
+      cancelButtonText: 'ปิด'
+    }).then(r => { if (r.isConfirmed) window.print(); });
+  }
+</script>
 
 </body>
 </html>
