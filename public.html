@@ -59,6 +59,10 @@
     .live-survey-shell .card{max-width:980px;}
     .live-word-cloud{min-height:320px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:14px;padding:24px;background:white;border:1px solid #e2e8f0;border-radius:18px;}
     .live-word-token{display:inline-block;padding:4px 8px;border-radius:999px;background:#eff6ff;color:#075985;font-weight:700;}
+  
+    .live-word-token { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; line-height: 1.05; }
+    .live-word-names { font-size: 0.32em; opacity: .68; font-weight: 400; margin-top: 2px; max-width: 240px; text-align: center; white-space: normal; }
+
   </style>
 </head>
 <body>
@@ -482,7 +486,8 @@
         const max = Math.max(...res.data.map(x => x.count || 1));
         box.innerHTML = `<div class="live-word-cloud">${res.data.map(x => {
           const size = 18 + Math.round(((x.count||1)/max)*46);
-          return `<span class="live-word-token" style="font-size:${size}px">${escapeHtml(x.text)} <small style="font-size:.45em">${x.count}</small></span>`;
+          const nameLine = x.namesText ? `<span class="live-word-names">${escapeHtml(x.namesText)}</span>` : '';
+          return `<span class="live-word-token" style="font-size:${size}px"><span>${escapeHtml(x.text)} <small style="font-size:.45em">${x.count}</small></span>${nameLine}</span>`;
         }).join('')}</div><div class="text-center text-muted small mt-2">รวม ${res.total || 0} ความคิดเห็น</div>`;
       }).getLiveOpinionSurveyResults(liveSurveyPublicState.id, liveSurveyPublicState.token, 80);
     }
