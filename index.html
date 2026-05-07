@@ -5557,30 +5557,63 @@ function openWorkspaceCreateModal() {
       const item = itBookingsGlobal.find(x => x.id === id);
       if (!item) return Swal.fire('ไม่พบข้อมูล', 'กรุณาโหลดข้อมูลใหม่อีกครั้ง', 'warning');
       Swal.fire({
-        title: 'จัดการคำขอจอง',
-        width: 680,
+        title: 'จัดการคำขอจอง / กรอกส่วนเจ้าหน้าที่',
+        width: 900,
         html: `<div class="text-start small">
-          <div class="mb-2"><b>${escapeHtml(item.topic || '-')}</b></div>
+          <div class="alert alert-info py-2 mb-3"><b>${escapeHtml(item.topic || '-')}</b><br>Digital View จะนำข้อมูลส่วนนี้ไปเติมในแบบฟอร์มกระดาษ</div>
           <div class="mb-2">สถานะปัจจุบัน: ${itBookingStatusBadge_(item.status)}</div>
-          <label class="small fw-bold text-muted">Room/ID ที่จัดให้</label><input id="itbmRoom" class="form-control mb-2" value="${escapeHtml(item.adminRoomId || '')}">
-          <label class="small fw-bold text-muted">Passcode</label><input id="itbmPass" class="form-control mb-2" value="${escapeHtml(item.adminPasscode || '')}">
-          <label class="small fw-bold text-muted">ลิงก์ประชุม</label><input id="itbmLink" class="form-control mb-2" value="${escapeHtml(item.adminLink || '')}">
-          <label class="small fw-bold text-muted">เหตุผล / หมายเหตุ</label><textarea id="itbmReason" class="form-control" rows="2">${escapeHtml(item.cancelReason || '')}</textarea>
+          <div class="row g-2">
+            <div class="col-md-4"><label class="small fw-bold text-muted">ห้องจัดประชุมที่</label><input id="itbmRoom" class="form-control mb-2" value="${escapeHtml(item.adminRoomId || '')}" placeholder="เช่น ห้องประชุม 1 / Zoom ID"></div>
+            <div class="col-md-4"><label class="small fw-bold text-muted">Password / Passcode</label><input id="itbmPass" class="form-control mb-2" value="${escapeHtml(item.adminPasscode || '')}"></div>
+            <div class="col-md-4"><label class="small fw-bold text-muted">ลิงก์ประชุม</label><input id="itbmLink" class="form-control mb-2" value="${escapeHtml(item.adminLink || '')}"></div>
+          </div>
+          <div class="row g-2">
+            <div class="col-md-6"><label class="small fw-bold text-muted">ผู้ควบคุมดูแล</label><input id="itbmSupervisorName" class="form-control mb-2" value="${escapeHtml(item.supervisorName || '')}" placeholder="ชื่อผู้ควบคุมดูแล"></div>
+            <div class="col-md-6"><label class="small fw-bold text-muted">ตำแหน่งผู้ควบคุมดูแล</label><input id="itbmSupervisorPosition" class="form-control mb-2" value="${escapeHtml(item.supervisorPosition || '')}" placeholder="ตำแหน่ง"></div>
+          </div>
+          <div class="mb-2 p-2 border rounded bg-light">
+            <div class="d-flex justify-content-between align-items-center mb-1"><label class="small fw-bold text-muted mb-0">ลายเซ็นผู้ควบคุมดูแล</label><button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearItBookingCanvas_('itbmSupervisorSig')">ล้าง</button></div>
+            <canvas id="itbmSupervisorSig" width="720" height="120" style="width:100%;height:120px;border:1px dashed #64748b;border-radius:10px;background:#fff;touch-action:none;"></canvas>
+            ${item.supervisorSignatureData ? '<small class="text-success">มีลายเซ็นเดิมแล้ว หากไม่เซ็นใหม่ ระบบจะใช้ลายเซ็นเดิม</small>' : ''}
+          </div>
+          <div class="row g-2">
+            <div class="col-md-6"><label class="small fw-bold text-muted">เจ้าหน้าที่ / ผู้อนุญาต</label><input id="itbmStaffName" class="form-control mb-2" value="${escapeHtml(item.staffName || user?.fullName || user?.name || '')}" placeholder="ชื่อเจ้าหน้าที่"></div>
+            <div class="col-md-6"><label class="small fw-bold text-muted">ตำแหน่ง</label><input id="itbmStaffPosition" class="form-control mb-2" value="${escapeHtml(item.staffPosition || user?.position || 'นักวิชาการคอมพิวเตอร์')}" placeholder="ตำแหน่ง"></div>
+          </div>
+          <div class="mb-2 p-2 border rounded bg-light">
+            <div class="d-flex justify-content-between align-items-center mb-1"><label class="small fw-bold text-muted mb-0">ลายเซ็นเจ้าหน้าที่ / ผู้อนุญาต</label><button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearItBookingCanvas_('itbmAdminSig')">ล้าง</button></div>
+            <canvas id="itbmAdminSig" width="720" height="120" style="width:100%;height:120px;border:1px dashed #64748b;border-radius:10px;background:#fff;touch-action:none;"></canvas>
+            ${item.adminSignatureData ? '<small class="text-success">มีลายเซ็นเดิมแล้ว หากไม่เซ็นใหม่ ระบบจะใช้ลายเซ็นเดิม</small>' : ''}
+          </div>
+          <label class="small fw-bold text-muted">เหตุผล / หมายเหตุ / ไม่อนุญาตเพราะ</label><textarea id="itbmReason" class="form-control" rows="2">${escapeHtml(item.cancelReason || item.approvalNote || '')}</textarea>
         </div>`,
         showDenyButton: true,
         showCancelButton: true,
         confirmButtonText: 'อนุมัติ',
         denyButtonText: 'ไม่อนุญาต',
         cancelButtonText: 'ยกเลิกคำขอ',
-        footer: `<button type="button" class="btn btn-outline-dark btn-sm me-2" onclick="openItBookingDigitalView('${id}')">Digital View</button><button type="button" class="btn btn-outline-secondary btn-sm" onclick="Swal.close()">ปิดหน้าต่าง</button>`
+        footer: `<button type="button" class="btn btn-outline-dark btn-sm me-2" onclick="openItBookingDigitalView('${id}')">Digital View</button><button type="button" class="btn btn-outline-secondary btn-sm" onclick="Swal.close()">ปิดหน้าต่าง</button>`,
+        didOpen: () => {
+          setupItBookingSignature_('itbmSupervisorSig');
+          setupItBookingSignature_('itbmAdminSig');
+        }
       }).then(async r => {
         if (!r.isConfirmed && !r.isDenied && r.dismiss !== Swal.DismissReason.cancel) return;
         const action = r.isConfirmed ? 'approve' : (r.isDenied ? 'reject' : 'cancel');
+        const supervisorNewSig = getItBookingCanvasData_('itbmSupervisorSig');
+        const adminNewSig = getItBookingCanvasData_('itbmAdminSig');
         const payload = {
           adminRoomId: document.getElementById('itbmRoom')?.value || '',
           adminPasscode: document.getElementById('itbmPass')?.value || '',
           adminLink: document.getElementById('itbmLink')?.value || '',
-          reason: document.getElementById('itbmReason')?.value || ''
+          reason: document.getElementById('itbmReason')?.value || '',
+          approvalNote: document.getElementById('itbmReason')?.value || '',
+          staffName: document.getElementById('itbmStaffName')?.value || '',
+          staffPosition: document.getElementById('itbmStaffPosition')?.value || '',
+          supervisorName: document.getElementById('itbmSupervisorName')?.value || '',
+          supervisorPosition: document.getElementById('itbmSupervisorPosition')?.value || '',
+          supervisorSignatureData: supervisorNewSig || item.supervisorSignatureData || '',
+          adminSignatureData: adminNewSig || item.adminSignatureData || ''
         };
         Swal.fire({title:'กำลังอัปเดต...', allowOutsideClick:false, didOpen:()=>Swal.showLoading()});
         try {
@@ -5873,58 +5906,161 @@ function openWorkspaceCreateModal() {
     canvas.addEventListener('touchstart', start, {passive:false}); canvas.addEventListener('touchmove', move, {passive:false}); canvas.addEventListener('touchend', end);
   }
 
-  function clearItBookingSignature_() {
-    const canvas = document.getElementById('itbSignatureCanvas');
+function clearItBookingCanvas_(canvasId) {
+    const canvas = document.getElementById(canvasId);
     if (!canvas) return;
     canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
   }
 
-  function getItBookingSignatureData_() {
-    const canvas = document.getElementById('itbSignatureCanvas');
+  function getItBookingCanvasData_(canvasId) {
+    const canvas = document.getElementById(canvasId);
     if (!canvas) return '';
-    try { return canvas.toDataURL('image/png'); } catch(e) { return ''; }
+    try {
+      const ctx = canvas.getContext('2d');
+      const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+      for (let i = 3; i < pixels.length; i += 4) {
+        if (pixels[i] !== 0) return canvas.toDataURL('image/png');
+      }
+    } catch(e) {}
+    return '';
+  }
+
+  function clearItBookingSignature_() { clearItBookingCanvas_('itbSignatureCanvas'); }
+
+  function getItBookingSignatureData_() { return getItBookingCanvasData_('itbSignatureCanvas'); }
+
+  function itBookingThaiDate_(value) {
+    if (!value) return '-';
+    const d = new Date(String(value).replace(' ', 'T'));
+    if (isNaN(d.getTime())) return escapeHtml(value);
+    const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear() + 543}`;
+  }
+
+  function itBookingTimeOnly_(value) {
+    if (!value) return '-';
+    const m = String(value).match(/(\d{2}:\d{2})/);
+    return m ? m[1] : escapeHtml(value);
+  }
+
+  function itBookingRoomParts_(item) {
+    const text = item.roomName || item.otherLocation || '';
+    const floorMatch = String(text).match(/ชั้น\s*([0-9๐-๙]+)/);
+    const room = String(text).replace(/ชั้น\s*[0-9๐-๙]+/g, '').trim();
+    return { room: room || '-', floor: floorMatch ? floorMatch[1] : '-' };
+  }
+
+  function itBookingCheck_(checked) {
+    return `<span style="display:inline-block;width:13px;height:13px;border:1.5px solid #111;margin-right:7px;vertical-align:-1px;text-align:center;line-height:11px;font-size:10px;font-weight:bold;background:${checked ? '#111' : '#fff'};color:#fff">${checked ? '✓' : ''}</span>`;
+  }
+
+  function itBookingSigBlock_(img, name, role, position) {
+    const sig = img ? `<img src="${img}" style="max-height:56px;max-width:190px;object-fit:contain;display:block;margin:0 auto 2px;">` : `<div style="height:56px"></div>`;
+    return `<div style="width:48%;text-align:center;line-height:1.55;break-inside:avoid;">
+      <div>ลงชื่อ</div>
+      ${sig}
+      <div>( <span style="display:inline-block;min-width:150px;border-bottom:1px dotted #555;color:#14248a;font-weight:700;">${escapeHtml(name || '')}</span> )</div>
+      <div>${escapeHtml(role || '')}</div>
+      ${position ? `<div>ตำแหน่ง <span style="display:inline-block;min-width:120px;border-bottom:1px dotted #999;color:#14248a;font-weight:700;">${escapeHtml(position)}</span></div>` : ''}
+    </div>`;
+  }
+
+  function buildItBookingPaperHtml_(item) {
+    const roomParts = itBookingRoomParts_(item);
+    const isHost = String(item.bookingType || '').toLowerCase().includes('host');
+    const isJoin = String(item.bookingType || '').toLowerCase().includes('join');
+    const approved = item.status === 'อนุมัติ';
+    const rejected = item.status === 'ไม่อนุญาต';
+    const supervisorName = item.supervisorName || '';
+    const staffName = item.staffName || 'เจ้าหน้าที่กลุ่มงานสุขภาพดิจิทัล';
+    const staffPosition = item.staffPosition || 'นักวิชาการคอมพิวเตอร์';
+    return `<div id="itBookingDigitalPaper" class="it-booking-paper" style="width:210mm;min-height:297mm;margin:0 auto;background:#fff;color:#111;padding:18mm 17mm;font-family:'Sarabun',sans-serif;font-size:14px;line-height:1.72;box-sizing:border-box;box-shadow:0 0 18px rgba(15,23,42,.18);">
+      <div style="text-align:right;color:#64748b;font-size:12px;margin-bottom:2mm;">แบบฟอร์มดิจิทัล (Digital Paper Form)</div>
+      <div style="text-align:center;font-size:22px;font-weight:800;margin-bottom:4mm;">ใบขออนุญาตใช้ระบบการประชุมทางไกล / การประชุมออนไลน์</div>
+      <div style="text-align:center;font-size:18px;margin-bottom:8mm;">วันที่ <span style="display:inline-block;min-width:120px;border-bottom:1px dotted #555;color:#14248a;font-weight:800;">${itBookingThaiDate_(item.startTime || item.createdAt)}</span></div>
+
+      <div><b>เรื่อง</b> ขออนุญาตใช้ระบบการประชุมทางไกล / การประชุมออนไลน์</div>
+      <div><b>เรียน</b> นายแพทย์สาธารณสุขจังหวัดนครนายก</div>
+
+      <div style="margin-top:7mm;text-indent:12mm;">ด้วยข้าพเจ้า <span style="display:inline-block;min-width:180px;border-bottom:1px dotted #555;color:#14248a;font-weight:800;text-align:center;">${escapeHtml(item.ownerName || '')}</span>
+      ตำแหน่ง <span style="display:inline-block;min-width:165px;border-bottom:1px dotted #555;color:#14248a;font-weight:800;text-align:center;">${escapeHtml(item.ownerPosition || user?.position || '')}</span></div>
+      <div>สังกัด/หน่วยงาน <span style="display:inline-block;min-width:310px;border-bottom:1px dotted #555;color:#14248a;font-weight:800;text-align:center;">${escapeHtml(item.department || '')}</span> มีความจำเป็นขอใช้งานระบบ:</div>
+
+      <div style="margin-top:4mm;margin-left:10mm;">
+        <div>${itBookingCheck_(false)} การประชุมทางไกล VDO Conference (Polycom) <span style="margin-left:8px;">RoomNumber</span> <span style="display:inline-block;min-width:70px;border-bottom:1px dotted #555;text-align:center;color:#14248a;font-weight:700;">-</span></div>
+        <div>${itBookingCheck_(true)} การประชุมออนไลน์ e-Conference (Webex / Zoom / Meet / etc.)</div>
+        <div style="margin-left:10mm;">${itBookingCheck_(isHost)} เป็นผู้จัดการประชุม (HOST)</div>
+        <div style="margin-left:10mm;">${itBookingCheck_(isJoin)} เข้าร่วมการประชุม RoomNumber/ID <span style="display:inline-block;min-width:90px;border-bottom:1px dotted #555;color:#14248a;font-weight:700;text-align:center;">${escapeHtml(item.meetingId || item.adminRoomId || '')}</span> Password <span style="display:inline-block;min-width:80px;border-bottom:1px dotted #555;color:#14248a;font-weight:700;text-align:center;">${escapeHtml(item.passcode || item.adminPasscode || '')}</span></div>
+        <div>${itBookingCheck_(false)} อื่น ๆ ระบุ <span style="display:inline-block;min-width:300px;border-bottom:1px dotted #555;color:#14248a;font-weight:700;">${escapeHtml(item.otherLocation || '')}</span></div>
+      </div>
+
+      <div style="margin-top:5mm;"><b>เรื่อง</b> <span style="display:inline-block;min-width:470px;border-bottom:1px dotted #555;color:#14248a;font-weight:800;text-align:center;">${escapeHtml(item.topic || '')}</span></div>
+      <div>ณ ห้องประชุม <span style="display:inline-block;min-width:230px;border-bottom:1px dotted #555;color:#14248a;font-weight:800;text-align:center;">${escapeHtml(roomParts.room)}</span> ชั้น <span style="display:inline-block;min-width:55px;border-bottom:1px dotted #555;color:#14248a;font-weight:800;text-align:center;">${escapeHtml(roomParts.floor)}</span></div>
+      <div>สำนักงานสาธารณสุขจังหวัดนครนายก วันที่ <span style="display:inline-block;min-width:120px;border-bottom:1px dotted #555;color:#14248a;font-weight:800;text-align:center;">${itBookingThaiDate_(item.startTime)}</span> เวลา <span style="display:inline-block;min-width:70px;border-bottom:1px dotted #555;color:#14248a;font-weight:800;text-align:center;">${itBookingTimeOnly_(item.startTime)}</span> น. ถึง <span style="display:inline-block;min-width:70px;border-bottom:1px dotted #555;color:#14248a;font-weight:800;text-align:center;">${itBookingTimeOnly_(item.endTime)}</span> น.</div>
+
+      <div style="display:flex;justify-content:space-between;gap:12mm;margin-top:11mm;">
+        ${itBookingSigBlock_(item.signatureData, item.ownerName, 'ผู้ขอใช้บริการ', '')}
+        ${itBookingSigBlock_(item.supervisorSignatureData, supervisorName, 'ผู้ควบคุมดูแล', item.supervisorPosition || '')}
+      </div>
+
+      <div style="border:1px solid #e2e8f0;background:#f8fafc;margin-top:10mm;padding:4mm 5mm;border-radius:6px;break-inside:avoid;">
+        <div style="font-weight:800;margin-bottom:3mm;">สำหรับเจ้าหน้าที่</div>
+        <div>ห้องจัดประชุมที่ : <span style="display:inline-block;min-width:230px;border-bottom:1px dotted #555;color:#14248a;font-weight:800;">${escapeHtml(item.adminRoomId || roomParts.room || '')}</span></div>
+        <div>RoomNumber : <span style="display:inline-block;min-width:260px;border-bottom:1px dotted #555;color:#14248a;font-weight:800;">${escapeHtml(item.adminRoomId || item.meetingId || '')}</span></div>
+        <div>Password : <span style="display:inline-block;min-width:270px;border-bottom:1px dotted #555;color:#14248a;font-weight:800;">${escapeHtml(item.adminPasscode || item.passcode || '')}</span></div>
+        ${item.adminLink ? `<div>Link : <span style="color:#0d6efd;font-weight:700;word-break:break-all;">${escapeHtml(item.adminLink)}</span></div>` : ''}
+        <div style="margin-top:4mm;">${itBookingCheck_(approved)} อนุญาต&nbsp;&nbsp;&nbsp;&nbsp; ${itBookingCheck_(rejected)} ไม่อนุญาต <span style="display:inline-block;min-width:220px;border-bottom:1px dotted #555;color:#14248a;font-weight:700;">${escapeHtml(item.cancelReason || item.approvalNote || '')}</span></div>
+        <div style="display:flex;justify-content:flex-end;margin-top:6mm;">
+          ${itBookingSigBlock_(item.adminSignatureData, staffName, '', staffPosition)}
+        </div>
+      </div>
+
+      <div style="font-size:11px;color:#475569;margin-top:5mm;">หมายเหตุ : Room Number หมายถึง หมายเลขห้องที่ผู้จัดประชุมกำหนดให้ เพื่อ Login เข้าร่วมประชุมทางไกล/ประชุมออนไลน์ ในวันนั้น ๆ</div>
+    </div>`;
   }
 
   function openItBookingDigitalView(id) {
     const item = (window.itBookingsGlobal || itBookingsGlobal || []).find(x => x.id === id);
     if (!item) return Swal.fire('ไม่พบข้อมูล', 'กรุณาโหลดข้อมูลใหม่อีกครั้ง', 'warning');
-    const sig = item.signatureData ? `<img src="${item.signatureData}" style="max-height:70px;max-width:240px;">` : '<span class="text-muted">ยังไม่มีลายเซ็น</span>';
-    const adminInfo = item.adminRoomId || item.adminPasscode || item.adminLink ? `
-      <div style="border:1px dashed #94a3b8;background:#f8fafc;padding:10px;margin-top:16px;border-radius:8px">
-        <b>สำหรับเจ้าหน้าที่กลุ่มงานสุขภาพดิจิทัล</b><br>
-        Room/ID: <b>${escapeHtml(item.adminRoomId || '-')}</b><br>
-        Passcode: <b>${escapeHtml(item.adminPasscode || '-')}</b><br>
-        Link: ${item.adminLink ? `<a href="${escapeHtml(item.adminLink)}" target="_blank">${escapeHtml(item.adminLink)}</a>` : '-'}
-      </div>` : '';
     Swal.fire({
-      title: 'Digital View ใบขอใช้ระบบประชุมออนไลน์',
-      width: 900,
-      html: `<div id="itBookingDigitalPaper" class="text-start" style="background:white;color:#111;padding:22px;border-radius:12px;border:1px solid #e2e8f0;font-family:Sarabun,Prompt,sans-serif;line-height:1.8">
-        <div class="text-center mb-3"><h5 class="fw-bold mb-1">ใบขออนุญาตใช้ระบบการประชุมทางไกล / การประชุมออนไลน์</h5><div class="text-muted small">Health Assistant OS / IT Services</div></div>
-        <div class="row g-2 small">
-          <div class="col-md-6"><b>เลขที่คำขอ:</b> ${escapeHtml(item.id || '-')}</div>
-          <div class="col-md-6"><b>สถานะ:</b> ${itBookingStatusBadge_(item.status)}</div>
-          <div class="col-md-12"><b>เรื่อง:</b> ${escapeHtml(item.topic || '-')}</div>
-          <div class="col-md-6"><b>ผู้ขอใช้บริการ:</b> ${escapeHtml(item.ownerName || '-')}</div>
-          <div class="col-md-6"><b>กลุ่มงาน:</b> ${escapeHtml(item.department || '-')}</div>
-          <div class="col-md-6"><b>ประเภท:</b> ${escapeHtml(item.bookingType || '-')}</div>
-          <div class="col-md-6"><b>ห้อง/สถานที่:</b> ${escapeHtml(item.roomName || item.otherLocation || '-')}</div>
-          <div class="col-md-6"><b>เริ่ม:</b> ${escapeHtml(item.startTime || '-')}</div>
-          <div class="col-md-6"><b>สิ้นสุด:</b> ${escapeHtml(item.endTime || '-')}</div>
-          <div class="col-md-6"><b>Meeting ID:</b> ${escapeHtml(item.meetingId || '-')}</div>
-          <div class="col-md-6"><b>Passcode:</b> ${escapeHtml(item.passcode || '-')}</div>
-        </div>
-        <div class="d-flex justify-content-between text-center mt-4">
-          <div style="width:48%"><div>${sig}</div><div class="border-top pt-1 mt-2">${escapeHtml(item.ownerName || '')}<br><small>ผู้ขอใช้บริการ</small></div></div>
-          <div style="width:48%"><div style="height:70px"></div><div class="border-top pt-1 mt-2">เจ้าหน้าที่กลุ่มงานสุขภาพดิจิทัล<br><small>ผู้ดำเนินการ</small></div></div>
-        </div>
-        ${adminInfo}
-        ${item.cancelReason ? `<div class="alert alert-warning mt-3 mb-0"><b>หมายเหตุ:</b> ${escapeHtml(item.cancelReason)}</div>` : ''}
-      </div>`,
-      showCancelButton: true,
-      confirmButtonText: 'พิมพ์',
-      cancelButtonText: 'ปิด'
-    }).then(r => { if (r.isConfirmed) window.print(); });
+      title: 'ใบขออนุญาตแบบดิจิทัล',
+      width: 980,
+      html: `<div style="background:#64748b;padding:16px;max-height:76vh;overflow:auto;border-radius:10px;">${buildItBookingPaperHtml_(item)}</div>`,
+      showConfirmButton: false,
+      showCloseButton: true,
+      footer: `<div class="d-flex flex-wrap gap-2 justify-content-center w-100">
+        <button type="button" class="btn btn-outline-primary" onclick="printItBookingPaper_()"><i class="bi bi-printer"></i> พิมพ์ A4</button>
+        <button type="button" class="btn btn-outline-success" onclick="downloadItBookingPaperPdf_()"><i class="bi bi-download"></i> ดาวน์โหลด PDF</button>
+        <button type="button" class="btn btn-success" onclick="copyItBookingInfo_('${id}')"><i class="bi bi-clipboard"></i> คัดลอกข้อมูลการจอง</button>
+        <button type="button" class="btn btn-secondary" onclick="Swal.close()">ปิดหน้าต่าง</button>
+      </div>`
+    });
+  }
+
+  function printItBookingPaper_() {
+    const el = document.getElementById('itBookingDigitalPaper');
+    if (!el) return;
+    const w = window.open('', '_blank');
+    w.document.write(`<html><head><title>IT Booking Form</title><link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700;800&display=swap" rel="stylesheet"><style>@page{size:A4;margin:0}body{margin:0;background:white}.it-booking-paper{box-shadow:none!important;margin:0!important}</style></head><body>${el.outerHTML}</body></html>`);
+    w.document.close();
+    setTimeout(() => { w.focus(); w.print(); }, 400);
+  }
+
+  async function downloadItBookingPaperPdf_() {
+    const el = document.getElementById('itBookingDigitalPaper');
+    if (!el || typeof html2canvas === 'undefined' || !window.jspdf) return Swal.fire('ไม่พร้อมใช้งาน', 'ไม่พบ html2canvas/jsPDF', 'warning');
+    const canvas = await html2canvas(el, {scale:2, backgroundColor:'#ffffff', useCORS:true});
+    const img = canvas.toDataURL('image/jpeg', 0.95);
+    const pdf = new window.jspdf.jsPDF('p', 'mm', 'a4');
+    pdf.addImage(img, 'JPEG', 0, 0, 210, 297);
+    pdf.save('IT_Booking_Digital_Form.pdf');
+  }
+
+  function copyItBookingInfo_(id) {
+    const item = (window.itBookingsGlobal || itBookingsGlobal || []).find(x => x.id === id);
+    if (!item) return;
+    const text = `ใบขออนุญาตใช้ระบบประชุมออนไลน์\nเรื่อง: ${item.topic || '-'}\nผู้ขอ: ${item.ownerName || '-'}\nหน่วยงาน: ${item.department || '-'}\nห้อง/สถานที่: ${item.roomName || item.otherLocation || '-'}\nเวลา: ${item.startTime || '-'} ถึง ${item.endTime || '-'}\nสถานะ: ${item.status || '-'}`;
+    navigator.clipboard?.writeText(text).then(() => Swal.fire({icon:'success', title:'คัดลอกแล้ว', timer:1000, showConfirmButton:false}));
   }
 </script>
 
