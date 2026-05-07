@@ -1336,7 +1336,7 @@
                   <div class="display-6 text-primary mb-3"><i class="bi bi-journal-text"></i></div>
                   <h6 class="fw-bold">รายงานการประชุม</h6>
                   <p class="text-muted small flex-grow-1">เตรียมเพิ่มระบบบันทึกรายงานการประชุม สรุปเสียงด้วย AI สร้าง Google Doc/PDF และผูกกับตารางงานได้</p>
-                  <button class="btn btn-primary btn-sm fw-bold" onclick="openItComingSoon('Meeting Minutes', 'v43 จะเพิ่มฟอร์มรายงานประชุม พร้อม AI สรุปจากไฟล์เสียง และระบบสร้างเอกสาร Google Doc/PDF')"><i class="bi bi-file-earmark-word"></i> เปิดโมดูลรายงาน</button>
+                  <button class="btn btn-primary btn-sm fw-bold" onclick="openItMinutesModule()"><i class="bi bi-file-earmark-word"></i> เปิดโมดูลรายงาน</button>
                 </div>
               </div>
             </div>
@@ -1369,6 +1369,29 @@
                 <table class="table table-hover align-middle mb-0 small">
                   <thead class="table-light"><tr><th class="ps-4">เรื่อง</th><th>ห้อง/สถานที่</th><th>ช่วงเวลา</th><th>ผู้ขอ</th><th>สถานะ</th><th class="pe-4 text-end">จัดการ</th></tr></thead>
                   <tbody id="itBookingTableBody"><tr><td colspan="6" class="text-center py-4 text-muted">ยังไม่ได้โหลดข้อมูล</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+
+          <div id="itMinutesPanel" class="card border-primary shadow-sm d-none mb-4">
+            <div class="card-header bg-primary bg-opacity-10 d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <div>
+                <h6 class="fw-bold mb-0 text-primary"><i class="bi bi-journal-text"></i> รายงานการประชุม</h6>
+                <small class="text-muted">สร้างรายงานประชุมด้วย AI จากข้อความ/ไฟล์เสียง และออก Google Doc/PDF อัตโนมัติ</small>
+              </div>
+              <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-primary fw-bold" onclick="openItMinutesCreate()"><i class="bi bi-plus-circle"></i> สร้างรายงานประชุม</button>
+                <button class="btn btn-sm btn-outline-primary" onclick="loadItMinutes()"><i class="bi bi-arrow-clockwise"></i> โหลดใหม่</button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="toggleItMinutesPanel(false)"><i class="bi bi-x-lg"></i> ปิด</button>
+              </div>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 small">
+                  <thead class="table-light"><tr><th class="ps-4">หัวข้อ</th><th>วันที่/สถานที่</th><th>ผู้จด</th><th>เอกสาร</th><th class="pe-4 text-end">จัดการ</th></tr></thead>
+                  <tbody id="itMinutesTableBody"><tr><td colspan="5" class="text-center py-4 text-muted">ยังไม่ได้โหลดข้อมูล</td></tr></tbody>
                 </table>
               </div>
             </div>
@@ -5512,6 +5535,171 @@ function openWorkspaceCreateModal() {
           loadItBookings();
         } catch(err) { Swal.fire('ผิดพลาด', err.message || String(err), 'error'); }
       });
+    }
+  </script>
+
+
+  <script>
+    // ==========================================
+    // Meeting Minutes Integration v43
+    // ==========================================
+    let itMinutesGlobal = [];
+
+    function openItMinutesModule() {
+      toggleItMinutesPanel(true);
+      loadItMinutes();
+    }
+
+    function toggleItMinutesPanel(show) {
+      const el = document.getElementById('itMinutesPanel');
+      if (!el) return;
+      el.classList.toggle('d-none', !show);
+      if (show) setTimeout(() => el.scrollIntoView({behavior:'smooth', block:'start'}), 100);
+    }
+
+    async function loadItMinutes() {
+      const body = document.getElementById('itMinutesTableBody');
+      if (body) body.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm"></span> กำลังโหลด...</td></tr>';
+      try {
+        const res = await gasRunPromise_('getMeetingMinutesHistoryV2', [user?.phone || '', user?.role || 'User', user?.department || '']);
+        if (!res || !res.success) throw new Error(res?.message || 'โหลดข้อมูลไม่สำเร็จ');
+        itMinutesGlobal = res.data || [];
+        renderItMinutes();
+      } catch (err) {
+        if (body) body.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">${escapeHtml(err.message || String(err))}</td></tr>`;
+      }
+    }
+
+    function renderItMinutes() {
+      const body = document.getElementById('itMinutesTableBody');
+      if (!body) return;
+      if (!itMinutesGlobal.length) {
+        body.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">ยังไม่มีรายงานการประชุม</td></tr>';
+        return;
+      }
+      body.innerHTML = itMinutesGlobal.map(item => {
+        const docBtns = `${item.docUrl ? `<a class="btn btn-sm btn-outline-primary" target="_blank" href="${escapeHtml(item.docUrl)}"><i class="bi bi-file-earmark-word"></i> Doc</a>` : ''} ${item.pdfUrl ? `<a class="btn btn-sm btn-outline-danger" target="_blank" href="${escapeHtml(item.pdfUrl)}"><i class="bi bi-file-pdf"></i> PDF</a>` : ''}`;
+        const canDelete = user && (user.role === 'Super Admin' || user.role === 'Admin' || item.recorderPhone === user.phone);
+        return `<tr>
+          <td class="ps-4"><div class="fw-bold">${escapeHtml(item.title || '-')}</div><small class="text-muted">${escapeHtml((item.agenda || '').slice(0, 120))}</small></td>
+          <td>${escapeHtml(item.date || '-')}<br><small class="text-muted">${escapeHtml(item.location || '-')}</small></td>
+          <td>${escapeHtml(item.recorderName || '-')}<br><small class="text-muted">${escapeHtml(item.department || '')}</small></td>
+          <td>${docBtns || '<span class="text-muted">-</span>'}</td>
+          <td class="text-end pe-4"><button class="btn btn-sm btn-outline-primary" onclick="openItMinutesDetail('${item.id}')"><i class="bi bi-eye"></i> ดู</button>${canDelete ? ` <button class="btn btn-sm btn-outline-danger" onclick="deleteItMinutes('${item.id}')"><i class="bi bi-trash"></i></button>` : ''}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    function openItMinutesDetail(id) {
+      const item = itMinutesGlobal.find(x => x.id === id);
+      if (!item) return Swal.fire('ไม่พบข้อมูล', 'กรุณาโหลดข้อมูลใหม่', 'warning');
+      Swal.fire({
+        title: escapeHtml(item.title || 'รายงานการประชุม'),
+        width: 820,
+        html: `<div class="text-start small">
+          <div class="row g-2 mb-2"><div class="col-md-6"><b>วันที่:</b> ${escapeHtml(item.date || '-')}</div><div class="col-md-6"><b>สถานที่:</b> ${escapeHtml(item.location || '-')}</div></div>
+          <div class="mb-2"><b>ประธาน:</b> ${escapeHtml(item.chairman || '-')}</div>
+          <div class="mb-2"><b>ผู้เข้าร่วม:</b><div class="border rounded p-2 bg-light" style="white-space:pre-wrap">${escapeHtml(item.attendees || '-')}</div></div>
+          <div class="mb-2"><b>วาระ/สาระสำคัญ:</b><div class="border rounded p-2 bg-light" style="white-space:pre-wrap">${escapeHtml(item.agenda || '-')}</div></div>
+          <div class="mb-2"><b>สรุปผล/มติ/ข้อสั่งการ:</b><div class="border rounded p-2 bg-light" style="white-space:pre-wrap">${escapeHtml(item.conclusion || '-')}</div></div>
+          <div class="d-flex gap-2 flex-wrap mt-3">${item.docUrl ? `<a class="btn btn-outline-primary" target="_blank" href="${escapeHtml(item.docUrl)}">เปิด Google Doc</a>` : ''}${item.pdfUrl ? `<a class="btn btn-outline-danger" target="_blank" href="${escapeHtml(item.pdfUrl)}">เปิด PDF</a>` : ''}</div>
+        </div>`,
+        confirmButtonText:'ปิด'
+      });
+    }
+
+    function openItMinutesCreate() {
+      Swal.fire({
+        title: 'สร้างรายงานการประชุม',
+        width: 900,
+        html: `<div class="text-start">
+          <div class="alert alert-info small"><b>AI ช่วยสรุปได้ 2 แบบ</b>: วางข้อความประชุมดิบ หรือแนบไฟล์เสียงประชุม แล้วกดวิเคราะห์เพื่อเติมฟอร์ม</div>
+          <div class="mb-2"><label class="small fw-bold text-muted">วางข้อความดิบจากการประชุม/บันทึกเสียงที่ถอดแล้ว</label><textarea id="itmRawText" class="form-control" rows="3" placeholder="วางข้อความ แล้วกด AI วิเคราะห์ข้อความ"></textarea></div>
+          <div class="d-flex gap-2 mb-3"><button type="button" class="btn btn-outline-primary btn-sm" onclick="itAnalyzeMinutesTextInModal()"><i class="bi bi-magic"></i> AI วิเคราะห์ข้อความ</button><input id="itmAudioFile" type="file" accept="audio/*" class="form-control form-control-sm"><button type="button" class="btn btn-outline-success btn-sm" onclick="itAnalyzeMinutesAudioInModal()"><i class="bi bi-soundwave"></i> AI วิเคราะห์เสียง</button></div>
+          <hr>
+          <div class="mb-2"><label class="small fw-bold text-muted">หัวข้อการประชุม</label><input id="itmTitle" class="form-control"></div>
+          <div class="row g-2 mb-2"><div class="col-md-6"><label class="small fw-bold text-muted">วันที่</label><input id="itmDate" type="date" class="form-control"></div><div class="col-md-6"><label class="small fw-bold text-muted">สถานที่</label><input id="itmLocation" class="form-control"></div></div>
+          <div class="mb-2"><label class="small fw-bold text-muted">ประธาน</label><input id="itmChairman" class="form-control"></div>
+          <div class="mb-2"><label class="small fw-bold text-muted">ผู้เข้าร่วม</label><textarea id="itmAttendees" class="form-control" rows="2"></textarea></div>
+          <div class="mb-2"><label class="small fw-bold text-muted">วาระ/สาระสำคัญ</label><textarea id="itmAgenda" class="form-control" rows="5"></textarea></div>
+          <div class="mb-2"><label class="small fw-bold text-muted">สรุปผล/มติ/ข้อสั่งการ</label><textarea id="itmConclusion" class="form-control" rows="4"></textarea></div>
+        </div>`,
+        showCancelButton:true,
+        confirmButtonText:'สร้าง Google Doc/PDF',
+        cancelButtonText:'ยกเลิก',
+        preConfirm: () => {
+          const payload = {
+            title: document.getElementById('itmTitle').value.trim(),
+            date: document.getElementById('itmDate').value,
+            location: document.getElementById('itmLocation').value.trim(),
+            chairman: document.getElementById('itmChairman').value.trim(),
+            attendees: document.getElementById('itmAttendees').value.trim(),
+            agenda: document.getElementById('itmAgenda').value.trim(),
+            conclusion: document.getElementById('itmConclusion').value.trim(),
+            recorderPhone: user.phone,
+            recorderName: user.fullName,
+            department: user.department
+          };
+          if (!payload.title) { Swal.showValidationMessage('กรุณาระบุหัวข้อการประชุม'); return false; }
+          return payload;
+        }
+      }).then(async r => {
+        if (!r.isConfirmed) return;
+        Swal.fire({title:'กำลังสร้าง Google Doc/PDF...', html:'กรุณารอสักครู่', allowOutsideClick:false, didOpen:()=>Swal.showLoading()});
+        try {
+          const res = await gasRunPromise_('saveMeetingMinutesV2', [r.value]);
+          if (!res || !res.success) throw new Error(res?.message || 'สร้างรายงานไม่สำเร็จ');
+          Swal.fire({icon:'success', title:'สร้างรายงานแล้ว', html:`<div class="d-flex gap-2 justify-content-center flex-wrap"><a class="btn btn-outline-primary" target="_blank" href="${escapeHtml(res.docUrl || '#')}">เปิด Google Doc</a><a class="btn btn-outline-danger" target="_blank" href="${escapeHtml(res.pdfUrl || '#')}">เปิด PDF</a></div>`});
+          loadItMinutes();
+        } catch(err) { Swal.fire('ผิดพลาด', err.message || String(err), 'error'); }
+      });
+    }
+
+    async function itAnalyzeMinutesTextInModal() {
+      const text = document.getElementById('itmRawText')?.value || '';
+      if (!text.trim()) return Swal.showValidationMessage ? Swal.showValidationMessage('กรุณาวางข้อความก่อน') : alert('กรุณาวางข้อความก่อน');
+      const old = Swal.getConfirmButton(); if (old) old.disabled = true;
+      try {
+        Swal.showLoading();
+        const res = await gasRunPromise_('analyzeMeetingMinutesText', [text]);
+        if (!res || !res.success) throw new Error(res?.message || 'AI วิเคราะห์ไม่สำเร็จ');
+        itFillMinutesForm_(res.data || {});
+        Swal.hideLoading(); if (old) old.disabled = false;
+      } catch(err) { Swal.fire('ผิดพลาด', err.message || String(err), 'error'); }
+    }
+
+    async function itAnalyzeMinutesAudioInModal() {
+      const file = document.getElementById('itmAudioFile')?.files?.[0];
+      if (!file) return Swal.showValidationMessage ? Swal.showValidationMessage('กรุณาเลือกไฟล์เสียงก่อน') : alert('กรุณาเลือกไฟล์เสียงก่อน');
+      if (file.size > 20 * 1024 * 1024) return Swal.fire('ไฟล์ใหญ่เกินไป', 'แนะนำให้ใช้เครื่องมือแบ่งไฟล์เสียงก่อน แล้วเลือกไฟล์ย่อยไม่เกิน 20MB', 'warning');
+      const old = Swal.getConfirmButton(); if (old) old.disabled = true;
+      try {
+        Swal.showLoading();
+        const base64 = await readFileBase64_(file);
+        const res = await gasRunPromise_('analyzeMeetingAudio', [base64, file.name, file.type || 'audio/mpeg']);
+        if (!res || !res.success) throw new Error(res?.message || 'AI วิเคราะห์เสียงไม่สำเร็จ');
+        itFillMinutesForm_(res.data || {});
+        Swal.hideLoading(); if (old) old.disabled = false;
+      } catch(err) { Swal.fire('ผิดพลาด', err.message || String(err), 'error'); }
+    }
+
+    function itFillMinutesForm_(data) {
+      const map = { itmTitle:'title', itmDate:'date', itmLocation:'location', itmChairman:'chairman', itmAttendees:'attendees', itmAgenda:'agenda', itmConclusion:'conclusion' };
+      Object.keys(map).forEach(id => {
+        const el = document.getElementById(id);
+        if (el && data[map[id]]) el.value = data[map[id]];
+      });
+    }
+
+    async function deleteItMinutes(id) {
+      const ok = await Swal.fire({title:'ลบรายงานการประชุม?', text:'รายการนี้จะถูกลบจากฐานข้อมูล แต่ไฟล์ Doc/PDF ที่สร้างไว้จะยังอยู่ใน Drive', icon:'warning', showCancelButton:true, confirmButtonText:'ลบ', cancelButtonText:'ยกเลิก'});
+      if (!ok.isConfirmed) return;
+      try {
+        const res = await gasRunPromise_('deleteMeetingMinutesV2', [id, user.phone]);
+        if (!res || !res.success) throw new Error(res?.message || 'ลบไม่สำเร็จ');
+        Swal.fire({icon:'success', title:'ลบแล้ว', timer:1200, showConfirmButton:false});
+        loadItMinutes();
+      } catch(err) { Swal.fire('ผิดพลาด', err.message || String(err), 'error'); }
     }
   </script>
 
