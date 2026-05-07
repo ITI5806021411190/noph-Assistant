@@ -1326,7 +1326,7 @@
                   <div class="display-6 text-success mb-3"><i class="bi bi-camera-video"></i></div>
                   <h6 class="fw-bold">จองห้องประชุม / Zoom</h6>
                   <p class="text-muted small flex-grow-1">เตรียมรวมระบบจองห้องประชุมและ Zoom เข้ากับ Resources, Approval Workflow, Notification และ Audit Log กลาง</p>
-                  <button class="btn btn-success btn-sm fw-bold" onclick="openItComingSoon('Meeting Room / Zoom Booking', 'v42 จะเพิ่มฟอร์มจองห้อง/Zoom แบบใหม่ โดยใช้ทรัพยากรและระบบอนุมัติกลางของ Health Assistant OS')"><i class="bi bi-calendar-plus"></i> เปิดโมดูลจอง</button>
+                  <button class="btn btn-success btn-sm fw-bold" onclick="openItBookingModule()"><i class="bi bi-calendar-plus"></i> เปิดโมดูลจอง</button>
                 </div>
               </div>
             </div>
@@ -1348,6 +1348,28 @@
                   <p class="text-muted small flex-grow-1">ใช้งานบนเบราว์เซอร์โดยตรง แบ่งไฟล์เสียงตามขนาด จำนวนไฟล์ หรือระยะเวลา เพื่อเตรียมส่งต่อให้ AI วิเคราะห์</p>
                   <button class="btn btn-warning btn-sm fw-bold text-dark" onclick="toggleItAudioSplitter(true)"><i class="bi bi-music-note-list"></i> เปิดเครื่องมือแบ่งไฟล์เสียง</button>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="itBookingPanel" class="card border-success shadow-sm d-none mb-4">
+            <div class="card-header bg-success bg-opacity-10 d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <div>
+                <h6 class="fw-bold mb-0 text-success"><i class="bi bi-calendar-check"></i> ระบบจองห้องประชุม / Zoom</h6>
+                <small class="text-muted">ใช้บัญชีผู้ใช้ ทรัพยากร การแจ้งเตือน และ Audit Log กลางของ Health Assistant OS</small>
+              </div>
+              <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-success fw-bold" onclick="openItBookingCreate()"><i class="bi bi-plus-circle"></i> สร้างคำขอจอง</button>
+                <button class="btn btn-sm btn-outline-success" onclick="loadItBookings()"><i class="bi bi-arrow-clockwise"></i> โหลดใหม่</button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="toggleItBookingPanel(false)"><i class="bi bi-x-lg"></i> ปิด</button>
+              </div>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 small">
+                  <thead class="table-light"><tr><th class="ps-4">เรื่อง</th><th>ห้อง/สถานที่</th><th>ช่วงเวลา</th><th>ผู้ขอ</th><th>สถานะ</th><th class="pe-4 text-end">จัดการ</th></tr></thead>
+                  <tbody id="itBookingTableBody"><tr><td colspan="6" class="text-center py-4 text-muted">ยังไม่ได้โหลดข้อมูล</td></tr></tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -5297,5 +5319,201 @@ function openWorkspaceCreateModal() {
     }
 
   </script>
+
+
+  <script>
+    // ==========================================
+    // IT Booking Integration v42
+    // ==========================================
+    let itBookingsGlobal = [];
+
+    function openItBookingModule() {
+      toggleItBookingPanel(true);
+      loadItBookings();
+    }
+
+    function toggleItBookingPanel(show) {
+      const el = document.getElementById('itBookingPanel');
+      if (!el) return;
+      el.classList.toggle('d-none', !show);
+      if (show) setTimeout(() => el.scrollIntoView({behavior:'smooth', block:'start'}), 100);
+    }
+
+    async function loadItBookings() {
+      const body = document.getElementById('itBookingTableBody');
+      if (body) body.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm"></span> กำลังโหลด...</td></tr>';
+      try {
+        const res = await gasRunPromise_('getITBookings', [user?.phone || '', user?.role || 'User', user?.department || '']);
+        if (!res || !res.success) throw new Error(res?.message || 'โหลดข้อมูลไม่สำเร็จ');
+        itBookingsGlobal = res.data || [];
+        renderItBookings();
+      } catch (err) {
+        if (body) body.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-danger">${escapeHtml(err.message || String(err))}</td></tr>`;
+      }
+    }
+
+    function itBookingStatusBadge_(status) {
+      const s = status || 'รออนุมัติ';
+      if (s === 'อนุมัติ') return '<span class="badge bg-success">อนุมัติ</span>';
+      if (s === 'ไม่อนุญาต') return '<span class="badge bg-danger">ไม่อนุญาต</span>';
+      if (s === 'ยกเลิก') return '<span class="badge bg-secondary">ยกเลิก</span>';
+      return '<span class="badge bg-warning text-dark">รออนุมัติ</span>';
+    }
+
+    function renderItBookings() {
+      const body = document.getElementById('itBookingTableBody');
+      if (!body) return;
+      if (!itBookingsGlobal.length) {
+        body.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">ยังไม่มีคำขอจองห้อง/Zoom</td></tr>';
+        return;
+      }
+      body.innerHTML = itBookingsGlobal.map(item => {
+        const room = item.roomName || item.otherLocation || '-';
+        const time = `${item.startTime || '-'}<br><span class="text-muted">ถึง ${item.endTime || '-'}</span>`;
+        const canManage = user && (user.role === 'Super Admin' || user.role === 'Admin' || item.approverPhone === user.phone || item.ownerPhone === user.phone);
+        return `<tr>
+          <td class="ps-4"><div class="fw-bold">${escapeHtml(item.topic || '-')}</div><small class="text-muted">${escapeHtml(item.bookingType || '')}${item.meetingId ? ' • ID: '+escapeHtml(item.meetingId) : ''}</small></td>
+          <td>${escapeHtml(room)}</td>
+          <td>${time}</td>
+          <td>${escapeHtml(item.ownerName || '-')}<br><small class="text-muted">${escapeHtml(item.department || '')}</small></td>
+          <td>${itBookingStatusBadge_(item.status)}</td>
+          <td class="text-end pe-4"><button class="btn btn-sm btn-outline-primary" onclick="openItBookingDetail('${item.id}')"><i class="bi bi-eye"></i> ดู</button>${canManage ? ` <button class="btn btn-sm btn-outline-success" onclick="openItBookingManage('${item.id}')"><i class="bi bi-gear"></i> จัดการ</button>` : ''}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    async function openItBookingCreate() {
+      let resources = [];
+      try {
+        const res = await gasRunPromise_('getAvailableResources', []);
+        if (res && res.success) resources = res.data || [];
+      } catch (ignore) {}
+      const options = ['<option value="">-- เลือกห้อง/ทรัพยากร --</option>'].concat(resources.map(r => `<option value="${escapeHtml(r.id)}" data-name="${escapeHtml(r.name)}">${escapeHtml(r.name)} (${escapeHtml(r.type || '-')})</option>`)).join('');
+      Swal.fire({
+        title: 'สร้างคำขอจองห้องประชุม / Zoom',
+        width: 760,
+        html: `<div class="text-start">
+          <div class="mb-2"><label class="small fw-bold text-muted">เรื่อง</label><input id="itbTopic" class="form-control" placeholder="เช่น ประชุมคณะทำงาน..." /></div>
+          <div class="row g-2 mb-2">
+            <div class="col-md-6"><label class="small fw-bold text-muted">ประเภทการจอง</label><select id="itbType" class="form-select"><option value="Host">เป็นผู้จัด / Host</option><option value="Join">เข้าร่วมประชุม</option></select></div>
+            <div class="col-md-6"><label class="small fw-bold text-muted">ผู้อนุมัติ (เบอร์โทร)</label><input id="itbApprover" class="form-control" maxlength="10" placeholder="เว้นว่าง = อนุมัติอัตโนมัติ" /></div>
+          </div>
+          <div class="row g-2 mb-2">
+            <div class="col-md-6"><label class="small fw-bold text-muted">Meeting ID</label><input id="itbMeetingId" class="form-control" placeholder="ถ้ามี" /></div>
+            <div class="col-md-6"><label class="small fw-bold text-muted">Passcode</label><input id="itbPasscode" class="form-control" placeholder="ถ้ามี" /></div>
+          </div>
+          <div class="mb-2"><label class="small fw-bold text-muted">ห้องประชุม / ทรัพยากร</label><select id="itbResource" class="form-select">${options}</select></div>
+          <div class="mb-2"><label class="small fw-bold text-muted">สถานที่อื่น / หมายเหตุสถานที่</label><input id="itbOtherLocation" class="form-control" placeholder="เช่น เปิดที่เครื่อง... หรือรอประสานภายหลัง" /></div>
+          <div class="row g-2 mb-2">
+            <div class="col-md-6"><label class="small fw-bold text-muted">เริ่ม</label><input id="itbStart" type="datetime-local" class="form-control" /></div>
+            <div class="col-md-6"><label class="small fw-bold text-muted">สิ้นสุด</label><input id="itbEnd" type="datetime-local" class="form-control" /></div>
+          </div>
+          <div class="alert alert-info small mb-0">ระบบจะบันทึกเข้าชีต ITBookings และส่งแจ้งเตือนให้ผู้อนุมัติ หากระบุเบอร์ผู้อนุมัติ</div>
+        </div>`,
+        showCancelButton: true,
+        confirmButtonText: 'บันทึกคำขอ',
+        cancelButtonText: 'ยกเลิก',
+        preConfirm: () => {
+          const resSel = document.getElementById('itbResource');
+          const opt = resSel?.options[resSel.selectedIndex];
+          const payload = {
+            topic: document.getElementById('itbTopic').value.trim(),
+            bookingType: document.getElementById('itbType').value,
+            meetingId: document.getElementById('itbMeetingId').value.trim(),
+            passcode: document.getElementById('itbPasscode').value.trim(),
+            resourceId: resSel?.value || '',
+            roomName: opt?.dataset?.name || opt?.textContent || '',
+            otherLocation: document.getElementById('itbOtherLocation').value.trim(),
+            startTime: document.getElementById('itbStart').value,
+            endTime: document.getElementById('itbEnd').value,
+            approverPhone: document.getElementById('itbApprover').value.trim(),
+            ownerPhone: user.phone,
+            ownerName: user.fullName,
+            department: user.department
+          };
+          if (!payload.topic || !payload.startTime || !payload.endTime) { Swal.showValidationMessage('กรุณากรอกเรื่องและช่วงเวลาให้ครบ'); return false; }
+          return payload;
+        }
+      }).then(async result => {
+        if (!result.isConfirmed) return;
+        Swal.fire({title:'กำลังบันทึก...', allowOutsideClick:false, didOpen:()=>Swal.showLoading()});
+        try {
+          const res = await gasRunPromise_('saveITBooking', [result.value]);
+          if (!res || !res.success) throw new Error(res?.message || 'บันทึกไม่สำเร็จ');
+          Swal.fire({icon:'success', title:'บันทึกแล้ว', text:res.message, timer:1600, showConfirmButton:false});
+          loadItBookings();
+        } catch (err) { Swal.fire('ผิดพลาด', err.message || String(err), 'error'); }
+      });
+    }
+
+    function openItBookingDetail(id) {
+      const item = itBookingsGlobal.find(x => x.id === id);
+      if (!item) return Swal.fire('ไม่พบข้อมูล', 'กรุณาโหลดข้อมูลใหม่อีกครั้ง', 'warning');
+      Swal.fire({
+        title: escapeHtml(item.topic || 'รายละเอียดคำขอจอง'),
+        width: 760,
+        html: `<div class="text-start small">
+          <div class="mb-2">${itBookingStatusBadge_(item.status)}</div>
+          <div class="row g-2">
+            <div class="col-md-6"><b>ผู้ขอ:</b> ${escapeHtml(item.ownerName || '-')}</div>
+            <div class="col-md-6"><b>กลุ่มงาน:</b> ${escapeHtml(item.department || '-')}</div>
+            <div class="col-md-6"><b>ประเภท:</b> ${escapeHtml(item.bookingType || '-')}</div>
+            <div class="col-md-6"><b>ห้อง/สถานที่:</b> ${escapeHtml(item.roomName || item.otherLocation || '-')}</div>
+            <div class="col-md-6"><b>เริ่ม:</b> ${escapeHtml(item.startTime || '-')}</div>
+            <div class="col-md-6"><b>สิ้นสุด:</b> ${escapeHtml(item.endTime || '-')}</div>
+            <div class="col-md-6"><b>Meeting ID:</b> ${escapeHtml(item.meetingId || '-')}</div>
+            <div class="col-md-6"><b>Passcode:</b> ${escapeHtml(item.passcode || '-')}</div>
+          </div>
+          <hr>
+          <div><b>ข้อมูลจาก Admin:</b></div>
+          <div>Room/ID: ${escapeHtml(item.adminRoomId || '-')}</div>
+          <div>Passcode: ${escapeHtml(item.adminPasscode || '-')}</div>
+          <div>Link: ${item.adminLink ? `<a href="${escapeHtml(item.adminLink)}" target="_blank">${escapeHtml(item.adminLink)}</a>` : '-'}</div>
+          ${item.cancelReason ? `<div class="alert alert-warning mt-2 mb-0"><b>เหตุผล:</b> ${escapeHtml(item.cancelReason)}</div>` : ''}
+        </div>`,
+        confirmButtonText: 'ปิด'
+      });
+    }
+
+    function openItBookingManage(id) {
+      const item = itBookingsGlobal.find(x => x.id === id);
+      if (!item) return Swal.fire('ไม่พบข้อมูล', 'กรุณาโหลดข้อมูลใหม่อีกครั้ง', 'warning');
+      Swal.fire({
+        title: 'จัดการคำขอจอง',
+        width: 680,
+        html: `<div class="text-start small">
+          <div class="mb-2"><b>${escapeHtml(item.topic || '-')}</b></div>
+          <div class="mb-2">สถานะปัจจุบัน: ${itBookingStatusBadge_(item.status)}</div>
+          <label class="small fw-bold text-muted">Room/ID ที่จัดให้</label><input id="itbmRoom" class="form-control mb-2" value="${escapeHtml(item.adminRoomId || '')}">
+          <label class="small fw-bold text-muted">Passcode</label><input id="itbmPass" class="form-control mb-2" value="${escapeHtml(item.adminPasscode || '')}">
+          <label class="small fw-bold text-muted">ลิงก์ประชุม</label><input id="itbmLink" class="form-control mb-2" value="${escapeHtml(item.adminLink || '')}">
+          <label class="small fw-bold text-muted">เหตุผล / หมายเหตุ</label><textarea id="itbmReason" class="form-control" rows="2">${escapeHtml(item.cancelReason || '')}</textarea>
+        </div>`,
+        showDenyButton: true,
+        showCancelButton: true,
+        confirmButtonText: 'อนุมัติ',
+        denyButtonText: 'ไม่อนุญาต',
+        cancelButtonText: 'ยกเลิกคำขอ',
+        footer: '<button type="button" class="btn btn-outline-secondary btn-sm" onclick="Swal.close()">ปิดหน้าต่าง</button>'
+      }).then(async r => {
+        if (!r.isConfirmed && !r.isDenied && r.dismiss !== Swal.DismissReason.cancel) return;
+        const action = r.isConfirmed ? 'approve' : (r.isDenied ? 'reject' : 'cancel');
+        const payload = {
+          adminRoomId: document.getElementById('itbmRoom')?.value || '',
+          adminPasscode: document.getElementById('itbmPass')?.value || '',
+          adminLink: document.getElementById('itbmLink')?.value || '',
+          reason: document.getElementById('itbmReason')?.value || ''
+        };
+        Swal.fire({title:'กำลังอัปเดต...', allowOutsideClick:false, didOpen:()=>Swal.showLoading()});
+        try {
+          const res = await gasRunPromise_('updateITBookingStatus', [id, action, user.phone, payload]);
+          if (!res || !res.success) throw new Error(res?.message || 'อัปเดตไม่สำเร็จ');
+          Swal.fire({icon:'success', title:'อัปเดตแล้ว', text:res.message, timer:1500, showConfirmButton:false});
+          loadItBookings();
+        } catch(err) { Swal.fire('ผิดพลาด', err.message || String(err), 'error'); }
+      });
+    }
+  </script>
+
 </body>
 </html>
