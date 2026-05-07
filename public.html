@@ -55,6 +55,10 @@
     @media print{ body{background:#fff!important;} .card{box-shadow:none!important;border:0!important;margin:0!important;max-width:100%!important;} .card-footer,.btn{display:none!important;} }
     .workspace-card{max-width:1180px;} .workspace-table-wrap{overflow:auto;border:1px solid #e2e8f0;border-radius:16px;background:white;} .workspace-table th{position:sticky;top:0;background:#f8fafc;z-index:1;white-space:nowrap;} .workspace-table td{min-width:150px;vertical-align:top;} .workspace-cell[contenteditable="true"]{outline:2px solid transparent;border-radius:6px;min-height:28px;padding:4px;} .workspace-cell[contenteditable="true"]:focus{outline-color:#0ea5e9;background:#eff6ff;} .workspace-toolbar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
 
+
+    .live-survey-shell .card{max-width:980px;}
+    .live-word-cloud{min-height:320px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:14px;padding:24px;background:white;border:1px solid #e2e8f0;border-radius:18px;}
+    .live-word-token{display:inline-block;padding:4px 8px;border-radius:999px;background:#eff6ff;color:#075985;font-weight:700;}
   </style>
 </head>
 <body>
@@ -130,6 +134,13 @@
       const urlParams = new URLSearchParams(window.location.search);
       const workspaceId = urlParams.get('workspaceId');
       const workspaceToken = urlParams.get('token');
+      const surveyId = urlParams.get('surveyId');
+      const surveyToken = urlParams.get('token');
+
+      if (surveyId) {
+        loadPublicLiveSurvey(surveyId, surveyToken || '');
+        return;
+      }
       if (workspaceId) {
         document.querySelector('.card').classList.add('workspace-card');
         loadPublicWorkspace(workspaceId, workspaceToken || '');
@@ -408,6 +419,78 @@
         Swal.fire('คัดลอกไม่สำเร็จ', textToShare, 'info');
       });
     }
+
+
+    // Live Opinion Survey public page
+    let liveSurveyPublicState = null;
+    let liveSurveyPublicTimer = null;
+
+    function loadPublicLiveSurvey(surveyId, token) {
+      document.body.classList.add('live-survey-shell');
+      google.script.run.withSuccessHandler(function(res) {
+        document.getElementById('loadingDiv').style.display = 'none';
+        if (!res.success) {
+          document.getElementById('loadingDiv').style.display = 'block';
+          document.getElementById('loadingDiv').innerHTML = `<div class="text-danger fw-bold"><i class="bi bi-exclamation-triangle"></i> ${res.message}</div>`;
+          return;
+        }
+        liveSurveyPublicState = res.data;
+        document.querySelector('.public-mark').innerHTML = '<i class="bi bi-clouds"></i>';
+        document.querySelector('.card-header h4').innerText = res.data.title || 'สำรวจความคิดเห็นสด';
+        document.querySelector('.card-header small').innerText = 'พิมพ์ความคิดเห็น แล้วดูผลแบบ Word Cloud บนหน้าจอ';
+        document.getElementById('dataDiv').style.display = 'block';
+        document.getElementById('dataDiv').innerHTML = `
+          <div class="text-center mb-4">
+            <h4 class="fw-bold text-primary">${escapeHtml(res.data.question || 'พิมพ์ความคิดเห็นของคุณ')}</h4>
+            <p class="text-muted small mb-0">คำที่ซ้ำกันจะมีขนาดใหญ่ขึ้นตามความถี่</p>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-md-4"><input id="liveParticipant" class="form-control" placeholder="ชื่อเล่น (ไม่บังคับ)"></div>
+            <div class="col-md-8"><input id="liveOpinion" class="form-control" maxlength="120" placeholder="พิมพ์ความคิดเห็นสั้น ๆ แล้วกดส่ง" onkeydown="if(event.key==='Enter') submitLiveOpinionPublic()"></div>
+          </div>
+          <button class="btn btn-primary w-100 fw-bold mb-4" onclick="submitLiveOpinionPublic()"><i class="bi bi-send"></i> ส่งความคิดเห็น</button>
+          <div id="liveWordCloudBox"><div class="text-center text-muted py-5">กำลังโหลดผล...</div></div>
+        `;
+        document.getElementById('footerDiv').style.display = 'none';
+        refreshLiveWordCloudPublic();
+        if (liveSurveyPublicTimer) clearInterval(liveSurveyPublicTimer);
+        liveSurveyPublicTimer = setInterval(refreshLiveWordCloudPublic, 3000);
+      }).getPublicLiveOpinionSurvey(surveyId, token);
+    }
+
+    function submitLiveOpinionPublic() {
+      if (!liveSurveyPublicState) return;
+      const opinion = document.getElementById('liveOpinion').value.trim();
+      const name = document.getElementById('liveParticipant').value.trim();
+      if (!opinion) return Swal.fire('แจ้งเตือน', 'กรุณาพิมพ์ความคิดเห็นก่อนส่ง', 'warning');
+      google.script.run.withSuccessHandler(function(res) {
+        if (res.success) {
+          document.getElementById('liveOpinion').value = '';
+          Swal.fire({icon:'success', title:'ส่งแล้ว', timer:900, showConfirmButton:false});
+          refreshLiveWordCloudPublic();
+        } else Swal.fire('ผิดพลาด', res.message, 'error');
+      }).submitLiveOpinionResponse(liveSurveyPublicState.id, liveSurveyPublicState.token, opinion, name);
+    }
+
+    function refreshLiveWordCloudPublic() {
+      if (!liveSurveyPublicState) return;
+      google.script.run.withSuccessHandler(function(res) {
+        const box = document.getElementById('liveWordCloudBox');
+        if (!box) return;
+        if (!res.success) { box.innerHTML = `<div class="text-danger">${escapeHtml(res.message)}</div>`; return; }
+        if (!res.data || !res.data.length) { box.innerHTML = '<div class="live-word-cloud text-muted">ยังไม่มีความคิดเห็น</div>'; return; }
+        const max = Math.max(...res.data.map(x => x.count || 1));
+        box.innerHTML = `<div class="live-word-cloud">${res.data.map(x => {
+          const size = 18 + Math.round(((x.count||1)/max)*46);
+          return `<span class="live-word-token" style="font-size:${size}px">${escapeHtml(x.text)} <small style="font-size:.45em">${x.count}</small></span>`;
+        }).join('')}</div><div class="text-center text-muted small mt-2">รวม ${res.total || 0} ความคิดเห็น</div>`;
+      }).getLiveOpinionSurveyResults(liveSurveyPublicState.id, liveSurveyPublicState.token, 80);
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+    }
+
   </script>
 </body>
 </html>
