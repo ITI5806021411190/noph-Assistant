@@ -42,7 +42,7 @@
           <div class="mb-2"><b>v41</b> — เพิ่ม IT Services Hub และเครื่องมือแบ่งไฟล์เสียงแบบเบา</div>
           <div class="mb-2"><b>v42</b> — รวมระบบจองห้องประชุม / Zoom กับ Resources และ Approval กลาง</div>
           <div class="mb-2"><b>v43</b> — รวมระบบรายงานการประชุม พร้อม AI สรุปเสียงและสร้างเอกสาร</div>
-          <div class="mb-2"><b>v44</b> — เพิ่มการนำไฟล์เสียงที่แบ่งแล้วไปใช้ต่อกับ AI สรุปรายงานประชุม</div>
+          <div class="mb-2"><b>v44</b> — เชื่อมเครื่องมือแบ่งไฟล์เสียงเข้ากับ AI สรุปรายงานประชุม และสร้างรายงานจากไฟล์ย่อยได้ทันที <span class="badge bg-success">พร้อมใช้</span></div>
           <hr>
           <div class="text-muted">แนวทางนี้จะไม่ย้ายระบบ login เดิมเข้ามา แต่ใช้บัญชี สิทธิ์ กลุ่มงาน แจ้งเตือน และ Audit Log ของ Health Assistant OS เป็นศูนย์กลาง</div>
         </div>`,
@@ -125,10 +125,12 @@
       const list = document.getElementById('itSplitDownloadLinks');
       if (!box || !list) return;
       list.innerHTML = '';
+      window.itSplitParts_ = [];
       const base = (originalName || 'audio').replace(/\.[^.]+$/, '');
       const origRate = audioBuffer.sampleRate;
       const targetRate = 16000;
       const channels = audioBuffer.numberOfChannels;
+      const fmt = sec => `${Math.floor(sec/60)}:${String(Math.floor(sec%60)).padStart(2,'0')}`;
       segments.forEach((seg, idx) => {
         const startFrame = Math.floor(seg.start * origRate);
         const endFrame = Math.floor(seg.end * origRate);
@@ -144,15 +146,59 @@
         for (let j=0; j<targetLength; j++) down[j] = mono[Math.floor(j*ratio)] || 0;
         const blob = itEncodeWav_(down, targetRate);
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${base}_part${idx+1}.wav`;
-        a.className = 'btn btn-outline-success text-start';
-        const fmt = sec => `${Math.floor(sec/60)}:${String(Math.floor(sec%60)).padStart(2,'0')}`;
-        a.innerHTML = `<i class="bi bi-download"></i> พาร์ต ${idx+1} • ${fmt(seg.start)} - ${fmt(seg.end)} • ${(blob.size/1024/1024).toFixed(2)} MB`;
-        list.appendChild(a);
+        const fileName = `${base}_part${idx+1}.wav`;
+        const partMeta = { blob, url, fileName, index: idx+1, start: seg.start, end: seg.end };
+        window.itSplitParts_.push(partMeta);
+
+        const row = document.createElement('div');
+        row.className = 'border rounded p-2 bg-white d-flex flex-column flex-md-row gap-2 justify-content-between align-items-md-center';
+        row.innerHTML = `<div>
+            <div class="fw-bold"><i class="bi bi-music-note-beamed text-warning"></i> พาร์ต ${idx+1}</div>
+            <small class="text-muted">${fmt(seg.start)} - ${fmt(seg.end)} • ${(blob.size/1024/1024).toFixed(2)} MB • WAV 16k mono เหมาะกับ AI</small>
+          </div>
+          <div class="d-flex flex-wrap gap-2 justify-content-md-end">
+            <a href="${url}" download="${fileName}" class="btn btn-sm btn-outline-success"><i class="bi bi-download"></i> ดาวน์โหลด</a>
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="itAnalyzeSplitPartAsMinutes_(${idx})"><i class="bi bi-magic"></i> สรุปเป็นรายงานประชุม</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="itOpenMinutesWithSplitPart_(${idx})"><i class="bi bi-file-earmark-plus"></i> เปิดฟอร์มพร้อมไฟล์นี้</button>
+          </div>`;
+        list.appendChild(row);
       });
       box.classList.remove('d-none');
+    }
+
+    async function itAnalyzeSplitPartAsMinutes_(partIndex) {
+      const part = (window.itSplitParts_ || [])[partIndex];
+      if (!part) return Swal.fire('ไม่พบไฟล์ย่อย', 'กรุณาแบ่งไฟล์ใหม่อีกครั้ง', 'warning');
+      if (part.blob.size > 20 * 1024 * 1024) return Swal.fire('ไฟล์ยังใหญ่เกินไป', 'กรุณาแบ่งไฟล์ให้เล็กลงก่อนส่งให้ AI', 'warning');
+      Swal.fire({title:'AI กำลังฟังไฟล์เสียงพาร์ตนี้...', html:`${escapeHtml(part.fileName)}<br><small class="text-muted">เมื่อวิเคราะห์เสร็จ ระบบจะเปิดฟอร์มรายงานการประชุมพร้อมข้อมูลที่เติมให้</small>`, allowOutsideClick:false, didOpen:()=>Swal.showLoading()});
+      try {
+        const file = new File([part.blob], part.fileName, {type:'audio/wav'});
+        const base64 = await readFileBase64_(file);
+        const res = await gasRunPromise_('analyzeMeetingAudio', [base64, part.fileName, 'audio/wav']);
+        if (!res || !res.success) throw new Error(res?.message || 'AI วิเคราะห์เสียงไม่สำเร็จ');
+        Swal.close();
+        openItMinutesCreate(res.data || {}, `วิเคราะห์จากไฟล์ย่อย: ${part.fileName}`);
+      } catch (err) {
+        Swal.fire('วิเคราะห์ไม่สำเร็จ', err.message || String(err), 'error');
+      }
+    }
+
+    function itOpenMinutesWithSplitPart_(partIndex) {
+      const part = (window.itSplitParts_ || [])[partIndex];
+      if (!part) return Swal.fire('ไม่พบไฟล์ย่อย', 'กรุณาแบ่งไฟล์ใหม่อีกครั้ง', 'warning');
+      openItMinutesCreate({}, `แนบไฟล์เสียงย่อยไว้แล้ว: ${part.fileName}`);
+      setTimeout(() => {
+        try {
+          const input = document.getElementById('itmAudioFile');
+          if (!input) return;
+          const file = new File([part.blob], part.fileName, {type:'audio/wav'});
+          const dt = new DataTransfer();
+          dt.items.add(file);
+          input.files = dt.files;
+        } catch (e) {
+          console.warn('ไม่สามารถแนบไฟล์อัตโนมัติได้', e);
+        }
+      }, 350);
     }
 
     function itEncodeWav_(samples, sampleRate) {
@@ -5608,21 +5654,25 @@ function openWorkspaceCreateModal() {
       });
     }
 
-    function openItMinutesCreate() {
+    function openItMinutesCreate(prefill, note) {
+      prefill = prefill || {};
+      const val = (key) => escapeHtml(prefill[key] || '');
+      const rawNote = note ? `<div class="alert alert-success small mb-2"><i class="bi bi-check-circle"></i> ${escapeHtml(note)}</div>` : '';
       Swal.fire({
         title: 'สร้างรายงานการประชุม',
         width: 900,
         html: `<div class="text-start">
-          <div class="alert alert-info small"><b>AI ช่วยสรุปได้ 2 แบบ</b>: วางข้อความประชุมดิบ หรือแนบไฟล์เสียงประชุม แล้วกดวิเคราะห์เพื่อเติมฟอร์ม</div>
+          ${rawNote}
+          <div class="alert alert-info small"><b>AI ช่วยสรุปได้ 3 แบบ</b>: วางข้อความประชุมดิบ, แนบไฟล์เสียงโดยตรง, หรือใช้ไฟล์เสียงที่แบ่งจากเครื่องมือแบ่งไฟล์เสียงแล้วส่งต่อให้ AI</div>
           <div class="mb-2"><label class="small fw-bold text-muted">วางข้อความดิบจากการประชุม/บันทึกเสียงที่ถอดแล้ว</label><textarea id="itmRawText" class="form-control" rows="3" placeholder="วางข้อความ แล้วกด AI วิเคราะห์ข้อความ"></textarea></div>
-          <div class="d-flex gap-2 mb-3"><button type="button" class="btn btn-outline-primary btn-sm" onclick="itAnalyzeMinutesTextInModal()"><i class="bi bi-magic"></i> AI วิเคราะห์ข้อความ</button><input id="itmAudioFile" type="file" accept="audio/*" class="form-control form-control-sm"><button type="button" class="btn btn-outline-success btn-sm" onclick="itAnalyzeMinutesAudioInModal()"><i class="bi bi-soundwave"></i> AI วิเคราะห์เสียง</button></div>
+          <div class="d-flex flex-column flex-lg-row gap-2 mb-3"><button type="button" class="btn btn-outline-primary btn-sm" onclick="itAnalyzeMinutesTextInModal()"><i class="bi bi-magic"></i> AI วิเคราะห์ข้อความ</button><input id="itmAudioFile" type="file" accept="audio/*" class="form-control form-control-sm"><button type="button" class="btn btn-outline-success btn-sm" onclick="itAnalyzeMinutesAudioInModal()"><i class="bi bi-soundwave"></i> AI วิเคราะห์เสียง</button></div>
           <hr>
-          <div class="mb-2"><label class="small fw-bold text-muted">หัวข้อการประชุม</label><input id="itmTitle" class="form-control"></div>
-          <div class="row g-2 mb-2"><div class="col-md-6"><label class="small fw-bold text-muted">วันที่</label><input id="itmDate" type="date" class="form-control"></div><div class="col-md-6"><label class="small fw-bold text-muted">สถานที่</label><input id="itmLocation" class="form-control"></div></div>
-          <div class="mb-2"><label class="small fw-bold text-muted">ประธาน</label><input id="itmChairman" class="form-control"></div>
-          <div class="mb-2"><label class="small fw-bold text-muted">ผู้เข้าร่วม</label><textarea id="itmAttendees" class="form-control" rows="2"></textarea></div>
-          <div class="mb-2"><label class="small fw-bold text-muted">วาระ/สาระสำคัญ</label><textarea id="itmAgenda" class="form-control" rows="5"></textarea></div>
-          <div class="mb-2"><label class="small fw-bold text-muted">สรุปผล/มติ/ข้อสั่งการ</label><textarea id="itmConclusion" class="form-control" rows="4"></textarea></div>
+          <div class="mb-2"><label class="small fw-bold text-muted">หัวข้อการประชุม</label><input id="itmTitle" class="form-control" value="${val('title')}"></div>
+          <div class="row g-2 mb-2"><div class="col-md-6"><label class="small fw-bold text-muted">วันที่</label><input id="itmDate" type="date" class="form-control" value="${val('date')}"></div><div class="col-md-6"><label class="small fw-bold text-muted">สถานที่</label><input id="itmLocation" class="form-control" value="${val('location')}"></div></div>
+          <div class="mb-2"><label class="small fw-bold text-muted">ประธาน</label><input id="itmChairman" class="form-control" value="${val('chairman')}"></div>
+          <div class="mb-2"><label class="small fw-bold text-muted">ผู้เข้าร่วม</label><textarea id="itmAttendees" class="form-control" rows="2">${val('attendees')}</textarea></div>
+          <div class="mb-2"><label class="small fw-bold text-muted">วาระ/สาระสำคัญ</label><textarea id="itmAgenda" class="form-control" rows="5">${val('agenda')}</textarea></div>
+          <div class="mb-2"><label class="small fw-bold text-muted">สรุปผล/มติ/ข้อสั่งการ</label><textarea id="itmConclusion" class="form-control" rows="4">${val('conclusion')}</textarea></div>
         </div>`,
         showCancelButton:true,
         confirmButtonText:'สร้าง Google Doc/PDF',
