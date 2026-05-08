@@ -6099,18 +6099,9 @@ function clearItBookingCanvas_(canvasId) {
     const el = document.getElementById('itBookingDigitalPaper');
     if (!el) return;
     const w = window.open('', '_blank');
-    w.document.write(`<html><head><title>IT Booking Form</title><link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700;800&display=swap" rel="stylesheet"><style>@page{size:A4;margin:0}body{margin:0;background:white}.it-booking-paper{box-shadow:none!important;margin:0!important}</style></head><body>${el.outerHTML}
-<script>
-// v57 hotfix: expose signature button renderer globally so every duplicated IT booking form keeps personal-signature buttons.
-window.signatureButtons_ = window.signatureButtons_ || function(canvasId){
-  return `<div class="d-flex gap-2 flex-wrap mb-1">
-    <button type="button" class="btn btn-sm btn-outline-primary" onclick="useSavedSignatureForCanvas_('${canvasId}')"><i class="bi bi-vector-pen"></i> ใช้/แทรกลายเซ็นส่วนตัว</button>
-    <button type="button" class="btn btn-sm btn-outline-success" onclick="openMySignatureManager()"><i class="bi bi-upload"></i> อัปโหลด/ตั้งค่าลายเซ็น</button>
-    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearItBookingCanvas_('${canvasId}')">ล้าง</button>
-  </div>`;
-};
-</script>
-</body></html>`);
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>IT Booking Form</title><link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700;800&display=swap" rel="stylesheet"><style>@page{size:A4;margin:0}html,body{margin:0;background:white;font-family:'Sarabun',sans-serif}.it-booking-paper{box-shadow:none!important;margin:0!important}</style></head><body>${el.outerHTML}</body></html>`;
+    w.document.open();
+    w.document.write(html);
     w.document.close();
     setTimeout(() => { w.focus(); w.print(); }, 400);
   }
@@ -6784,7 +6775,7 @@ window.signatureButtons_ = window.signatureButtons_ || function(canvasId){
 
 
 <script>
-/* v56: Definitive IT Booking Host/Join Form Override
+/* v58: Definitive IT Booking Host/Join Form Override
    Root cause fixed: older duplicate openItBookingCreate() definitions could still be used.
    This final override is loaded last and guarantees Join shows Meeting ID, Passcode and Link fields. */
 (function(){
@@ -6960,13 +6951,13 @@ window.signatureButtons_ = window.signatureButtons_ || function(canvasId){
     });
   };
 
-  console.info('v56 Definitive IT Booking Join Fields Override loaded');
+  console.info('v58 Definitive IT Booking Join Fields Override loaded');
 })();
 </script>
 
 
 <script>
-// v57 hotfix: expose signature button renderer globally so every duplicated IT booking form keeps personal-signature buttons.
+// v58 hotfix: expose signature button renderer globally so every duplicated IT booking form keeps personal-signature buttons.
 window.signatureButtons_ = window.signatureButtons_ || function(canvasId){
   return `<div class="d-flex gap-2 flex-wrap mb-1">
     <button type="button" class="btn btn-sm btn-outline-primary" onclick="useSavedSignatureForCanvas_('${canvasId}')"><i class="bi bi-vector-pen"></i> ใช้/แทรกลายเซ็นส่วนตัว</button>
