@@ -261,6 +261,7 @@
   
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
@@ -6062,6 +6063,337 @@ function clearItBookingCanvas_(canvasId) {
     const text = `ใบขออนุญาตใช้ระบบประชุมออนไลน์\nเรื่อง: ${item.topic || '-'}\nผู้ขอ: ${item.ownerName || '-'}\nหน่วยงาน: ${item.department || '-'}\nห้อง/สถานที่: ${item.roomName || item.otherLocation || '-'}\nเวลา: ${item.startTime || '-'} ถึง ${item.endTime || '-'}\nสถานะ: ${item.status || '-'}`;
     navigator.clipboard?.writeText(text).then(() => Swal.fire({icon:'success', title:'คัดลอกแล้ว', timer:1000, showConfirmButton:false}));
   }
+</script>
+
+
+
+<script>
+// ==========================================
+// v47 IT Booking UX + E-Signature + Digital Form Polish
+// ==========================================
+(function(){
+  window.HAOS_VERSION = 'v47-it-booking-polish';
+
+  function ready_(fn){ if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn); else fn(); }
+
+  window.loadScriptOnce_ = function(src, testFn) {
+    return new Promise((resolve, reject) => {
+      try { if (typeof testFn === 'function' && testFn()) return resolve(); } catch(e) {}
+      const old = Array.from(document.scripts).find(s => s.src === src);
+      if (old) { old.addEventListener('load', resolve); old.addEventListener('error', reject); setTimeout(resolve, 800); return; }
+      const s = document.createElement('script');
+      s.src = src; s.async = true;
+      s.onload = () => resolve(); s.onerror = () => reject(new Error('โหลด library ไม่สำเร็จ: ' + src));
+      document.head.appendChild(s);
+    });
+  };
+
+  window.formatThaiDateTime24_ = function(value) {
+    if (!value) return '-';
+    const d = value instanceof Date ? value : new Date(String(value).replace(' ', 'T'));
+    if (isNaN(d.getTime())) return String(value || '-');
+    return d.toLocaleString('th-TH', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false });
+  };
+  window.itBookingTimeOnly_ = function(value) {
+    if (!value) return '-';
+    const s = String(value);
+    const m = s.match(/(\d{1,2}):(\d{2})/);
+    if (m) return `${String(m[1]).padStart(2,'0')}:${m[2]}`;
+    const d = new Date(s.replace(' ', 'T'));
+    if (isNaN(d.getTime())) return s;
+    return d.toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit', hour12:false});
+  };
+
+  window.openItServicesRoadmap = function() {
+    Swal.fire({
+      title: 'คู่มือการใช้งาน IT Services',
+      width: 860,
+      html: `<div class="text-start small">
+        <div class="alert alert-primary py-2"><b>IT Services Hub</b> คือศูนย์รวมบริการด้าน IT ที่เชื่อมกับบัญชีผู้ใช้ สิทธิ์ แจ้งเตือน และ Audit Log กลางของ Health Assistant OS</div>
+        <h6 class="fw-bold text-success"><i class="bi bi-camera-video"></i> 1) จองห้องประชุม / Zoom</h6>
+        <ul><li>ใช้สร้างคำขอจองห้องประชุมหรือระบบประชุมออนไลน์</li><li>เลือกได้ว่าเป็น <b>ผู้จัด Host</b> หรือ <b>เข้าร่วมประชุม</b></li><li>ถ้าเป็น Host ระบบจะส่งให้เจ้าหน้าที่ IT จัดการ Room/Link/Passcode</li><li>ถ้าเข้าร่วมประชุมและมี Meeting ID/Link แล้วให้กรอกไว้ ถ้ายังไม่มีให้เลือกประสาน IT ภายหลัง</li><li>เจ้าหน้าที่กลุ่มงานสุขภาพดิจิทัลจัดการ อนุมัติ/ไม่อนุญาต และเปิด Digital Paper Form ได้</li></ul>
+        <h6 class="fw-bold text-primary"><i class="bi bi-journal-text"></i> 2) รายงานการประชุม</h6>
+        <ul><li>บันทึกหัวข้อ วันที่ สถานที่ ประธาน ผู้เข้าร่วม วาระ และมติ</li><li>AI ช่วยวิเคราะห์ข้อความดิบหรือไฟล์เสียงเพื่อเติมแบบฟอร์ม</li><li>ระบบสร้าง Google Doc/PDF เก็บประวัติให้ใช้งานต่อ</li></ul>
+        <h6 class="fw-bold text-warning"><i class="bi bi-scissors"></i> 3) เครื่องมือแบ่งไฟล์เสียง</h6>
+        <ul><li>แบ่งไฟล์เสียงตามขนาด จำนวนไฟล์ หรือระยะเวลาในเบราว์เซอร์</li><li>เหมาะกับไฟล์เสียงประชุมยาว ก่อนส่งต่อให้ AI วิเคราะห์เป็นรายงาน</li></ul>
+        <h6 class="fw-bold text-info"><i class="bi bi-clouds"></i> 4) สำรวจความคิดเห็นสด / Word Cloud</h6>
+        <ul><li>สร้างลิงก์ให้ผู้เข้าอบรมพิมพ์ความคิดเห็น</li><li>ข้อความที่ถูกตอบบ่อยจะแสดงใหญ่ขึ้น พร้อมชื่อผู้ตอบแบบตัวเล็ก</li><li>เหมาะกับช่วงท้ายการอบรม/ประชุมเพื่อเก็บ feedback สด</li></ul>
+        <hr><div class="text-muted">คู่มือนี้จะปรับตามฟีเจอร์ใหม่ในแต่ละเวอร์ชัน เพื่อให้ผู้ใช้เปิดอ่านได้แทนแผนพัฒนาเดิม</div>
+      </div>`,
+      icon: 'info', confirmButtonText: 'เข้าใจแล้ว'
+    });
+  };
+
+  function patchItServicesHub_(){
+    try {
+      const roadmapBtn = document.querySelector('button[onclick="openItServicesRoadmap()"]');
+      if (roadmapBtn) roadmapBtn.innerHTML = '<i class="bi bi-question-circle"></i> คู่มือ IT Services';
+      const liveHeader = Array.from(document.querySelectorAll('h6')).find(h => (h.textContent||'').includes('สำรวจความคิดเห็นสด'));
+      const oldCard = liveHeader ? liveHeader.closest('.card') : null;
+      if (oldCard && oldCard.closest('#schedule-pane')) oldCard.classList.add('d-none');
+      const row = document.querySelector('#itservices-pane .row.g-3.mb-4');
+      if (row && !document.getElementById('itWordCloudCard')) {
+        row.insertAdjacentHTML('beforeend', `<div class="col-md-4" id="itWordCloudCard">
+          <div class="card h-100 border-info it-service-card">
+            <div class="card-body p-4 d-flex flex-column">
+              <div class="display-6 text-info mb-3"><i class="bi bi-clouds"></i></div>
+              <h6 class="fw-bold">สำรวจความคิดเห็นสด / Word Cloud</h6>
+              <p class="text-muted small flex-grow-1">สร้างลิงก์ให้ผู้เข้าอบรมพิมพ์ความเห็น แล้วแสดงผลบนจอด้วยขนาดตัวอักษรตามความถี่ พร้อมชื่อผู้ตอบ</p>
+              <button class="btn btn-info btn-sm fw-bold text-white" onclick="openLiveSurveyCreate()"><i class="bi bi-plus-circle"></i> สร้างแบบสำรวจสด</button>
+              <button class="btn btn-outline-info btn-sm fw-bold mt-2" onclick="loadLiveSurveys(); document.getElementById('schedule-tab')?.click(); setTimeout(()=>document.getElementById('liveSurveyTableBody')?.closest('.card')?.scrollIntoView({behavior:'smooth'}),300)"><i class="bi bi-list-ul"></i> ดูรายการแบบสำรวจ</button>
+            </div>
+          </div>
+        </div>`);
+      }
+    } catch(e) { console.warn('patchItServicesHub_', e); }
+  }
+  ready_(patchItServicesHub_);
+
+  // ---------- E-signature helpers ----------
+  window.readFileAsDataUrl_ = function(file){ return new Promise((resolve,reject)=>{ const r=new FileReader(); r.onload=()=>resolve(r.result); r.onerror=reject; r.readAsDataURL(file); }); };
+
+  window.removeWhiteBackgroundFromDataUrl_ = async function(dataUrl) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const maxW = 1000;
+        const ratio = Math.min(1, maxW / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(img.width * ratio));
+        canvas.height = Math.max(1, Math.round(img.height * ratio));
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const im = ctx.getImageData(0,0,canvas.width,canvas.height);
+        const data = im.data;
+        for(let i=0;i<data.length;i+=4){
+          const r=data[i], g=data[i+1], b=data[i+2];
+          if(r>235 && g>235 && b>235){ data[i+3]=0; }
+          else if(r>215 && g>215 && b>215){ data[i+3]=Math.min(data[i+3], 90); }
+        }
+        ctx.putImageData(im,0,0);
+        resolve(canvas.toDataURL('image/png'));
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  };
+
+  window.drawSignatureToCanvas_ = function(canvasId, dataUrl) {
+    const canvas = document.getElementById(canvasId); if(!canvas || !dataUrl) return;
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.onload = () => {
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      const pad = 12;
+      const ratio = Math.min((canvas.width-pad*2)/img.width, (canvas.height-pad*2)/img.height);
+      const w = img.width * ratio, h = img.height * ratio;
+      ctx.drawImage(img, (canvas.width-w)/2, (canvas.height-h)/2, w, h);
+    };
+    img.src = dataUrl;
+  };
+
+  window.useSavedSignatureForCanvas_ = async function(canvasId) {
+    try {
+      const res = await gasRunPromise_('getMySignature', [user?.phone || '']);
+      if (!res || !res.success || !res.signatureData) return Swal.fire('ยังไม่มีลายเซ็นส่วนตัว', 'กรุณาอัปโหลดลายเซ็นในระบบก่อน', 'info');
+      drawSignatureToCanvas_(canvasId, res.signatureData);
+    } catch(err) { Swal.fire('ผิดพลาด', err.message || String(err), 'error'); }
+  };
+
+  window.openMySignatureManager = async function() {
+    let current = '';
+    try { const res = await gasRunPromise_('getMySignature', [user?.phone || '']); if (res && res.success) current = res.signatureData || ''; } catch(e) {}
+    Swal.fire({
+      title: 'ลายเซ็นอิเล็กทรอนิกส์ของฉัน', width: 620,
+      html: `<div class="text-start">
+        <div class="alert alert-info small">อัปโหลดภาพลายเซ็น ระบบจะลบพื้นหลังสีขาวให้อัตโนมัติ เหมาะกับการนำไปลงชื่อในแบบฟอร์มดิจิทัลทุกจุด</div>
+        <input type="file" id="mySignatureFile" accept="image/*" class="form-control mb-3">
+        <div class="border rounded p-3 text-center bg-light"><img id="mySignaturePreview" src="${escapeHtml(current)}" style="max-height:120px;max-width:100%;${current?'':'display:none'}"></div>
+      </div>`,
+      showCancelButton:true, confirmButtonText:'บันทึกลายเซ็น', cancelButtonText:'ปิด',
+      didOpen:()=>{
+        document.getElementById('mySignatureFile')?.addEventListener('change', async ev=>{
+          const f=ev.target.files?.[0]; if(!f) return;
+          const raw=await readFileAsDataUrl_(f);
+          const clean=await removeWhiteBackgroundFromDataUrl_(raw);
+          const img=document.getElementById('mySignaturePreview'); img.src=clean; img.style.display='inline-block'; img.dataset.cleaned=clean;
+        });
+      },
+      preConfirm:()=>{
+        const img=document.getElementById('mySignaturePreview');
+        const data=img?.dataset.cleaned || img?.src || '';
+        if(!data || data === window.location.href) { Swal.showValidationMessage('กรุณาเลือกภาพลายเซ็น'); return false; }
+        return data;
+      }
+    }).then(async r=>{
+      if(!r.isConfirmed) return;
+      Swal.fire({title:'กำลังบันทึกลายเซ็น...', allowOutsideClick:false, didOpen:()=>Swal.showLoading()});
+      const res=await gasRunPromise_('saveMySignature', [user?.phone || '', r.value]);
+      if(!res || !res.success) return Swal.fire('ผิดพลาด', res?.message || 'บันทึกไม่สำเร็จ','error');
+      Swal.fire('สำเร็จ','บันทึกลายเซ็นส่วนตัวแล้ว','success');
+    });
+  };
+
+  function signatureButtons_(canvasId){
+    return `<div class="d-flex gap-2 flex-wrap mb-1">
+      <button type="button" class="btn btn-sm btn-outline-primary" onclick="useSavedSignatureForCanvas_('${canvasId}')"><i class="bi bi-vector-pen"></i> ใช้ลายเซ็นส่วนตัว</button>
+      <button type="button" class="btn btn-sm btn-outline-success" onclick="openMySignatureManager()"><i class="bi bi-upload"></i> อัปโหลด/ตั้งค่าลายเซ็น</button>
+      <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearItBookingCanvas_('${canvasId}')">ล้าง</button>
+    </div>`;
+  }
+
+  function itBookingToggleJoinFields_(){
+    const type = document.getElementById('itbType')?.value || 'Host';
+    const joinBox = document.getElementById('itbJoinBox');
+    const credBox = document.getElementById('itbJoinCredBox');
+    const status = document.getElementById('itbJoinStatus')?.value || 'later';
+    if(joinBox) joinBox.classList.toggle('d-none', type !== 'Join');
+    if(credBox) credBox.classList.toggle('d-none', !(type === 'Join' && status === 'has'));
+  }
+
+  window.openItBookingCreate = async function() {
+    let resources=[];
+    try { const res=await gasRunPromise_('getAvailableResources', []); if(res&&res.success) resources=res.data||[]; } catch(e){}
+    const options=['<option value="">-- เลือกห้อง/ทรัพยากร --</option>'].concat(resources.map(r=>`<option value="${escapeHtml(r.id)}" data-name="${escapeHtml(r.name)}">${escapeHtml(r.name)} (${escapeHtml(r.type||'-')})</option>`)).join('');
+    Swal.fire({
+      title:'สร้างคำขอจองห้องประชุม / Zoom', width:880,
+      html:`<div class="text-start">
+        <div class="mb-2"><label class="small fw-bold text-muted">เรื่อง</label><input id="itbTopic" class="form-control" placeholder="เช่น ประชุมคณะทำงาน..."></div>
+        <div class="row g-2 mb-2">
+          <div class="col-md-6"><label class="small fw-bold text-muted">ประเภทการจอง</label><select id="itbType" class="form-select" onchange="itBookingToggleJoinFields_()"><option value="Host">1. ผู้จัด / Host</option><option value="Join">2. เข้าร่วมประชุม</option></select></div>
+          <div class="col-md-6"><label class="small fw-bold text-muted">สถานะ</label><input class="form-control bg-light" value="ส่งให้เจ้าหน้าที่กลุ่มงานสุขภาพดิจิทัลดำเนินการ" readonly></div>
+        </div>
+        <div id="itbJoinBox" class="d-none border rounded p-2 mb-2 bg-light">
+          <label class="small fw-bold text-muted">ข้อมูลการเข้าร่วมประชุม</label>
+          <select id="itbJoinStatus" class="form-select mb-2" onchange="itBookingToggleJoinFields_()"><option value="has">มี Meeting ID / Passcode / Link แล้ว</option><option value="later">ยังไม่มี ให้ประสานเจ้าหน้าที่ IT ภายหลัง</option></select>
+          <div id="itbJoinCredBox" class="row g-2">
+            <div class="col-md-4"><input id="itbMeetingId" class="form-control" placeholder="Meeting ID / RoomNumber"></div>
+            <div class="col-md-4"><input id="itbPasscode" class="form-control" placeholder="Passcode"></div>
+            <div class="col-md-4"><input id="itbMeetingLink" class="form-control" placeholder="ลิงก์ประชุม ถ้ามี"></div>
+          </div>
+        </div>
+        <div class="mb-2"><label class="small fw-bold text-muted">ห้องประชุม / ทรัพยากร</label><select id="itbResource" class="form-select">${options}</select></div>
+        <div class="mb-2"><label class="small fw-bold text-muted">สถานที่อื่น / หมายเหตุสถานที่</label><input id="itbOtherLocation" class="form-control" placeholder="เช่น เปิดที่เครื่อง... หรือรอประสานภายหลัง"></div>
+        <div class="row g-2 mb-2"><div class="col-md-6"><label class="small fw-bold text-muted">เริ่ม</label><input id="itbStart" type="datetime-local" class="form-control"></div><div class="col-md-6"><label class="small fw-bold text-muted">สิ้นสุด</label><input id="itbEnd" type="datetime-local" class="form-control"></div></div>
+        <div class="mb-2 p-2 border rounded bg-light"><label class="small fw-bold text-muted mb-1">ลงชื่อผู้ขอใช้บริการ</label>${signatureButtons_('itbSignatureCanvas')}<canvas id="itbSignatureCanvas" width="720" height="150" style="width:100%;height:150px;border:1px dashed #64748b;border-radius:10px;background:#fff;touch-action:none;"></canvas><small class="text-muted">เลือกใช้ลายเซ็นส่วนตัวหรือเซ็นสดได้</small></div>
+        <div class="alert alert-info small mb-0"><i class="bi bi-info-circle"></i> คำขอนี้จะถูกส่งให้เจ้าหน้าที่กลุ่มงานสุขภาพดิจิทัลเป็นผู้จัดการ ไม่ต้องระบุเบอร์ผู้อนุมัติ</div>
+      </div>`,
+      showCancelButton:true, confirmButtonText:'บันทึกคำขอ', cancelButtonText:'ยกเลิก',
+      didOpen:()=>{ setupItBookingSignature_('itbSignatureCanvas'); itBookingToggleJoinFields_(); },
+      preConfirm:()=>{
+        const resSel=document.getElementById('itbResource'); const opt=resSel?.options[resSel.selectedIndex];
+        const type=document.getElementById('itbType').value;
+        const joinStatus=document.getElementById('itbJoinStatus')?.value || '';
+        const payload={ topic:document.getElementById('itbTopic').value.trim(), bookingType:type, joinOption:type==='Join'?joinStatus:'', meetingId:type==='Join'&&joinStatus==='has'?document.getElementById('itbMeetingId').value.trim():'', passcode:type==='Join'&&joinStatus==='has'?document.getElementById('itbPasscode').value.trim():'', meetingLink:type==='Join'&&joinStatus==='has'?document.getElementById('itbMeetingLink').value.trim():'', resourceId:resSel?.value||'', roomName:opt?.dataset?.name||opt?.textContent||'', otherLocation:document.getElementById('itbOtherLocation').value.trim(), startTime:document.getElementById('itbStart').value, endTime:document.getElementById('itbEnd').value, approverPhone:'', signatureData:getItBookingSignatureData_(), ownerPhone:user.phone, ownerName:user.fullName, department:user.department };
+        if(!payload.topic || !payload.startTime || !payload.endTime){ Swal.showValidationMessage('กรุณากรอกเรื่องและช่วงเวลาให้ครบ'); return false; }
+        return payload;
+      }
+    }).then(async r=>{ if(!r.isConfirmed) return; Swal.fire({title:'กำลังบันทึก...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()}); try{ const res=await gasRunPromise_('saveITBooking',[r.value]); if(!res||!res.success) throw new Error(res?.message||'บันทึกไม่สำเร็จ'); Swal.fire({icon:'success',title:'บันทึกแล้ว',text:res.message,timer:1600,showConfirmButton:false}); loadItBookings(); }catch(err){ Swal.fire('ผิดพลาด',err.message||String(err),'error'); } });
+  };
+
+  window.renderItBookings = function() {
+    const body=document.getElementById('itBookingTableBody'); if(!body) return;
+    if(!itBookingsGlobal.length){ body.innerHTML='<tr><td colspan="6" class="text-center py-4 text-muted">ยังไม่มีคำขอจองห้อง/Zoom</td></tr>'; return; }
+    const canManage=isCurrentUserITServiceStaff_();
+    body.innerHTML=itBookingsGlobal.map(item=>{
+      const room=item.roomName||item.otherLocation||'-';
+      const time=`${formatThaiDateTime24_(item.startTime)}<br><span class="text-muted">ถึง ${formatThaiDateTime24_(item.endTime)}</span>`;
+      return `<tr><td class="ps-4"><div class="fw-bold">${escapeHtml(item.topic||'-')}</div><small class="text-muted">${escapeHtml(item.bookingType||'')}${item.meetingId?' • ID: '+escapeHtml(item.meetingId):''}</small></td><td>${escapeHtml(room)}</td><td>${time}</td><td>${escapeHtml(item.ownerName||'-')}<br><small class="text-muted">${escapeHtml(item.department||'')}</small></td><td>${itBookingStatusBadge_(item.status)}</td><td class="text-end pe-4"><button class="btn btn-sm btn-outline-primary" onclick="openItBookingDetail('${item.id}')"><i class="bi bi-eye"></i> ดู</button>${canManage?` <button class="btn btn-sm btn-outline-success" onclick="openItBookingManage('${item.id}')"><i class="bi bi-gear"></i> จัดการ</button> <button class="btn btn-sm btn-outline-danger" onclick="deleteItBooking_('${item.id}')"><i class="bi bi-trash"></i> ลบ</button>`:''}</td></tr>`;
+    }).join('');
+  };
+
+  window.deleteItBooking_ = async function(id){
+    const ok=await Swal.fire({icon:'warning',title:'ลบคำขอจอง?',text:'รายการนี้จะถูกลบออกจากระบบ',showCancelButton:true,confirmButtonText:'ลบ',cancelButtonText:'ยกเลิก',confirmButtonColor:'#dc3545'});
+    if(!ok.isConfirmed) return;
+    const res=await gasRunPromise_('deleteITBooking',[id,user?.phone||'']);
+    if(!res||!res.success) return Swal.fire('ผิดพลาด',res?.message||'ลบไม่สำเร็จ','error');
+    Swal.fire({icon:'success',title:'ลบแล้ว',timer:1000,showConfirmButton:false}); loadItBookings();
+  };
+
+  function ensureItBookingCalendarHost_(){
+    const panel=document.getElementById('itBookingPanel'); if(!panel) return;
+    const header=panel.querySelector('.card-header .d-flex.gap-2');
+    if(header && !document.getElementById('itBookingCalendarBtn')){
+      header.insertAdjacentHTML('afterbegin', `<button id="itBookingListBtn" class="btn btn-sm btn-outline-success" onclick="showItBookingListView_()"><i class="bi bi-list-ul"></i> รายการ</button><button id="itBookingCalendarBtn" class="btn btn-sm btn-outline-success" onclick="showItBookingCalendarView_()"><i class="bi bi-calendar3"></i> ปฏิทิน</button>`);
+    }
+    const body=panel.querySelector('.card-body');
+    if(body && !document.getElementById('itBookingCalendarBox')) body.insertAdjacentHTML('beforeend','<div id="itBookingCalendarBox" class="d-none p-3"><div id="itBookingCalendar"></div></div>');
+  }
+  const oldToggleItBookingPanel = window.toggleItBookingPanel;
+  window.toggleItBookingPanel = function(show){ if(typeof oldToggleItBookingPanel==='function') oldToggleItBookingPanel(show); ensureItBookingCalendarHost_(); };
+  const oldLoadItBookings = window.loadItBookings;
+  window.loadItBookings = async function(){ await oldLoadItBookings(); ensureItBookingCalendarHost_(); if(!document.getElementById('itBookingCalendarBox')?.classList.contains('d-none')) renderItBookingCalendar_(); };
+  window.showItBookingListView_ = function(){ document.querySelector('#itBookingPanel .table-responsive')?.classList.remove('d-none'); document.getElementById('itBookingCalendarBox')?.classList.add('d-none'); };
+  window.showItBookingCalendarView_ = function(){ document.querySelector('#itBookingPanel .table-responsive')?.classList.add('d-none'); document.getElementById('itBookingCalendarBox')?.classList.remove('d-none'); renderItBookingCalendar_(); };
+  window.renderItBookingCalendar_ = function(){
+    const el=document.getElementById('itBookingCalendar'); if(!el) return;
+    if(window.FullCalendar){
+      el.innerHTML='';
+      const cal=new FullCalendar.Calendar(el,{initialView:'dayGridMonth',height:620,locale:'th',events:(itBookingsGlobal||[]).map(x=>({title:(x.topic||'-')+' • '+(x.roomName||x.otherLocation||''),start:(x.rawStartTime||String(x.startTime||'').replace(' ','T')),end:(x.rawEndTime||String(x.endTime||'').replace(' ','T')),backgroundColor:x.status==='อนุมัติ'?'#198754':(x.status==='ไม่อนุญาต'?'#dc3545':'#0dcaf0'),borderColor:'transparent'})),eventClick:(info)=>{ const item=(itBookingsGlobal||[]).find(x=>(x.topic||'-')===info.event.title.split(' • ')[0]); if(item) openItBookingDetail(item.id); }});
+      cal.render();
+    } else {
+      el.innerHTML=(itBookingsGlobal||[]).map(x=>`<div class="border rounded p-2 mb-2"><b>${escapeHtml(x.topic||'-')}</b><br><small>${formatThaiDateTime24_(x.startTime)} - ${formatThaiDateTime24_(x.endTime)}</small></div>`).join('')||'<div class="text-muted">ไม่มีข้อมูล</div>';
+    }
+  };
+
+  window.openItBookingManage = async function(id){
+    const item=(window.itBookingsGlobal||itBookingsGlobal||[]).find(x=>x.id===id); if(!item) return Swal.fire('ไม่พบข้อมูล','กรุณาโหลดข้อมูลใหม่','warning');
+    let head={}; try{ const r=await gasRunPromise_('getDigitalHealthHeadInfo',[]); if(r&&r.success) head=r.data||{}; }catch(e){}
+    const defaultSupervisorName=item.supervisorName||user?.fullName||''; const defaultSupervisorPos=item.supervisorPosition||user?.position||'';
+    const defaultApproverName=item.approverName||head.fullName||'หัวหน้ากลุ่มงานสุขภาพดิจิทัล'; const defaultApproverPos=item.approverPosition||head.position||'หัวหน้ากลุ่มงานสุขภาพดิจิทัล';
+    Swal.fire({title:'จัดการคำขอจอง / กรอกส่วนเจ้าหน้าที่',width:940,html:`<div class="text-start small">
+      <div class="alert alert-info py-2 mb-3"><b>${escapeHtml(item.topic||'-')}</b><br>ข้อมูลส่วนนี้จะแสดงในแบบฟอร์มกระดาษดิจิทัล</div><div class="mb-2">สถานะปัจจุบัน: ${itBookingStatusBadge_(item.status)}</div>
+      <div class="row g-2"><div class="col-md-4"><label class="small fw-bold text-muted">ห้องจัดประชุมที่</label><input id="itbmRoom" class="form-control mb-2" value="${escapeHtml(item.adminRoomId||'')}" placeholder="เช่น ห้องประชุม 1 / Zoom ID"></div><div class="col-md-4"><label class="small fw-bold text-muted">Password / Passcode</label><input id="itbmPass" class="form-control mb-2" value="${escapeHtml(item.adminPasscode||'')}"></div><div class="col-md-4"><label class="small fw-bold text-muted">ลิงก์ประชุม</label><input id="itbmLink" class="form-control mb-2" value="${escapeHtml(item.adminLink||item.meetingLink||'')}"></div></div>
+      <div class="row g-2"><div class="col-md-6"><label class="small fw-bold text-muted">ผู้ควบคุมดูแล</label><input id="itbmSupervisorName" class="form-control mb-2" value="${escapeHtml(defaultSupervisorName)}"></div><div class="col-md-6"><label class="small fw-bold text-muted">ตำแหน่งผู้ควบคุมดูแล</label><input id="itbmSupervisorPosition" class="form-control mb-2" value="${escapeHtml(defaultSupervisorPos)}"></div></div>
+      <div class="mb-2 p-2 border rounded bg-light"><label class="small fw-bold text-muted mb-1">ลายเซ็นผู้ควบคุมดูแล</label>${signatureButtons_('itbmSupervisorSig')}<canvas id="itbmSupervisorSig" width="720" height="120" style="width:100%;height:120px;border:1px dashed #64748b;border-radius:10px;background:#fff;touch-action:none;"></canvas></div>
+      <div class="row g-2"><div class="col-md-6"><label class="small fw-bold text-muted">เจ้าหน้าที่ผู้กรอกข้อมูล</label><input id="itbmStaffName" class="form-control mb-2" value="${escapeHtml(item.staffName||user?.fullName||'')}"></div><div class="col-md-6"><label class="small fw-bold text-muted">ตำแหน่งเจ้าหน้าที่</label><input id="itbmStaffPosition" class="form-control mb-2" value="${escapeHtml(item.staffPosition||user?.position||'นักวิชาการคอมพิวเตอร์')}"></div></div>
+      <div class="mb-2 p-2 border rounded bg-light"><label class="small fw-bold text-muted mb-1">ลายเซ็นเจ้าหน้าที่</label>${signatureButtons_('itbmAdminSig')}<canvas id="itbmAdminSig" width="720" height="120" style="width:100%;height:120px;border:1px dashed #64748b;border-radius:10px;background:#fff;touch-action:none;"></canvas></div>
+      <div class="row g-2"><div class="col-md-6"><label class="small fw-bold text-muted">ผู้อนุญาต / ไม่อนุญาต</label><input id="itbmApproverName" class="form-control mb-2" value="${escapeHtml(defaultApproverName)}"></div><div class="col-md-6"><label class="small fw-bold text-muted">ตำแหน่งผู้อนุญาต</label><input id="itbmApproverPosition" class="form-control mb-2" value="${escapeHtml(defaultApproverPos)}"></div></div>
+      <div class="mb-2 p-2 border rounded bg-light"><label class="small fw-bold text-muted mb-1">ลายเซ็นอิเล็กทรอนิกส์ผู้อนุญาต</label>${signatureButtons_('itbmApproverSig')}<canvas id="itbmApproverSig" width="720" height="120" style="width:100%;height:120px;border:1px dashed #64748b;border-radius:10px;background:#fff;touch-action:none;"></canvas><small class="text-muted">สามารถใช้ลายเซ็นอิเล็กทรอนิกส์ ไม่จำเป็นต้องลงนามจริงบนกระดาษ</small></div>
+      <label class="small fw-bold text-muted">เหตุผล / หมายเหตุ / ไม่อนุญาตเพราะ</label><textarea id="itbmReason" class="form-control" rows="2">${escapeHtml(item.cancelReason||item.approvalNote||'')}</textarea></div>`,showDenyButton:true,showCancelButton:true,confirmButtonText:'อนุมัติ',denyButtonText:'ไม่อนุญาต',cancelButtonText:'ยกเลิกคำขอ',footer:`<button type="button" class="btn btn-outline-dark btn-sm me-2" onclick="openItBookingDigitalView('${id}')">Digital View</button><button type="button" class="btn btn-outline-secondary btn-sm" onclick="Swal.close()">ปิดหน้าต่าง</button>`,didOpen:()=>{['itbmSupervisorSig','itbmAdminSig','itbmApproverSig'].forEach(setupItBookingSignature_); if(item.supervisorSignatureData) drawSignatureToCanvas_('itbmSupervisorSig',item.supervisorSignatureData); if(item.adminSignatureData) drawSignatureToCanvas_('itbmAdminSig',item.adminSignatureData); if(item.approverSignatureData) drawSignatureToCanvas_('itbmApproverSig',item.approverSignatureData); }}).then(async r=>{ if(!r.isConfirmed && !r.isDenied && r.dismiss!==Swal.DismissReason.cancel) return; const action=r.isConfirmed?'approve':(r.isDenied?'reject':'cancel'); const payload={adminRoomId:document.getElementById('itbmRoom')?.value||'',adminPasscode:document.getElementById('itbmPass')?.value||'',adminLink:document.getElementById('itbmLink')?.value||'',reason:document.getElementById('itbmReason')?.value||'',approvalNote:document.getElementById('itbmReason')?.value||'',staffName:document.getElementById('itbmStaffName')?.value||'',staffPosition:document.getElementById('itbmStaffPosition')?.value||'',supervisorName:document.getElementById('itbmSupervisorName')?.value||'',supervisorPosition:document.getElementById('itbmSupervisorPosition')?.value||'',supervisorSignatureData:getItBookingCanvasData_('itbmSupervisorSig')||item.supervisorSignatureData||'',adminSignatureData:getItBookingCanvasData_('itbmAdminSig')||item.adminSignatureData||'',approverName:document.getElementById('itbmApproverName')?.value||'',approverPosition:document.getElementById('itbmApproverPosition')?.value||'',approverSignatureData:getItBookingCanvasData_('itbmApproverSig')||item.approverSignatureData||''}; Swal.fire({title:'กำลังอัปเดต...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()}); try{ const res=await gasRunPromise_('updateITBookingStatus',[id,action,user.phone,payload]); if(!res||!res.success) throw new Error(res?.message||'อัปเดตไม่สำเร็จ'); Swal.fire({icon:'success',title:'อัปเดตแล้ว',text:res.message,timer:1500,showConfirmButton:false}); loadItBookings(); }catch(err){ Swal.fire('ผิดพลาด',err.message||String(err),'error'); } });
+  };
+
+  const oldBuildPaper = window.buildItBookingPaperHtml_;
+  window.buildItBookingPaperHtml_ = function(item){
+    let html = oldBuildPaper ? oldBuildPaper(item) : '';
+    if(!html) return html;
+    const approverName = item.approverName || item.staffName || 'หัวหน้ากลุ่มงานสุขภาพดิจิทัล';
+    const approverPosition = item.approverPosition || 'หัวหน้ากลุ่มงานสุขภาพดิจิทัล';
+    const approverSig = item.approverSignatureData || item.adminSignatureData || '';
+    html = html.replace(/เวลา <span[^>]*>.*?<\/span> น\. ถึง <span[^>]*>.*?<\/span> น\./, `เวลา <span style="display:inline-block;min-width:70px;border-bottom:1px dotted #555;color:#14248a;font-weight:800;text-align:center;">${itBookingTimeOnly_(item.startTime)}</span> น. ถึง <span style="display:inline-block;min-width:70px;border-bottom:1px dotted #555;color:#14248a;font-weight:800;text-align:center;">${itBookingTimeOnly_(item.endTime)}</span> น.`);
+    if(html.includes('Admin Signature Data')===false){
+      html = html.replace(/<div style="display:flex;justify-content:flex-end;margin-top:6mm;">[\s\S]*?<\/div>\s*<\/div>\s*<div style="font-size:11px;color:#475569;margin-top:5mm;">/, `<div style="display:flex;justify-content:flex-end;margin-top:6mm;">${itBookingSigBlock_(approverSig, approverName, '', approverPosition)}</div></div><div style="font-size:11px;color:#475569;margin-top:5mm;">`);
+    }
+    return html;
+  };
+
+  window.downloadItBookingPaperPdf_ = async function(){
+    const el=document.getElementById('itBookingDigitalPaper'); if(!el) return;
+    try{
+      await loadScriptOnce_('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',()=>typeof html2canvas!=='undefined');
+      await loadScriptOnce_('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js',()=>!!window.jspdf);
+      const canvas=await html2canvas(el,{scale:2,backgroundColor:'#ffffff',useCORS:true});
+      const img=canvas.toDataURL('image/jpeg',0.95); const pdf=new window.jspdf.jsPDF('p','mm','a4'); pdf.addImage(img,'JPEG',0,0,210,297); pdf.save('IT_Booking_Digital_Form.pdf');
+    }catch(err){ Swal.fire('ดาวน์โหลด PDF ไม่สำเร็จ', err.message||String(err),'error'); }
+  };
+
+  function itSetMinutesAiStatus_(msg, type){
+    let box=document.getElementById('itmAiStatus');
+    if(!box){ const input=document.getElementById('itmAudioFile'); if(input) input.insertAdjacentHTML('afterend','<div id="itmAiStatus" class="small mt-2"></div>'); box=document.getElementById('itmAiStatus'); }
+    if(box){ box.className='small mt-2 text-'+(type||'primary'); box.innerHTML=msg; }
+  }
+  window.itFillMinutesForm_ = function(data){
+    const map={itmTitle:'title',itmDate:'date',itmLocation:'location',itmChairman:'chairman',itmAttendees:'attendees',itmAgenda:'agenda',itmConclusion:'conclusion'};
+    Object.keys(map).forEach(id=>{ const el=document.getElementById(id); const v=data&&data[map[id]]; if(el && v!==undefined && v!==null && String(v).trim()){ el.value=String(v).trim(); el.dispatchEvent(new Event('input',{bubbles:true})); } });
+    itSetMinutesAiStatus_('<i class="bi bi-check-circle"></i> AI วิเคราะห์แล้วและเติมข้อมูลลงแบบฟอร์มเรียบร้อย', 'success');
+  };
+  window.itAnalyzeMinutesAudioInModal = async function(){
+    const file=document.getElementById('itmAudioFile')?.files?.[0]; if(!file) return itSetMinutesAiStatus_('กรุณาเลือกไฟล์เสียงก่อน','danger');
+    try{ const btn=Swal.getConfirmButton(); if(btn) btn.disabled=true; itSetMinutesAiStatus_('<span class="spinner-border spinner-border-sm"></span> AI กำลังวิเคราะห์ไฟล์เสียง...', 'primary');
+      let data; if(file.size <= 2.8*1024*1024){ const base64=await readFileBase64_(file); const res=await gasRunPromise_('analyzeMeetingAudio',[base64,file.name,file.type||'audio/mpeg']); if(!res||!res.success) throw new Error(res?.message||'AI วิเคราะห์เสียงไม่สำเร็จ'); data=res.data||{}; } else { const chunks=await itCreateAudioChunksForAi_(file,120); const results=[]; for(let i=0;i<Math.min(chunks.length,12);i++){ itSetMinutesAiStatus_(`<span class="spinner-border spinner-border-sm"></span> วิเคราะห์ช่วงที่ ${i+1}/${Math.min(chunks.length,12)}...`, 'primary'); const f=new File([chunks[i].blob],chunks[i].fileName,{type:'audio/wav'}); const base64=await readFileBase64_(f); const res=await gasRunPromise_('analyzeMeetingAudio',[base64,chunks[i].fileName,'audio/wav']); if(res&&res.success&&res.data) results.push(res.data); } if(!results.length) throw new Error('AI ไม่สามารถวิเคราะห์เสียงได้'); data=itMergeMinutesResults_(results); }
+      itFillMinutesForm_(data||{}); if(btn) btn.disabled=false; }catch(err){ itSetMinutesAiStatus_('ผิดพลาด: '+escapeHtml(err.message||String(err)),'danger'); const btn=Swal.getConfirmButton(); if(btn) btn.disabled=false; }
+  };
+})();
 </script>
 
 </body>
