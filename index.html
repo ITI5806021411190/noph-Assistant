@@ -6505,5 +6505,121 @@ function clearItBookingCanvas_(canvasId) {
 })();
 </script>
 
+
+<script>
+/* ========================= v50: Stability audit hotfix =========================
+   Root fix: v49 used window.myReportsGlobal / window.teamReportsGlobal, but the app stores them as top-level let variables.
+   That made report tables render empty or behave like new records in some flows.
+*/
+(function(){
+  window.HAOS_VERSION = 'v50-stability-audit';
+  const $v50 = (id)=>document.getElementById(id);
+  const esc50 = (v)=> (typeof escapeHtml==='function') ? escapeHtml(v) : String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const strip50 = (v)=>{ try { return stripHtml_(v || ''); } catch(e) { return String(v || '').replace(/<[^>]+>/g,''); } };
+  function getMyReports50_(){ try { return (typeof myReportsGlobal !== 'undefined' && Array.isArray(myReportsGlobal)) ? myReportsGlobal : (window.myReportsGlobal || []); } catch(e) { return window.myReportsGlobal || []; } }
+  function getTeamReports50_(){ try { return (typeof teamReportsGlobal !== 'undefined' && Array.isArray(teamReportsGlobal)) ? teamReportsGlobal : (window.teamReportsGlobal || []); } catch(e) { return window.teamReportsGlobal || []; } }
+  function getMyReportMode50_(){ try { return typeof myReportViewMode !== 'undefined' ? myReportViewMode : (window.myReportViewMode || 'list'); } catch(e) { return window.myReportViewMode || 'list'; } }
+  function getHeadReportMode50_(){ try { return typeof headReportViewMode !== 'undefined' ? headReportViewMode : (window.headReportViewMode || 'list'); } catch(e) { return window.headReportViewMode || 'list'; } }
+  function getPageSize50_(id){ const v=$v50(id)?.value || '20'; return v === 'all' ? 'all' : Number(v || 20); }
+  function formatDate50_(value){
+    if (typeof formatReportDateThai_ === 'function') return formatReportDateThai_(value);
+    if(!value) return '-';
+    const d = new Date(String(value).includes('T') ? value : String(value)+'T00:00:00');
+    if (isNaN(d)) return String(value);
+    const days=['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.']; const mons=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    return `${d.getDate()} ${mons[d.getMonth()]} ${d.getFullYear()+543} (${days[d.getDay()]})`;
+  }
+  function dateParts50_(value){ const text=formatDate50_(value); const m=text.match(/^(\d+)\s+([^\s]+)\s+(\d+)/); return m?{d:m[1],my:m[2]+' '+m[3],full:text}:{d:'-',my:text,full:text}; }
+
+  window.editReport = function(id){
+    const reports = getMyReports50_();
+    const rep = reports.find(r => String(r.id) === String(id));
+    if(!rep){
+      return Swal.fire('ไม่พบรายการ', 'ระบบไม่พบรายงานที่ต้องการแก้ไข กรุณารีเฟรชข้อมูลแล้วลองอีกครั้ง', 'warning');
+    }
+    const rawDate = rep.rawDate || rep.reportDate || rep.date || '';
+    const dateVal = String(rawDate).includes('T') ? String(rawDate).slice(0,10) : String(rawDate).slice(0,10);
+    if($v50('repEditId')) $v50('repEditId').value = rep.id || '';
+    if($v50('repDate')) $v50('repDate').value = dateVal;
+    const time = String(rep.time || rep.reportTime || '');
+    if(time.includes(' - ')){
+      const t=time.split(' - ');
+      if($v50('repStartTime')) $v50('repStartTime').value=(t[0]||'').trim();
+      if($v50('repEndTime')) $v50('repEndTime').value=(t[1]||'').trim();
+    } else {
+      if($v50('repStartTime')) $v50('repStartTime').value = rep.startTime || '';
+      if($v50('repEndTime')) $v50('repEndTime').value = rep.endTime || '';
+    }
+    if($v50('repLeave')) $v50('repLeave').value = rep.leaveType || rep.status || 'ปฏิบัติงานปกติ';
+    if($v50('repDetails')) $v50('repDetails').value = rep.details || rep.workDetails || rep.detail || rep.description || '';
+    if($v50('repRemarks')) $v50('repRemarks').value = rep.remarks || rep.remark || rep.note || '';
+    try { toggleLeaveFields(); } catch(e) {}
+    try { resetReportFileInputs(); } catch(e) {}
+    const btn=$v50('btnSaveReport'); if(btn){ btn.classList.remove('btn-primary'); btn.classList.add('btn-warning'); }
+    $v50('btnCancelEditRep')?.classList.remove('d-none');
+    if(typeof openReportFormModal === 'function') openReportFormModal('edit');
+    setTimeout(()=> $v50('repDetails')?.focus(), 250);
+  };
+
+  window.renderMyReports = function(){
+    const tbody=$v50('myReportTable'); if(!tbody) return;
+    const reports=getMyReports50_(); tbody.innerHTML='';
+    if(getMyReportMode50_()==='calendar'){
+      $v50('myReportListView')?.classList.add('d-none'); $v50('myReportCalendarView')?.classList.remove('d-none');
+      return typeof renderReportCalendar_==='function' ? renderReportCalendar_('myReportCalendarView', reports, 'my') : undefined;
+    }
+    $v50('myReportListView')?.classList.remove('d-none'); $v50('myReportCalendarView')?.classList.add('d-none');
+    if(!reports.length){ tbody.innerHTML='<tr><td colspan="4" class="text-center py-4 text-muted">ยังไม่มีประวัติ</td></tr>'; return; }
+    const pageSize=getPageSize50_('myReportPageSize'); const display=pageSize==='all'?reports:reports.slice(0,pageSize);
+    display.forEach(r=>{
+      const p=dateParts50_(r.date || r.rawDate || r.reportDate); const badge=(r.leaveType||'')==='ปฏิบัติงานปกติ'?'bg-success':'bg-warning text-dark';
+      const files=(typeof renderFileLinks_==='function') ? renderFileLinks_(r.fileUrl || r.files || '') : '';
+      const txt=strip50(r.details||r.workDetails||r.detail||'').slice(0,180);
+      tbody.innerHTML += `<tr class="report-card-row"><td><span class="report-date-pill"><span>${p.d}</span><small>${p.my}</small></span><div class="small text-muted mt-1">${esc50(r.time||'')}</div></td><td><span class="status-badge ${badge}">${esc50(r.leaveType||'-')}</span></td><td><div class="report-detail-box">${esc50(txt||'-')}${files?'<div class="mt-1">'+files+'</div>':''}</div></td><td class="text-end"><button class="btn btn-light btn-sm border text-primary" onclick="editReport('${esc50(r.id)}')"><i class="bi bi-pencil"></i></button> <button class="btn btn-light btn-sm border text-danger" onclick="deleteReport('${esc50(r.id)}')"><i class="bi bi-trash"></i></button></td></tr>`;
+    });
+    if(display.length < reports.length) tbody.innerHTML += `<tr><td colspan="4" class="text-center text-muted small py-2">แสดง ${display.length} จาก ${reports.length} รายการ</td></tr>`;
+  };
+
+  window.renderHeadReports = function(){
+    const tbody=$v50('headReportTable'); if(!tbody) return;
+    const reports=getTeamReports50_(); tbody.innerHTML='';
+    const head=$v50('headReportListView')?.querySelector('thead tr');
+    if(head){ head.innerHTML='<th>วันที่</th><th>ชื่อ</th><th>สถานะ/เวลา</th><th>รายละเอียด</th><th>ไฟล์</th>'; }
+    if(getHeadReportMode50_()==='calendar'){
+      $v50('headReportListView')?.classList.add('d-none'); $v50('headReportCalendarView')?.classList.remove('d-none');
+      return typeof renderReportCalendar_==='function' ? renderReportCalendar_('headReportCalendarView', reports, 'team') : undefined;
+    }
+    $v50('headReportListView')?.classList.remove('d-none'); $v50('headReportCalendarView')?.classList.add('d-none');
+    if(!reports.length){ tbody.innerHTML='<tr><td colspan="5" class="text-center py-4 text-muted">ยังไม่มีข้อมูลรายงานทีม</td></tr>'; return; }
+    const pageSize=getPageSize50_('headReportPageSize'); const display=pageSize==='all'?reports:reports.slice(0,pageSize);
+    display.forEach(r=>{
+      const p=dateParts50_(r.date || r.rawDate || r.reportDate); const badge=(r.leaveType||'')==='ปฏิบัติงานปกติ'?'bg-success':'bg-warning text-dark';
+      const files=(typeof renderFileLinks_==='function') ? renderFileLinks_(r.fileUrl || r.files || '') : '-';
+      tbody.innerHTML += `<tr class="report-card-row"><td><span class="report-date-pill"><span>${p.d}</span><small>${p.my}</small></span></td><td><b>${esc50(r.name||'-')}</b></td><td><span class="status-badge ${badge}">${esc50(r.leaveType||'-')}</span><br><small class="text-muted">${esc50(r.time||'')}</small></td><td><div class="report-detail-box">${esc50(strip50(r.details||r.workDetails||'').slice(0,180)||'-')}</div></td><td>${files||'-'}</td></tr>`;
+    });
+    if(display.length < reports.length) tbody.innerHTML += `<tr><td colspan="5" class="text-center text-muted small py-2">แสดง ${display.length} จาก ${reports.length} รายการ</td></tr>`;
+  };
+
+  window.useSavedSignatureForCanvas_ = async function(canvasId){
+    try{
+      let data='';
+      try{
+        const res=await gasRunPromise_('getMySignatures',[user?.phone || '']);
+        if(res?.success){ const arr=res.signatures||[]; data=(arr.find(s=>s.isDefault)||arr[0]||{}).data||''; }
+      }catch(e){}
+      if(!data){ const res=await gasRunPromise_('getMySignature',[user?.phone || '']); if(res?.success) data=res.signatureData||''; }
+      if(!data) return Swal.fire('ยังไม่มีลายเซ็นส่วนตัว','ไปที่ตั้งค่าโปรไฟล์เพื่อเพิ่มลายเซ็นก่อน หรือเซ็นสดในช่องนี้ได้เลย','info');
+      if(typeof drawSignatureToCanvas_ === 'function') drawSignatureToCanvas_(canvasId, data);
+    }catch(err){ Swal.fire('โหลดลายเซ็นไม่สำเร็จ', err.message||String(err), 'error'); }
+  };
+
+  const oldDownloadQr50 = window.downloadQrV49_;
+  window.downloadQrV49_ = async function(){
+    if(!window.qrCanvasV49 && typeof renderQrWithLogoV49_==='function') await renderQrWithLogoV49_();
+    return oldDownloadQr50 ? oldDownloadQr50() : undefined;
+  };
+})();
+</script>
+
 </body>
 </html>
