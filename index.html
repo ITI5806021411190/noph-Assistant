@@ -5493,6 +5493,7 @@ function openWorkspaceCreateModal() {
     }
 
     async function openItBookingCreate() {
+      // v52: definitive booking form. Host hides meeting credentials; Join can provide Meeting ID, Passcode and Link.
       let resources = [];
       try {
         const res = await gasRunPromise_('getAvailableResources', []);
@@ -5501,16 +5502,23 @@ function openWorkspaceCreateModal() {
       const options = ['<option value="">-- เลือกห้อง/ทรัพยากร --</option>'].concat(resources.map(r => `<option value="${escapeHtml(r.id)}" data-name="${escapeHtml(r.name)}">${escapeHtml(r.name)} (${escapeHtml(r.type || '-')})</option>`)).join('');
       Swal.fire({
         title: 'สร้างคำขอจองห้องประชุม / Zoom',
-        width: 840,
+        width: 900,
         html: `<div class="text-start">
           <div class="mb-2"><label class="small fw-bold text-muted">เรื่อง</label><input id="itbTopic" class="form-control" placeholder="เช่น ประชุมคณะทำงาน..." /></div>
           <div class="row g-2 mb-2">
-            <div class="col-md-6"><label class="small fw-bold text-muted">ประเภทการจอง</label><select id="itbType" class="form-select"><option value="Host">เป็นผู้จัด / Host</option><option value="Join">เข้าร่วมประชุม</option></select></div>
+            <div class="col-md-6"><label class="small fw-bold text-muted">ประเภทการจอง</label><select id="itbType" class="form-select" onchange="itBookingToggleJoinFields_()"><option value="Host">1. ผู้จัด / Host</option><option value="Join">2. เข้าร่วมประชุม</option></select></div>
             <div class="col-md-6"><label class="small fw-bold text-muted">สถานะ</label><input class="form-control bg-light" value="ส่งให้เจ้าหน้าที่กลุ่มงานสุขภาพดิจิทัลดำเนินการ" readonly /></div>
           </div>
-          <div class="row g-2 mb-2">
-            <div class="col-md-6"><label class="small fw-bold text-muted">Meeting ID</label><input id="itbMeetingId" class="form-control" placeholder="ถ้ามี" /></div>
-            <div class="col-md-6"><label class="small fw-bold text-muted">Passcode</label><input id="itbPasscode" class="form-control" placeholder="ถ้ามี" /></div>
+          <div id="itbHostHint" class="alert alert-secondary small py-2 mb-2"><i class="bi bi-camera-video"></i> เลือก <b>ผู้จัด / Host</b>: ระบบจะปิดช่อง Meeting ID / Passcode / Link เพราะให้เจ้าหน้าที่ IT สร้างหรือจัดเตรียมให้ภายหลัง</div>
+          <div id="itbJoinBox" class="d-none border rounded p-3 mb-2 bg-light">
+            <label class="small fw-bold text-muted">ข้อมูลการเข้าร่วมประชุม</label>
+            <select id="itbJoinStatus" class="form-select mb-2" onchange="itBookingToggleJoinFields_()"><option value="has">มี Meeting ID / Passcode / ลิงก์เข้าร่วมประชุมแล้ว</option><option value="later">ยังไม่มี ให้ประสานเจ้าหน้าที่ IT ภายหลัง</option></select>
+            <div id="itbJoinCredBox" class="row g-2">
+              <div class="col-md-4"><label class="small fw-bold text-muted">Meeting ID / RoomNumber</label><input id="itbMeetingId" class="form-control" placeholder="เช่น 444 111 3070"></div>
+              <div class="col-md-4"><label class="small fw-bold text-muted">Passcode</label><input id="itbPasscode" class="form-control" placeholder="เช่น 107533"></div>
+              <div class="col-md-4"><label class="small fw-bold text-muted">ลิงก์เข้าร่วมประชุม</label><input id="itbMeetingLink" class="form-control" placeholder="https://zoom.us/j/... หรือ Meet/Webex"></div>
+            </div>
+            <div id="itbJoinLaterHint" class="d-none alert alert-warning small py-2 mb-0 mt-2"><i class="bi bi-info-circle"></i> ผู้ขอยังไม่มี Meeting ID / Passcode / Link ระบบจะบันทึกเป็นงานให้เจ้าหน้าที่ IT ประสานภายหลัง</div>
           </div>
           <div class="mb-2"><label class="small fw-bold text-muted">ห้องประชุม / ทรัพยากร</label><select id="itbResource" class="form-select">${options}</select></div>
           <div class="mb-2"><label class="small fw-bold text-muted">สถานที่อื่น / หมายเหตุสถานที่</label><input id="itbOtherLocation" class="form-control" placeholder="เช่น เปิดที่เครื่อง... หรือรอประสานภายหลัง" /></div>
@@ -5519,24 +5527,29 @@ function openWorkspaceCreateModal() {
             <div class="col-md-6"><label class="small fw-bold text-muted">สิ้นสุด</label><input id="itbEnd" type="datetime-local" class="form-control" /></div>
           </div>
           <div class="mb-2 p-2 border rounded bg-light">
-            <div class="d-flex justify-content-between align-items-center mb-1"><label class="small fw-bold text-muted mb-0">ลงชื่อผู้ขอใช้บริการ</label><button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearItBookingSignature_()">ล้างลายเซ็น</button></div>
+            <label class="small fw-bold text-muted mb-1">ลงชื่อผู้ขอใช้บริการ</label>
+            ${typeof signatureButtons_ === 'function' ? signatureButtons_('itbSignatureCanvas') : '<button type="button" class="btn btn-sm btn-outline-secondary mb-1" onclick="clearItBookingSignature_()">ล้างลายเซ็น</button>'}
             <canvas id="itbSignatureCanvas" width="720" height="150" style="width:100%;height:150px;border:1px dashed #64748b;border-radius:10px;background:#fff;touch-action:none;"></canvas>
-            <small class="text-muted">สามารถเซ็นสดบนหน้าจอได้ ระบบจะแสดงใน Digital View</small>
+            <small class="text-muted">เลือกใช้ลายเซ็นส่วนตัวหรือเซ็นสดได้ ระบบจะแสดงใน Digital View</small>
           </div>
           <div class="alert alert-info small mb-0"><i class="bi bi-info-circle"></i> คำขอนี้จะถูกส่งให้เจ้าหน้าที่กลุ่มงานสุขภาพดิจิทัลเป็นผู้จัดการ ไม่ต้องระบุเบอร์ผู้อนุมัติ</div>
         </div>`,
         showCancelButton: true,
         confirmButtonText: 'บันทึกคำขอ',
         cancelButtonText: 'ยกเลิก',
-        didOpen: () => setupItBookingSignature_('itbSignatureCanvas'),
+        didOpen: () => { setupItBookingSignature_('itbSignatureCanvas'); itBookingToggleJoinFields_(); },
         preConfirm: () => {
           const resSel = document.getElementById('itbResource');
           const opt = resSel?.options[resSel.selectedIndex];
+          const type = document.getElementById('itbType').value;
+          const joinStatus = document.getElementById('itbJoinStatus')?.value || '';
           const payload = {
             topic: document.getElementById('itbTopic').value.trim(),
-            bookingType: document.getElementById('itbType').value,
-            meetingId: document.getElementById('itbMeetingId').value.trim(),
-            passcode: document.getElementById('itbPasscode').value.trim(),
+            bookingType: type,
+            joinOption: type === 'Join' ? joinStatus : '',
+            meetingId: type === 'Join' && joinStatus === 'has' ? document.getElementById('itbMeetingId').value.trim() : '',
+            passcode: type === 'Join' && joinStatus === 'has' ? document.getElementById('itbPasscode').value.trim() : '',
+            meetingLink: type === 'Join' && joinStatus === 'has' ? document.getElementById('itbMeetingLink').value.trim() : '',
             resourceId: resSel?.value || '',
             roomName: opt?.dataset?.name || opt?.textContent || '',
             otherLocation: document.getElementById('itbOtherLocation').value.trim(),
@@ -5580,6 +5593,7 @@ function openWorkspaceCreateModal() {
             <div class="col-md-6"><b>สิ้นสุด:</b> ${escapeHtml(item.endTime || '-')}</div>
             <div class="col-md-6"><b>Meeting ID:</b> ${escapeHtml(item.meetingId || '-')}</div>
             <div class="col-md-6"><b>Passcode:</b> ${escapeHtml(item.passcode || '-')}</div>
+            <div class="col-12"><b>ลิงก์เข้าร่วมประชุม:</b> ${item.meetingLink ? `<a href="${escapeHtml(item.meetingLink)}" target="_blank">${escapeHtml(item.meetingLink)}</a>` : '-'}</div>
           </div>
           <hr>
           <div><b>ข้อมูลจาก Admin:</b></div>
@@ -6286,8 +6300,12 @@ function clearItBookingCanvas_(canvasId) {
     const joinBox = document.getElementById('itbJoinBox');
     const credBox = document.getElementById('itbJoinCredBox');
     const status = document.getElementById('itbJoinStatus')?.value || 'later';
+    const hostHint = document.getElementById('itbHostHint');
+    const laterHint = document.getElementById('itbJoinLaterHint');
     if(joinBox) joinBox.classList.toggle('d-none', type !== 'Join');
+    if(hostHint) hostHint.classList.toggle('d-none', type === 'Join');
     if(credBox) credBox.classList.toggle('d-none', !(type === 'Join' && status === 'has'));
+    if(laterHint) laterHint.classList.toggle('d-none', !(type === 'Join' && status === 'later'));
   }
 
   window.openItBookingCreate = async function() {
@@ -6621,5 +6639,132 @@ function clearItBookingCanvas_(canvasId) {
 })();
 </script>
 
+
+<script>
+/* ========================= v51: Thai datetime everywhere + report edit/filter fixes ========================= */
+(function(){
+  window.HAOS_VERSION = 'v51-thai-datetime-report-fix';
+  const $ = (id)=>document.getElementById(id);
+  const esc = (v)=> (typeof escapeHtml==='function') ? escapeHtml(v) : String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const strip = (v)=> { try { return stripHtml_(v || ''); } catch(e) { return String(v || '').replace(/<[^>]+>/g,''); } };
+  const TH_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  const TH_DAYS = ['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'];
+  function parseDateAnyV51_(value){
+    if(!value) return null;
+    if(value instanceof Date && !isNaN(value)) return value;
+    let raw = String(value).trim();
+    if(!raw || raw === '-') return null;
+    let m = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s](\d{1,2}):(\d{1,2}))?/);
+    if(m) return new Date(Number(m[1]), Number(m[2])-1, Number(m[3]), Number(m[4]||0), Number(m[5]||0));
+    m = raw.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2}))?/);
+    if(m){ let y=Number(m[3]); if(y>2400) y-=543; return new Date(y, Number(m[2])-1, Number(m[1]), Number(m[4]||0), Number(m[5]||0)); }
+    m = raw.match(/(\d{1,2})\s+([^\s]+)\s+(\d{4})(?:.*?(\d{1,2})[:.](\d{2}))?/);
+    if(m){ const mo=TH_MONTHS.findIndex(x=>x===m[2]); if(mo>=0){ let y=Number(m[3]); if(y>2400) y-=543; return new Date(y, mo, Number(m[1]), Number(m[4]||0), Number(m[5]||0)); } }
+    const d = new Date(raw);
+    return isNaN(d) ? null : d;
+  }
+  function pad2V51_(n){ return String(n).padStart(2,'0'); }
+  function toInputDateV51_(value){ const d=parseDateAnyV51_(value); return d ? `${d.getFullYear()}-${pad2V51_(d.getMonth()+1)}-${pad2V51_(d.getDate())}` : ''; }
+  window.formatThaiDateOnlyV51_ = function(value, withDay=false){
+    const d=parseDateAnyV51_(value); if(!d) return value ? String(value) : '-';
+    return `${d.getDate()} ${TH_MONTHS[d.getMonth()]} ${d.getFullYear()+543}${withDay ? ' ('+TH_DAYS[d.getDay()]+'.)' : ''}`;
+  };
+  window.formatThaiTimeOnlyV51_ = function(value){
+    const d=parseDateAnyV51_(value); if(!d) return value ? String(value).replace(':','.') : '-';
+    return `${pad2V51_(d.getHours())}.${pad2V51_(d.getMinutes())} น.`;
+  };
+  window.formatThaiDateTimeV51_ = function(value){
+    const d=parseDateAnyV51_(value); if(!d) return value ? String(value) : '-';
+    return `${d.getDate()} ${TH_MONTHS[d.getMonth()]} ${d.getFullYear()+543} เวลา ${pad2V51_(d.getHours())}.${pad2V51_(d.getMinutes())} น.`;
+  };
+  window.formatThaiDateTime24_ = window.formatThaiDateTimeV51_;
+  window.formatReportDateThai_ = function(value){ return window.formatThaiDateOnlyV51_(value, true); };
+  window.formatReportDateParts_ = function(value){ const text=window.formatReportDateThai_(value); const m=text.match(/^(\d+)\s+([^\s]+)\s+(\d+)/); return m?{d:m[1],my:m[2]+' '+m[3],full:text}:{d:'-',my:text,full:text}; };
+  window.itBookingThaiDate_ = function(value){ return window.formatThaiDateOnlyV51_(value, false); };
+  window.itBookingTimeOnly_ = function(value){ const d=parseDateAnyV51_(value); return d ? `${pad2V51_(d.getHours())}.${pad2V51_(d.getMinutes())}` : '-'; };
+
+  function getMyReportsV51_(){ try { return (typeof myReportsGlobal !== 'undefined' && Array.isArray(myReportsGlobal)) ? myReportsGlobal : (window.myReportsGlobal || []); } catch(e) { return window.myReportsGlobal || []; } }
+  function getTeamReportsV51_(){ try { return (typeof teamReportsGlobal !== 'undefined' && Array.isArray(teamReportsGlobal)) ? teamReportsGlobal : (window.teamReportsGlobal || []); } catch(e) { return window.teamReportsGlobal || []; } }
+  function getMyReportModeV51_(){ try { return typeof myReportViewMode !== 'undefined' ? myReportViewMode : (window.myReportViewMode || 'list'); } catch(e) { return window.myReportViewMode || 'list'; } }
+  function getHeadReportModeV51_(){ try { return typeof headReportViewMode !== 'undefined' ? headReportViewMode : (window.headReportViewMode || 'list'); } catch(e) { return window.headReportViewMode || 'list'; } }
+  function getPageSizeV51_(id){ const v=$(id)?.value || '20'; return v === 'all' ? 'all' : Number(v || 20); }
+  function splitReportTimeV51_(time){
+    const t=String(time||'').replace(/น\.?/g,'').replace(/เวลา/g,'').replace(/\./g,':');
+    const m=t.match(/(\d{1,2}:\d{2})\s*(?:-|ถึง|–|—)\s*(\d{1,2}:\d{2})/);
+    return m ? [m[1],m[2]] : ['', ''];
+  }
+  window.editReport = function(id){
+    const reports=getMyReportsV51_();
+    const rep=reports.find(r=>String(r.id)===String(id));
+    if(!rep) return Swal.fire('ไม่พบรายการ','ระบบไม่พบรายงานที่ต้องการแก้ไข กรุณากดโหลดใหม่แล้วลองอีกครั้ง','warning');
+    if($('repEditId')) $('repEditId').value=rep.id||'';
+    if($('repDate')) $('repDate').value=toInputDateV51_(rep.rawDate || rep.reportDate || rep.date);
+    let st=rep.startTime||'', et=rep.endTime||'';
+    if(!st && !et){ const parts=splitReportTimeV51_(rep.time || rep.reportTime || ''); st=parts[0]; et=parts[1]; }
+    if($('repStartTime')) $('repStartTime').value=st||'';
+    if($('repEndTime')) $('repEndTime').value=et||'';
+    if($('repLeave')) $('repLeave').value=rep.leaveType || rep.status || 'ปฏิบัติงานปกติ';
+    if($('repDetails')) $('repDetails').value=rep.details || rep.workDetails || rep.detail || rep.description || '';
+    if($('repRemarks')) $('repRemarks').value=rep.remarks || rep.remark || rep.note || '';
+    try { toggleLeaveFields(); } catch(e) {}
+    try { resetReportFileInputs(); } catch(e) {}
+    const btn=$('btnSaveReport'); if(btn){ btn.classList.remove('btn-primary'); btn.classList.add('btn-warning'); }
+    $('btnCancelEditRep')?.classList.remove('d-none');
+    if(typeof openReportFormModal==='function') openReportFormModal('edit');
+    setTimeout(()=> $('repDetails')?.focus(), 250);
+  };
+  window.renderMyReports = function(){
+    const tbody=$('myReportTable'); if(!tbody) return;
+    const reports=getMyReportsV51_(); tbody.innerHTML='';
+    if(getMyReportModeV51_()==='calendar'){
+      $('myReportListView')?.classList.add('d-none'); $('myReportCalendarView')?.classList.remove('d-none');
+      return typeof renderReportCalendar_==='function' ? renderReportCalendar_('myReportCalendarView', reports, 'my') : undefined;
+    }
+    $('myReportListView')?.classList.remove('d-none'); $('myReportCalendarView')?.classList.add('d-none');
+    if(!reports.length){ tbody.innerHTML='<tr><td colspan="4" class="text-center py-4 text-muted">ยังไม่มีประวัติ</td></tr>'; return; }
+    const pageSize=getPageSizeV51_('myReportPageSize'); const display=pageSize==='all'?reports:reports.slice(0,pageSize);
+    display.forEach(r=>{
+      const p=window.formatReportDateParts_(r.rawDate || r.reportDate || r.date); const badge=(r.leaveType||'')==='ปฏิบัติงานปกติ'?'bg-success':'bg-warning text-dark';
+      const files=(typeof renderFileLinks_==='function') ? renderFileLinks_(r.fileUrl || r.files || '') : '';
+      const txt=strip(r.details||r.workDetails||r.detail||'').slice(0,180);
+      tbody.innerHTML += `<tr class="report-card-row"><td><span class="report-date-pill"><span>${p.d}</span><small>${p.my}</small></span><div class="small text-muted mt-1">${esc(r.time||'')}</div></td><td><span class="status-badge ${badge}">${esc(r.leaveType||'-')}</span></td><td><div class="report-detail-box">${esc(txt||'-')}${files?'<div class="mt-1">'+files+'</div>':''}</div></td><td class="text-end"><button class="btn btn-light btn-sm border text-primary" onclick="editReport('${esc(r.id)}')"><i class="bi bi-pencil"></i></button> <button class="btn btn-light btn-sm border text-danger" onclick="deleteReport('${esc(r.id)}')"><i class="bi bi-trash"></i></button></td></tr>`;
+    });
+    if(display.length<reports.length) tbody.innerHTML+=`<tr><td colspan="4" class="text-center text-muted small py-2">แสดง ${display.length} จาก ${reports.length} รายการ</td></tr>`;
+  };
+  window.renderHeadReports = function(){
+    const tbody=$('headReportTable'); if(!tbody) return;
+    const reports=getTeamReportsV51_(); tbody.innerHTML='';
+    const head=$('headReportListView')?.querySelector('thead tr'); if(head) head.innerHTML='<th>วันที่</th><th>ชื่อ</th><th>สถานะ/เวลา</th><th>รายละเอียด</th><th>ไฟล์</th>';
+    if(getHeadReportModeV51_()==='calendar'){
+      $('headReportListView')?.classList.add('d-none'); $('headReportCalendarView')?.classList.remove('d-none');
+      return typeof renderReportCalendar_==='function' ? renderReportCalendar_('headReportCalendarView', reports, 'team') : undefined;
+    }
+    $('headReportListView')?.classList.remove('d-none'); $('headReportCalendarView')?.classList.add('d-none');
+    if(!reports.length){ tbody.innerHTML='<tr><td colspan="5" class="text-center py-4 text-muted">ยังไม่มีข้อมูลรายงานทีม</td></tr>'; return; }
+    const pageSize=getPageSizeV51_('headReportPageSize'); const display=pageSize==='all'?reports:reports.slice(0,pageSize);
+    display.forEach(r=>{
+      const p=window.formatReportDateParts_(r.rawDate || r.reportDate || r.date); const badge=(r.leaveType||'')==='ปฏิบัติงานปกติ'?'bg-success':'bg-warning text-dark';
+      const files=(typeof renderFileLinks_==='function') ? renderFileLinks_(r.fileUrl || r.files || '') : '-';
+      tbody.innerHTML += `<tr class="report-card-row"><td><span class="report-date-pill"><span>${p.d}</span><small>${p.my}</small></span></td><td><b>${esc(r.name||'-')}</b></td><td><span class="status-badge ${badge}">${esc(r.leaveType||'-')}</span><br><small class="text-muted">${esc(r.time||'')}</small></td><td><div class="report-detail-box">${esc(strip(r.details||r.workDetails||'').slice(0,180)||'-')}</div></td><td>${files||'-'}</td></tr>`;
+    });
+    if(display.length<reports.length) tbody.innerHTML+=`<tr><td colspan="5" class="text-center text-muted small py-2">แสดง ${display.length} จาก ${reports.length} รายการ</td></tr>`;
+  };
+  function getPersonalScheduleCardV51_(){
+    const cards=[...document.querySelectorAll('#schedule-pane .card')];
+    return cards.find(c => /ตารางงาน\/นัดหมายของคุณ/.test(c.textContent||'')) || document.querySelector('#schedule-pane .card');
+  }
+  function moveGlobalScheduleFilterV51_(){
+    let filter=$('globalScheduleFilterV49');
+    if(!filter && typeof window.ensureScheduleGlobalFilterV49_==='function') { try{ window.ensureScheduleGlobalFilterV49_(); }catch(e){} filter=$('globalScheduleFilterV49'); }
+    const personal=getPersonalScheduleCardV51_();
+    if(filter && personal && filter.nextElementSibling !== personal){ personal.parentNode.insertBefore(filter, personal); }
+  }
+  const oldEnsureFilterV51 = window.ensureScheduleGlobalFilterV49_;
+  window.ensureScheduleGlobalFilterV49_ = function(){ if(oldEnsureFilterV51) oldEnsureFilterV51(); moveGlobalScheduleFilterV51_(); };
+  document.addEventListener('DOMContentLoaded', ()=>setTimeout(moveGlobalScheduleFilterV51_, 800));
+  setTimeout(moveGlobalScheduleFilterV51_, 1200);
+  setTimeout(()=>{ try{ if(typeof renderMyReports==='function') renderMyReports(); if(typeof renderHeadReports==='function') renderHeadReports(); }catch(e){} }, 1500);
+})();
+</script>
 </body>
 </html>
