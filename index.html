@@ -5528,7 +5528,11 @@ function openWorkspaceCreateModal() {
           </div>
           <div class="mb-2 p-2 border rounded bg-light">
             <label class="small fw-bold text-muted mb-1">ลงชื่อผู้ขอใช้บริการ</label>
-            ${typeof signatureButtons_ === 'function' ? signatureButtons_('itbSignatureCanvas') : '<button type="button" class="btn btn-sm btn-outline-secondary mb-1" onclick="clearItBookingSignature_()">ล้างลายเซ็น</button>'}
+            <div class="d-flex gap-2 flex-wrap mb-1">
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="useSavedSignatureForCanvas_('itbSignatureCanvas')"><i class="bi bi-vector-pen"></i> ใช้/แทรกลายเซ็นส่วนตัว</button>
+            <button type="button" class="btn btn-sm btn-outline-success" onclick="openMySignatureManager()"><i class="bi bi-upload"></i> อัปโหลด/ตั้งค่าลายเซ็น</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearItBookingCanvas_('itbSignatureCanvas')">ล้าง</button>
+          </div>
             <canvas id="itbSignatureCanvas" width="720" height="150" style="width:100%;height:150px;border:1px dashed #64748b;border-radius:10px;background:#fff;touch-action:none;"></canvas>
             <small class="text-muted">เลือกใช้ลายเซ็นส่วนตัวหรือเซ็นสดได้ ระบบจะแสดงใน Digital View</small>
           </div>
@@ -6095,7 +6099,18 @@ function clearItBookingCanvas_(canvasId) {
     const el = document.getElementById('itBookingDigitalPaper');
     if (!el) return;
     const w = window.open('', '_blank');
-    w.document.write(`<html><head><title>IT Booking Form</title><link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700;800&display=swap" rel="stylesheet"><style>@page{size:A4;margin:0}body{margin:0;background:white}.it-booking-paper{box-shadow:none!important;margin:0!important}</style></head><body>${el.outerHTML}</body></html>`);
+    w.document.write(`<html><head><title>IT Booking Form</title><link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700;800&display=swap" rel="stylesheet"><style>@page{size:A4;margin:0}body{margin:0;background:white}.it-booking-paper{box-shadow:none!important;margin:0!important}</style></head><body>${el.outerHTML}
+<script>
+// v57 hotfix: expose signature button renderer globally so every duplicated IT booking form keeps personal-signature buttons.
+window.signatureButtons_ = window.signatureButtons_ || function(canvasId){
+  return `<div class="d-flex gap-2 flex-wrap mb-1">
+    <button type="button" class="btn btn-sm btn-outline-primary" onclick="useSavedSignatureForCanvas_('${canvasId}')"><i class="bi bi-vector-pen"></i> ใช้/แทรกลายเซ็นส่วนตัว</button>
+    <button type="button" class="btn btn-sm btn-outline-success" onclick="openMySignatureManager()"><i class="bi bi-upload"></i> อัปโหลด/ตั้งค่าลายเซ็น</button>
+    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearItBookingCanvas_('${canvasId}')">ล้าง</button>
+  </div>`;
+};
+</script>
+</body></html>`);
     w.document.close();
     setTimeout(() => { w.focus(); w.print(); }, 400);
   }
@@ -6882,7 +6897,11 @@ function clearItBookingCanvas_(canvasId) {
 
         <div class="mb-2 p-2 border rounded bg-light">
           <label class="small fw-bold text-muted mb-1">ลงชื่อผู้ขอใช้บริการ</label>
-          ${typeof signatureButtons_ === 'function' ? signatureButtons_('itbSignatureCanvas') : '<button type="button" class="btn btn-sm btn-outline-secondary mb-1" onclick="clearItBookingSignature_()">ล้างลายเซ็น</button>'}
+          <div class="d-flex gap-2 flex-wrap mb-1">
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="useSavedSignatureForCanvas_('itbSignatureCanvas')"><i class="bi bi-vector-pen"></i> ใช้/แทรกลายเซ็นส่วนตัว</button>
+            <button type="button" class="btn btn-sm btn-outline-success" onclick="openMySignatureManager()"><i class="bi bi-upload"></i> อัปโหลด/ตั้งค่าลายเซ็น</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearItBookingCanvas_('itbSignatureCanvas')">ล้าง</button>
+          </div>
           <canvas id="itbSignatureCanvas" width="720" height="150" style="width:100%;height:150px;border:1px dashed #64748b;border-radius:10px;background:#fff;touch-action:none;"></canvas>
           <small class="text-muted">เลือกใช้ลายเซ็นส่วนตัวหรือเซ็นสดได้ ระบบจะแสดงใน Digital View</small>
         </div>
@@ -6945,6 +6964,17 @@ function clearItBookingCanvas_(canvasId) {
 })();
 </script>
 
+
+<script>
+// v57 hotfix: expose signature button renderer globally so every duplicated IT booking form keeps personal-signature buttons.
+window.signatureButtons_ = window.signatureButtons_ || function(canvasId){
+  return `<div class="d-flex gap-2 flex-wrap mb-1">
+    <button type="button" class="btn btn-sm btn-outline-primary" onclick="useSavedSignatureForCanvas_('${canvasId}')"><i class="bi bi-vector-pen"></i> ใช้/แทรกลายเซ็นส่วนตัว</button>
+    <button type="button" class="btn btn-sm btn-outline-success" onclick="openMySignatureManager()"><i class="bi bi-upload"></i> อัปโหลด/ตั้งค่าลายเซ็น</button>
+    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearItBookingCanvas_('${canvasId}')">ล้าง</button>
+  </div>`;
+};
+</script>
 </body>
 </html>
 <script>
