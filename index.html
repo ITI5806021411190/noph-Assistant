@@ -6457,7 +6457,7 @@ function clearItBookingCanvas_(canvasId) {
 <script>
 /* ========================= v49: UI/Workflow patch pack ========================= */
 (function(){
-  window.HAOS_VERSION = 'v49-itservices-polish';
+  window.HAOS_VERSION = 'v55-report-date-edit-hotfix';
   function q(id){return document.getElementById(id)}
   function esc(v){return (typeof escapeHtml==='function')?escapeHtml(v):String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
   window.formatReportDateThai_ = function(value){
@@ -6766,11 +6766,190 @@ function clearItBookingCanvas_(canvasId) {
   setTimeout(()=>{ try{ if(typeof renderMyReports==='function') renderMyReports(); if(typeof renderHeadReports==='function') renderHeadReports(); }catch(e){} }, 1500);
 })();
 </script>
+
+
+<script>
+/* v56: Definitive IT Booking Host/Join Form Override
+   Root cause fixed: older duplicate openItBookingCreate() definitions could still be used.
+   This final override is loaded last and guarantees Join shows Meeting ID, Passcode and Link fields. */
+(function(){
+  function el(id){ return document.getElementById(id); }
+
+  window.itBookingToggleJoinFields_ = function(){
+    const type = el('itbType')?.value || 'Host';
+    const joinStatus = el('itbJoinStatus')?.value || 'has';
+    const isJoin = type === 'Join';
+    const hasInfo = joinStatus === 'has';
+
+    const hostHint = el('itbHostHint');
+    const joinBox = el('itbJoinBox');
+    const credBox = el('itbJoinCredBox');
+    const laterHint = el('itbJoinLaterHint');
+
+    if (hostHint) hostHint.style.display = isJoin ? 'none' : 'block';
+    if (joinBox) joinBox.style.display = isJoin ? 'block' : 'none';
+    if (credBox) credBox.style.display = (isJoin && hasInfo) ? 'flex' : 'none';
+    if (laterHint) laterHint.style.display = (isJoin && !hasInfo) ? 'block' : 'none';
+
+    ['itbMeetingId','itbPasscode','itbMeetingLink'].forEach(id => {
+      const input = el(id);
+      if (!input) return;
+      input.disabled = !(isJoin && hasInfo);
+      if (!isJoin || !hasInfo) input.value = '';
+    });
+  };
+
+  window.openItBookingCreate = async function(){
+    let resources = [];
+    try {
+      const res = await gasRunPromise_('getAvailableResources', []);
+      if (res && res.success) resources = res.data || [];
+    } catch (ignore) {}
+
+    const resourceOptions = ['<option value="">-- เลือกห้อง/ทรัพยากร --</option>']
+      .concat(resources.map(r => `<option value="${escapeHtml(r.id)}" data-name="${escapeHtml(r.name)}">${escapeHtml(r.name)} (${escapeHtml(r.type || '-')})</option>`))
+      .join('');
+
+    Swal.fire({
+      title: 'สร้างคำขอจองห้องประชุม / Zoom',
+      width: 940,
+      html: `<div class="text-start">
+        <div class="alert alert-light border-start border-4 border-primary py-2 mb-3">
+          <div class="fw-bold text-primary"><i class="bi bi-camera-video"></i> ระบบจองห้องประชุม / Zoom</div>
+          <small class="text-muted">เลือกประเภทการจองให้ถูกต้อง: ถ้าเป็นผู้จัด ระบบจะให้เจ้าหน้าที่ IT จัดเตรียมห้อง/ลิงก์ให้ หากเข้าร่วมประชุมและมีข้อมูลแล้ว ให้กรอก Meeting ID / Passcode / Link ได้ทันที</small>
+        </div>
+
+        <div class="mb-2">
+          <label class="small fw-bold text-muted">เรื่อง</label>
+          <input id="itbTopic" class="form-control" placeholder="เช่น ประชุมคณะทำงาน / อบรมออนไลน์ / เข้าร่วมประชุม Zoom ...">
+        </div>
+
+        <div class="row g-2 mb-2">
+          <div class="col-md-6">
+            <label class="small fw-bold text-muted">ประเภทการจอง</label>
+            <select id="itbType" class="form-select" onchange="itBookingToggleJoinFields_()">
+              <option value="Host">1. ผู้จัด / Host</option>
+              <option value="Join">2. เข้าร่วมประชุม</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="small fw-bold text-muted">สถานะเริ่มต้น</label>
+            <input class="form-control bg-light" value="ส่งให้เจ้าหน้าที่กลุ่มงานสุขภาพดิจิทัลดำเนินการ" readonly>
+          </div>
+        </div>
+
+        <div id="itbHostHint" class="alert alert-secondary small py-2 mb-2">
+          <i class="bi bi-info-circle"></i> เลือก <b>ผู้จัด / Host</b>: ระบบจะปิดช่อง Meeting ID / Passcode / Link เพราะให้เจ้าหน้าที่ IT จัดเตรียมให้ภายหลัง
+        </div>
+
+        <div id="itbJoinBox" class="border rounded-3 p-3 mb-2 bg-light" style="display:none;">
+          <label class="small fw-bold text-primary mb-1"><i class="bi bi-box-arrow-in-right"></i> ข้อมูลสำหรับการเข้าร่วมประชุม</label>
+          <select id="itbJoinStatus" class="form-select mb-2" onchange="itBookingToggleJoinFields_()">
+            <option value="has">มี Meeting ID / Passcode / ลิงก์เข้าร่วมประชุมแล้ว</option>
+            <option value="later">ยังไม่มี ให้ประสานเจ้าหน้าที่ IT ภายหลัง</option>
+          </select>
+          <div id="itbJoinCredBox" class="row g-2" style="display:flex;">
+            <div class="col-md-4">
+              <label class="small fw-bold text-muted">Meeting ID / RoomNumber</label>
+              <input id="itbMeetingId" class="form-control" placeholder="เช่น 444 111 3070">
+            </div>
+            <div class="col-md-4">
+              <label class="small fw-bold text-muted">Passcode</label>
+              <input id="itbPasscode" class="form-control" placeholder="เช่น 107533">
+            </div>
+            <div class="col-md-4">
+              <label class="small fw-bold text-muted">ลิงก์เข้าร่วมประชุม</label>
+              <input id="itbMeetingLink" class="form-control" placeholder="https://zoom.us/j/... หรือ Google Meet/Webex">
+            </div>
+          </div>
+          <div id="itbJoinLaterHint" class="alert alert-warning small py-2 mb-0 mt-2" style="display:none;">
+            <i class="bi bi-info-circle"></i> ผู้ขอยังไม่มี Meeting ID / Passcode / Link ระบบจะบันทึกว่าให้เจ้าหน้าที่ IT ประสานภายหลัง
+          </div>
+        </div>
+
+        <div class="mb-2">
+          <label class="small fw-bold text-muted">ห้องประชุม / ทรัพยากร</label>
+          <select id="itbResource" class="form-select">${resourceOptions}</select>
+        </div>
+        <div class="mb-2">
+          <label class="small fw-bold text-muted">สถานที่อื่น / หมายเหตุสถานที่</label>
+          <input id="itbOtherLocation" class="form-control" placeholder="เช่น เปิดที่เครื่อง / ขอให้ตั้ง Zoom ก่อนประชุม 30 นาที / รอประสานภายหลัง">
+        </div>
+        <div class="row g-2 mb-2">
+          <div class="col-md-6"><label class="small fw-bold text-muted">เริ่ม</label><input id="itbStart" type="datetime-local" class="form-control"></div>
+          <div class="col-md-6"><label class="small fw-bold text-muted">สิ้นสุด</label><input id="itbEnd" type="datetime-local" class="form-control"></div>
+        </div>
+
+        <div class="mb-2 p-2 border rounded bg-light">
+          <label class="small fw-bold text-muted mb-1">ลงชื่อผู้ขอใช้บริการ</label>
+          ${typeof signatureButtons_ === 'function' ? signatureButtons_('itbSignatureCanvas') : '<button type="button" class="btn btn-sm btn-outline-secondary mb-1" onclick="clearItBookingSignature_()">ล้างลายเซ็น</button>'}
+          <canvas id="itbSignatureCanvas" width="720" height="150" style="width:100%;height:150px;border:1px dashed #64748b;border-radius:10px;background:#fff;touch-action:none;"></canvas>
+          <small class="text-muted">เลือกใช้ลายเซ็นส่วนตัวหรือเซ็นสดได้ ระบบจะแสดงใน Digital View</small>
+        </div>
+      </div>`,
+      showCancelButton: true,
+      confirmButtonText: 'บันทึกคำขอ',
+      cancelButtonText: 'ยกเลิก',
+      didOpen: () => {
+        try { setupItBookingSignature_('itbSignatureCanvas'); } catch(e) {}
+        window.itBookingToggleJoinFields_();
+      },
+      preConfirm: () => {
+        const resSel = el('itbResource');
+        const opt = resSel?.options[resSel.selectedIndex];
+        const type = el('itbType')?.value || 'Host';
+        const joinStatus = type === 'Join' ? (el('itbJoinStatus')?.value || 'has') : '';
+        const payload = {
+          topic: el('itbTopic')?.value.trim() || '',
+          bookingType: type,
+          joinOption: joinStatus,
+          meetingId: (type === 'Join' && joinStatus === 'has') ? (el('itbMeetingId')?.value.trim() || '') : '',
+          passcode: (type === 'Join' && joinStatus === 'has') ? (el('itbPasscode')?.value.trim() || '') : '',
+          meetingLink: (type === 'Join' && joinStatus === 'has') ? (el('itbMeetingLink')?.value.trim() || '') : '',
+          resourceId: resSel?.value || '',
+          roomName: opt?.dataset?.name || opt?.textContent || '',
+          otherLocation: el('itbOtherLocation')?.value.trim() || '',
+          startTime: el('itbStart')?.value || '',
+          endTime: el('itbEnd')?.value || '',
+          approverPhone: '',
+          signatureData: (typeof getItBookingSignatureData_ === 'function' ? getItBookingSignatureData_() : ''),
+          ownerPhone: user?.phone || '',
+          ownerName: user?.fullName || '',
+          department: user?.department || ''
+        };
+        if (!payload.topic || !payload.startTime || !payload.endTime) {
+          Swal.showValidationMessage('กรุณากรอกเรื่องและช่วงเวลาให้ครบ');
+          return false;
+        }
+        if (payload.bookingType === 'Join' && payload.joinOption === 'has' && !payload.meetingId && !payload.passcode && !payload.meetingLink) {
+          Swal.showValidationMessage('กรุณากรอก Meeting ID, Passcode หรือ Link อย่างน้อย 1 รายการ หรือเลือก “ยังไม่มี ให้ประสานเจ้าหน้าที่ IT ภายหลัง”');
+          return false;
+        }
+        return payload;
+      }
+    }).then(async result => {
+      if (!result.isConfirmed) return;
+      Swal.fire({ title:'กำลังบันทึก...', allowOutsideClick:false, didOpen:()=>Swal.showLoading() });
+      try {
+        const res = await gasRunPromise_('saveITBooking', [result.value]);
+        if (!res || !res.success) throw new Error(res?.message || 'บันทึกไม่สำเร็จ');
+        Swal.fire({ icon:'success', title:'บันทึกแล้ว', text:res.message || 'ส่งคำขอเรียบร้อย', timer:1600, showConfirmButton:false });
+        if (typeof loadItBookings === 'function') loadItBookings();
+      } catch (err) {
+        Swal.fire('ผิดพลาด', err.message || String(err), 'error');
+      }
+    });
+  };
+
+  console.info('v56 Definitive IT Booking Join Fields Override loaded');
+})();
+</script>
+
 </body>
 </html>
 <script>
 /* =========================================================
-   v53 Hotfix: Daily report edit form fields not restored
+   v55 Hotfix: Daily report edit form fields not restored
    Root cause: toggleLeaveFields() cleared repDetails after editReport()
    ========================================================= */
 (function(){
