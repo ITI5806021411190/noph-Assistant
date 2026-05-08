@@ -5493,7 +5493,7 @@ function openWorkspaceCreateModal() {
     }
 
     async function openItBookingCreate() {
-      // v52: definitive booking form. Host hides meeting credentials; Join can provide Meeting ID, Passcode and Link.
+      // v53: definitive booking form. Host hides meeting credentials; Join can provide Meeting ID, Passcode and Link.
       let resources = [];
       try {
         const res = await gasRunPromise_('getAvailableResources', []);
@@ -6768,3 +6768,126 @@ function clearItBookingCanvas_(canvasId) {
 </script>
 </body>
 </html>
+<script>
+/* =========================================================
+   v53 Hotfix: Daily report edit form fields not restored
+   Root cause: toggleLeaveFields() cleared repDetails after editReport()
+   ========================================================= */
+(function(){
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+  function normalizeTime_(t){
+    return String(t || '')
+      .replace(/เวลา/g,'')
+      .replace(/น\.?/g,'')
+      .replace(/[–—]/g,'-')
+      .replace(/\./g, ':')
+      .trim();
+  }
+  function splitTimeRange_(time){
+    const t = normalizeTime_(time);
+    const m = t.match(/(\d{1,2}:\d{2})\s*(?:-|ถึง|to)\s*(\d{1,2}:\d{2})/i);
+    return m ? [m[1], m[2]] : ['', ''];
+  }
+  function toInputDate_(value){
+    if (!value) return '';
+    if (value instanceof Date && !isNaN(value)) {
+      const y=value.getFullYear(), m=String(value.getMonth()+1).padStart(2,'0'), d=String(value.getDate()).padStart(2,'0');
+      return `${y}-${m}-${d}`;
+    }
+    const s = String(value).trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    let m = s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/);
+    if (m) {
+      const y = Number(m[3]) > 2400 ? Number(m[3])-543 : Number(m[3]);
+      return `${y}-${String(m[2]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`;
+    }
+    const months = {'ม.ค.':1,'ก.พ.':2,'มี.ค.':3,'เม.ย.':4,'พ.ค.':5,'มิ.ย.':6,'ก.ค.':7,'ส.ค.':8,'ก.ย.':9,'ต.ค.':10,'พ.ย.':11,'ธ.ค.':12};
+    m = s.match(/(\d{1,2})\s*([ก-ฮ]\.ค\.)\s*(\d{4})/);
+    if (m && months[m[2]]) {
+      const y = Number(m[3]) > 2400 ? Number(m[3])-543 : Number(m[3]);
+      return `${y}-${String(months[m[2]]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`;
+    }
+    const d = new Date(s);
+    if (!isNaN(d)) return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    return '';
+  }
+  function getMyReports_(){
+    try { if (typeof myReportsGlobal !== 'undefined' && Array.isArray(myReportsGlobal)) return myReportsGlobal; } catch(e) {}
+    return Array.isArray(window.myReportsGlobal) ? window.myReportsGlobal : [];
+  }
+  function setVal_(id, val){ const el=$(id); if (el) el.value = val ?? ''; }
+
+  // Replace toggleLeaveFields with a non-destructive version.
+  // The old version cleared repDetails whenever status was not leave, so edit mode lost the original detail.
+  window.toggleLeaveFields = function(){
+    const type = $('repLeave')?.value || '';
+    const detail = $('repDetails');
+    const start = $('repStartTime');
+    const end = $('repEndTime');
+    const isLeave = ['ลาป่วย','ลาพักร้อน','ลากิจ'].includes(type);
+    if (isLeave) {
+      if (detail) { detail.disabled = true; if (!detail.value || detail.value === '-') detail.value = '-'; }
+      if (start) { start.disabled = true; start.value = ''; }
+      if (end) { end.disabled = true; end.value = ''; }
+    } else {
+      if (detail) { detail.disabled = false; if (detail.value === '-') detail.value = ''; }
+      if (start) start.disabled = false;
+      if (end) end.disabled = false;
+    }
+  };
+
+  // Replace editReport with a stable version that opens the modal first, then fills the existing data.
+  window.editReport = function(id){
+    const rep = getMyReports_().find(r => String(r.id) === String(id));
+    if (!rep) {
+      return Swal.fire('ไม่พบรายการ', 'ระบบไม่พบรายงานที่ต้องการแก้ไข กรุณากดรีเฟรชแล้วลองอีกครั้ง', 'warning');
+    }
+
+    // Open first in case the form has been moved into the modal/mounted lazily.
+    if (typeof openReportFormModal === 'function') openReportFormModal('edit');
+
+    setTimeout(() => {
+      setVal_('repEditId', rep.id || id);
+      setVal_('repDate', toInputDate_(rep.rawDate || rep.reportDate || rep.date));
+
+      let st = rep.startTime || '';
+      let et = rep.endTime || '';
+      if (!st && !et) {
+        const parts = splitTimeRange_(rep.time || rep.reportTime || '');
+        st = parts[0]; et = parts[1];
+      }
+      setVal_('repStartTime', st);
+      setVal_('repEndTime', et);
+      setVal_('repLeave', rep.leaveType || rep.status || 'ปฏิบัติงานปกติ');
+
+      // Run status toggle before placing details, then restore details after it to prevent accidental clearing.
+      try { window.toggleLeaveFields(); } catch(e) {}
+      setVal_('repDetails', rep.details || rep.workDetails || rep.detail || rep.description || '');
+      setVal_('repRemarks', rep.remarks || rep.remark || rep.note || '');
+
+      try { resetReportFileInputs(); } catch(e) {}
+      const btn = $('btnSaveReport');
+      if (btn) { btn.classList.remove('btn-primary'); btn.classList.add('btn-warning'); btn.innerHTML = '<i class="bi bi-save"></i> บันทึกการแก้ไข'; }
+      $('btnCancelEditRep')?.classList.remove('d-none');
+      $('repDetails')?.focus();
+    }, 80);
+  };
+
+  // Make copied report/details safe too.
+  window.copyPreviousReport = function(){
+    const latest = getMyReports_().find(r => (r.details || r.workDetails) && (r.details || r.workDetails) !== '-');
+    if (!latest) return Swal.fire('ยังไม่มีรายงานล่าสุดให้คัดลอก', 'เมื่อมีประวัติรายงานแล้วจะใช้ปุ่มนี้ได้ครับ', 'info');
+    setVal_('repLeave', latest.leaveType || 'ปฏิบัติงานปกติ');
+    try { window.toggleLeaveFields(); } catch(e) {}
+    setVal_('repDetails', latest.details || latest.workDetails || '');
+    setVal_('repRemarks', latest.remarks || '');
+    try { autoSaveReportDraft(); } catch(e) {}
+    Swal.fire({icon:'success', title:'คัดลอกรายงานล่าสุดแล้ว', timer:1300, showConfirmButton:false});
+  };
+
+  console.info('v53 Daily Report Edit Hotfix loaded');
+})();
+</script>
