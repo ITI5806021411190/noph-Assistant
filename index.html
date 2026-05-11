@@ -6378,79 +6378,14 @@ function clearItBookingCanvas_(canvasId) {
     const el = document.getElementById('itBookingDigitalPaper');
     if (!el) return;
     const w = window.open('', '_blank');
-    const html = `<!doctype html><html><head><meta charset="utf-8"><title>IT Booking Form</title><link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700;800&display=swap" rel="stylesheet"><style>@page{size:A4;margin:0}html,body{margin:0;background:white;font-family:'Sarabun',sans-serif}.it-booking-paper{box-shadow:none!important;margin:0!important}</style>
-  <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#0ea5e9">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Health Assistant OS">
-  <style id="haos-v63-v66-style">
-    .haos-roadmap-fab{position:fixed;left:18px;bottom:18px;z-index:1080;border-radius:18px;padding:12px 16px;box-shadow:0 14px 36px rgba(14,165,233,.28);background:linear-gradient(135deg,#0284c7,#14b8a6);color:white;border:0;font-weight:800}
-    .haos-admin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}.haos-admin-tile{border:1px solid #dbeafe;border-radius:18px;padding:16px;background:linear-gradient(180deg,#fff,#f8fafc);box-shadow:0 12px 30px rgba(15,23,42,.06)}
-    .haos-admin-tile h6{font-weight:800;color:#075985}.haos-admin-tile .btn{border-radius:12px}.haos-permission-table td,.haos-permission-table th{vertical-align:middle}.haos-brand-preview{border-radius:20px;padding:18px;color:white;background:linear-gradient(135deg,var(--haos-brand-color,#0ea5e9),#22c55e)}
-    canvas.signature-mobile-ready{touch-action:none;user-select:none;-webkit-user-select:none}
-  </style>
-</head><body>${el.outerHTML}
-<script id="haos-v63-v66-script">
-(function(){
-  'use strict';
-  const $v66 = (id)=>document.getElementById(id);
-  function roleCanAdminV66_(){ try{return ['Admin','Super Admin'].includes(String(user?.role||''));}catch(e){return false;} }
-  function gasV66_(fn,args){ if(typeof gasRunPromise_==='function') return gasRunPromise_(fn,args||[]); return new Promise((resolve,reject)=>google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(null,args||[])); }
-  function escV66_(v){ return String(v??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m])); }
-
-  // v66: robust mobile signature drawing with pointer events + ink tracking
-  const oldSetupSigV66 = window.setupItBookingSignature_;
-  window.setupItBookingSignature_ = function(canvasId){
-    const canvas=$v66(canvasId); if(!canvas) return oldSetupSigV66&&oldSetupSigV66(canvasId);
-    canvas.classList.add('signature-mobile-ready'); canvas.dataset.hasInk = canvas.dataset.hasInk || '';
-    const ctx=canvas.getContext('2d'); ctx.lineWidth=2.4; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#0f172a';
-    let drawing=false;
-    const point=(ev)=>{const rect=canvas.getBoundingClientRect(); const p=ev.touches?ev.touches[0]:ev; return {x:(p.clientX-rect.left)*(canvas.width/rect.width), y:(p.clientY-rect.top)*(canvas.height/rect.height)};};
-    const start=(ev)=>{drawing=true; canvas.dataset.hasInk='1'; const p=point(ev); ctx.beginPath(); ctx.moveTo(p.x,p.y); ev.preventDefault&&ev.preventDefault(); try{canvas.setPointerCapture&&ev.pointerId&&canvas.setPointerCapture(ev.pointerId)}catch(e){}};
-    const move=(ev)=>{if(!drawing)return; const p=point(ev); ctx.lineTo(p.x,p.y); ctx.stroke(); ev.preventDefault&&ev.preventDefault();};
-    const end=(ev)=>{drawing=false; ev&&ev.preventDefault&&ev.preventDefault();};
-    ['pointerdown','mousedown','touchstart'].forEach(e=>canvas.addEventListener(e,start,{passive:false}));
-    ['pointermove','mousemove','touchmove'].forEach(e=>canvas.addEventListener(e,move,{passive:false}));
-    ['pointerup','pointerleave','mouseup','touchend','touchcancel'].forEach(e=>canvas.addEventListener(e,end,{passive:false}));
-  };
-  const oldClearSigV66 = window.clearItBookingCanvas_;
-  window.clearItBookingCanvas_ = function(canvasId){ const canvas=$v66(canvasId); if(canvas) canvas.dataset.hasInk=''; return oldClearSigV66?oldClearSigV66(canvasId):(canvas&&canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height)); };
-  const oldGetSigV66 = window.getItBookingCanvasData_;
-  window.getItBookingCanvasData_ = function(canvasId){ const canvas=$v66(canvasId); if(!canvas) return ''; if(canvas.dataset.hasInk==='1') { try{return canvas.toDataURL('image/png');}catch(e){} } return oldGetSigV66?oldGetSigV66(canvasId):''; };
-
-  // v63-v66 control center
-  function ensureRoadmapButtonV66_(){
-    if($v66('haosRoadmapV66Btn')) return;
-    const btn=document.createElement('button'); btn.id='haosRoadmapV66Btn'; btn.className='haos-roadmap-fab'; btn.innerHTML='<i class="bi bi-stars"></i> v63-v66 Tools'; btn.onclick=openV66ControlCenter;
-    document.body.appendChild(btn);
-  }
-  async function openV66ControlCenter(){
-    const admin = roleCanAdminV66_();
-    const html=`<div class="text-start">
-      <div class="haos-brand-preview mb-3"><h5 class="mb-1">Health Assistant OS</h5><div>v63 Backup • v64 Permission • v65 Branding/PWA • v66 Google Calendar</div></div>
-      <div class="haos-admin-grid">
-        <div class="haos-admin-tile"><h6><i class="bi bi-shield-check"></i> Backup / Restore</h6><p class="small text-muted">สำรองฐานข้อมูลทั้งหมดเป็น JSON บน Google Drive</p><button class="btn btn-primary btn-sm" ${admin?'':'disabled'} onclick="createBackupV63_()">สร้าง Backup</button> <button class="btn btn-outline-primary btn-sm" ${admin?'':'disabled'} onclick="listBackupsV63_()">ดู Backup</button></div>
-        <div class="haos-admin-tile"><h6><i class="bi bi-person-lock"></i> Permission Matrix</h6><p class="small text-muted">กำหนดสิทธิ์แต่ละ Role แบบเป็นตาราง</p><button class="btn btn-outline-dark btn-sm" ${admin?'':'disabled'} onclick="openPermissionMatrixV64_()">เปิดตั้งค่าสิทธิ์</button></div>
-        <div class="haos-admin-tile"><h6><i class="bi bi-palette"></i> Branding / PWA</h6><p class="small text-muted">โลโก้ สีองค์กร ชื่อระบบ และ manifest สำหรับติดตั้งบนมือถือ</p><button class="btn btn-outline-success btn-sm" ${admin?'':'disabled'} onclick="openBrandingV65_()">ตั้งค่า Branding</button></div>
-        <div class="haos-admin-tile"><h6><i class="bi bi-calendar-check"></i> Google Calendar</h6><p class="small text-muted">ซิงก์ตารางงาน & ระบบจอง Zoom เข้าปฏิทิน Google Calendar กลาง</p><button class="btn btn-warning btn-sm" ${admin?'':'disabled'} onclick="resyncCalendarV66_()">ซิงก์ใหม่ทั้งหมด</button></div>
-      </div>
-      <hr><div class="small text-muted">หมายเหตุ: CalendarApp จะซิงก์เข้าปฏิทินของบัญชีที่ deploy Apps Script เป็นหลัก เหมาะกับปฏิทินกลางของสำนักงาน</div>
-    </div>`;
-    Swal.fire({title:'ศูนย์จัดการระบบ v63-v66',html,width:980,showConfirmButton:false,showCloseButton:true});
-  }
-  window.createBackupV63_=async function(){try{Swal.fire({title:'กำลังสร้าง Backup...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});const res=await gasV66_('createSystemBackupV63',[user?.phone||'', 'Manual backup from UI']); if(!res.success) throw new Error(res.message); Swal.fire({icon:'success',title:'สร้าง Backup แล้ว',html:`<a href="${escV66_(res.url)}" target="_blank">เปิดไฟล์ Backup</a>`});}catch(e){Swal.fire('ผิดพลาด',e.message||String(e),'error');}};
-  window.listBackupsV63_=async function(){try{const res=await gasV66_('listSystemBackupsV63',[user?.phone||'']); if(!res.success) throw new Error(res.message); const rows=(res.data||[]).slice(0,12).map(x=>`<tr><td>${escV66_(x.id)}</td><td>${escV66_(String(x.timestamp||''))}</td><td>${escV66_(x.note||'')}</td><td><a target="_blank" href="${escV66_(x.url)}">เปิด</a></td></tr>`).join(''); Swal.fire({title:'รายการ Backup',width:900,html:`<div class="table-responsive"><table class="table table-sm"><thead><tr><th>ID</th><th>เวลา</th><th>หมายเหตุ</th><th>ไฟล์</th></tr></thead><tbody>${rows||'<tr><td colspan=4>ยังไม่มี Backup</td></tr>'}</tbody></table></div>`});}catch(e){Swal.fire('ผิดพลาด',e.message||String(e),'error');}};
-  window.openPermissionMatrixV64_=async function(){try{const res=await gasV66_('getPermissionMatrixV64',[user?.phone||'']); const data=res.data||[]; const rows=data.map((x,i)=>`<tr data-i="${i}"><td><b>${escV66_(x.name)}</b><br><small>${escV66_(x.key)}</small></td>${['User','Head','Admin','Super Admin'].map(r=>`<td class="text-center"><input type="checkbox" data-role="${r}" ${x[r]?'checked':''}></td>`).join('')}</tr>`).join(''); Swal.fire({title:'Permission Matrix',width:980,html:`<div class="table-responsive"><table id="permMatrixTableV64" class="table table-bordered haos-permission-table"><thead><tr><th>ฟังก์ชัน</th><th>User</th><th>Head</th><th>Admin</th><th>Super Admin</th></tr></thead><tbody>${rows}</tbody></table></div>`,showCancelButton:true,confirmButtonText:'บันทึก',preConfirm:async()=>{const updated=data.map((x,i)=>{const tr=document.querySelector(`#permMatrixTableV64 tr[data-i="${i}"]`);['User','Head','Admin','Super Admin'].forEach(r=>x[r]=!!tr.querySelector(`[data-role="${r}"]`)?.checked);return x;});const save=await gasV66_('savePermissionMatrixV64',[user?.phone||'',updated]); if(!save.success) return Swal.showValidationMessage(save.message); return save;}});}catch(e){Swal.fire('ผิดพลาด',e.message||String(e),'error');}};
-  window.openBrandingV65_=async function(){try{const res=await gasV66_('getBrandingConfigV65',[]); const b=res.data||{}; Swal.fire({title:'Branding / PWA',width:760,html:`<div class="text-start"><label class="small fw-bold">ชื่อระบบ</label><input id="brandSystemName" class="form-control mb-2" value="${escV66_(b.systemName||'')}"><label class="small fw-bold">หน่วยงาน</label><input id="brandOrg" class="form-control mb-2" value="${escV66_(b.organizationName||'')}"><label class="small fw-bold">สีหลัก</label><input id="brandColor" type="color" class="form-control form-control-color mb-2" value="${escV66_(b.accentColor||'#0ea5e9')}"><label class="small fw-bold">Logo URL</label><input id="brandLogo" class="form-control mb-2" value="${escV66_(b.logoUrl||'')}"><label class="small fw-bold">ข้อความหน้า Login</label><input id="brandLogin" class="form-control" value="${escV66_(b.loginMessage||'')}"></div>`,showCancelButton:true,confirmButtonText:'บันทึก',preConfirm:async()=>{const cfg={systemName:$v66('brandSystemName').value,organizationName:$v66('brandOrg').value,accentColor:$v66('brandColor').value,logoUrl:$v66('brandLogo').value,loginMessage:$v66('brandLogin').value}; const save=await gasV66_('saveBrandingConfigV65',[user?.phone||'',cfg]); if(!save.success) return Swal.showValidationMessage(save.message); document.documentElement.style.setProperty('--haos-brand-color',cfg.accentColor); return save;}});}catch(e){Swal.fire('ผิดพลาด',e.message||String(e),'error');}};
-  window.resyncCalendarV66_=async function(){try{const ok=await Swal.fire({title:'ซิงก์ Google Calendar ใหม่ทั้งหมด?',text:'ระบบจะสร้าง/อัปเดตกิจกรรมจากตารางงานและคำขอจอง Zoom',icon:'question',showCancelButton:true,confirmButtonText:'ซิงก์เลย'}); if(!ok.isConfirmed)return; Swal.fire({title:'กำลังซิงก์...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()}); const res=await gasV66_('resyncAllGoogleCalendarV66',[user?.phone||'']); if(!res.success) throw new Error(res.message); Swal.fire({icon:'success',title:'สำเร็จ',text:res.message});}catch(e){Swal.fire('ผิดพลาด',e.message||String(e),'error');}};
-
-  // Service worker registration for PWA
-  if('serviceWorker' in navigator){ window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js').catch(()=>{});}); }
-  document.addEventListener('DOMContentLoaded',()=>{ setTimeout(ensureRoadmapButtonV66_,800); });
-  console.info('v63-v66 roadmap layer loaded');
-})();
-</script>
-</body></html>`;
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>IT Booking Form</title>
+      <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700;800&display=swap" rel="stylesheet">
+      <style>
+        @page{size:A4;margin:0}
+        html,body{margin:0;background:white;font-family:'Sarabun',sans-serif}
+        .it-booking-paper{box-shadow:none!important;margin:0 auto!important;transform:none!important}
+      </style>
+    </head><body>${el.outerHTML}</body></html>`;
     w.document.open();
     w.document.write(html);
     w.document.close();
