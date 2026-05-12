@@ -7495,7 +7495,7 @@ window.signatureButtons_ = window.signatureButtons_ || function(canvasId){
 </script>
 
 <!-- =========================================================
-HAOS v68.1 FRONTEND STABILITY PATCH
+HAOS v68.2 FRONTEND STABILITY PATCH
 แก้: ลด side effect จาก v68, ย้ายเครื่องมือ v63-v66 เข้า Super Admin อย่างปลอดภัย,
 ตารางรายงานไม่ซ้อนเวลา, ตัวกรองไม่ถูกย้ายข้ามโมดูล, ลายเซ็นมือถือ และ IT Booking polish
 ========================================================= -->
@@ -7600,11 +7600,22 @@ HAOS v68.1 FRONTEND STABILITY PATCH
 
   function centralizeGlobalFilters(){
     const pane=$('schedule-pane'); if(!pane)return;
-    const global=$('globalScheduleFilterV49')||pane.querySelector('[id*="globalScheduleFilter"],.global-schedule-filter,.filter-panel');
+    // v68.2: จำกัดขอบเขตเฉพาะ filter ของ schedule เท่านั้น ห้ามหยิบ .filter-panel ตัวแรกแบบกว้าง ๆ
+    const global=$('globalScheduleFilterV49')||$('scheduleFilterPanel')||pane.querySelector('[id*="globalScheduleFilter"],.global-schedule-filter');
     if(!global)return;
     const first=pane.querySelector('.card'); if(first&&global.parentElement!==first.parentElement) first.parentElement.insertBefore(global,first);
     qsa('.card',pane).forEach(card=>{if(!/ตารางงาน\/นัดหมายของคุณ/.test(txt(card)))return; qsa('input,select,button',card).forEach(ctrl=>{const around=ctrl.closest('.filter-panel,.row,.d-flex,.input-group,.mb-2,.mb-3'); if(around&&around!==global&&/ค้นหา|สถานะ|ช่วงเวลา|เรียง|ทั้งหมด|ล่าสุด/i.test(txt(around))) around.classList.add('haos-v68-hidden-duplicate-filter');});});
-    if(global.dataset.v681Bound)return; global.dataset.v681Bound='1'; const apply=()=>{const controls=qsa('input,select',global); const kw=(controls.find(c=>c.type==='text'||c.tagName==='INPUT')?.value||'').toLowerCase().trim(); const selects=controls.filter(c=>c.tagName==='SELECT').map(c=>String(c.value||'').toLowerCase()).filter(v=>v&&v!=='ทั้งหมด'&&v!=='all'); qsa('tbody tr,.workspace-row,.schedule-row,.list-group-item',pane).forEach(row=>{const t=txt(row).toLowerCase(); row.style.display=(!kw||t.includes(kw))&&selects.every(v=>t.includes(v))?'':'none';});}; global.addEventListener('input',apply); global.addEventListener('change',apply);
+    if(global.dataset.v682Bound)return; global.dataset.v682Bound='1';
+    const apply=()=>{
+      // ใช้ฟังก์ชัน filter หลักของระบบแทนการซ่อน <tr> เอง เพราะ select เรียงลำดับมีค่า newest/oldest/name
+      // v68.1 เคยเอาค่า sort ไป match กับข้อความในแถว ทำให้ทุกแถวถูกซ่อนจนเหมือนตารางไม่แสดงผล
+      if(typeof window.applyScheduleFilters==='function'){ window.applyScheduleFilters(); return; }
+      const controls=qsa('input,select',global);
+      const kw=(controls.find(c=>c.type==='text'||c.tagName==='INPUT')?.value||'').toLowerCase().trim();
+      const selects=controls.filter(c=>c.tagName==='SELECT'&&!/sort|เรียง/i.test((c.id||'')+' '+txt(c.closest('.mb-2,.mb-3,.col-md-6,.col-md-4,div')||''))).map(c=>String(c.value||'').toLowerCase()).filter(v=>v&&v!=='ทั้งหมด'&&v!=='all'&&!['newest','oldest','name'].includes(v));
+      qsa('tbody tr,.workspace-row,.schedule-row,.list-group-item',pane).forEach(row=>{const t=txt(row).toLowerCase(); row.style.display=(!kw||t.includes(kw))&&selects.every(v=>t.includes(v))?'':'none';});
+    };
+    global.addEventListener('input',apply); global.addEventListener('change',apply);
   }
 
   function polishITBooking(){qsa('table').forEach(table=>{if(/จองห้อง|Zoom|Meeting ID|Passcode|คำขอจอง/i.test(txt(table))){table.classList.add('it-booking-table'); qsa('tbody tr',table).forEach(tr=>tr.classList.add('haos-itbooking-card-row'));}}); const popup=document.querySelector('.swal2-popup'); if(popup&&popup.querySelector('#itbType')) popup.classList.add('it-booking-modal-modern');}
