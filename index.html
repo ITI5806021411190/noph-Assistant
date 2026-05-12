@@ -7493,6 +7493,361 @@ window.signatureButtons_ = window.signatureButtons_ || function(canvasId){
   console.info('v63-v66 roadmap layer loaded');
 })();
 </script>
+
+<!-- =========================================================
+HAOS v68 FRONTEND HOTFIX PATCH
+วิธีใช้: วางบล็อกนี้ไว้ก่อน </body> ของ index.html เวอร์ชันล่าสุด
+แก้: floating tools, ตารางรายงานทีม, date/time pill, admin header, filter รวม,
+UI จอง Zoom, ลายเซ็น/มือถือ และ polish ตาราง IT Booking
+========================================================= -->
+<style id="haos-v68-style">
+  /* 1) เอาปุ่ม v63-v66 Tools ที่ลอยออกจากสายตา */
+  #haosRoadmapV66Btn,
+  .haos-roadmap-fab{display:none!important;}
+
+  /* 4) หัว Super Admin อ่านยาก: บังคับสีตัวหนังสือให้ชัด */
+  #adminPanel .card-header,
+  #adminPanelBody .card-header,
+  .admin-panel .card-header,
+  .super-admin-panel .card-header{
+    background:linear-gradient(135deg,#eff6ff,#ecfeff)!important;
+    color:#0f172a!important;
+    border-bottom:1px solid rgba(148,163,184,.25)!important;
+  }
+  #adminPanel .card-header * ,
+  #adminPanelBody .card-header * ,
+  .admin-panel .card-header * ,
+  .super-admin-panel .card-header *{
+    color:#0f172a!important;
+    text-shadow:none!important;
+  }
+
+  /* 2-3) รายงาน: date/time pill + status badge ไม่ซ้อนเวลา */
+  .haos-v68-date-pill,
+  .report-date-pill{
+    display:inline-flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    justify-content:center!important;
+    min-width:78px!important;
+    padding:10px 12px!important;
+    border-radius:16px!important;
+    background:linear-gradient(180deg,#dff1ff,#dbeafe)!important;
+    border:1px solid rgba(59,130,246,.18)!important;
+    color:#075985!important;
+    font-weight:900!important;
+    line-height:1.25!important;
+  }
+  .haos-v68-date-pill .day,
+  .report-date-pill span{font-size:1.05rem!important;color:#075985!important;}
+  .haos-v68-date-pill .month-year,
+  .report-date-pill small{font-size:.82rem!important;color:#2563eb!important;font-weight:800!important;}
+  .haos-v68-date-pill .time{font-size:.78rem!important;color:#475569!important;font-weight:700!important;margin-top:4px!important;}
+
+  #headReportTable .status-badge,
+  #myReportTable .status-badge,
+  .haos-v68-status-badge{
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    white-space:normal!important;
+    line-height:1.25!important;
+    max-width:150px!important;
+    padding:.46rem .70rem!important;
+    border-radius:999px!important;
+    font-size:.82rem!important;
+  }
+  #headReportTable td,
+  #myReportTable td{vertical-align:middle!important;}
+  #headReportTable td:nth-child(3),
+  #myReportTable td:nth-child(2){min-width:160px!important;}
+  #headReportTable .haos-v68-time-under-status,
+  #myReportTable .haos-v68-time-under-status{display:block!important;margin-top:6px!important;color:#475569!important;font-size:.86rem!important;}
+
+  /* 9,12) UI จองห้อง/Zoom และตารางให้ดูเป็นงานบริการจริง */
+  .swal2-popup:has(#itbType),
+  .it-booking-modal-modern{
+    border-radius:28px!important;
+    background:linear-gradient(180deg,#ffffff,#f8fbff)!important;
+    box-shadow:0 28px 80px rgba(15,23,42,.20)!important;
+  }
+  #itbJoinBox,
+  .itbooking-join-box{
+    border:1px solid rgba(14,165,233,.28)!important;
+    background:linear-gradient(135deg,#eff6ff,#ecfeff)!important;
+    border-radius:20px!important;
+    box-shadow:0 10px 26px rgba(14,165,233,.08)!important;
+  }
+  #itbHostHint,
+  .itbooking-host-hint{
+    border:1px solid rgba(148,163,184,.24)!important;
+    border-radius:18px!important;
+    background:linear-gradient(135deg,#f8fafc,#eef2ff)!important;
+  }
+  #itBookingTable tr,
+  #itBookingsTable tr,
+  .it-booking-table tbody tr{
+    transition:.15s ease!important;
+  }
+  #itBookingTable tbody tr:hover,
+  #itBookingsTable tbody tr:hover,
+  .it-booking-table tbody tr:hover{
+    background:linear-gradient(90deg,rgba(239,246,255,.95),rgba(236,253,245,.65))!important;
+  }
+  #itBookingTable td:first-child,
+  #itBookingsTable td:first-child,
+  .it-booking-table tbody td:first-child{border-left:5px solid #0ea5e9!important;}
+  .haos-itbooking-card-row{
+    border-radius:18px!important;
+    background:#fff!important;
+    box-shadow:0 8px 20px rgba(15,23,42,.06)!important;
+  }
+
+  /* 10-11) ลดความสับสน: ซ่อนตัวกรองซ้ำในตารางส่วนตัว */
+  .haos-v68-hidden-duplicate-filter{display:none!important;}
+
+  /* 6,8) ฟอร์มตารางงาน: แยก Assign / Approval ให้เป็นมิตร */
+  .haos-v68-form-section{
+    border:1px solid rgba(14,165,233,.18)!important;
+    background:linear-gradient(180deg,#fff,#f8fbff)!important;
+    border-radius:18px!important;
+    padding:14px!important;
+    margin-bottom:12px!important;
+  }
+  .haos-v68-section-title{font-weight:900;color:#075985;margin-bottom:8px;display:flex;gap:6px;align-items:center;}
+</style>
+
+<script id="haos-v68-script">
+(function(){
+  'use strict';
+  const HAOS_V68 = 'v68-ui-workflow-fix';
+  const $ = (id)=>document.getElementById(id);
+  const qsa = (sel, root=document)=>Array.from(root.querySelectorAll(sel));
+  const text = (el)=>String(el?.textContent||'').trim();
+  const userSafe = ()=>{ try { return window.user || user || {}; } catch(e){ return {}; } };
+  const isAdmin = ()=>['Admin','Super Admin'].includes(String(userSafe().role||''));
+  const isSuper = ()=>String(userSafe().role||'')==='Super Admin';
+
+  function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+  /* 1) ย้าย v63-v66 Tools เข้า Super Admin/Admin panel และแยกสิทธิ์ */
+  function moveV66ToolsIntoAdminPanel(){
+    const floating = $('haosRoadmapV66Btn') || document.querySelector('.haos-roadmap-fab');
+    if(floating) floating.style.display='none';
+    const adminBody = $('adminPanelBody') || document.querySelector('#adminPanel .card-body') || document.querySelector('.super-admin-panel .card-body') || document.querySelector('.admin-panel .card-body');
+    if(!adminBody || $('haosAdminRoadmapV68')) return;
+    const wrap = document.createElement('div');
+    wrap.id='haosAdminRoadmapV68';
+    wrap.className='mt-3 p-3 rounded-4 border bg-light';
+    wrap.innerHTML = `
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+        <div><b><i class="bi bi-stars text-primary"></i> เครื่องมือระบบขั้นสูง v63-v66</b><div class="small text-muted">Backup, Permission Matrix, Branding/PWA และ Google Calendar Sync</div></div>
+      </div>
+      <div class="d-flex flex-wrap gap-2">
+        ${isAdmin()?'<button class="btn btn-outline-primary btn-sm" onclick="createBackupV63_&&createBackupV63_()"><i class="bi bi-cloud-arrow-down"></i> Backup</button>':''}
+        ${isSuper()?'<button class="btn btn-outline-danger btn-sm" onclick="listBackupsV63_&&listBackupsV63_()"><i class="bi bi-arrow-counterclockwise"></i> Backup / Restore</button>':''}
+        ${isAdmin()?'<button class="btn btn-outline-dark btn-sm" onclick="openPermissionMatrixV64_&&openPermissionMatrixV64_()"><i class="bi bi-person-lock"></i> Permission Matrix</button>':''}
+        ${isAdmin()?'<button class="btn btn-outline-success btn-sm" onclick="openBrandingV65_&&openBrandingV65_()"><i class="bi bi-palette"></i> Branding / PWA</button>':''}
+        ${isAdmin()?'<button class="btn btn-warning btn-sm" onclick="resyncCalendarV66_&&resyncCalendarV66_()"><i class="bi bi-calendar-check"></i> Sync Google Calendar</button>':''}
+      </div>`;
+    adminBody.appendChild(wrap);
+  }
+
+  /* 2-3) ซ่อมตารางรายงานทีม/ของฉันหลัง render ทุกครั้ง */
+  function parseThaiDateAndTimeFromCell(cell){
+    const raw = text(cell).replace(/\s+/g,' ');
+    const timeMatch = raw.match(/(\d{1,2}[:.]\d{2})\s*(?:-|ถึง|–|—)?\s*(\d{1,2}[:.]\d{2})?/);
+    const time = timeMatch ? (timeMatch[2] ? `${timeMatch[1].replace(':','.')} - ${timeMatch[2].replace(':','.')}` : timeMatch[1].replace(':','.')) : '';
+    const dateMatch = raw.match(/(\d{1,2})\s*(ม\.ค\.|ก\.พ\.|มี\.ค\.|เม\.ย\.|พ\.ค\.|มิ\.ย\.|ก\.ค\.|ส\.ค\.|ก\.ย\.|ต\.ค\.|พ\.ย\.|ธ\.ค\.)\s*(\d{4})/);
+    const dateText = dateMatch ? {day:dateMatch[1], monthYear:`${dateMatch[2]} ${dateMatch[3]}`} : null;
+    return {raw,time,dateText};
+  }
+  function makeDatePill(day, monthYear, timeVal){
+    return `<span class="haos-v68-date-pill"><span class="day">${day||'-'}</span><span class="month-year">${monthYear||''}</span>${timeVal?`<span class="time">${timeVal} น.</span>`:''}</span>`;
+  }
+  function polishReportTables(){
+    // Team table: if first render is broken, force list renderer once then polish
+    const headTable = $('headReportTable');
+    if(headTable){
+      const firstRow = headTable.querySelector('tbody tr, tr');
+      const broken = headTable.textContent.includes('\n-\n') || qsa('tr', headTable).some(tr => tr.children.length < 4);
+      if(broken && typeof window.renderHeadReports === 'function' && !headTable.dataset.v68Rerendered){
+        headTable.dataset.v68Rerendered='1';
+        try { window.headReportViewMode = 'list'; renderHeadReports(); } catch(e){}
+      }
+      qsa('tbody tr, tr', headTable).forEach(tr=>{
+        if(tr.dataset.v68Done) return;
+        const cells = Array.from(tr.children);
+        if(cells.length < 4) return;
+        // date cell
+        const d = parseThaiDateAndTimeFromCell(cells[0]);
+        if(d.dateText) cells[0].innerHTML = makeDatePill(d.dateText.day,d.dateText.monthYear,'');
+        // status/time cell
+        const st = cells[2];
+        const stInfo = parseThaiDateAndTimeFromCell(st);
+        const badge = st.querySelector('.status-badge,.badge') || st.querySelector('span');
+        if(badge) badge.classList.add('haos-v68-status-badge');
+        if(stInfo.time && !st.querySelector('.haos-v68-time-under-status')) st.insertAdjacentHTML('beforeend',`<span class="haos-v68-time-under-status">${stInfo.time} น.</span>`);
+        tr.dataset.v68Done='1';
+      });
+    }
+    // My report table: merge time into date pill in first column
+    const myTable = $('myReportTable');
+    if(myTable){
+      qsa('tbody tr, tr', myTable).forEach(tr=>{
+        if(tr.dataset.v68Done) return;
+        const cells = Array.from(tr.children); if(cells.length < 3) return;
+        const d = parseThaiDateAndTimeFromCell(cells[0]);
+        if(d.dateText) cells[0].innerHTML = makeDatePill(d.dateText.day,d.dateText.monthYear,d.time);
+        tr.dataset.v68Done='1';
+      });
+    }
+  }
+
+  /* 5) เปลี่ยนข้อความสถานะกลุ่มงานจากวันนี้เป็นเมื่อวานแบบ UX */
+  function relabelTeamStatusYesterday(){
+    qsa('*').forEach(el=>{
+      if(el.childNodes.length===1 && el.childNodes[0].nodeType===3){
+        const t=el.textContent;
+        if(t && t.includes('สถานะของกลุ่มงานวันนี้')) el.textContent=t.replace('สถานะของกลุ่มงานวันนี้','สถานะของกลุ่มงานเมื่อวาน');
+        if(t && t.includes('ทีมงานส่งแล้ววันนี้')) el.textContent=t.replace('ทีมงานส่งแล้ววันนี้','ทีมงานส่งแล้วเมื่อวาน');
+        if(t && t.includes('ยังไม่ส่งวันนี้')) el.textContent=t.replace('ยังไม่ส่งวันนี้','ยังไม่ส่งเมื่อวาน');
+      }
+    });
+  }
+
+  /* 6,8) ปรับฟอร์มสร้างตารางงาน: Assign แยกทีม/นอกทีม, ซ่อน Telegram, approver เป็นหัวหน้า */
+  function splitAssignAndApprovalFields(){
+    const modal = document.querySelector('.swal2-popup') || document;
+    // ซ่อน Telegram Chat ID
+    qsa('label, .form-label, small, div', modal).forEach(el=>{
+      if(/Telegram\s*Chat\s*ID/i.test(text(el))){
+        const box = el.closest('.mb-2,.mb-3,.col-md-6,.col-md-4,.row,div') || el;
+        box.classList.add('haos-v68-hidden-duplicate-filter');
+      }
+    });
+    // approver phone -> friendly approval toggle
+    qsa('label, .form-label', modal).forEach(label=>{
+      if(/ขออนุมัติ|เบอร์หัวหน้า|Approver/i.test(text(label)) && !label.dataset.v68Approval){
+        label.dataset.v68Approval='1';
+        const group = label.closest('.mb-2,.mb-3,.col-md-6,.col-md-4,div') || label.parentElement;
+        if(group && !group.querySelector('#haosNeedApprovalV68')){
+          const input = group.querySelector('input,select');
+          if(input){ input.style.display='none'; input.value = input.value || ''; }
+          group.insertAdjacentHTML('beforeend',`<div class="haos-v68-form-section"><div class="haos-v68-section-title"><i class="bi bi-check2-square"></i> การขออนุมัติจากหัวหน้ากลุ่มงาน</div><select id="haosNeedApprovalV68" class="form-select"><option value="No">ไม่ต้องขออนุมัติ</option><option value="Yes">ขออนุมัติจากหัวหน้ากลุ่มงานของฉัน</option></select><small class="text-muted">ระบบจะส่งงานไปที่หัวหน้ากลุ่มงานตามข้อมูลผู้ใช้งาน ไม่ต้องกรอกเบอร์เอง</small></div>`);
+        }
+      }
+    });
+    // Assign select optgroup
+    const dept = String(userSafe().department||'');
+    qsa('select', modal).forEach(sel=>{
+      const labelText = text(sel.closest('.mb-2,.mb-3,.col-md-6,.col-md-4,div')?.querySelector('label,.form-label'));
+      if(!/มอบหมาย|Assign/i.test(labelText) || sel.dataset.v68AssignSplit) return;
+      sel.dataset.v68AssignSplit='1';
+      const opts = Array.from(sel.options).map(o=>({value:o.value,text:o.textContent,selected:o.selected}));
+      sel.innerHTML='';
+      const own=document.createElement('optgroup'); own.label='สมาชิกในทีม / กลุ่มงานเดียวกัน';
+      const other=document.createElement('optgroup'); other.label='รายชื่อนอกกลุ่มงาน';
+      opts.forEach(o=>{
+        const opt=new Option(o.text,o.value,o.selected,o.selected);
+        const inDept = dept && o.text.includes(dept.replace(/^\d+\s*/,''));
+        (inDept?own:other).appendChild(opt);
+      });
+      sel.appendChild(own); sel.appendChild(other);
+    });
+  }
+
+  /* 7) สถานที่ fallback: location blank -> resource name -> ไม่ได้ระบุ */
+  function patchScheduleSaveFallback(){
+    if(window.__haosV68ScheduleFallbackPatched) return;
+    window.__haosV68ScheduleFallbackPatched=true;
+    // before saving, fill visible location inputs if blank and resource selected
+    document.addEventListener('click',()=>{
+      const modal=document.querySelector('.swal2-popup')||document;
+      const locInputs=qsa('input,textarea',modal).filter(i=>/สถานที่|Location/i.test(text(i.closest('.mb-2,.mb-3,.col-md-6,.col-md-4,div')?.querySelector('label,.form-label'))));
+      const resSelect=qsa('select',modal).find(s=>/ทรัพยากร|Resource|ห้องประชุม|จองทรัพยากร/i.test(text(s.closest('.mb-2,.mb-3,.col-md-6,.col-md-4,div')?.querySelector('label,.form-label'))));
+      locInputs.forEach(inp=>{
+        if(String(inp.value||'').trim()) return;
+        const selectedText = resSelect && resSelect.value ? resSelect.options[resSelect.selectedIndex]?.textContent?.trim() : '';
+        inp.value = selectedText || 'ไม่ได้ระบุ';
+      });
+    }, true);
+  }
+
+  /* 10-11) ตัวกรองรวมตัวเดียว กรอง personal + department + workspace และซ่อนตัวกรองซ้ำ */
+  function centralizeGlobalFilters(){
+    const global = $('globalScheduleFilterV49') || document.querySelector('[id*="globalScheduleFilter"], .global-schedule-filter, .filter-panel');
+    const schedulePane = $('schedule-pane') || document.querySelector('#schedulePane,[data-pane="schedule"]');
+    if(!schedulePane || !global) return;
+    // move to top before first schedule card
+    const firstCard = schedulePane.querySelector('.card');
+    if(firstCard && global.parentElement !== firstCard.parentElement) firstCard.parentElement.insertBefore(global, firstCard);
+    // hide duplicate filters inside personal card
+    qsa('.card', schedulePane).forEach(card=>{
+      if(/ตารางงาน\/นัดหมายของคุณ/.test(text(card))){
+        qsa('input,select,button',card).forEach(ctrl=>{
+          const around = ctrl.closest('.filter-panel,.row,.d-flex,.input-group,.mb-2,.mb-3');
+          if(around && around !== global && /ค้นหา|สถานะ|ช่วงเวลา|เรียง|ทั้งหมด|ล่าสุด/i.test(text(around))) around.classList.add('haos-v68-hidden-duplicate-filter');
+        });
+      }
+    });
+    if(global.dataset.v68Bound) return;
+    global.dataset.v68Bound='1';
+    global.addEventListener('input',()=>applyUnifiedFilter(global,schedulePane));
+    global.addEventListener('change',()=>applyUnifiedFilter(global,schedulePane));
+  }
+  function applyUnifiedFilter(global, pane){
+    const controls=qsa('input,select',global);
+    const keyword=(controls.find(c=>c.type==='text'||c.tagName==='INPUT')?.value||'').toLowerCase().trim();
+    const selects=controls.filter(c=>c.tagName==='SELECT').map(c=>String(c.value||'').toLowerCase()).filter(v=>v && v!=='ทั้งหมด' && v!=='all');
+    qsa('tbody tr,.workspace-row,.schedule-row,.card .list-group-item',pane).forEach(row=>{
+      const t=text(row).toLowerCase();
+      const okKeyword=!keyword||t.includes(keyword);
+      const okSelects=selects.every(v=>t.includes(v));
+      row.style.display=(okKeyword&&okSelects)?'':'none';
+    });
+  }
+
+  /* 9,12) Polish IT Booking UI after render */
+  function polishITBooking(){
+    qsa('table').forEach(table=>{
+      if(/จองห้อง|Zoom|Meeting ID|Passcode|คำขอจอง/i.test(text(table))){
+        table.classList.add('it-booking-table');
+        qsa('tbody tr',table).forEach(tr=>tr.classList.add('haos-itbooking-card-row'));
+      }
+    });
+    const popup=document.querySelector('.swal2-popup');
+    if(popup && popup.querySelector('#itbType')) popup.classList.add('it-booking-modal-modern');
+  }
+
+  function runAll(){
+    moveV66ToolsIntoAdminPanel();
+    polishReportTables();
+    relabelTeamStatusYesterday();
+    splitAssignAndApprovalFields();
+    patchScheduleSaveFallback();
+    centralizeGlobalFilters();
+    polishITBooking();
+  }
+
+  // Wrap important render functions to fix immediately after they run
+  ['renderHeadReports','renderMyReports','renderITBookings','loadItBookings','renderSchedules','renderDepartmentSchedules','renderSharedWorkspaces'].forEach(fn=>{
+    const old=window[fn];
+    if(typeof old==='function' && !old.__haosV68Wrapped){
+      window[fn]=function(){ const r=old.apply(this,arguments); setTimeout(runAll,80); setTimeout(runAll,400); return r; };
+      window[fn].__haosV68Wrapped=true;
+    }
+  });
+
+  document.addEventListener('DOMContentLoaded',()=>{ setTimeout(runAll,300); setTimeout(runAll,1200); });
+  document.addEventListener('shown.bs.tab',()=>setTimeout(runAll,120));
+  const mo = new MutationObserver(()=>{ clearTimeout(window.__haosV68Timer); window.__haosV68Timer=setTimeout(runAll,180); });
+  try { mo.observe(document.body,{subtree:true,childList:true}); } catch(e){}
+  window.haosV68FixNow = runAll;
+  console.info('HAOS '+HAOS_V68+' loaded');
+})();
+</script>
+
 </body>
 </html>
 <script>
