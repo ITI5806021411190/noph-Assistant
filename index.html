@@ -7755,5 +7755,197 @@ HAOS v68.2 FRONTEND STABILITY PATCH
   console.info('v53 Daily Report Edit Hotfix loaded');
 })();
 </script>
+
+
+<script>
+/* =========================================================
+   v68.3 Schedule Display Stability Hotfix
+   Root cause fixed: v49-v68 global filter / DOM polish patches could hide
+   the schedule table controls and leave the schedule table in a non-rendered state.
+   This patch makes the schedule list renderer authoritative again.
+   ========================================================= */
+(function(){
+  'use strict';
+  const PATCH = 'v68.3-schedule-display-stability';
+  const $ = (id) => document.getElementById(id);
+  const qa = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+  const strip = (v) => String(v ?? '').replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim();
+
+  function safeEmptyRow_(colspan, icon, title, hint){
+    if (typeof window.emptyRow === 'function') return window.emptyRow(colspan, icon, title, hint);
+    return `<tr><td colspan="${colspan}" class="text-center text-muted py-4"><div class="fw-bold">${title || '-'}</div><small>${hint || ''}</small></td></tr>`;
+  }
+  function safeLoadingRow_(colspan, text){
+    if (typeof window.loadingRow === 'function') return window.loadingRow(colspan, text);
+    return `<tr><td colspan="${colspan}" class="text-center text-muted py-4">${text || 'กำลังโหลดข้อมูล...'}</td></tr>`;
+  }
+  function normalizeList_(res){
+    if (!res) return [];
+    if (Array.isArray(res)) return res;
+    if (Array.isArray(res.data)) return res.data;
+    if (Array.isArray(res.schedules)) return res.schedules;
+    if (Array.isArray(res.items)) return res.items;
+    return [];
+  }
+  function getUser_(){
+    try { return window.user || user || {}; } catch(e) { return window.user || {}; }
+  }
+  function ensureScheduleVisible_(){
+    const pane = $('schedule-pane');
+    if (!pane) return;
+
+    // v68.1/v68.2 อาจใส่ class ซ่อน filter/row กว้างเกินไป: ถอนเฉพาะในหน้า schedule
+    qa('.haos-v68-hidden-duplicate-filter', pane).forEach(el => {
+      el.classList.remove('haos-v68-hidden-duplicate-filter');
+      if (el.style && el.style.display === 'none') el.style.display = '';
+    });
+
+    // ถ้ามี filter รวมเก่าที่ทำให้ state ชนกับ filter หลัก ให้เก็บออกจาก flow แต่ไม่แตะข้อมูล
+    const globalFilter = $('globalScheduleFilterV49');
+    if (globalFilter) globalFilter.style.display = 'none';
+
+    const listDiv = $('scheduleListDiv');
+    const calDiv = $('calendarDiv');
+    const legend = $('calendarLegend');
+    const isCalendar = calDiv && calDiv.style.display === 'block';
+    if (listDiv && !isCalendar) listDiv.style.display = 'block';
+    if (calDiv && !isCalendar) calDiv.style.display = 'none';
+    if (legend && !isCalendar) legend.style.display = 'none';
+
+    // กันแถวที่เคยโดนซ่อนด้วย style.display จาก filter รวมเก่า
+    qa('#myTable tr, #departmentScheduleTable tr', pane).forEach(tr => {
+      if (tr.style && tr.style.display === 'none') tr.style.display = '';
+    });
+  }
+
+  function schedulePasses_(item, q, status, period){
+    const hay = [item.eventName,item.details,item.location,item.workStatus,item.startTime,item.ownerName,item.scheduleScope,item.priority,item.tags].map(strip).join(' ').toLowerCase();
+    if (q && !hay.includes(q)) return false;
+    if (status && String(item.workStatus || '') !== status) return false;
+    if (period && typeof window.schedulePassesPeriod === 'function' && !window.schedulePassesPeriod(item, period)) return false;
+    return true;
+  }
+  function sortSchedules_(list, sort){
+    const out = list.slice();
+    out.sort((a,b) => {
+      if (sort === 'name') return String(a.eventName || '').localeCompare(String(b.eventName || ''), 'th');
+      const da = a.rawStartTime ? new Date(a.rawStartTime) : new Date(0);
+      const db = b.rawStartTime ? new Date(b.rawStartTime) : new Date(0);
+      return sort === 'oldest' ? da - db : db - da;
+    });
+    return out;
+  }
+
+  window.applyScheduleFilters = function(){
+    const q = ($('scheduleSearch')?.value || '').toLowerCase().trim();
+    const status = $('scheduleStatusFilter')?.value || '';
+    const period = $('schedulePeriodFilter')?.value || '';
+    const sort = $('scheduleSort')?.value || 'newest';
+    let personal = [];
+    let deptForCalendar = [];
+    try { personal = Array.isArray(mySchedulesGlobal) ? mySchedulesGlobal : (window.mySchedulesGlobal || []); } catch(e) { personal = window.mySchedulesGlobal || []; }
+    try { deptForCalendar = Array.isArray(departmentSchedulesGlobal) ? departmentSchedulesGlobal : (window.departmentSchedulesGlobal || []); } catch(e) { deptForCalendar = window.departmentSchedulesGlobal || []; }
+    const filtered = sortSchedules_(personal.filter(item => schedulePasses_(item, q, status, period)), sort);
+    try { filteredSchedulesGlobal = filtered; } catch(e) { window.filteredSchedulesGlobal = filtered; }
+    if (typeof window.renderScheduleRows === 'function') window.renderScheduleRows(filtered);
+    else renderScheduleRowsFallback_(filtered);
+
+    const deptFiltered = sortSchedules_(deptForCalendar.filter(item => schedulePasses_(item, q, status, period)), sort);
+    if (typeof window.renderCalendar === 'function') window.renderCalendar(filtered.concat(deptFiltered));
+    ensureScheduleVisible_();
+  };
+
+  function renderScheduleRowsFallback_(list){
+    const tbody = $('myTable');
+    const mobile = $('scheduleMobileCards');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    if (mobile) mobile.innerHTML = '';
+    if (!list.length) {
+      tbody.innerHTML = safeEmptyRow_(4, 'calendar-x', 'ยังไม่มีตารางงาน/นัดหมาย', 'ถ้ามีข้อมูลอยู่แล้ว ให้กดรีเฟรชหรือล้างตัวกรอง');
+      return;
+    }
+    list.forEach(item => {
+      const badgeClass = typeof window.getScheduleBadgeClass === 'function' ? window.getScheduleBadgeClass(item.workStatus) : 'bg-info text-dark';
+      tbody.insertAdjacentHTML('beforeend', `<tr><td class="ps-4 fw-medium text-primary">${strip(item.eventName) || '-'}<div class="small text-muted">${strip(item.location) || '-'}</div></td><td class="small text-muted">${strip(item.startTime) || '-'}</td><td><span class="badge ${badgeClass}">${strip(item.workStatus) || '-'}</span></td><td class="pe-4 text-end"><button class="btn btn-outline-info btn-sm text-dark" onclick="viewScheduleDetail('${String(item.id || '').replace(/'/g,'')}')"><i class="bi bi-eye"></i></button></td></tr>`);
+    });
+  }
+
+  window.loadMySchedules = function(){
+    const tbody = $('myTable');
+    const mobile = $('scheduleMobileCards');
+    if (tbody) tbody.innerHTML = safeLoadingRow_(4, 'กำลังโหลดตารางงาน...');
+    if (mobile) mobile.innerHTML = '';
+    ensureScheduleVisible_();
+    const u = getUser_();
+    if (!u || !u.phone) {
+      if (tbody) tbody.innerHTML = safeEmptyRow_(4, 'person-x', 'ยังไม่พบข้อมูลผู้ใช้', 'กรุณาเข้าสู่ระบบใหม่อีกครั้ง');
+      return;
+    }
+    google.script.run
+      .withSuccessHandler(function(res){
+        if (!res || res.success === false) {
+          if (tbody) tbody.innerHTML = safeEmptyRow_(4, 'exclamation-triangle', 'โหลดตารางงานไม่สำเร็จ', (res && res.message) || 'ระบบไม่ได้ส่งข้อมูลกลับมา');
+          ensureScheduleVisible_();
+          return;
+        }
+        const list = normalizeList_(res);
+        try { mySchedulesGlobal = list; } catch(e) { window.mySchedulesGlobal = list; }
+        if (u.role !== 'Super Admin' && $('dashMyScheds')) $('dashMyScheds').innerText = list.length;
+        window.applyScheduleFilters();
+        if (typeof window.syncOverviewCards === 'function') window.syncOverviewCards();
+        ensureScheduleVisible_();
+      })
+      .withFailureHandler(function(err){
+        if (tbody) tbody.innerHTML = safeEmptyRow_(4, 'wifi-off', 'เชื่อมต่อข้อมูลตารางงานไม่สำเร็จ', (err && err.message) ? err.message : String(err || 'ไม่ทราบสาเหตุ'));
+        ensureScheduleVisible_();
+      })
+      .getUserSchedules(u.phone);
+  };
+
+  window.loadDepartmentSchedules = function(){
+    const tbody = $('departmentScheduleTable');
+    const mobile = $('departmentScheduleMobileCards');
+    if (tbody) tbody.innerHTML = safeLoadingRow_(5, 'กำลังโหลดตารางงานของกลุ่มงาน...');
+    if (mobile) mobile.innerHTML = '';
+    const u = getUser_();
+    if (!u || !u.phone) {
+      if (tbody) tbody.innerHTML = safeEmptyRow_(5, 'person-x', 'ยังไม่พบข้อมูลผู้ใช้', 'กรุณาเข้าสู่ระบบใหม่อีกครั้ง');
+      return;
+    }
+    google.script.run
+      .withSuccessHandler(function(res){
+        if (!res || res.success === false) {
+          if (tbody) tbody.innerHTML = safeEmptyRow_(5, 'exclamation-triangle', 'โหลดตารางงานกลุ่มงานไม่สำเร็จ', (res && res.message) || 'ระบบไม่ได้ส่งข้อมูลกลับมา');
+          ensureScheduleVisible_();
+          return;
+        }
+        const list = normalizeList_(res);
+        try { departmentSchedulesGlobal = list; } catch(e) { window.departmentSchedulesGlobal = list; }
+        if (typeof window.renderDepartmentScheduleRows === 'function') window.renderDepartmentScheduleRows(list);
+        if (typeof window.applyScheduleFilters === 'function') window.applyScheduleFilters();
+        ensureScheduleVisible_();
+      })
+      .withFailureHandler(function(err){
+        if (tbody) tbody.innerHTML = safeEmptyRow_(5, 'wifi-off', 'เชื่อมต่อข้อมูลกลุ่มงานไม่สำเร็จ', (err && err.message) ? err.message : String(err || 'ไม่ทราบสาเหตุ'));
+        ensureScheduleVisible_();
+      })
+      .getDepartmentSchedules(u.phone, u.department || '');
+  };
+
+  // ให้ปุ่ม/แท็บตารางงานเปิดกลับมาเห็น list ก่อนเสมอ เว้นแต่ผู้ใช้กดปฏิทินเอง
+  document.addEventListener('shown.bs.tab', function(ev){
+    if (ev.target && ev.target.id === 'schedule-tab') {
+      setTimeout(function(){ ensureScheduleVisible_(); if (typeof window.loadMySchedules === 'function') window.loadMySchedules(); if (typeof window.loadDepartmentSchedules === 'function') window.loadDepartmentSchedules(); }, 120);
+    }
+  });
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(ensureScheduleVisible_, 400); setTimeout(ensureScheduleVisible_, 1400); });
+  try { new MutationObserver(function(){ setTimeout(ensureScheduleVisible_, 60); }).observe(document.body, {subtree:true, childList:true, attributes:true, attributeFilter:['class','style']}); } catch(e) {}
+
+  window.haosScheduleDisplayFixV683 = ensureScheduleVisible_;
+  console.info('HAOS ' + PATCH + ' loaded');
+})();
+</script>
+
 </body>
 </html>
