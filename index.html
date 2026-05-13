@@ -7936,11 +7936,10 @@ HAOS v68.2 FRONTEND STABILITY PATCH
   // ให้ปุ่ม/แท็บตารางงานเปิดกลับมาเห็น list ก่อนเสมอ เว้นแต่ผู้ใช้กดปฏิทินเอง
   document.addEventListener('shown.bs.tab', function(ev){
     if (ev.target && ev.target.id === 'schedule-tab') {
-      setTimeout(function(){ ensureScheduleVisible_(); if (typeof window.loadMySchedules === 'function') window.loadMySchedules(); if (typeof window.loadDepartmentSchedules === 'function') window.loadDepartmentSchedules(); }, 120);
+      setTimeout(function(){ ensureScheduleVisible_(); }, 120);
     }
   });
   document.addEventListener('DOMContentLoaded', function(){ setTimeout(ensureScheduleVisible_, 400); setTimeout(ensureScheduleVisible_, 1400); });
-  try { new MutationObserver(function(){ setTimeout(ensureScheduleVisible_, 60); }).observe(document.body, {subtree:true, childList:true, attributes:true, attributeFilter:['class','style']}); } catch(e) {}
 
   window.haosScheduleDisplayFixV683 = ensureScheduleVisible_;
   console.info('HAOS ' + PATCH + ' loaded');
@@ -8038,7 +8037,7 @@ HAOS v68.2 FRONTEND STABILITY PATCH
           <input type="hidden" id="approverPhone" value="">
           <div id="approverHeadDisplay" class="form-control bg-light text-muted">กำลังตรวจสอบหัวหน้ากลุ่ม...</div>
           <div class="form-check form-switch mt-2">
-            <input class="form-check-input" type="checkbox" id="approvalRequired" checked>
+            <input class="form-check-input" type="checkbox" id="approvalRequired">
             <label class="form-check-label small" for="approvalRequired">ขออนุมัติจากหัวหน้ากลุ่มก่อนบันทึกรายการ</label>
           </div>
           <small class="text-muted d-block mt-1">ถ้ายังไม่ได้กำหนดหัวหน้ากลุ่ม ระบบจะเว้นว่างไว้และบันทึกได้โดยไม่ส่งอนุมัติ</small>`;
@@ -8299,5 +8298,242 @@ HAOS v68.2 FRONTEND STABILITY PATCH
   console.info('HAOS ' + PATCH + ' loaded');
 })();
 </script>
+
+<script>
+/* =========================================================
+   v68.5 Real Fix: team report renderer + schedule anti-refresh + approval default OFF
+   ========================================================= */
+(function(){
+  'use strict';
+  const PATCH = 'v68.5-real-report-schedule-fix';
+  const $ = id => document.getElementById(id);
+  const qa = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+  const esc = v => String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+  const clean = v => String(v ?? '').replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim();
+  const phoneKey = v => String(v ?? '').replace(/'/g,'').trim();
+  const dateParts = v => {
+    const s = String(v || '').trim();
+    const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (iso) return {d: iso[3], my: iso[2] + '/' + iso[1]};
+    const th = s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (th) return {d: th[1].padStart(2,'0'), my: th[2].padStart(2,'0') + '/' + th[3]};
+    return {d:'-', my:''};
+  };
+  const fileLinks = url => {
+    if (typeof window.renderFileLinks_ === 'function') return window.renderFileLinks_(url);
+    if (!url) return '';
+    return String(url).split(/\n|,/).filter(Boolean).map((u,i)=>`<a href="${esc(u.trim())}" target="_blank" rel="noopener" class="text-decoration-none">📄${i?i+1:''}</a>`).join(' ');
+  };
+  function getUser(){ try { return window.user || user || {}; } catch(e){ return window.user || {}; } }
+  function setTeamReportsGlobal(list){
+    const arr = Array.isArray(list) ? list : [];
+    window.teamReportsGlobal = arr;
+    try { teamReportsGlobal = arr; } catch(e) {}
+    return arr;
+  }
+  function getTeamReportsGlobal(){
+    try { if (Array.isArray(teamReportsGlobal)) return teamReportsGlobal; } catch(e) {}
+    return Array.isArray(window.teamReportsGlobal) ? window.teamReportsGlobal : [];
+  }
+  function setTodayTeamReports(list){
+    const arr = Array.isArray(list) ? list : [];
+    window.todayTeamReports = arr;
+    try { todayTeamReports = arr; } catch(e) {}
+    return arr;
+  }
+
+  // 1) Authoritative renderer: exact 5 columns and exactly one time block.
+  window.renderHeadReports = function(){
+    const tbody = $('headReportTable');
+    const listView = $('headReportListView');
+    const calendarView = $('headReportCalendarView');
+    if (!tbody) return;
+    const head = listView ? listView.querySelector('thead tr') : null;
+    if (head) head.innerHTML = '<th>วันที่</th><th>ชื่อ</th><th>สถานะ/เวลา</th><th>รายละเอียด</th><th>ไฟล์</th>';
+    const reports = getTeamReportsGlobal();
+    if ((window.headReportViewMode || 'list') === 'calendar') {
+      listView && listView.classList.add('d-none');
+      calendarView && calendarView.classList.remove('d-none');
+      return typeof renderReportCalendar_ === 'function' ? renderReportCalendar_('headReportCalendarView', reports, 'team') : undefined;
+    }
+    listView && listView.classList.remove('d-none');
+    calendarView && calendarView.classList.add('d-none');
+    tbody.innerHTML = '';
+    if (!reports.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">ยังไม่มีข้อมูลรายงานทีม</td></tr>';
+      return;
+    }
+    const pageSize = (typeof getReportPageSize_ === 'function') ? getReportPageSize_('headReportPageSize') : (($('headReportPageSize') || {}).value || 20);
+    const show = pageSize === 'all' ? reports : reports.slice(0, Math.max(1, Number(pageSize || 20)));
+    show.forEach(r => {
+      const p = dateParts(r.date || r.rawDate || r.reportDate);
+      const status = r.leaveType || r.status || '-';
+      const badge = status === 'ปฏิบัติงานปกติ' ? 'bg-success' : 'bg-warning text-dark';
+      const detail = clean(r.details || r.workDetails || r.detail || '') || '-';
+      const remark = clean(r.remarks || r.remark || '');
+      const time = clean(r.time || r.workTime || '');
+      tbody.insertAdjacentHTML('beforeend', `<tr class="report-card-row haos-v685-team-report-row">
+        <td><span class="report-date-pill"><span>${esc(p.d)}</span><small>${esc(p.my)}</small></span></td>
+        <td><b>${esc(r.name || r.userName || '-')}</b></td>
+        <td><span class="status-badge ${badge}">${esc(status)}</span>${time ? `<div class="small text-muted mt-1">${esc(time)}</div>` : ''}</td>
+        <td><div class="report-detail-box">${esc(detail).slice(0,260)}${remark ? `<div class="small text-muted mt-1">${esc(remark).slice(0,160)}</div>` : ''}</div></td>
+        <td>${fileLinks(r.fileUrl) || '-'}</td>
+      </tr>`);
+    });
+    if (show.length < reports.length) tbody.insertAdjacentHTML('beforeend', `<tr><td colspan="5" class="text-center text-muted small py-2">แสดง ${show.length} จาก ${reports.length} รายการ</td></tr>`);
+  };
+
+  window.loadTeamReports = function(){
+    const u = getUser();
+    const tbody = $('headReportTable');
+    const head = $('headReportListView')?.querySelector('thead tr');
+    if (head) head.innerHTML = '<th>วันที่</th><th>ชื่อ</th><th>สถานะ/เวลา</th><th>รายละเอียด</th><th>ไฟล์</th>';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm me-2"></span>กำลังโหลดรายงานทีม...</td></tr>';
+    google.script.run.withSuccessHandler(function(res){
+      if (!res || res.success === false) {
+        if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-danger">โหลดรายงานทีมไม่สำเร็จ: ${esc(res && res.message ? res.message : 'ไม่มีข้อมูลตอบกลับ')}</td></tr>`;
+        return;
+      }
+      const box = $('teamStatsBox');
+      if (box) box.innerHTML = '';
+      let submittedCount = 0;
+      const stats = Array.isArray(res.stats) ? res.stats : [];
+      stats.forEach(member => {
+        if (member.submittedToday || member.submittedYesterday) submittedCount++;
+        const ok = !!(member.submittedToday || member.submittedYesterday);
+        const color = ok ? 'success' : 'danger';
+        const icon = ok ? 'check-circle-fill' : 'x-circle-fill';
+        const txt = ok ? ((member.leaveType === 'ปฏิบัติงานปกติ') ? 'ส่งแล้ว' : (member.leaveType || 'ส่งแล้ว')) : 'ยังไม่ส่ง';
+        if (box) box.insertAdjacentHTML('beforeend', `<div class="col-6 col-md-4"><div class="border rounded p-2 text-center bg-white shadow-sm"><div class="fw-bold small text-truncate">${esc(member.name || '-')}</div><div class="badge bg-${color}"><i class="bi bi-${icon}"></i> ${esc(txt)}</div></div></div>`);
+      });
+      if ($('dashTeamReports')) $('dashTeamReports').innerText = submittedCount + '/' + stats.length;
+      try { if (typeof syncOverviewCards === 'function') syncOverviewCards(); } catch(e) {}
+      setTodayTeamReports([]);
+      setTeamReportsGlobal(res.reports || []);
+      if (res.isHead) {
+        $('headSummaryTools')?.classList.remove('d-none');
+        $('btnHeadSummary')?.classList.remove('d-none');
+        $('headReportView')?.classList.remove('d-none');
+      }
+      window.renderHeadReports();
+    }).withFailureHandler(function(err){
+      if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-danger">เชื่อมต่อรายงานทีมไม่สำเร็จ: ${esc(err && err.message ? err.message : err)}</td></tr>`;
+    }).getTeamReports(u.department || '', u.role || 'User');
+  };
+
+  // 2) Stop the schedule page from feeling like it refreshes itself: throttle accidental repeat loads.
+  const lastLoad = { mine:0, dept:0 };
+  const loading = { mine:false, dept:false };
+  const oldMine = window.loadMySchedules;
+  const oldDept = window.loadDepartmentSchedules;
+  window.loadMySchedules = function(force){
+    const now = Date.now();
+    if (!force && (loading.mine || now - lastLoad.mine < 2500)) return;
+    loading.mine = true; lastLoad.mine = now;
+    try { return oldMine ? oldMine.apply(this, arguments) : undefined; }
+    finally { setTimeout(()=>{ loading.mine = false; }, 1800); }
+  };
+  window.loadDepartmentSchedules = function(force){
+    const now = Date.now();
+    if (!force && (loading.dept || now - lastLoad.dept < 2500)) return;
+    loading.dept = true; lastLoad.dept = now;
+    try { return oldDept ? oldDept.apply(this, arguments) : undefined; }
+    finally { setTimeout(()=>{ loading.dept = false; }, 1800); }
+  };
+
+  // 3) Approval UI: default OFF, head display robust, only send approver when checked.
+  function approvalDefaultOff(){
+    const sw = $('approvalRequired');
+    if (sw) sw.checked = false;
+  }
+  function ensureApprovalHead(){
+    const u = getUser();
+    const display = $('approverHeadDisplay');
+    const hidden = $('approverPhone');
+    approvalDefaultOff();
+    if (!display || !hidden) return;
+    hidden.value = '';
+    display.textContent = 'กำลังตรวจสอบหัวหน้ากลุ่ม...';
+    google.script.run.withSuccessHandler(function(res){
+      if (res && res.success && res.phone) {
+        hidden.value = phoneKey(res.phone);
+        display.classList.remove('text-muted');
+        display.innerHTML = `<i class="bi bi-person-check text-success"></i> ${esc(res.name || 'หัวหน้ากลุ่ม')} <span class="text-muted small">(${esc(res.phone)})</span>`;
+      } else {
+        hidden.value = '';
+        display.classList.add('text-muted');
+        display.textContent = (res && res.message) ? res.message : 'ยังไม่ได้กำหนดหัวหน้ากลุ่ม';
+      }
+    }).withFailureHandler(function(err){
+      hidden.value = '';
+      display.classList.add('text-muted');
+      display.textContent = 'โหลดหัวหน้ากลุ่มไม่สำเร็จ';
+      console.warn('[HAOS v68.5] head lookup failed', err);
+    }).getHeadOfDepartmentV68(u.department || '');
+  }
+
+  const oldLoadUsersList = window.loadUsersList;
+  window.loadUsersList = function(){
+    const ret = oldLoadUsersList ? oldLoadUsersList.apply(this, arguments) : undefined;
+    setTimeout(approvalDefaultOff, 100);
+    setTimeout(ensureApprovalHead, 550);
+    return ret;
+  };
+
+  const oldHandleSaveEvent = window.handleSaveEvent;
+  window.handleSaveEvent = function(){
+    const sw = $('approvalRequired');
+    const hidden = $('approverPhone');
+    if (hidden && sw && !sw.checked) hidden.value = '';
+    const same = $('assignUsers');
+    const ext = $('assignExternalUsers');
+    if (same && ext) {
+      const selected = [...same.selectedOptions, ...ext.selectedOptions].map(o => o.value);
+      const originalSelected = Array.from(same.options).map(o => o.selected);
+      try {
+        Array.from(same.options).forEach(o => { o.selected = selected.includes(o.value); });
+        // Add external selected as temporary options so legacy handleSaveEvent can collect them.
+        [...ext.selectedOptions].forEach(o => {
+          if (![...same.options].some(x => x.value === o.value)) {
+            const opt = document.createElement('option'); opt.value = o.value; opt.textContent = o.textContent; opt.selected = true; opt.dataset.tempExternal = '1'; same.appendChild(opt);
+          }
+        });
+        return oldHandleSaveEvent ? oldHandleSaveEvent.apply(this, arguments) : undefined;
+      } finally {
+        setTimeout(()=>qa('option[data-temp-external="1"]', same).forEach(o=>o.remove()), 1000);
+        setTimeout(()=>Array.from(same.options).forEach((o,i)=>{ if (originalSelected[i] !== undefined) o.selected = originalSelected[i]; }), 1200);
+      }
+    }
+    return oldHandleSaveEvent ? oldHandleSaveEvent.apply(this, arguments) : undefined;
+  };
+
+  // Keep schedule buttons from becoming form submitters after DOM rewrites.
+  function hardenScheduleButtons(){
+    const pane = $('schedule-pane'); if (!pane) return;
+    qa('button:not([type])', pane).forEach(b => b.type = 'button');
+    qa('button[type="submit"]', pane).forEach(b => { if (b.id !== 'btnSaveEvent') b.type = 'button'; });
+    const save = $('btnSaveEvent'); if (save) save.type = 'submit';
+  }
+  document.addEventListener('click', function(ev){
+    const btn = ev.target && ev.target.closest ? ev.target.closest('#schedule-pane button') : null;
+    if (btn && btn.id !== 'btnSaveEvent' && btn.type === 'submit') { btn.type = 'button'; ev.preventDefault(); }
+  }, true);
+
+  function init(){
+    hardenScheduleButtons();
+    approvalDefaultOff();
+    if ($('approverHeadDisplay')) ensureApprovalHead();
+    const head = $('headReportListView')?.querySelector('thead tr');
+    if (head) head.innerHTML = '<th>วันที่</th><th>ชื่อ</th><th>สถานะ/เวลา</th><th>รายละเอียด</th><th>ไฟล์</th>';
+    if ($('headReportTable') && getTeamReportsGlobal().length) window.renderHeadReports();
+  }
+  document.addEventListener('DOMContentLoaded', () => setTimeout(init, 700));
+  document.addEventListener('shown.bs.tab', ev => { if (ev.target && (ev.target.id === 'report-tab' || ev.target.id === 'schedule-tab')) setTimeout(init, 150); });
+  setTimeout(init, 1200);
+  setTimeout(init, 2600);
+  console.info('HAOS ' + PATCH + ' loaded');
+})();
+</script>
+
 </body>
 </html>
