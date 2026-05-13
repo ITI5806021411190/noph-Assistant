@@ -7947,5 +7947,357 @@ HAOS v68.2 FRONTEND STABILITY PATCH
 })();
 </script>
 
+<script>
+/* =========================================================
+   v68.4 Report/Schedule UX Stability Hotfix
+   Fixes:
+   1) Team report table column mismatch + duplicate time caused by older polish patch.
+   2) Prevent accidental page refresh inside Schedule tab.
+   3) Add independent filters for department schedules and shared workspaces.
+   4) Split Assign into same-department members and outside-department members.
+   5) Pull approver from department head and let user choose whether approval is required.
+   ========================================================= */
+(function(){
+  'use strict';
+  const PATCH = 'v68.4-report-schedule-ux-stability';
+  const $ = id => document.getElementById(id);
+  const qa = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+  const esc = v => String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+  const clean = v => String(v ?? '').replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim();
+  const phoneKey = v => String(v ?? '').replace(/'/g,'').trim();
+  const deptKey = v => String(v ?? '').replace(/[\u200B-\u200D\uFEFF]/g,'').replace(/\s+/g,' ').trim().toLowerCase();
+  const dateParts = v => {
+    const s = String(v || '').trim();
+    const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (iso) return {d: iso[3], my: iso[2] + '/' + iso[1]};
+    const th = s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (th) return {d: th[1].padStart(2,'0'), my: th[2].padStart(2,'0') + '/' + th[3]};
+    return {d:'-', my:''};
+  };
+  const sortList = (list, sort) => list.slice().sort((a,b)=>{
+    if (sort === 'name') return String(a.eventName || a.title || '').localeCompare(String(b.eventName || b.title || ''),'th');
+    const da = new Date(a.rawStartTime || a.startTime || a.createdAt || 0);
+    const db = new Date(b.rawStartTime || b.startTime || b.createdAt || 0);
+    return sort === 'oldest' ? da - db : db - da;
+  });
+  function getUser(){ try { return window.user || user || {}; } catch(e){ return window.user || {}; } }
+  function badgeClass(status){ return typeof window.getScheduleBadgeClass === 'function' ? window.getScheduleBadgeClass(status) : 'bg-info text-dark'; }
+  function fileLinks(url){ return typeof window.renderFileLinks_ === 'function' ? window.renderFileLinks_(url) : (url ? `<a href="${esc(url)}" target="_blank">ไฟล์</a>` : ''); }
+  function passPeriod(item, period){ return !period || (typeof window.schedulePassesPeriod === 'function' ? window.schedulePassesPeriod(item, period) : true); }
+  function passSchedule(item, q, status, period){
+    const hay = [item.eventName,item.details,item.location,item.workStatus,item.startTime,item.ownerName,item.scheduleScope,item.priority,item.tags].map(clean).join(' ').toLowerCase();
+    if (q && !hay.includes(q)) return false;
+    if (status && String(item.workStatus || '') !== status) return false;
+    if (!passPeriod(item, period)) return false;
+    return true;
+  }
+
+  function ensureScheduleButtonsDoNotSubmit(){
+    const pane = $('schedule-pane'); if (!pane) return;
+    qa('button:not([type])', pane).forEach(btn => btn.type = 'button');
+    qa('button[type="submit"]', pane).forEach(btn => { if (btn.id !== 'btnSaveEvent') btn.type = 'button'; });
+  }
+
+  // Extra guard: old browser/PWA states sometimes submit the schedule area when filter buttons are tapped.
+  document.addEventListener('submit', function(ev){
+    const form = ev.target;
+    if (form && form.closest && form.closest('#schedule-pane') && form.getAttribute('onsubmit') !== 'handleSaveEvent(); return false;') {
+      ev.preventDefault();
+      ev.stopPropagation();
+      return false;
+    }
+  }, true);
+
+  function ensureAssignAndApprovalUI(){
+    const assignGroup = $('assignGroup');
+    const oldAssign = $('assignUsers');
+    if (assignGroup && oldAssign && !assignGroup.dataset.v684) {
+      assignGroup.dataset.v684 = '1';
+      assignGroup.innerHTML = `
+        <div class="row g-2">
+          <div class="col-md-6">
+            <label class="small fw-bold text-success"><i class="bi bi-people-fill"></i> สมาชิกในกลุ่มงาน</label>
+            <select id="assignUsers" class="form-select" multiple size="5"></select>
+            <small class="text-muted">รายการหลักสำหรับมอบหมายงานในทีมเดียวกัน</small>
+          </div>
+          <div class="col-md-6">
+            <label class="small fw-bold text-warning"><i class="bi bi-person-plus"></i> สมาชิกนอกกลุ่มงาน</label>
+            <select id="assignExternalUsers" class="form-select" multiple size="5"></select>
+            <small class="text-muted">ใช้เฉพาะกรณีต้องข้ามทีม ลดการเลือกผิดคน</small>
+          </div>
+        </div>`;
+    }
+    const approver = $('approverPhone');
+    if (approver && !approver.dataset.v684) {
+      approver.dataset.v684 = '1';
+      const col = approver.closest('.col-6') || approver.parentElement;
+      if (col) {
+        col.classList.remove('col-6'); col.classList.add('col-md-7');
+        col.innerHTML = `
+          <label class="small fw-bold text-muted">หัวหน้ากลุ่มสำหรับขออนุมัติ</label>
+          <input type="hidden" id="approverPhone" value="">
+          <div id="approverHeadDisplay" class="form-control bg-light text-muted">กำลังตรวจสอบหัวหน้ากลุ่ม...</div>
+          <div class="form-check form-switch mt-2">
+            <input class="form-check-input" type="checkbox" id="approvalRequired" checked>
+            <label class="form-check-label small" for="approvalRequired">ขออนุมัติจากหัวหน้ากลุ่มก่อนบันทึกรายการ</label>
+          </div>
+          <small class="text-muted d-block mt-1">ถ้ายังไม่ได้กำหนดหัวหน้ากลุ่ม ระบบจะเว้นว่างไว้และบันทึกได้โดยไม่ส่งอนุมัติ</small>`;
+      }
+    }
+    ensureScheduleButtonsDoNotSubmit();
+  }
+
+  function optionHtml(u){
+    const pos = u.position ? esc(u.position) + ' - ' : '';
+    return `<option value="${esc(phoneKey(u.phone))}">${esc(u.name || u.fullName || '-')} (${pos}${esc(u.department || '-')})</option>`;
+  }
+
+  window.loadUsersList = function(){
+    ensureAssignAndApprovalUI();
+    const sameSel = $('assignUsers');
+    const extSel = $('assignExternalUsers');
+    if (sameSel) sameSel.innerHTML = '<option disabled>กำลังโหลดสมาชิก...</option>';
+    if (extSel) extSel.innerHTML = '';
+    const u = getUser();
+    google.script.run.withSuccessHandler(function(res){
+      const list = (res && res.success && Array.isArray(res.data)) ? res.data : [];
+      window.haosAllUsersV684 = list;
+      const myPhone = phoneKey(u.phone);
+      const myDept = deptKey(u.department);
+      const same = [];
+      const outside = [];
+      list.forEach(x => {
+        if (phoneKey(x.phone) === myPhone) return;
+        if (deptKey(x.department) === myDept) same.push(x); else outside.push(x);
+      });
+      if (sameSel) sameSel.innerHTML = same.length ? same.map(optionHtml).join('') : '<option disabled>ยังไม่มีสมาชิกในกลุ่มงาน</option>';
+      if (extSel) extSel.innerHTML = outside.length ? outside.map(optionHtml).join('') : '<option disabled>ไม่มีสมาชิกนอกกลุ่มงาน</option>';
+    }).withFailureHandler(function(err){
+      if (sameSel) sameSel.innerHTML = `<option disabled>โหลดสมาชิกไม่สำเร็จ: ${esc(err && err.message ? err.message : err)}</option>`;
+    }).getAllUsers();
+
+    if (typeof google !== 'undefined' && google.script && google.script.run && u.department) {
+      google.script.run.withSuccessHandler(function(res){
+        const hidden = $('approverPhone');
+        const display = $('approverHeadDisplay');
+        const sw = $('approvalRequired');
+        if (res && res.success && res.phone) {
+          if (hidden) hidden.value = phoneKey(res.phone);
+          if (display) { display.classList.remove('text-muted'); display.innerHTML = `<i class="bi bi-person-check text-success"></i> ${esc(res.name || 'หัวหน้ากลุ่ม')} <span class="text-muted">(${esc(phoneKey(res.phone))})</span>`; }
+          if (sw) { sw.disabled = false; sw.checked = true; }
+        } else {
+          if (hidden) hidden.value = '';
+          if (display) { display.classList.add('text-muted'); display.innerHTML = '<i class="bi bi-info-circle"></i> ยังไม่ได้กำหนดหัวหน้ากลุ่ม'; }
+          if (sw) { sw.checked = false; sw.disabled = true; }
+        }
+      }).withFailureHandler(function(){
+        if ($('approverHeadDisplay')) $('approverHeadDisplay').textContent = 'ตรวจสอบหัวหน้ากลุ่มไม่สำเร็จ';
+        if ($('approvalRequired')) { $('approvalRequired').checked = false; $('approvalRequired').disabled = true; }
+        if ($('approverPhone')) $('approverPhone').value = '';
+      }).getHeadOfDepartmentV68(u.department);
+    }
+  };
+
+  function selectedAssignees(){
+    return ['assignUsers','assignExternalUsers'].flatMap(id => Array.from($(id)?.selectedOptions || []).map(o => o.value)).filter(Boolean);
+  }
+
+  window.handleSaveEvent = function(){
+    ensureAssignAndApprovalUI();
+    const fileInput = $('schedFile');
+    const btn = $('btnSaveEvent');
+    if (!btn) return false;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังบันทึก...';
+    const requireApproval = !!($('approvalRequired') && $('approvalRequired').checked && !$('approvalRequired').disabled);
+    const approverPhone = requireApproval ? phoneKey($('approverPhone')?.value || '') : '';
+    const u = getUser();
+    const data = {
+      eventEditId: $('eventEditId')?.value || '',
+      workStatus: $('eventWorkStatus')?.value || 'อยู่ระหว่างการดำเนินการ',
+      priority: $('eventPriority') ? $('eventPriority').value : 'ปกติ',
+      tags: $('eventTags') ? Array.from($('eventTags').selectedOptions).map(o => o.value) : [],
+      scheduleScope: $('scheduleScope') ? $('scheduleScope').value : 'Personal',
+      ownerDepartment: u.department || '',
+      eventName: $('eventName')?.value || '',
+      details: $('eventDetails')?.value || '',
+      startTime: $('startTime')?.value || '',
+      endTime: $('endTime') ? $('endTime').value : '',
+      location: $('eventLocation')?.value || '',
+      resourceId: $('resourceId')?.value || '',
+      approverPhone: approverPhone,
+      approvalRequired: requireApproval && !!approverPhone,
+      ownerPhone: u.phone,
+      ownerName: u.fullName,
+      leadTime: $('leadTime')?.value || 15,
+      userEmail: u.email,
+      meetingLink: $('meetingLink')?.value || '',
+      chatId: $('chatId')?.value || '',
+      assignees: selectedAssignees(),
+      fileUrl: '',
+      recurringEnabled: $('recurringEnabled') ? $('recurringEnabled').checked : false,
+      recurringFrequency: $('recurringFrequency') ? $('recurringFrequency').value : 'weekly',
+      recurringInterval: $('recurringInterval') ? $('recurringInterval').value : 1,
+      recurringByDay: $('recurringByDay') ? $('recurringByDay').value : '',
+      recurringEndDate: $('recurringEndDate') ? $('recurringEndDate').value : ''
+    };
+    const resetBtn = () => { btn.disabled = false; btn.innerHTML = data.eventEditId ? '<i class="bi bi-save"></i> อัปเดตกำหนดการ' : '<i class="bi bi-save"></i> บันทึกกำหนดการ'; };
+    if (fileInput && fileInput.files && fileInput.files.length > 0) {
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+      reader.onload = e => google.script.run.withSuccessHandler(function(up){
+        if (up && up.success) { data.fileUrl = up.url; window.submitScheduleData(data, btn); }
+        else { resetBtn(); Swal.fire('ข้อผิดพลาด', 'อัปโหลดไฟล์ล้มเหลว', 'error'); }
+      }).withFailureHandler(function(err){ resetBtn(); Swal.fire('ข้อผิดพลาด', err && err.message ? err.message : String(err), 'error'); }).uploadFileToDrive(e.target.result.split(',')[1], file.name, file.type);
+      reader.onerror = () => { resetBtn(); Swal.fire('ข้อผิดพลาด', 'อ่านไฟล์แนบไม่สำเร็จ', 'error'); };
+      reader.readAsDataURL(file);
+    } else {
+      window.submitScheduleData(data, btn);
+    }
+    return false;
+  };
+
+  function clearAssignSelections(){ ['assignUsers','assignExternalUsers'].forEach(id => qa('option', $(id) || document.createElement('select')).forEach(o => o.selected = false)); }
+  const oldCancel = window.cancelEditEvent;
+  window.cancelEditEvent = function(){
+    const r = oldCancel ? oldCancel.apply(this, arguments) : undefined;
+    ensureAssignAndApprovalUI();
+    clearAssignSelections();
+    if ($('assignGroup')) $('assignGroup').style.display = '';
+    if ($('approvalRequired') && $('approverPhone')?.value) { $('approvalRequired').disabled = false; $('approvalRequired').checked = true; }
+    return r;
+  };
+
+  function ensureDeptFilters(){
+    const tbody = $('departmentScheduleTable'); if (!tbody) return;
+    const card = tbody.closest('.card'); if (!card || $('deptScheduleFilterBox')) return;
+    const body = card.querySelector('.card-body'); if (!body) return;
+    body.insertAdjacentHTML('afterbegin', `
+      <div class="filter-panel m-3 mb-0" id="deptScheduleFilterBox">
+        <div class="row g-2 align-items-end">
+          <div class="col-md-5"><label class="small fw-bold text-muted">ค้นหางานกลุ่มงาน</label><input type="text" id="deptScheduleSearch" class="form-control" placeholder="ค้นหาชื่อ สถานที่ รายละเอียด ผู้สร้าง..." oninput="applyDepartmentScheduleFiltersV684()"></div>
+          <div class="col-md-3"><label class="small fw-bold text-muted">สถานะงาน</label><select id="deptScheduleStatusFilter" class="form-select" onchange="applyDepartmentScheduleFiltersV684()"><option value="">ทั้งหมด</option><option value="อยู่ระหว่างการดำเนินการ">อยู่ระหว่างการดำเนินการ</option><option value="ดำเนินการแล้ว">ดำเนินการแล้ว</option><option value="ยกเลิกสถานะ">ยกเลิกสถานะ</option><option value="เสร็จสิ้นแต่ยังไม่สมบูรณ์">เสร็จสิ้นแต่ยังไม่สมบูรณ์</option></select></div>
+          <div class="col-md-2"><label class="small fw-bold text-muted">ช่วงเวลา</label><select id="deptSchedulePeriodFilter" class="form-select" onchange="applyDepartmentScheduleFiltersV684()"><option value="">ทั้งหมด</option><option value="today">วันนี้</option><option value="week">7 วัน</option><option value="month">30 วัน</option></select></div>
+          <div class="col-md-1"><label class="small fw-bold text-muted">เรียง</label><select id="deptScheduleSort" class="form-select" onchange="applyDepartmentScheduleFiltersV684()"><option value="newest">ล่าสุด</option><option value="oldest">เก่าสุด</option><option value="name">ชื่อ</option></select></div>
+          <div class="col-md-1 d-grid"><button type="button" class="btn btn-outline-secondary" onclick="resetDepartmentScheduleFiltersV684()" title="ล้างตัวกรอง"><i class="bi bi-arrow-counterclockwise"></i></button></div>
+        </div>
+      </div>`);
+  }
+  function ensureWorkspaceFilters(){
+    const tbody = $('workspaceTableBody'); if (!tbody) return;
+    const card = tbody.closest('.card'); if (!card || $('workspaceFilterBoxV684')) return;
+    const body = card.querySelector('.card-body'); if (!body) return;
+    body.insertAdjacentHTML('afterbegin', `
+      <div class="filter-panel m-3 mb-0" id="workspaceFilterBoxV684">
+        <div class="row g-2 align-items-end">
+          <div class="col-md-5"><label class="small fw-bold text-muted">ค้นหาพื้นที่ทำงาน</label><input id="workspaceSearchV684" class="form-control" placeholder="ค้นหาชื่อพื้นที่ เจ้าของ รายละเอียด..." oninput="applyWorkspaceFiltersV684()"></div>
+          <div class="col-md-3"><label class="small fw-bold text-muted">ขอบเขต</label><select id="workspaceScopeFilterV684" class="form-select" onchange="applyWorkspaceFiltersV684()"><option value="">ทั้งหมด</option><option value="department">กลุ่มงาน</option><option value="personal">ส่วนตัว</option></select></div>
+          <div class="col-md-3"><label class="small fw-bold text-muted">ชนิด</label><select id="workspaceTypeFilterV684" class="form-select" onchange="applyWorkspaceFiltersV684()"><option value="">ทั้งหมด</option><option value="table">ตาราง</option><option value="checklist">Checklist</option><option value="form">แบบฟอร์ม</option><option value="google_sheet">Google Sheet</option><option value="google_form">Google Form</option></select></div>
+          <div class="col-md-1 d-grid"><button type="button" class="btn btn-outline-secondary" onclick="resetWorkspaceFiltersV684()" title="ล้างตัวกรอง"><i class="bi bi-arrow-counterclockwise"></i></button></div>
+        </div>
+      </div>`);
+  }
+
+  const oldRenderDept = window.renderDepartmentScheduleRows;
+  window.renderDepartmentScheduleRows = function(list){
+    window.departmentSchedulesGlobal = Array.isArray(list) ? list : (window.departmentSchedulesGlobal || []);
+    ensureDeptFilters();
+    window.applyDepartmentScheduleFiltersV684();
+  };
+  window.applyDepartmentScheduleFiltersV684 = function(){
+    ensureDeptFilters();
+    const q = ($('deptScheduleSearch')?.value || '').toLowerCase().trim();
+    const status = $('deptScheduleStatusFilter')?.value || '';
+    const period = $('deptSchedulePeriodFilter')?.value || '';
+    const sort = $('deptScheduleSort')?.value || 'newest';
+    const list = sortList((window.departmentSchedulesGlobal || []).filter(item => passSchedule(item,q,status,period)), sort);
+    const tbody = $('departmentScheduleTable');
+    const mobile = $('departmentScheduleMobileCards');
+    if (!tbody) return;
+    tbody.innerHTML = ''; if (mobile) mobile.innerHTML = '';
+    if (!list.length) { tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">ไม่พบตารางงานของกลุ่มงานตามเงื่อนไข</td></tr>'; return; }
+    const u = getUser();
+    list.forEach(item => {
+      const canEdit = phoneKey(item.ownerPhone) === phoneKey(u.phone);
+      const editBtn = canEdit ? `<button type="button" class="btn btn-outline-warning btn-sm me-1 text-dark" onclick="editSchedule('${esc(item.id)}')" title="แก้ไข"><i class="bi bi-pencil"></i></button>` : '';
+      const delBtn = canEdit ? `<button type="button" class="btn btn-outline-danger btn-sm" onclick="handleDelete('${esc(item.id)}')" title="ลบ"><i class="bi bi-trash"></i></button>` : '';
+      const fileIcon = item.fileUrl ? '<i class="bi bi-paperclip text-primary ms-1" title="มีไฟล์แนบ"></i>' : '';
+      tbody.insertAdjacentHTML('beforeend', `<tr><td class="ps-4 fw-medium text-primary">${esc(item.eventName || '-')} ${fileIcon}<div class="small text-muted text-truncate" style="max-width:320px;">${esc(item.location || '-')}</div></td><td class="small text-muted">${esc(item.startTime || '-')}</td><td class="small text-muted">${esc(item.ownerName || '-')}</td><td><span class="badge ${badgeClass(item.workStatus)}">${esc(item.workStatus || '-')}</span></td><td class="pe-4 text-end action-menu"><button type="button" class="btn btn-outline-info btn-sm text-dark me-1" onclick="viewScheduleDetail('${esc(item.id)}')" title="รายละเอียด"><i class="bi bi-eye"></i></button>${editBtn}${delBtn}</td></tr>`);
+    });
+    ensureScheduleButtonsDoNotSubmit();
+  };
+  window.resetDepartmentScheduleFiltersV684 = function(){ ['deptScheduleSearch','deptScheduleStatusFilter','deptSchedulePeriodFilter'].forEach(id => { const el=$(id); if(el) el.value=''; }); if($('deptScheduleSort')) $('deptScheduleSort').value='newest'; window.applyDepartmentScheduleFiltersV684(); };
+
+  const oldLoadWorkspaces = window.loadSharedWorkspaces;
+  window.loadSharedWorkspaces = function(){
+    ensureWorkspaceFilters();
+    const r = oldLoadWorkspaces ? oldLoadWorkspaces.apply(this, arguments) : undefined;
+    setTimeout(window.applyWorkspaceFiltersV684, 400);
+    setTimeout(window.applyWorkspaceFiltersV684, 1000);
+    return r;
+  };
+  window.applyWorkspaceFiltersV684 = function(){
+    ensureWorkspaceFilters();
+    const q = ($('workspaceSearchV684')?.value || '').toLowerCase().trim();
+    const scope = $('workspaceScopeFilterV684')?.value || '';
+    const type = $('workspaceTypeFilterV684')?.value || '';
+    qa('#workspaceTableBody tr').forEach(row => {
+      const text = row.innerText.toLowerCase();
+      const scopeOk = !scope || text.includes(scope === 'department' ? 'กลุ่มงาน' : 'ส่วนตัว');
+      const typeOk = !type || text.includes(({table:'ตาราง',checklist:'checklist',form:'แบบฟอร์ม',google_sheet:'google sheet',google_form:'google form'}[type] || type).toLowerCase());
+      const qOk = !q || text.includes(q);
+      row.style.display = scopeOk && typeOk && qOk ? '' : 'none';
+    });
+  };
+  window.resetWorkspaceFiltersV684 = function(){ ['workspaceSearchV684','workspaceScopeFilterV684','workspaceTypeFilterV684'].forEach(id => { const el=$(id); if(el) el.value=''; }); window.applyWorkspaceFiltersV684(); };
+
+  // Final authoritative renderer for team reports: exact 5 cells, one time display only.
+  window.renderHeadReports = function(){
+    const tbody = $('headReportTable'); if (!tbody) return;
+    const reports = window.teamReportsGlobal || [];
+    const head = $('headReportListView')?.querySelector('thead tr');
+    if (head) head.innerHTML = '<th>วันที่</th><th>ชื่อ</th><th>สถานะ/เวลา</th><th>รายละเอียด</th><th>ไฟล์</th>';
+    if ((window.headReportViewMode || 'list') === 'calendar') {
+      $('headReportListView')?.classList.add('d-none'); $('headReportCalendarView')?.classList.remove('d-none');
+      return typeof window.renderReportCalendar_ === 'function' ? window.renderReportCalendar_('headReportCalendarView', reports, 'team') : undefined;
+    }
+    $('headReportListView')?.classList.remove('d-none'); $('headReportCalendarView')?.classList.add('d-none');
+    tbody.innerHTML = '';
+    if (!reports.length) { tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">ยังไม่มีข้อมูลรายงานทีม</td></tr>'; return; }
+    const ps = typeof window.getReportPageSize_ === 'function' ? window.getReportPageSize_('headReportPageSize') : 20;
+    const display = ps === 'all' ? reports : reports.slice(0, Number(ps || 20));
+    display.forEach(r => {
+      const p = dateParts(r.date || r.rawDate || r.reportDate);
+      const badge = (r.leaveType || '') === 'ปฏิบัติงานปกติ' ? 'bg-success' : 'bg-warning text-dark';
+      const detail = clean(r.details || r.workDetails || r.detail || '').slice(0, 220) || '-';
+      tbody.insertAdjacentHTML('beforeend', `<tr class="report-card-row"><td><span class="report-date-pill"><span>${esc(p.d)}</span><small>${esc(p.my)}</small></span></td><td><b>${esc(r.name || r.userName || '-')}</b></td><td><span class="status-badge ${badge}">${esc(r.leaveType || '-')}</span><span class="haos-v68-time-under-status">${esc(r.time || '-')}</span></td><td><div class="report-detail-box">${esc(detail)}</div></td><td>${fileLinks(r.fileUrl) || '-'}</td></tr>`);
+    });
+    if (display.length < reports.length) tbody.insertAdjacentHTML('beforeend', `<tr><td colspan="5" class="text-center text-muted small py-2">แสดง ${display.length} จาก ${reports.length} รายการ</td></tr>`);
+  };
+
+  const oldLoadTeamReports = window.loadTeamReports;
+  window.loadTeamReports = function(){
+    if (!oldLoadTeamReports) return;
+    const r = oldLoadTeamReports.apply(this, arguments);
+    setTimeout(() => { try { if (window.teamReportsGlobal && window.teamReportsGlobal.length) window.renderHeadReports(); } catch(e){} }, 450);
+    setTimeout(() => { try { if (window.teamReportsGlobal && window.teamReportsGlobal.length) window.renderHeadReports(); } catch(e){} }, 1200);
+    return r;
+  };
+
+  function initV684(){
+    ensureAssignAndApprovalUI();
+    ensureDeptFilters();
+    ensureWorkspaceFilters();
+    ensureScheduleButtonsDoNotSubmit();
+    if ($('assignUsers') && !window.haosAllUsersV684 && typeof window.loadUsersList === 'function') window.loadUsersList();
+  }
+  document.addEventListener('DOMContentLoaded', () => setTimeout(initV684, 500));
+  document.addEventListener('shown.bs.tab', ev => { if (ev.target && ev.target.id === 'schedule-tab') setTimeout(initV684, 120); });
+  setTimeout(initV684, 900);
+  setTimeout(initV684, 2200);
+
+  console.info('HAOS ' + PATCH + ' loaded');
+})();
+</script>
 </body>
 </html>
