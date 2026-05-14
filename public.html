@@ -510,5 +510,24 @@ body{background:radial-gradient(circle at 12% 10%,rgba(14,165,233,.20),transpare
     }
 
   </script>
+<style id="haos-public-booking-v686-style">
+  .public-booking-v686{max-width:880px;margin:32px auto;border-radius:26px;background:linear-gradient(180deg,#fff,#f8fbff);box-shadow:0 24px 70px rgba(15,23,42,.12);border:1px solid rgba(255,255,255,.75);overflow:hidden}.public-booking-v686 .hero{padding:24px;color:#fff;background:linear-gradient(135deg,#0ea5e9,#2563eb,#10b981)}.public-booking-v686 .body{padding:22px}.public-booking-v686 .section{border:1px solid rgba(148,163,184,.24);border-radius:18px;padding:14px;margin-bottom:12px;background:#fff}.public-booking-v686 .form-control,.public-booking-v686 .form-select{border-radius:14px!important}
+</style>
+<script id="haos-public-booking-v686-script">
+(function(){
+  function qs(k){return new URLSearchParams(location.search).get(k)||''}
+  function el(id){return document.getElementById(id)}
+  function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  function gas(fn,args){return new Promise((resolve,reject)=>{try{google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run,args||[])}catch(e){reject(e)}})}
+  async function renderPublicBooking(){
+    if(!(qs('booking')==='1'||qs('module')==='booking'||location.hash==='#booking')) return;
+    document.body.innerHTML='<div class="container"><div class="public-booking-v686"><div class="hero"><h3 class="fw-bold mb-1"><i class="bi bi-camera-video"></i> จองห้องประชุม / Zoom</h3><div class="opacity-75">กรอกคำขอได้โดยไม่ต้องล็อกอิน เมื่อส่งแล้วสามารถสมัครสมาชิกต่อได้</div></div><div class="body"><div class="section"><label class="small fw-bold">เรื่อง</label><input id="pbTopic" class="form-control mb-2" placeholder="หัวข้อการประชุม/อบรม"><div class="row g-2"><div class="col-md-4"><label class="small fw-bold">ชื่อผู้ขอ</label><input id="pbName" class="form-control"></div><div class="col-md-4"><label class="small fw-bold">ตำแหน่ง</label><input id="pbPosition" class="form-control"></div><div class="col-md-4"><label class="small fw-bold">กลุ่มงาน</label><input id="pbDept" class="form-control"></div></div></div><div class="section"><div class="row g-2"><div class="col-md-6"><label class="small fw-bold">เริ่ม</label><input id="pbStart" type="datetime-local" class="form-control"></div><div class="col-md-6"><label class="small fw-bold">สิ้นสุด</label><input id="pbEnd" type="datetime-local" class="form-control"></div></div><label class="small fw-bold mt-2">สถานที่/หมายเหตุ</label><input id="pbLocation" class="form-control" placeholder="ห้องประชุม / ขอ Zoom / หมายเหตุอื่น ๆ"></div><div class="section"><label class="small fw-bold">เบอร์โทรผู้ขอ (ไม่บังคับ)</label><input id="pbPhone" class="form-control" placeholder="ใช้สำหรับผูกบัญชีเมื่อต้องการสมัครสมาชิกภายหลัง"></div><button id="pbSave" class="btn btn-primary btn-lg w-100 fw-bold"><i class="bi bi-send"></i> ส่งคำขอจอง</button></div></div></div>';
+    el('pbSave').onclick=async function(){const payload={topic:el('pbTopic').value.trim(),ownerName:el('pbName').value.trim(),position:el('pbPosition').value.trim(),department:el('pbDept').value.trim(),startTime:el('pbStart').value,endTime:el('pbEnd').value,otherLocation:el('pbLocation').value.trim(),ownerPhone:el('pbPhone').value.trim(),bookingType:'Host',status:'รอเจ้าหน้าที่'}; if(!payload.topic||!payload.ownerName||!payload.position||!payload.department||!payload.startTime||!payload.endTime){return Swal.fire('กรอกข้อมูลไม่ครบ','กรุณากรอกเรื่อง ชื่อผู้ขอ ตำแหน่ง กลุ่มงาน และช่วงเวลา','warning')} Swal.fire({title:'กำลังส่งคำขอ...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()}); try{const res=await gas('savePublicITBookingV686',[payload]); if(!res||!res.success)throw new Error(res?.message||'บันทึกไม่สำเร็จ'); Swal.fire({icon:'success',title:'ส่งคำขอแล้ว',html:'บันทึกคำขอจองเรียบร้อย<br><br><b>ต้องการนำข้อมูลนี้ไปสมัครสมาชิกเพื่อใช้เข้าสู่ระบบในอนาคตหรือไม่?</b><br><small class="text-muted">สมัครสมาชิกแล้วจะติดตามงานและรับแจ้งเตือนได้สะดวกขึ้น</small>',showCancelButton:true,confirmButtonText:'ไปสมัครสมาชิก',cancelButtonText:'ไว้ก่อน'}).then(r=>{if(r.isConfirmed) location.href='/?register=1&phone='+encodeURIComponent(payload.ownerPhone||'')});}catch(e){Swal.fire('ผิดพลาด',e.message||String(e),'error')}};
+  }
+  document.addEventListener('DOMContentLoaded',renderPublicBooking);
+})();
+</script>
+
+
 </body>
 </html>
