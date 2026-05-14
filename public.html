@@ -582,5 +582,111 @@ body{background:radial-gradient(circle at 12% 10%,rgba(14,165,233,.20),transpare
 })();
 </script>
 
+<style id="haos-public-booking-v689-style">
+  .public-booking-v689{max-width:1040px;margin:28px auto;border-radius:30px;background:linear-gradient(180deg,#ffffff,#f8fbff);box-shadow:0 30px 90px rgba(15,23,42,.16);border:1px solid rgba(255,255,255,.82);overflow:hidden}
+  .public-booking-v689 .hero{padding:28px;color:#fff;background:linear-gradient(135deg,#0f766e,#0284c7,#2563eb)}
+  .public-booking-v689 .hero-title{display:flex;align-items:center;gap:12px}
+  .public-booking-v689 .hero-logo{width:46px;height:46px;border-radius:50%;background:#fff;object-fit:contain;box-shadow:0 6px 18px rgba(15,23,42,.2)}
+  .public-booking-v689 .body{padding:24px;background:#f8fafc}
+  .public-booking-v689 .cardlet{border:1px solid rgba(148,163,184,.24);border-radius:20px;padding:17px;margin-bottom:14px;background:#fff}
+  .public-booking-v689 .card-title{display:flex;gap:9px;align-items:center;font-weight:900;color:#075985;margin-bottom:12px}
+  .public-booking-v689 .form-control,.public-booking-v689 .form-select{border-radius:15px!important;min-height:48px}
+  .public-booking-v689 .required::after{content:' *';color:#ef4444}
+  .public-booking-v689 .choice{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:8px}
+  .public-booking-v689 .choice label{border:1px solid #cbd5e1;border-radius:17px;padding:13px;cursor:pointer;background:#f8fafc;height:100%}
+  .public-booking-v689 .choice input{margin-right:7px}
+  .public-booking-v689 .hint{border:1px solid #bfdbfe;background:#eff6ff;border-radius:16px;padding:12px;color:#075985}
+  .public-booking-v689 .btn-primary{border:0;background:linear-gradient(135deg,#0ea5e9,#2563eb)!important;border-radius:18px!important}
+  .public-booking-v689 canvas{width:100%;height:150px;border:1px dashed #64748b;border-radius:14px;background:#fff;touch-action:none}
+  @media (max-width:700px){.public-booking-v689{margin:12px}.public-booking-v689 .choice{grid-template-columns:1fr}.public-booking-v689 .body{padding:16px}}
+</style>
+<script id="haos-public-booking-v689-script">
+(function(){
+  'use strict';
+  const PATCH='v68.9-public-booking-form-parity';
+  const qs=k=>new URLSearchParams(location.search).get(k);
+  const el=id=>document.getElementById(id);
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const isBookingMode=()=>{const s=(location.search+' '+location.hash+' '+location.pathname).toLowerCase();return qs('booking')==='1'||qs('booking')==='true'||qs('module')==='booking'||qs('module')==='itbooking'||qs('mode')==='booking'||qs('type')==='booking'||location.hash==='#booking'||(/\/public\/?$/.test(location.pathname.toLowerCase())&&qs('publicId')===null&&qs('workspaceId')===null&&qs('surveyId')===null&&s.includes('booking'));};
+  function gas(fn,args){return new Promise((resolve,reject)=>{try{google.script.run.withSuccessHandler(resolve).withFailureHandler(e=>reject(new Error(e&&e.message?e.message:String(e))))[fn].apply(google.script.run,args||[]);}catch(e){reject(e);}});}
+  async function callSave(payload){
+    const fns=['savePublicITBookingV688','savePublicITBookingV687','savePublicITBookingV686','saveITBooking'];
+    let last=null;
+    for(const fn of fns){
+      try{const res=await gas(fn,[payload]); if(res&&res.success!==false)return res; last=new Error(res&&res.message?res.message:'บันทึกไม่สำเร็จ');}
+      catch(e){last=e;}
+    }
+    throw last||new Error('บันทึกไม่สำเร็จ');
+  }
+  function resourceOption(r){
+    const id=r.id||r.resourceId||r.key||r.name||r.roomName||'';
+    const name=r.name||r.resourceName||r.roomName||r.title||id;
+    const desc=r.location||r.description||r.type||'';
+    return '<option value="'+esc(id)+'" data-name="'+esc(name)+'">'+esc(name)+(desc?' - '+esc(desc):'')+'</option>';
+  }
+  async function loadResources(){
+    const sel=el('pbResource'); if(!sel) return;
+    try{
+      const res=await gas('getAvailableResources',[]);
+      const list=res&&res.success?(res.data||res.resources||[]):(Array.isArray(res)?res:[]);
+      sel.innerHTML='<option value="">-- ไม่ระบุ / ให้เจ้าหน้าที่พิจารณา --</option>'+list.map(resourceOption).join('');
+    }catch(e){
+      sel.innerHTML='<option value="">-- ไม่ระบุ / ให้เจ้าหน้าที่พิจารณา --</option>';
+    }
+  }
+  function setupCanvas(id){
+    const c=el(id); if(!c) return;
+    const ctx=c.getContext('2d');
+    ctx.lineWidth=2.4; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#0f172a';
+    let drawing=false;
+    const pos=ev=>{const r=c.getBoundingClientRect(); const p=ev.touches?ev.touches[0]:ev; return {x:(p.clientX-r.left)*(c.width/r.width),y:(p.clientY-r.top)*(c.height/r.height)};};
+    const down=ev=>{drawing=true;c.dataset.hasInk='1';ctx.beginPath();const p=pos(ev);ctx.moveTo(p.x,p.y);ev.preventDefault();};
+    const move=ev=>{if(!drawing)return;const p=pos(ev);ctx.lineTo(p.x,p.y);ctx.stroke();ev.preventDefault();};
+    const up=()=>{drawing=false;ctx.closePath();};
+    ['pointerdown','mousedown','touchstart'].forEach(n=>c.addEventListener(n,down,{passive:false}));
+    ['pointermove','mousemove','touchmove'].forEach(n=>c.addEventListener(n,move,{passive:false}));
+    ['pointerup','pointerleave','mouseup','mouseleave','touchend','touchcancel'].forEach(n=>c.addEventListener(n,up,{passive:false}));
+  }
+  function clearCanvas(){const c=el('pbSignature'); if(!c)return; c.getContext('2d').clearRect(0,0,c.width,c.height); c.dataset.hasInk='';}
+  window.haosPublicClearSignatureV689=clearCanvas;
+  function sigData(){const c=el('pbSignature'); return c&&c.dataset.hasInk?c.toDataURL('image/png'):'';}
+  window.haosPublicToggleBookingTypeV689=function(){
+    const type=document.querySelector('input[name="pbBookingType"]:checked')?.value||'Host';
+    const isJoin=type==='Join';
+    el('pbJoinBox')?.classList.toggle('d-none',!isJoin);
+    el('pbHostHint')?.classList.toggle('d-none',isJoin);
+    const later=el('pbJoinStatus')?.value==='later';
+    el('pbJoinCredBox')?.classList.toggle('d-none',later);
+    el('pbJoinLaterHint')?.classList.toggle('d-none',!later);
+  };
+  function render(){
+    if(!isBookingMode()) return;
+    document.body.innerHTML='<div class="container"><div class="public-booking-v689"><div class="hero"><div class="hero-title"><img src="/logo-moph.png" class="hero-logo" alt="logo"><div><h3 class="fw-bold mb-1"><i class="bi bi-camera-video"></i> จองห้องประชุม / Zoom</h3><div class="opacity-75">Public booking • ส่งคำขอได้โดยไม่ต้องล็อกอิน</div></div></div></div><div class="body"><div class="hint mb-3"><i class="bi bi-info-circle"></i> ฟอร์มนี้จัดข้อมูลให้ใกล้กับแบบฟอร์มจองปกติ เพื่อให้เจ้าหน้าที่ตรวจสอบและดำเนินการต่อได้ครบถ้วน</div><div class="cardlet"><div class="card-title"><i class="bi bi-person-vcard"></i> ข้อมูลผู้ขอ</div><div class="row g-2"><div class="col-md-4"><label class="small fw-bold required">ชื่อผู้ขอ</label><input id="pbName" class="form-control" autocomplete="name"></div><div class="col-md-4"><label class="small fw-bold required">ตำแหน่ง</label><input id="pbPosition" class="form-control"></div><div class="col-md-4"><label class="small fw-bold required">กลุ่มงาน</label><input id="pbDept" class="form-control"></div></div><div class="row g-2 mt-1"><div class="col-md-6"><label class="small fw-bold">เบอร์โทร</label><input id="pbPhone" class="form-control" inputmode="tel"></div><div class="col-md-6"><label class="small fw-bold">อีเมล</label><input id="pbEmail" class="form-control" type="email"></div></div></div><div class="cardlet"><div class="card-title"><i class="bi bi-pencil-square"></i> ข้อมูลคำขอ</div><label class="small fw-bold required">เรื่อง</label><input id="pbTopic" class="form-control mb-2" placeholder="เช่น ประชุมคณะทำงาน / อบรมออนไลน์"><div class="choice"><label><input type="radio" name="pbBookingType" value="Host" checked onchange="haosPublicToggleBookingTypeV689()"><b>ผู้จัด / Host</b><br><small class="text-muted">ให้เจ้าหน้าที่สร้าง Meeting ID/Link หรือเตรียมห้อง</small></label><label><input type="radio" name="pbBookingType" value="Join" onchange="haosPublicToggleBookingTypeV689()"><b>เข้าร่วมประชุม</b><br><small class="text-muted">มี Meeting ID/Link แล้ว หรือให้ช่วยประสาน</small></label></div></div><div id="pbHostHint" class="cardlet"><div class="card-title"><i class="bi bi-info-circle"></i> โหมด Host</div><div class="small text-muted">ระบบจะส่งคำขอให้เจ้าหน้าที่จัดเตรียมห้องประชุม Zoom Link หรือรหัสผ่านให้ภายหลัง</div></div><div id="pbJoinBox" class="cardlet d-none"><div class="card-title"><i class="bi bi-link-45deg"></i> ข้อมูลเข้าร่วมประชุม</div><select id="pbJoinStatus" class="form-select mb-2" onchange="haosPublicToggleBookingTypeV689()"><option value="has">มี Meeting ID / Passcode / Link แล้ว</option><option value="later">ยังไม่มี ให้เจ้าหน้าที่ประสานภายหลัง</option></select><div id="pbJoinCredBox" class="row g-2"><div class="col-md-4"><label class="small fw-bold">Meeting ID</label><input id="pbMeetingId" class="form-control"></div><div class="col-md-4"><label class="small fw-bold">Passcode</label><input id="pbPasscode" class="form-control"></div><div class="col-md-4"><label class="small fw-bold">Link</label><input id="pbMeetingLink" class="form-control"></div></div><div id="pbJoinLaterHint" class="alert alert-warning small py-2 mb-0 mt-2 d-none">ให้เจ้าหน้าที่ IT ประสานภายหลัง</div></div><div class="cardlet"><div class="card-title"><i class="bi bi-geo-alt"></i> สถานที่และเวลา</div><label class="small fw-bold">ห้องประชุม / ทรัพยากร</label><select id="pbResource" class="form-select mb-2"><option value="">กำลังโหลดทรัพยากร...</option></select><label class="small fw-bold">สถานที่อื่น / หมายเหตุ</label><input id="pbOtherLocation" class="form-control mb-2" placeholder="เช่น เปิดที่เครื่อง / ขอ Zoom ก่อนประชุม 30 นาที"><div class="row g-2"><div class="col-md-6"><label class="small fw-bold required">เริ่ม</label><input id="pbStart" type="datetime-local" class="form-control"></div><div class="col-md-6"><label class="small fw-bold required">สิ้นสุด</label><input id="pbEnd" type="datetime-local" class="form-control"></div></div></div><div class="cardlet"><div class="card-title"><i class="bi bi-vector-pen"></i> ลายเซ็นผู้ขอใช้บริการ</div><div class="d-flex gap-2 flex-wrap mb-2"><button type="button" class="btn btn-sm btn-outline-secondary" onclick="haosPublicClearSignatureV689()"><i class="bi bi-eraser"></i> ล้างลายเซ็น</button></div><canvas id="pbSignature" width="720" height="150"></canvas><div class="small text-muted mt-2">สามารถเซ็นสดในช่องนี้ หรือเว้นว่างไว้ให้เจ้าหน้าที่ติดต่อกลับได้</div></div><button id="pbSave" type="button" class="btn btn-primary btn-lg w-100 fw-bold"><i class="bi bi-send"></i> ส่งคำขอจอง</button><div class="text-center small text-muted mt-3">หลังส่งคำขอ ระบบจะแนะนำการสมัครสมาชิกเพื่อใช้ติดตามสถานะในครั้งถัดไป</div></div></div></div>';
+    loadResources();
+    setupCanvas('pbSignature');
+    window.haosPublicToggleBookingTypeV689();
+    el('pbSave').onclick=async()=>{
+      const type=document.querySelector('input[name="pbBookingType"]:checked')?.value||'Host';
+      const joinStatus=type==='Join'?(el('pbJoinStatus')?.value||'has'):'';
+      const resSel=el('pbResource');
+      const opt=resSel&&resSel.options[resSel.selectedIndex];
+      const payload={topic:el('pbTopic').value.trim(),eventName:el('pbTopic').value.trim(),bookingType:type,joinOption:joinStatus,meetingId:(type==='Join'&&joinStatus==='has')?el('pbMeetingId').value.trim():'',passcode:(type==='Join'&&joinStatus==='has')?el('pbPasscode').value.trim():'',meetingLink:(type==='Join'&&joinStatus==='has')?el('pbMeetingLink').value.trim():'',resourceId:resSel?.value||'',roomName:opt?.dataset?.name||opt?.textContent||'',otherLocation:el('pbOtherLocation').value.trim(),location:el('pbOtherLocation').value.trim(),startTime:el('pbStart').value,endTime:el('pbEnd').value,signatureData:sigData(),ownerName:el('pbName').value.trim(),requesterName:el('pbName').value.trim(),position:el('pbPosition').value.trim(),ownerPosition:el('pbPosition').value.trim(),department:el('pbDept').value.trim(),ownerPhone:el('pbPhone').value.trim(),ownerEmail:el('pbEmail').value.trim(),status:'รอเจ้าหน้าที่',publicGuest:true};
+      if(!payload.topic||!payload.ownerName||!payload.position||!payload.department||!payload.startTime||!payload.endTime) return Swal.fire('กรอกข้อมูลไม่ครบ','กรุณากรอกเรื่อง ชื่อผู้ขอ ตำแหน่ง กลุ่มงาน และช่วงเวลา','warning');
+      if(payload.bookingType==='Join'&&payload.joinOption==='has'&&!payload.meetingId&&!payload.passcode&&!payload.meetingLink) return Swal.fire('ข้อมูลเข้าร่วมประชุมยังไม่ครบ','กรอก Meeting ID / Passcode / Link อย่างน้อย 1 รายการ หรือเลือกให้เจ้าหน้าที่ประสานภายหลัง','warning');
+      Swal.fire({title:'กำลังส่งคำขอ...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+      try{
+        await callSave(payload);
+        Swal.fire({icon:'success',title:'ส่งคำขอแล้ว',html:'บันทึกคำขอจองเรียบร้อย<br><br><b>ต้องการนำข้อมูลนี้ไปสมัครสมาชิกเพื่อใช้ติดตามงานในอนาคตหรือไม่?</b><br><small class="text-muted">สมัครสมาชิกแล้วจะติดตามงาน รับแจ้งเตือน และใช้ระบบครั้งต่อไปได้สะดวกขึ้น</small>',showCancelButton:true,confirmButtonText:'ไปสมัครสมาชิก',cancelButtonText:'ไว้ก่อน'}).then(r=>{if(r.isConfirmed)location.href='/?register=1&name='+encodeURIComponent(payload.ownerName)+'&phone='+encodeURIComponent(payload.ownerPhone||'')+'&department='+encodeURIComponent(payload.department);});
+      }catch(e){Swal.fire('ผิดพลาด',e.message||String(e),'error');}
+    };
+  }
+  if(isBookingMode()){
+    window.onload=render;
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',render,{once:true}); else render();
+  }
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
+
 </body>
 </html>
