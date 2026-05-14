@@ -8879,7 +8879,8 @@ HAOS v68.6 FINISHING FIX
   function isActiveTab(id){const el=$(id);return !!(el&&el.classList.contains('active'));}
   function repairTabs(){
     const pane=$('schedule-pane');
-    const scheduleActive=isActiveTab('schedule-tab') || !!(pane&&pane.classList.contains('active')) || location.hash==='#schedule';
+    const scheduleTabActive=isActiveTab('schedule-tab');
+    const scheduleActive=scheduleTabActive || !!(pane&&pane.classList.contains('active')&&!isActiveTab('report-tab')&&!isActiveTab('itservices-tab')) || location.hash==='#schedule';
     const reportActive=!scheduleActive && (isActiveTab('report-tab') || isActiveTab('reports-tab'));
     document.body.classList.toggle('haos-schedule-active',scheduleActive);
     document.body.classList.toggle('haos-report-active',reportActive);
@@ -8887,7 +8888,16 @@ HAOS v68.6 FINISHING FIX
     pane.style.removeProperty('display');
     pane.style.removeProperty('visibility');
     pane.style.removeProperty('opacity');
-    if(scheduleActive) pane.classList.add('active','show');
+    if(scheduleActive){
+      pane.classList.add('active','show');
+    }else{
+      pane.classList.remove('active','show','haos-v687-open','haos-v689-schedule-stable');
+      qa('#schedule-pane .card,#schedule-pane .table-responsive,#scheduleListDiv').forEach(el=>{
+        el.style.removeProperty('display');
+        el.style.removeProperty('visibility');
+        el.style.removeProperty('opacity');
+      });
+    }
   }
   document.addEventListener('shown.bs.tab',ev=>setTimeout(repairTabs,30),true);
   document.addEventListener('click',ev=>{ if(ev.target.closest('#report-tab,#reports-tab,#schedule-tab,#mainTab .nav-link')) setTimeout(repairTabs,80); },true);
