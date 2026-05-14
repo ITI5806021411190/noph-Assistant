@@ -529,5 +529,31 @@ body{background:radial-gradient(circle at 12% 10%,rgba(14,165,233,.20),transpare
 </script>
 
 
+
+<style id="haos-public-booking-v687-style">
+  .public-booking-v687{max-width:920px;margin:28px auto;border-radius:28px;background:linear-gradient(180deg,#fff,#f8fbff);box-shadow:0 28px 80px rgba(15,23,42,.14);border:1px solid rgba(255,255,255,.78);overflow:hidden}.public-booking-v687 .hero{padding:28px;color:#fff;background:radial-gradient(circle at top right,rgba(255,255,255,.24),transparent 35%),linear-gradient(135deg,#0284c7,#2563eb,#10b981)}.public-booking-v687 .body{padding:24px}.public-booking-v687 .section{border:1px solid rgba(148,163,184,.24);border-radius:20px;padding:16px;margin-bottom:14px;background:linear-gradient(180deg,#fff,#f8fafc)}.public-booking-v687 .section-title{display:flex;gap:8px;align-items:center;font-weight:900;color:#075985;margin-bottom:10px}.public-booking-v687 .form-control,.public-booking-v687 .form-select{border-radius:14px!important;min-height:46px}.public-booking-v687 .required::after{content:' *';color:#ef4444}.public-booking-v687 .btn-primary{border:0;background:linear-gradient(135deg,#0ea5e9,#2563eb)!important;border-radius:16px!important}
+</style>
+<script id="haos-public-booking-v687-script">
+(function(){
+  'use strict';
+  function qs(k){return new URLSearchParams(location.search).get(k)||''}
+  function isBookingMode(){const s=(location.search+' '+location.hash+' '+location.pathname).toLowerCase(); return qs('booking')==='1'||qs('booking')==='true'||qs('module')==='booking'||qs('mode')==='booking'||qs('type')==='booking'||location.hash==='#booking'||/booking|itbooking|zoom/.test(s);}
+  function el(id){return document.getElementById(id)}
+  function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  function gas(fn,args){return new Promise((resolve,reject)=>{try{google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run,args||[])}catch(e){reject(e)}})}
+  async function callSave(payload){
+    const fns=['savePublicITBookingV687','savePublicITBookingV686','saveITBooking']; let lastErr=null;
+    for(const fn of fns){try{const res=await gas(fn,[payload]); if(res&&res.success)return res; lastErr=new Error(res&&res.message?res.message:(fn+' failed'));}catch(e){lastErr=e;}}
+    throw lastErr||new Error('บันทึกไม่สำเร็จ');
+  }
+  function renderPublicBookingV687(){
+    if(!isBookingMode()) return;
+    document.body.innerHTML=`<div class="container"><div class="public-booking-v687"><div class="hero"><h3 class="fw-bold mb-1"><i class="bi bi-camera-video"></i> จองห้องประชุม / Zoom</h3><div class="opacity-75">ส่งคำขอได้โดยไม่ต้องล็อกอิน กรอกครบ จบงาน ส่งต่อเจ้าหน้าที่ได้ทันที</div></div><div class="body"><div class="section"><div class="section-title"><i class="bi bi-person-vcard"></i> ข้อมูลผู้ขอ</div><div class="row g-2"><div class="col-md-4"><label class="small fw-bold required">ชื่อผู้ขอ</label><input id="pbName" class="form-control" autocomplete="name"></div><div class="col-md-4"><label class="small fw-bold required">ตำแหน่ง</label><input id="pbPosition" class="form-control"></div><div class="col-md-4"><label class="small fw-bold required">กลุ่มงาน</label><input id="pbDept" class="form-control"></div></div><div class="row g-2 mt-1"><div class="col-md-6"><label class="small fw-bold">เบอร์โทร</label><input id="pbPhone" class="form-control" inputmode="tel"></div><div class="col-md-6"><label class="small fw-bold">อีเมล</label><input id="pbEmail" class="form-control" type="email"></div></div></div><div class="section"><div class="section-title"><i class="bi bi-pencil-square"></i> รายละเอียดคำขอ</div><label class="small fw-bold required">เรื่อง</label><input id="pbTopic" class="form-control mb-2" placeholder="หัวข้อการประชุม/อบรม"><div class="row g-2"><div class="col-md-6"><label class="small fw-bold required">เริ่ม</label><input id="pbStart" type="datetime-local" class="form-control"></div><div class="col-md-6"><label class="small fw-bold required">สิ้นสุด</label><input id="pbEnd" type="datetime-local" class="form-control"></div></div><label class="small fw-bold mt-2">สถานที่ / หมายเหตุ</label><input id="pbLocation" class="form-control" placeholder="เช่น ห้องประชุม / ขอ Zoom / เปิดเครื่องก่อนประชุม 30 นาที"></div><button id="pbSave" type="button" class="btn btn-primary btn-lg w-100 fw-bold"><i class="bi bi-send"></i> ส่งคำขอจอง</button><div class="text-center small text-muted mt-3">หลังส่งคำขอแล้ว ระบบจะแนะนำการสมัครสมาชิกเพื่อใช้งานครั้งถัดไป</div></div></div></div>`;
+    el('pbSave').onclick=async function(){const payload={topic:el('pbTopic').value.trim(),ownerName:el('pbName').value.trim(),position:el('pbPosition').value.trim(),ownerPosition:el('pbPosition').value.trim(),department:el('pbDept').value.trim(),startTime:el('pbStart').value,endTime:el('pbEnd').value,otherLocation:el('pbLocation').value.trim(),location:el('pbLocation').value.trim(),ownerPhone:el('pbPhone').value.trim(),ownerEmail:el('pbEmail').value.trim(),bookingType:'Host',status:'รอเจ้าหน้าที่',publicGuest:true}; if(!payload.topic||!payload.ownerName||!payload.position||!payload.department||!payload.startTime||!payload.endTime){return Swal.fire('กรอกข้อมูลไม่ครบ','กรุณากรอกเรื่อง ชื่อผู้ขอ ตำแหน่ง กลุ่มงาน และช่วงเวลา','warning')} Swal.fire({title:'กำลังส่งคำขอ...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()}); try{const res=await callSave(payload); Swal.fire({icon:'success',title:'ส่งคำขอแล้ว',html:'บันทึกคำขอจองเรียบร้อย<br><br><b>ต้องการนำข้อมูลนี้ไปสมัครสมาชิกเพื่อใช้เข้าสู่ระบบในอนาคตหรือไม่?</b><br><small class="text-muted">สมัครสมาชิกแล้วจะติดตามงาน รับแจ้งเตือน และใช้ระบบครั้งต่อไปได้สะดวกขึ้น</small>',showCancelButton:true,confirmButtonText:'ไปสมัครสมาชิก',cancelButtonText:'ไว้ก่อน'}).then(r=>{if(r.isConfirmed) location.href='/?register=1&name='+encodeURIComponent(payload.ownerName)+'&phone='+encodeURIComponent(payload.ownerPhone||'')+'&department='+encodeURIComponent(payload.department)});}catch(e){Swal.fire('ผิดพลาด',e.message||String(e),'error')}};
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',renderPublicBookingV687); else renderPublicBookingV687();
+})();
+</script>
+
 </body>
 </html>
