@@ -8977,11 +8977,18 @@ HAOS v68.6 FINISHING FIX
 </style>
 <script id="haos-v68-9-schedule-tab-stability-fix">
 (function(){
-  const PATCH='v68.9-schedule-tab-stability-fix-2';
+  const PATCH='v68.9-schedule-tab-stability-fix-3';
   const $=id=>document.getElementById(id);
   const qa=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
   let scheduleMode=false;
   let loadTimer=null;
+  let scheduleGuardUntil=0;
+
+  function armScheduleGuard(ms){
+    scheduleMode=true;
+    const duration=(typeof ms==='number'&&ms>0)?ms:18000;
+    scheduleGuardUntil=Math.max(scheduleGuardUntil,Date.now()+duration);
+  }
 
   function activateTabButton(activeId){
     qa('#mainTab .nav-link').forEach(btn=>{
@@ -9020,10 +9027,11 @@ HAOS v68.6 FINISHING FIX
     },120);
   }
 
-  function keepScheduleVisible(forceLoad){
+  function keepScheduleVisible(forceLoad,guardMs){
     const pane=$('schedule-pane');
     if(!pane) return;
-    scheduleMode=true;
+    if(guardMs===0) scheduleMode=true;
+    else armScheduleGuard(guardMs);
     document.body.classList.add('haos-schedule-active');
     document.body.classList.remove('haos-report-active');
     activateTabButton('schedule-tab');
@@ -9052,23 +9060,46 @@ HAOS v68.6 FINISHING FIX
 
   function leaveScheduleMode(){
     scheduleMode=false;
+    scheduleGuardUntil=0;
     document.body.classList.remove('haos-schedule-active');
     const pane=$('schedule-pane');
     if(pane) pane.classList.remove('haos-v689-schedule-stable');
   }
 
+  function wrapScheduleLoader(name){
+    const old=window[name];
+    if(typeof old!=='function' || old.__haosV689Guarded) return;
+    window[name]=function(){
+      armScheduleGuard(22000);
+      const ret=old.apply(this,arguments);
+      setTimeout(()=>{ if(scheduleMode) keepScheduleVisible(false,0); },900);
+      setTimeout(()=>{ if(scheduleMode) keepScheduleVisible(false,0); },3200);
+      setTimeout(()=>{ if(scheduleMode) keepScheduleVisible(false,0); },7200);
+      return ret;
+    };
+    window[name].__haosV689Guarded=true;
+  }
+
   const tab=$('schedule-tab');
   if(tab){
     tab.addEventListener('click',()=>{
-      setTimeout(()=>keepScheduleVisible(true),0);
-      setTimeout(()=>keepScheduleVisible(true),80);
-      setTimeout(()=>keepScheduleVisible(false),350);
-      setTimeout(()=>keepScheduleVisible(false),900);
+      armScheduleGuard(22000);
+      setTimeout(()=>keepScheduleVisible(true,22000),0);
+      setTimeout(()=>keepScheduleVisible(true,22000),80);
+      setTimeout(()=>keepScheduleVisible(false,0),350);
+      setTimeout(()=>keepScheduleVisible(false,0),900);
+      setTimeout(()=>keepScheduleVisible(false,0),5200);
+      setTimeout(()=>keepScheduleVisible(false,0),9000);
     },true);
   }
 
   document.addEventListener('shown.bs.tab',ev=>{
-    if(ev.target && ev.target.id==='schedule-tab') setTimeout(()=>keepScheduleVisible(true),30);
+    if(ev.target && ev.target.id==='schedule-tab'){
+      armScheduleGuard(22000);
+      setTimeout(()=>keepScheduleVisible(true,22000),30);
+      setTimeout(()=>keepScheduleVisible(false,0),5200);
+      setTimeout(()=>keepScheduleVisible(false,0),9000);
+    }
     else if(ev.target && ev.target.closest && ev.target.closest('#mainTab')) leaveScheduleMode();
   },true);
 
@@ -9077,7 +9108,15 @@ HAOS v68.6 FINISHING FIX
     if(other) leaveScheduleMode();
   },true);
 
-  // No polling here; tab visibility is handled by Bootstrap events plus the one-shot guards above.
+  wrapScheduleLoader('loadMySchedules');
+  wrapScheduleLoader('loadDepartmentSchedules');
+  wrapScheduleLoader('loadSharedWorkspaces');
+
+  setInterval(()=>{
+    if(scheduleMode && Date.now()<scheduleGuardUntil){
+      keepScheduleVisible(false,0);
+    }
+  },350);
 
   console.info('HAOS '+PATCH+' loaded');
 })();
