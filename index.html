@@ -8769,5 +8769,82 @@ HAOS v68.6 FINISHING FIX
 })();
 </script>
 
+
+
+<style id="haos-v68-8-calendar-public-link-style">
+  #headReportCalendarView .fc { background:#fff; border-radius:18px; padding:8px; }
+  #headReportCalendarView .fc-toolbar-title { font-weight:900; color:#0f172a; }
+  #headReportCalendarView .fc-event { border:0!important; border-radius:10px!important; padding:2px 6px!important; background:#0ea5e9!important; }
+  .haos-public-link-box{border:1px solid #bfdbfe;background:linear-gradient(135deg,#eff6ff,#ecfeff);border-radius:16px;padding:12px;text-align:left;word-break:break-all}
+</style>
+<script id="haos-v68-8-calendar-public-link-fix">
+(function(){
+  const PATCH='v68.8-calendar-public-link-fix';
+  const $=id=>document.getElementById(id);
+  const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+  function clean(v){return String(v??'').replace(/<[^>]*>/g,' ').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').trim();}
+  function parseDateAny(v){
+    if(!v) return null;
+    if(v instanceof Date && !isNaN(v)) return v;
+    let s=String(v).trim();
+    if(!s) return null;
+    s=s.replace(/[年月]/g,'-').replace(/[日]/g,'').replace(/\s+.*/,'').replace(/\//g,'-');
+    let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if(m){let y=+m[1]; if(y>2400)y-=543; return new Date(y,+m[2]-1,+m[3]);}
+    m=s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+    if(m){let y=+m[3]; if(y>2400)y-=543; return new Date(y,+m[2]-1,+m[1]);}
+    m=s.match(/^(\d{1,2})\s*([ก-๙.]+)\s*(\d{4})$/);
+    if(m){const months=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']; let idx=months.findIndex(x=>m[2].startsWith(x.replace('.',''))||x.startsWith(m[2].replace('.',''))); let y=+m[3]; if(y>2400)y-=543; if(idx>=0)return new Date(y,idx,+m[1]);}
+    const d=new Date(s); return isNaN(d)?null:d;
+  }
+  function dateKey(r){
+    const d=parseDateAny(r.date || r.rawDate || r.reportDate || r.workDate || r.createdAt || r.timestamp);
+    if(!d) return '';
+    const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  }
+  function oneTime(v){
+    let s=clean(v).replace(/น\.?(?=\s*\d)/g,'น.\n');
+    const ranges=s.match(/\d{1,2}:\d{2}\s*(?:-|–|—|ถึง|to)\s*\d{1,2}:\d{2}/gi);
+    if(ranges&&ranges.length){let r=ranges[0].replace(/\s*(?:-|–|—|ถึง|to)\s*/i,' - ').trim();return /น\.?$/.test(r)?r:r+' น.';}
+    return '';
+  }
+  function getTeamReports(){try{if(Array.isArray(teamReportsGlobal))return teamReportsGlobal;}catch(e){} return Array.isArray(window.teamReportsGlobal)?window.teamReportsGlobal:[];}
+  window.renderReportCalendar_=function(elementId,reports,type){
+    const el=$(elementId); if(!el)return;
+    const list=Array.isArray(reports)&&reports.length?reports:(type==='team'?getTeamReports():(window.myReportsGlobal||[]));
+    el.innerHTML='';
+    const events=list.map(r=>{
+      const start=dateKey(r); if(!start) return null;
+      const status=r.leaveType||r.status||'รายงาน';
+      const name=r.name||r.userName||'';
+      return {title:(type==='team'&&name?name+' - ':'')+status,start,allDay:true,extendedProps:{details:r.details||r.workDetails||r.detail||'',time:oneTime(r.time||r.workTime||r.startTime||''),remarks:r.remarks||r.remark||'',raw:r}};
+    }).filter(Boolean);
+    if(!events.length){el.innerHTML='<div class="empty-state"><i class="bi bi-calendar-x"></i> ยังไม่มีข้อมูลวันที่สำหรับแสดงในปฏิทิน</div>';return;}
+    if(window.headReportCalendarObj&&elementId==='headReportCalendarView'){try{window.headReportCalendarObj.destroy();}catch(e){}}
+    if(window.myReportCalendarObj&&elementId==='myReportCalendarView'){try{window.myReportCalendarObj.destroy();}catch(e){}}
+    const cal=new FullCalendar.Calendar(el,{initialView:'dayGridMonth',height:420,locale:'th',events,headerToolbar:{left:'prev,next today',center:'title',right:'dayGridMonth,listMonth'},eventClick:info=>{const p=info.event.extendedProps||{};Swal.fire({title:esc(info.event.title),html:`<div class="text-start"><b>วันที่:</b> ${esc(info.event.startStr)}<br><b>เวลา:</b> ${esc(p.time||'-')}<br><b>รายละเอียด:</b><br>${esc(clean(p.details)||'-')}<br><span class="text-muted">${esc(clean(p.remarks||''))}</span></div>`,width:650});}});
+    cal.render();
+    if(type==='team') window.headReportCalendarObj=cal; else window.myReportCalendarObj=cal;
+  };
+  const oldSet=window.setHeadReportViewMode;
+  window.setHeadReportViewMode=function(mode){
+    window.haosHeadReportViewMode=(mode==='calendar')?'calendar':'list';
+    try{headReportViewMode=window.haosHeadReportViewMode;}catch(e){}
+    if(typeof window.renderHeadReportsV687==='function') window.renderHeadReportsV687();
+    else if(typeof window.renderHeadReports==='function') window.renderHeadReports();
+    setTimeout(()=>{try{if(window.haosHeadReportViewMode==='calendar'&&window.headReportCalendarObj)window.headReportCalendarObj.updateSize();}catch(e){}},250);
+  };
+  function publicBookingUrl(){return location.origin.replace(/\/+$/,'') + '/public?booking=1';}
+  window.openItBookingDirectLinkInfo=function(){
+    const url=publicBookingUrl();
+    navigator.clipboard&&navigator.clipboard.writeText(url).catch(()=>{});
+    Swal.fire({icon:'success',title:'ลิงก์จองห้อง/Zoom แบบไม่ต้องล็อกอิน',html:`<div class="haos-public-link-box">${esc(url)}</div><div class="small text-muted mt-2">ลิงก์นี้คือ Public booking สำหรับส่งให้บุคคลทั่วไปกรอกคำขอจองได้ทันที ไม่ต้องเข้าระบบก่อน</div>`,showCancelButton:true,confirmButtonText:'เปิดลิงก์',cancelButtonText:'ปิด'}).then(r=>{if(r.isConfirmed) window.open(url,'_blank');});
+  };
+  document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{try{if($('headReportCalendarView')&&!getTeamReports().length&&typeof window.loadTeamReports==='function')window.loadTeamReports();}catch(e){}},900);});
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
+
 </body>
 </html>
