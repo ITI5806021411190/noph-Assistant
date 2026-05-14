@@ -7802,11 +7802,7 @@ UI จอง Zoom, ลายเซ็น/มือถือ และ polish ต
     const keyword=(controls.find(c=>c.type==='text'||c.tagName==='INPUT')?.value||'').toLowerCase().trim();
     const ignoreSelects=new Set(['all','newest','oldest','name','today','week','month']);
     const selects=controls.filter(c=>c.tagName==='SELECT').map(c=>String(c.value||'').toLowerCase()).filter(v=>v && v!=='ทั้งหมด' && !ignoreSelects.has(v));
-    try{ if(typeof window.applyScheduleFilters==='function') window.applyScheduleFilters(); }catch(e){}
-    const rows=(typeof window.applyScheduleFilters==='function')
-      ? qsa('#departmentScheduleTable tr,#workspaceTableBody tr,.workspace-row,.schedule-row,.card .list-group-item',pane)
-      : qsa('tbody tr,.workspace-row,.schedule-row,.card .list-group-item',pane);
-    rows.forEach(row=>{
+    qsa('tbody tr,.workspace-row,.schedule-row,.card .list-group-item',pane).forEach(row=>{
       const t=text(row).toLowerCase();
       const okKeyword=!keyword||t.includes(keyword);
       const okSelects=selects.every(v=>t.includes(v));
@@ -7977,109 +7973,5 @@ UI จอง Zoom, ลายเซ็น/มือถือ และ polish ต
   };
 
   console.info('v53 Daily Report Edit Hotfix loaded');
-})();
-</script>
-
-<style id="haos-v68-schedule-visible-hotfix-style">
-  body.haos-schedule-locked #schedule-pane,
-  body.haos-schedule-locked #schedule-pane .card,
-  body.haos-schedule-locked #schedule-pane .table-responsive,
-  body.haos-schedule-locked #schedule-pane #scheduleListDiv,
-  body.haos-schedule-locked #schedule-pane .schedule-table-personal,
-  body.haos-schedule-locked #schedule-pane .schedule-table-dept,
-  body.haos-schedule-locked #schedule-pane .workspace-table-card {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-  }
-</style>
-<script id="haos-v68-schedule-visible-hotfix">
-(function(){
-  'use strict';
-  const PATCH='v68-schedule-visible-hotfix-1';
-  const $=id=>document.getElementById(id);
-  const qa=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
-  let guardUntil=0;
-
-  function arm(ms){
-    guardUntil=Math.max(guardUntil,Date.now()+(ms||26000));
-    document.body.classList.add('haos-schedule-locked');
-    keepVisible();
-  }
-
-  function isGuarded(){
-    return Date.now()<guardUntil;
-  }
-
-  function keepVisible(){
-    if(!isGuarded()) return;
-    const pane=$('schedule-pane');
-    if(!pane) return;
-    qa('#mainTab .nav-link').forEach(btn=>{
-      const active=btn.id==='schedule-tab';
-      btn.classList.toggle('active',active);
-      btn.setAttribute('aria-selected',active?'true':'false');
-    });
-    qa('#myTabContent > .tab-pane').forEach(tabPane=>{
-      const active=tabPane.id==='schedule-pane';
-      tabPane.classList.toggle('active',active);
-      tabPane.classList.toggle('show',active);
-      if(!active){
-        tabPane.style.removeProperty('display');
-        tabPane.style.removeProperty('visibility');
-        tabPane.style.removeProperty('opacity');
-      }
-    });
-    pane.classList.add('active','show');
-    pane.style.setProperty('display','block','important');
-    pane.style.setProperty('visibility','visible','important');
-    pane.style.setProperty('opacity','1','important');
-    qa('#schedule-pane .card,#schedule-pane .table-responsive,#scheduleListDiv,#myTable,#departmentScheduleTable,#workspaceTableBody').forEach(el=>{
-      el.classList.remove('d-none','haos-v68-hidden-duplicate-filter');
-      el.style.removeProperty('visibility');
-      el.style.removeProperty('opacity');
-      if(el.id!=='calendarDiv') el.style.removeProperty('display');
-    });
-    qa('#myTable tr,#departmentScheduleTable tr,#workspaceTableBody tr').forEach(row=>{
-      if(row.style && row.style.display==='none') row.style.display='';
-    });
-  }
-
-  function wrapLoader(name){
-    const old=window[name];
-    if(typeof old!=='function' || old.__haosScheduleVisibleGuard) return;
-    window[name]=function(){
-      arm(28000);
-      const ret=old.apply(this,arguments);
-      [600,1800,4200,7200,12000].forEach(ms=>setTimeout(keepVisible,ms));
-      return ret;
-    };
-    window[name].__haosScheduleVisibleGuard=true;
-  }
-
-  const scheduleTab=$('schedule-tab');
-  if(scheduleTab){
-    scheduleTab.addEventListener('click',()=>arm(28000),true);
-  }
-  document.addEventListener('shown.bs.tab',ev=>{
-    if(ev.target && ev.target.id==='schedule-tab') arm(28000);
-    else if(ev.target && ev.target.closest && ev.target.closest('#mainTab')){
-      guardUntil=0;
-      document.body.classList.remove('haos-schedule-locked');
-    }
-  },true);
-  document.addEventListener('DOMContentLoaded',()=>{
-    wrapLoader('loadMySchedules');
-    wrapLoader('loadDepartmentSchedules');
-    wrapLoader('loadSharedWorkspaces');
-  });
-  wrapLoader('loadMySchedules');
-  wrapLoader('loadDepartmentSchedules');
-  wrapLoader('loadSharedWorkspaces');
-  setInterval(()=>{
-    if(isGuarded()) keepVisible();
-    else document.body.classList.remove('haos-schedule-locked');
-  },300);
-  console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
