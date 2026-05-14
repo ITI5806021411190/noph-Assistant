@@ -8967,5 +8967,133 @@ HAOS v68.6 FINISHING FIX
 })();
 </script>
 
+<style id="haos-v68-9-schedule-tab-stability-style">
+  body.haos-schedule-active #schedule-pane,
+  body.haos-schedule-active #schedule-pane.haos-v689-schedule-stable {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  body.haos-schedule-active #scheduleListDiv,
+  body.haos-schedule-active #schedule-pane .schedule-table-personal,
+  body.haos-schedule-active #schedule-pane .schedule-table-dept,
+  body.haos-schedule-active #schedule-pane .workspace-table-card {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+</style>
+<script id="haos-v68-9-schedule-tab-stability-fix">
+(function(){
+  const PATCH='v68.9-schedule-tab-stability-fix';
+  const $=id=>document.getElementById(id);
+  const qa=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
+  let scheduleMode=false;
+  let loadTimer=null;
+
+  function activateTabButton(activeId){
+    qa('#mainTab .nav-link').forEach(btn=>{
+      const active=btn.id===activeId;
+      btn.classList.toggle('active',active);
+      btn.setAttribute('aria-selected',active?'true':'false');
+    });
+  }
+
+  function activatePane(activeId){
+    qa('#myTabContent > .tab-pane').forEach(pane=>{
+      const active=pane.id===activeId;
+      pane.classList.toggle('active',active);
+      pane.classList.toggle('show',active);
+      if(!active){
+        pane.style.removeProperty('display');
+        pane.style.removeProperty('visibility');
+        pane.style.removeProperty('opacity');
+      }
+    });
+  }
+
+  function shouldReloadTable(id){
+    const el=$(id);
+    if(!el) return false;
+    const text=(el.innerText||'').trim();
+    return !el.children.length || /กำลังโหลด|ไม่สำเร็จ|ยังไม่มี|loading|error/i.test(text);
+  }
+
+  function loadScheduleTables(){
+    clearTimeout(loadTimer);
+    loadTimer=setTimeout(()=>{
+      try{ if(typeof window.loadMySchedules==='function' && shouldReloadTable('myTable')) window.loadMySchedules(); }catch(e){}
+      try{ if(typeof window.loadDepartmentSchedules==='function' && shouldReloadTable('departmentScheduleTable')) window.loadDepartmentSchedules(); }catch(e){}
+      try{ if(typeof window.loadSharedWorkspaces==='function' && shouldReloadTable('workspaceTableBody')) window.loadSharedWorkspaces(); }catch(e){}
+    },120);
+  }
+
+  function keepScheduleVisible(forceLoad){
+    const pane=$('schedule-pane');
+    if(!pane) return;
+    scheduleMode=true;
+    document.body.classList.add('haos-schedule-active');
+    document.body.classList.remove('haos-report-active');
+    activateTabButton('schedule-tab');
+    activatePane('schedule-pane');
+    pane.classList.add('haos-v687-open','haos-v689-schedule-stable','active','show');
+    pane.style.setProperty('display','block','important');
+    pane.style.setProperty('visibility','visible','important');
+    pane.style.setProperty('opacity','1','important');
+    const cal=$('calendarDiv');
+    if(cal && !cal.classList.contains('haos-v687-calendar-active')) cal.style.display='none';
+    const list=$('scheduleListDiv');
+    if(list) list.style.setProperty('display','block','important');
+    qa('#schedule-pane .card,#schedule-pane .table-responsive,#scheduleListDiv').forEach(el=>{
+      const safeUnhide = el.id==='scheduleListDiv' || el.classList.contains('table-responsive') || el.classList.contains('schedule-table-personal') || el.classList.contains('schedule-table-dept') || el.classList.contains('workspace-table-card');
+      if(safeUnhide) el.classList.remove('d-none');
+      el.style.setProperty('visibility','visible','important');
+      el.style.setProperty('opacity','1','important');
+      if(safeUnhide && el.id!=='calendarDiv') el.style.setProperty('display','block','important');
+    });
+    qa('#schedule-pane button:not([type])').forEach(btn=>btn.type='button');
+    const save=$('btnSaveEvent');
+    if(save) save.type='submit';
+    if(forceLoad) loadScheduleTables();
+    try{ if(typeof window.updateScheduleKpiV687==='function') window.updateScheduleKpiV687(); else if(typeof window.updateScheduleKpi==='function') window.updateScheduleKpi(); }catch(e){}
+  }
+
+  function leaveScheduleMode(){
+    scheduleMode=false;
+    document.body.classList.remove('haos-schedule-active');
+    const pane=$('schedule-pane');
+    if(pane) pane.classList.remove('haos-v689-schedule-stable');
+  }
+
+  const tab=$('schedule-tab');
+  if(tab){
+    tab.addEventListener('click',()=>{
+      setTimeout(()=>keepScheduleVisible(true),0);
+      setTimeout(()=>keepScheduleVisible(true),80);
+      setTimeout(()=>keepScheduleVisible(false),350);
+      setTimeout(()=>keepScheduleVisible(false),900);
+    },true);
+  }
+
+  document.addEventListener('shown.bs.tab',ev=>{
+    if(ev.target && ev.target.id==='schedule-tab') setTimeout(()=>keepScheduleVisible(true),30);
+    else if(ev.target && ev.target.closest && ev.target.closest('#mainTab')) leaveScheduleMode();
+  },true);
+
+  document.addEventListener('click',ev=>{
+    const other=ev.target && ev.target.closest ? ev.target.closest('#report-tab,#itservices-tab') : null;
+    if(other) leaveScheduleMode();
+  },true);
+
+  setInterval(()=>{
+    if(scheduleMode || $('schedule-tab')?.classList.contains('active') || $('schedule-pane')?.classList.contains('haos-v689-schedule-stable')){
+      keepScheduleVisible(false);
+    }
+  },250);
+
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
+
 </body>
 </html>
