@@ -8639,5 +8639,135 @@ HAOS v68.6 FINISHING FIX
 </script>
 
 
+
+<style id="haos-v687-emergency-style">
+  /* v68.7 emergency polish: force schedule pane/cards back into visible flow */
+  #schedule-pane.haos-v687-open,
+  #schedule-pane.haos-v687-open .card,
+  #schedule-pane.haos-v687-open .table-responsive,
+  #schedule-pane.haos-v687-open #scheduleListDiv{
+    display:block !important;
+    visibility:visible !important;
+    opacity:1 !important;
+  }
+  #schedule-pane.haos-v687-open #calendarDiv:not(.haos-v687-calendar-active){display:none!important;}
+  #headReportTable .haos-v687-time{display:block;margin-top:6px;color:#475569;font-size:.92rem;line-height:1.2;white-space:nowrap;}
+  #headReportTable .haos-v687-date-pill{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;min-width:78px;border-radius:16px;background:linear-gradient(180deg,#dff0ff,#d7ecff);border:1px solid #bfdbfe;color:#075985;padding:10px 12px;font-weight:900;box-shadow:inset 0 1px 0 rgba(255,255,255,.7)}
+  #headReportTable .haos-v687-date-pill .day{font-size:1.35rem;line-height:1;}
+  #headReportTable .haos-v687-date-pill .month{font-size:.78rem;color:#2563eb;margin-top:4px;}
+  .swal2-popup .haos-v687-sig-form input#sigNameV49{position:relative!important;z-index:5!important;pointer-events:auto!important;user-select:text!important;background:#fff!important;}
+  .swal2-popup .haos-v687-sig-form canvas{position:relative!important;z-index:1!important;display:block!important;}
+  .profile-signature-item{max-width:100%!important;overflow:hidden!important;}
+</style>
+<script id="haos-v68-7-real-emergency-fix">
+(function(){
+  'use strict';
+  const PATCH='v68.7-real-emergency-fix';
+  const $=id=>document.getElementById(id);
+  const qa=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function getUser(){try{return window.user||user||{};}catch(e){return window.user||{};}}
+  function gas(fn,args){return new Promise((resolve,reject)=>{try{google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run,args||[]);}catch(e){reject(e);}});}
+  const thMonths=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  function parseDate(v){
+    if(!v) return null;
+    if(v instanceof Date && !isNaN(v)) return v;
+    let s=String(v).trim();
+    let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); if(m) return new Date(+m[1],+m[2]-1,+m[3]);
+    m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/); if(m){let y=+m[3]; if(y>2400)y-=543; return new Date(y,+m[2]-1,+m[1]);}
+    const d=new Date(s); return isNaN(d)?null:d;
+  }
+  function thaiDate(v){const d=parseDate(v); if(!d)return '<span class="haos-v687-date-pill"><span class="day">-</span><span class="month">ไม่ระบุ</span></span>'; return `<span class="haos-v687-date-pill"><span class="day">${String(d.getDate()).padStart(2,'0')}</span><span class="month">${thMonths[d.getMonth()]} ${d.getFullYear()+543}</span></span>`;}
+  function cleanText(v){return String(v??'').replace(/<[^>]*>/g,' ').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').trim();}
+  function oneTime(v){
+    let s=String(v??'').replace(/<br\s*\/?\s*>/gi,'\n').replace(/\r/g,'\n').replace(/น\.?(?=\s*\d)/g,'น.\n').trim();
+    if(!s) return '';
+    const ranges=s.match(/\d{1,2}:\d{2}\s*(?:-|–|—|ถึง|to)\s*\d{1,2}:\d{2}/gi);
+    if(ranges && ranges.length){
+      let r=ranges[0].replace(/\s*(?:-|–|—|ถึง|to)\s*/i,' - ').replace(/\s+/g,' ').trim();
+      return /น\.?$/.test(r)?r:r+' น.';
+    }
+    const first=s.split(/[\n,;|]+/).map(x=>x.trim()).filter(Boolean)[0]||'';
+    return first ? (/[0-9]:[0-9]/.test(first) && !/น\.?$/.test(first) ? first+' น.' : first) : '';
+  }
+  function fileLinks(url){try{if(typeof window.renderFileLinks_==='function')return window.renderFileLinks_(url)||'';}catch(e){} if(!url)return ''; return String(url).split(/\n|,/).filter(Boolean).map((u,i)=>`<a href="${esc(u.trim())}" target="_blank" rel="noopener">📄${i?i+1:''}</a>`).join(' ');}
+  function teamList(){try{if(Array.isArray(teamReportsGlobal))return teamReportsGlobal;}catch(e){} return Array.isArray(window.teamReportsGlobal)?window.teamReportsGlobal:[];}
+  function setTeamList(list){const arr=Array.isArray(list)?list:[]; window.teamReportsGlobal=arr; try{teamReportsGlobal=arr;}catch(e){} return arr;}
+  function setHeadMode(mode){window.haosHeadReportViewMode=(mode==='calendar')?'calendar':'list'; try{headReportViewMode=window.haosHeadReportViewMode;}catch(e){} }
+  window.setHeadReportViewMode=function(mode){setHeadMode(mode); window.renderHeadReportsV687();};
+  window.renderHeadReports=window.renderHeadReportsV687=function(){
+    const tbody=$('headReportTable'), listView=$('headReportListView'), calView=$('headReportCalendarView'); if(!tbody)return;
+    const reports=teamList(); const head=listView?listView.querySelector('thead tr'):null;
+    if(head) head.innerHTML='<th>วันที่</th><th>ชื่อ</th><th>สถานะ/เวลา</th><th>รายละเอียด</th><th>ไฟล์</th>';
+    if((window.haosHeadReportViewMode||'list')==='calendar'){
+      listView&&listView.classList.add('d-none'); calView&&calView.classList.remove('d-none');
+      if(calView) calView.style.display='block';
+      try{ if(typeof window.renderReportCalendar_==='function') window.renderReportCalendar_('headReportCalendarView', reports, 'team'); }catch(e){ if(calView) calView.innerHTML='<div class="text-danger p-3">เปิดปฏิทินไม่สำเร็จ: '+esc(e.message||e)+'</div>'; }
+      setTimeout(()=>{try{ if(window.headReportCalendarObj) window.headReportCalendarObj.render(); }catch(e){}},120);
+      return;
+    }
+    listView&&listView.classList.remove('d-none'); calView&&calView.classList.add('d-none'); tbody.innerHTML='';
+    if(!reports.length){tbody.innerHTML='<tr><td colspan="5" class="text-center py-4 text-muted">ยังไม่มีข้อมูลรายงานทีม</td></tr>';return;}
+    const size=($('headReportPageSize')?.value||20); const show=size==='all'?reports:reports.slice(0,Math.max(1,Number(size||20)));
+    show.forEach(r=>{
+      const status=r.leaveType||r.status||'-'; const badge=status==='ปฏิบัติงานปกติ'?'bg-success':'bg-warning text-dark';
+      const t=oneTime(r.time||r.workTime||r.startTime||'');
+      const detail=cleanText(r.details||r.workDetails||r.detail||'')||'-'; const remark=cleanText(r.remarks||r.remark||'');
+      tbody.insertAdjacentHTML('beforeend',`<tr class="report-card-row haos-v687-team-report-row"><td>${thaiDate(r.date||r.rawDate||r.reportDate)}</td><td><b>${esc(r.name||r.userName||'-')}</b></td><td><span class="status-badge ${badge}">${esc(status)}</span>${t?`<span class="haos-v687-time">${esc(t)}</span>`:''}</td><td><div class="report-detail-box">${esc(detail).slice(0,280)}${remark?`<div class="small text-muted mt-1">${esc(remark).slice(0,160)}</div>`:''}</div></td><td>${fileLinks(r.fileUrl)||'-'}</td></tr>`);
+    });
+    if(show.length<reports.length) tbody.insertAdjacentHTML('beforeend',`<tr><td colspan="5" class="text-center text-muted small py-2">แสดง ${show.length} จาก ${reports.length} รายการ</td></tr>`);
+    cleanupTeamReportTime();
+  };
+  function cleanupTeamReportTime(){
+    qa('#headReportTable tr').forEach(tr=>{
+      const cells=qa('td',tr); if(cells.length<5)return; const statusCell=cells[2]; const badge=statusCell.querySelector('.status-badge');
+      const t=oneTime(statusCell.innerText.replace(badge?badge.innerText:'',''));
+      statusCell.innerHTML=(badge?badge.outerHTML:'')+(t?`<span class="haos-v687-time">${esc(t)}</span>`:'');
+    });
+  }
+  const oldLoadTeam=window.loadTeamReports;
+  window.loadTeamReports=function(){
+    const u=getUser(), tbody=$('headReportTable'); if(tbody)tbody.innerHTML='<tr><td colspan="5" class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm me-2"></span>กำลังโหลดรายงานทีม...</td></tr>';
+    if(!window.google || !google.script || !google.script.run){ if(oldLoadTeam) return oldLoadTeam.apply(this,arguments); return; }
+    google.script.run.withSuccessHandler(res=>{
+      if(!res||res.success===false){ if(tbody)tbody.innerHTML=`<tr><td colspan="5" class="text-center py-4 text-danger">โหลดรายงานทีมไม่สำเร็จ: ${esc(res&&res.message?res.message:'ไม่มีข้อมูลตอบกลับ')}</td></tr>`; return; }
+      const stats=Array.isArray(res.stats)?res.stats:[], box=$('teamStatsBox'); if(box)box.innerHTML=''; let submitted=0;
+      stats.forEach(m=>{const ok=!!(m.submittedToday||m.submittedYesterday); if(ok)submitted++; const color=ok?'success':'danger', icon=ok?'check-circle-fill':'x-circle-fill'; const label=ok?((m.leaveType==='ปฏิบัติงานปกติ')?'ส่งแล้ว':(m.leaveType||'ส่งแล้ว')):'ยังไม่ส่ง'; box&&box.insertAdjacentHTML('beforeend',`<div class="col-6 col-md-4"><div class="border rounded p-2 text-center bg-white shadow-sm"><div class="fw-bold small text-truncate">${esc(m.name||'-')}</div><div class="badge bg-${color}"><i class="bi bi-${icon}"></i> ${esc(label)}</div></div></div>`);});
+      if($('dashTeamReports'))$('dashTeamReports').innerText=submitted+'/'+stats.length; try{syncOverviewCards&&syncOverviewCards();}catch(e){}
+      setTeamList(res.reports||[]); $('headSummaryTools')?.classList.remove('d-none'); $('btnHeadSummary')?.classList.remove('d-none'); $('headReportView')?.classList.remove('d-none'); window.renderHeadReportsV687();
+    }).withFailureHandler(err=>{ if(tbody)tbody.innerHTML=`<tr><td colspan="5" class="text-center py-4 text-danger">เชื่อมต่อรายงานทีมไม่สำเร็จ: ${esc(err&&err.message?err.message:err)}</td></tr>`; }).getTeamReports(u.department||'',u.role||'User');
+  };
+
+  function listFromRes(res){return Array.isArray(res)?res:(Array.isArray(res?.data)?res.data:(Array.isArray(res?.schedules)?res.schedules:[]));}
+  function badgeCls(s){ if(typeof window.getScheduleBadgeClass==='function')return window.getScheduleBadgeClass(s); if(s==='ดำเนินการแล้ว')return 'bg-success'; if(s==='ยกเลิกสถานะ')return 'bg-danger'; return 'bg-info text-dark';}
+  function phoneKey(v){return String(v??'').replace(/'/g,'').trim();}
+  function rowActions(item,canEdit){const id=esc(item.id||'');return `<button type="button" class="btn btn-outline-info btn-sm text-dark me-1" onclick="viewScheduleDetail('${id}')"><i class="bi bi-eye"></i></button>${canEdit?`<button type="button" class="btn btn-outline-warning btn-sm text-dark me-1" onclick="editSchedule('${id}')"><i class="bi bi-pencil"></i></button><button type="button" class="btn btn-outline-danger btn-sm" onclick="handleDelete('${id}')"><i class="bi bi-trash"></i></button>`:''}`;}
+  function renderMyRows(list){const tbody=$('myTable'); if(!tbody)return; tbody.innerHTML=''; if(!list.length){tbody.innerHTML='<tr><td colspan="4" class="text-center py-4 text-muted">ยังไม่มีตารางงาน/นัดหมายของคุณ</td></tr>';return;} list.forEach(item=>{tbody.insertAdjacentHTML('beforeend',`<tr class="haos-v687-schedule-row"><td class="ps-4 fw-medium text-primary">${esc(item.eventName||item.title||'-')} ${item.fileUrl?'<i class="bi bi-paperclip text-primary"></i>':''}<div class="small text-muted text-truncate" style="max-width:320px;">${esc(item.location||item.eventLocation||'-')}</div></td><td class="small text-muted">${esc(item.startTime||item.start||'-')}</td><td><span class="badge ${badgeCls(item.workStatus||item.status)}">${esc(item.workStatus||item.status||'-')}</span></td><td class="pe-4 text-end action-menu">${rowActions(item,true)}</td></tr>`);});}
+  function renderDeptRows(list){const tbody=$('departmentScheduleTable'), u=getUser(); if(!tbody)return; tbody.innerHTML=''; if(!list.length){tbody.innerHTML='<tr><td colspan="5" class="text-center py-4 text-muted">ยังไม่มีตารางงาน/นัดหมายของกลุ่มงาน</td></tr>';return;} list.forEach(item=>{const can=phoneKey(item.ownerPhone)===phoneKey(u.phone); tbody.insertAdjacentHTML('beforeend',`<tr class="haos-v687-schedule-row"><td class="ps-4 fw-medium text-primary">${esc(item.eventName||item.title||'-')} ${item.fileUrl?'<i class="bi bi-paperclip text-primary"></i>':''}<div class="small text-muted text-truncate" style="max-width:320px;">${esc(item.location||item.eventLocation||'-')}</div></td><td class="small text-muted">${esc(item.startTime||item.start||'-')}</td><td>${esc(item.ownerName||item.createdBy||'-')}</td><td><span class="badge ${badgeCls(item.workStatus||item.status)}">${esc(item.workStatus||item.status||'-')}</span></td><td class="pe-4 text-end action-menu">${rowActions(item,can)}</td></tr>`);});}
+  window.loadMySchedules=function(){const u=getUser(), tbody=$('myTable'); if(tbody)tbody.innerHTML='<tr><td colspan="4" class="text-center py-4 text-muted">กำลังโหลดตารางงาน...</td></tr>'; google.script.run.withSuccessHandler(res=>{const list=listFromRes(res); window.mySchedulesGlobal=list; try{mySchedulesGlobal=list;}catch(e){} renderMyRows(list); updateScheduleKpiV687();}).withFailureHandler(err=>{if(tbody)tbody.innerHTML=`<tr><td colspan="4" class="text-center py-4 text-danger">โหลดตารางงานไม่สำเร็จ: ${esc(err&&err.message?err.message:err)}</td></tr>`;}).getUserSchedules(u.phone||'');};
+  window.loadDepartmentSchedules=function(){const u=getUser(), tbody=$('departmentScheduleTable'); if(tbody)tbody.innerHTML='<tr><td colspan="5" class="text-center py-4 text-muted">กำลังโหลดตารางงานกลุ่มงาน...</td></tr>'; google.script.run.withSuccessHandler(res=>{const list=listFromRes(res); window.departmentSchedulesGlobal=list; try{departmentSchedulesGlobal=list;}catch(e){} renderDeptRows(list); updateScheduleKpiV687();}).withFailureHandler(err=>{if(tbody)tbody.innerHTML=`<tr><td colspan="5" class="text-center py-4 text-danger">โหลดตารางงานกลุ่มงานไม่สำเร็จ: ${esc(err&&err.message?err.message:err)}</td></tr>`;}).getDepartmentSchedules(u.phone||'',u.department||'');};
+  window.updateScheduleKpiV687=function(){const all=[...(window.mySchedulesGlobal||[]),...(window.departmentSchedulesGlobal||[])]; const pending=all.filter(x=>(x.workStatus||x.status||'').includes('อยู่ระหว่าง')).length; const done=all.filter(x=>(x.workStatus||x.status||'')==='ดำเนินการแล้ว').length; const cancel=all.filter(x=>(x.workStatus||x.status||'')==='ยกเลิกสถานะ').length; if($('dashMyScheds')){$('dashMyScheds').innerText=pending; $('dashMyScheds').nextElementSibling && ($('dashMyScheds').nextElementSibling.innerText='อยู่ระหว่างดำเนินการ');} if($('dashPending')){$('dashPending').innerText=done; $('dashPending').nextElementSibling && ($('dashPending').nextElementSibling.innerText='ดำเนินการแล้ว');} if($('dashApproved')){$('dashApproved').innerText=cancel; $('dashApproved').nextElementSibling && ($('dashApproved').nextElementSibling.innerText='ยกเลิกสถานะ');}};
+  function ensureScheduleVisible(){
+    const pane=$('schedule-pane'); if(!pane)return; pane.classList.add('haos-v687-open','active','show'); pane.style.display='block'; pane.style.visibility='visible'; pane.style.opacity='1';
+    qa('#schedule-pane .card,#schedule-pane .table-responsive,#scheduleListDiv').forEach(el=>{el.style.display='block';el.style.visibility='visible';el.style.opacity='1';el.classList.remove('d-none');});
+    if($('calendarDiv')&&!$('calendarDiv').classList.contains('haos-v687-calendar-active')) $('calendarDiv').style.display='none';
+    qa('#schedule-pane button:not([type])').forEach(b=>b.type='button'); const save=$('btnSaveEvent'); if(save)save.type='submit';
+  }
+  window.haosOpenScheduleV687=function(){ensureScheduleVisible(); window.loadMySchedules(); window.loadDepartmentSchedules(); try{if(typeof window.loadSharedWorkspaces==='function')window.loadSharedWorkspaces();}catch(e){} setTimeout(ensureScheduleVisible,350); setTimeout(updateScheduleKpiV687,800);};
+  const scheduleTab=$('schedule-tab'); if(scheduleTab){scheduleTab.addEventListener('click',()=>setTimeout(window.haosOpenScheduleV687,80),true);}
+  document.addEventListener('shown.bs.tab',ev=>{if(ev.target&&ev.target.id==='schedule-tab')setTimeout(window.haosOpenScheduleV687,80);});
+  window.toggleCalendarView=function(type){ if(type==='calendar'){ $('scheduleListDiv')&&($('scheduleListDiv').style.display='none'); $('calendarDiv')&&($('calendarDiv').style.display='block'); $('calendarDiv')&&$('calendarDiv').classList.add('haos-v687-calendar-active'); $('calendarLegend')&&($('calendarLegend').style.display='block'); try{renderCalendar&&renderCalendar([...(window.mySchedulesGlobal||[]),...(window.departmentSchedulesGlobal||[])]); if(window.calendarObj)window.calendarObj.render();}catch(e){} } else { $('calendarDiv')&&($('calendarDiv').style.display='none'); $('calendarDiv')&&$('calendarDiv').classList.remove('haos-v687-calendar-active'); $('scheduleListDiv')&&($('scheduleListDiv').style.display='block'); $('calendarLegend')&&($('calendarLegend').style.display='none'); } };
+
+  function unlockSigInputs(){qa('#sigNameV49,input[id*="sigName"],input[name*="signature" i],input[placeholder*="ชื่อเรียกลายเซ็น"],input[placeholder*="ลายเซ็น"],.swal2-popup input.form-control').forEach(i=>{ if((i.placeholder||'').includes('ลายเซ็น') || i.id==='sigNameV49'){ i.disabled=false; i.readOnly=false; i.removeAttribute('disabled'); i.removeAttribute('readonly'); i.style.pointerEvents='auto'; i.style.userSelect='text'; i.style.position='relative'; i.style.zIndex='10'; }});}
+  window.addProfileSignatureV49_=function(){
+    Swal.fire({title:'เพิ่มลายเซ็น',width:620,html:`<div class="haos-v687-sig-form text-start"><label class="small fw-bold text-muted">ชื่อเรียกลายเซ็น</label><input id="sigNameV49" type="text" class="form-control mb-2" autocomplete="off" placeholder="เช่น ลายเซ็นหลัก / ลายเซ็นอนุมัติ"><label class="small fw-bold text-muted">แนบรูปภาพลายเซ็น</label><input id="sigFileV49" type="file" accept="image/*" class="form-control mb-2"><canvas id="sigCanvasV49" width="420" height="150" style="width:100%;height:150px;border:1px dashed #94a3b8;border-radius:12px;background:#fff;touch-action:none;"></canvas><div class="small text-muted mt-2">อัปโหลดรูป หรือเซ็นสดในช่องนี้ แล้วตั้งชื่อได้ตามต้องการ</div></div>`,showCancelButton:true,confirmButtonText:'บันทึก',cancelButtonText:'ยกเลิก',didOpen:()=>{unlockSigInputs(); setTimeout(()=>{$('sigNameV49')?.focus();},80); try{setupItBookingSignature_('sigCanvasV49');}catch(e){} const f=$('sigFileV49'); if(f)f.addEventListener('change',async ev=>{try{const file=ev.target.files&&ev.target.files[0]; if(!file)return; const data=await new Promise((resolve,reject)=>{const r=new FileReader(); r.onload=e=>resolve(e.target.result); r.onerror=reject; r.readAsDataURL(file);}); let clean=data; try{if(typeof removeWhiteBgSignatureV49_==='function') clean=await removeWhiteBgSignatureV49_(data);}catch(e){} if(typeof drawSignatureToCanvas_==='function') drawSignatureToCanvas_('sigCanvasV49',clean);}catch(err){Swal.showValidationMessage(err.message||String(err));}});},preConfirm:async()=>{unlockSigInputs(); const data=(typeof getItBookingCanvasData_==='function')?getItBookingCanvasData_('sigCanvasV49'):''; if(!data)return Swal.showValidationMessage('กรุณาอัปโหลดหรือเซ็นลายเซ็น'); const name=($('sigNameV49')?.value||'').trim(); const current=await gas('getMySignatures',[getUser().phone||'']); const arr=current&&current.success?(current.signatures||[]):[]; if(arr.length>=10)return Swal.showValidationMessage('เก็บลายเซ็นได้สูงสุด 10 รายการ'); arr.push({name:name||('ลายเซ็น '+(arr.length+1)),data:data,isDefault:arr.length===0}); const save=await gas('saveMySignatures',[getUser().phone||'',arr]); if(!save||!save.success)return Swal.showValidationMessage(save&&save.message?save.message:'บันทึกไม่สำเร็จ'); return true;}}).then(r=>{if(r.isConfirmed&&typeof window.loadProfileSignaturesV49_==='function')window.loadProfileSignaturesV49_();});
+  };
+  document.addEventListener('focusin',unlockSigInputs,true); document.addEventListener('click',()=>setTimeout(unlockSigInputs,50),true);
+  setInterval(()=>{try{cleanupTeamReportTime(); unlockSigInputs(); if($('schedule-pane')?.classList.contains('active')) ensureScheduleVisible();}catch(e){}},1200);
+  document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{unlockSigInputs(); if($('schedule-pane')?.classList.contains('active'))window.haosOpenScheduleV687(); if($('headReportTable'))cleanupTeamReportTime();},700);});
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
+
 </body>
 </html>
