@@ -8854,8 +8854,7 @@ HAOS v68.6 FINISHING FIX
      - Render team-report calendar with a safe built-in calendar/list view
      ========================================================== -->
 <style id="haos-v68-9-style">
-  body:not(.haos-schedule-active) #schedule-pane{display:none!important;visibility:hidden!important;opacity:0!important;}
-  body.haos-report-active #schedule-pane{display:none!important;visibility:hidden!important;opacity:0!important;}
+  /* v68.9 hotfix: Bootstrap controls #schedule-pane visibility. Hard-hiding it here caused schedule-tab bounce loops. */
   #headReportCalendarView{min-height:420px;background:#fff;border-radius:18px;padding:14px!important;}
   .haos-v689-calendar-wrap{display:grid;gap:12px;}
   .haos-v689-calendar-header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 14px;border:1px solid rgba(148,163,184,.28);border-radius:18px;background:linear-gradient(135deg,#eff6ff,#ecfeff);}
@@ -8871,7 +8870,7 @@ HAOS v68.6 FINISHING FIX
 </style>
 <script id="haos-v68-9-tab-calendar-fix">
 (function(){
-  const PATCH='v68.9-tab-calendar-hard-fix';
+  const PATCH='v68.9-tab-calendar-loop-hotfix';
   const $=id=>document.getElementById(id);
   const qa=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
   const esc=s=>String(s??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]));
@@ -8879,27 +8878,20 @@ HAOS v68.6 FINISHING FIX
   const thMonths=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
   function isActiveTab(id){const el=$(id);return !!(el&&el.classList.contains('active'));}
   function repairTabs(){
-    const scheduleActive=isActiveTab('schedule-tab') || location.hash==='#schedule';
-    const reportActive=isActiveTab('report-tab') || (!scheduleActive && isActiveTab('reports-tab'));
+    const pane=$('schedule-pane');
+    const scheduleActive=isActiveTab('schedule-tab') || !!(pane&&pane.classList.contains('active')) || location.hash==='#schedule';
+    const reportActive=!scheduleActive && (isActiveTab('report-tab') || isActiveTab('reports-tab'));
     document.body.classList.toggle('haos-schedule-active',scheduleActive);
     document.body.classList.toggle('haos-report-active',reportActive);
-    const pane=$('schedule-pane');
     if(!pane) return;
-    if(!scheduleActive){
-      pane.classList.remove('active','show','haos-v687-open');
-      pane.style.setProperty('display','none','important');
-      pane.style.setProperty('visibility','hidden','important');
-      pane.style.setProperty('opacity','0','important');
-    }else{
-      pane.style.removeProperty('display');
-      pane.style.removeProperty('visibility');
-      pane.style.removeProperty('opacity');
-      pane.classList.add('active','show');
-    }
+    pane.style.removeProperty('display');
+    pane.style.removeProperty('visibility');
+    pane.style.removeProperty('opacity');
+    if(scheduleActive) pane.classList.add('active','show');
   }
   document.addEventListener('shown.bs.tab',ev=>setTimeout(repairTabs,30),true);
   document.addEventListener('click',ev=>{ if(ev.target.closest('#report-tab,#reports-tab,#schedule-tab,#mainTab .nav-link')) setTimeout(repairTabs,80); },true);
-  setInterval(repairTabs,350);
+  // Disabled polling: it was racing Bootstrap and hiding the schedule tab after it opened.
   setTimeout(repairTabs,100);
 
   function parseDateAny(v){
@@ -8985,7 +8977,7 @@ HAOS v68.6 FINISHING FIX
 </style>
 <script id="haos-v68-9-schedule-tab-stability-fix">
 (function(){
-  const PATCH='v68.9-schedule-tab-stability-fix';
+  const PATCH='v68.9-schedule-tab-stability-fix-2';
   const $=id=>document.getElementById(id);
   const qa=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
   let scheduleMode=false;
@@ -9085,11 +9077,7 @@ HAOS v68.6 FINISHING FIX
     if(other) leaveScheduleMode();
   },true);
 
-  setInterval(()=>{
-    if(scheduleMode || $('schedule-tab')?.classList.contains('active') || $('schedule-pane')?.classList.contains('haos-v689-schedule-stable')){
-      keepScheduleVisible(false);
-    }
-  },250);
+  // No polling here; tab visibility is handled by Bootstrap events plus the one-shot guards above.
 
   console.info('HAOS '+PATCH+' loaded');
 })();
