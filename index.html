@@ -9649,9 +9649,10 @@ HAOS v68.6 FINISHING FIX
       const select=$(selectId); if(!select)return;
       const holder=select.parentElement; if(!holder)return;
       holder.classList.add('haos-v692-view-tools');
-      let list=qa('button',holder).find(b=>(b.getAttribute('onclick')||'').includes(fn+"('list')"));
-      let card=qa('button',holder).find(b=>(b.getAttribute('onclick')||'').includes(fn+"('card')")||b.dataset.mode==='card');
-      let cal=qa('button',holder).find(b=>(b.getAttribute('onclick')||'').includes(fn+"('calendar')")||b.dataset.mode==='calendar'||b.dataset.mode==='month');
+      const legacyButtons=qa('button',holder).filter(b=>!b.closest('.haos-v703-report-button-set'));
+      let list=legacyButtons.find(b=>(b.getAttribute('onclick')||'').includes(fn+"('list')"));
+      let card=legacyButtons.find(b=>(b.getAttribute('onclick')||'').includes(fn+"('card')")||b.dataset.mode==='card');
+      let cal=legacyButtons.find(b=>(b.getAttribute('onclick')||'').includes(fn+"('calendar')")||b.dataset.mode==='calendar'||b.dataset.mode==='month');
       if(!card&&cal){card=cal; card.setAttribute('onclick',fn+"('card')"); card.dataset.mode='card'; card.innerHTML='<i class="bi bi-grid-3x3-gap"></i> การ์ด'; cal=null;}
       if(!cal){select.insertAdjacentHTML('beforebegin','<button type="button" data-haos-v69-view="'+scope+'" data-mode="calendar" class="btn btn-sm btn-outline-primary" onclick="'+fn+'(\'calendar\')"><i class="bi bi-calendar3"></i> ปฏิทิน</button>'); cal=select.previousElementSibling;}
       if(list) holder.insertBefore(list,select);
@@ -10140,7 +10141,7 @@ HAOS v68.6 FINISHING FIX
     if(!holder)return;
     holder.classList.add('haos-v702-report-tools');
     holder.id=scope+'ViewToolsV702';
-    qa('button',holder).forEach(btn=>{const oc=btn.getAttribute('onclick')||'';if(btn.closest('.haos-v702-report-button-set'))return;if(oc.includes(kind==='my'?'setMyReportViewMode':'setHeadReportViewMode'))btn.remove();});
+    qa('button',holder).forEach(btn=>{const oc=btn.getAttribute('onclick')||'';if(btn.closest('.haos-v702-report-button-set')||btn.closest('.haos-v703-report-button-set'))return;if(oc.includes(kind==='my'?'setMyReportViewMode':'setHeadReportViewMode'))btn.remove();});
     if(!holder.querySelector('.haos-v702-report-button-set')){
       holder.insertAdjacentHTML('afterbegin','<span class="haos-v702-current-view" id="'+scope+'CurrentV702"></span><span class="haos-v702-report-button-set d-inline-flex gap-2 flex-wrap"><button type="button" class="btn btn-sm btn-outline-primary" data-mode="list" onclick="'+(kind==='my'?'setMyReportViewMode':'setHeadReportViewMode')+'(\'list\')"><i class="bi bi-list"></i> รายการ</button><button type="button" class="btn btn-sm btn-outline-primary" data-mode="card" onclick="'+(kind==='my'?'setMyReportViewMode':'setHeadReportViewMode')+'(\'card\')"><i class="bi bi-grid-3x3-gap"></i> การ์ด</button><button type="button" class="btn btn-sm btn-outline-primary" data-mode="calendar" onclick="'+(kind==='my'?'setMyReportViewMode':'setHeadReportViewMode')+'(\'calendar\')"><i class="bi bi-calendar3"></i> ปฏิทิน</button></span>');
     }
@@ -10258,5 +10259,235 @@ HAOS v68.6 FINISHING FIX
 })();
 </script>
 
+<style id="haos-v70-3-stability-style">
+  .haos-v703-legacy-hidden{display:none!important}
+  .haos-v703-report-tool-wrap{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:42px}
+  .haos-v703-report-current{font-size:.84rem;font-weight:900;color:#075985;background:#e0f2fe;border:1px solid #bae6fd;border-radius:999px;padding:7px 11px;white-space:nowrap}
+  .haos-v703-report-button-set{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .haos-v703-report-button-set .btn{border-radius:14px!important;font-weight:900!important;transition:none!important}
+  .haos-v703-report-button-set .btn.active{background:#0d6efd!important;color:#fff!important;border-color:#0d6efd!important;box-shadow:0 8px 18px rgba(13,110,253,.16)}
+  #haosUnifiedScheduleShellV692.haos-v703-merged>#scheduleListDiv,
+  #haosUnifiedScheduleShellV692.haos-v703-merged>.card,
+  #haosUnifiedScheduleShellV692.haos-v703-merged #haosUnifiedScheduleBodyV692{display:none!important}
+  #haosUnifiedScheduleViewV702{display:block!important}
+  .haos-v703-form .haos-form-hero{border-radius:22px;padding:18px;color:#fff;background:linear-gradient(135deg,#0ea5e9,#2563eb);margin-bottom:14px;text-align:left}
+  .haos-v703-form .haos-form-section{border:1px solid rgba(148,163,184,.24);border-radius:18px;background:#fff;padding:14px;margin-bottom:12px;text-align:left}
+  .haos-v703-form .haos-form-title{font-weight:900;color:#075985;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .haos-v703-form label{display:flex;align-items:center;gap:6px}
+  .haos-v703-info-btn{border:0;background:#e0f2fe;color:#0369a1;border-radius:999px;width:20px;height:20px;display:inline-grid;place-items:center;font-size:.72rem;padding:0;line-height:1}
+  .haos-v703-attachment-note{border:1px dashed rgba(14,165,233,.45);border-radius:16px;background:#f0f9ff;padding:10px;color:#075985;font-size:.86rem}
+  .haos-v703-public-linkbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+  .haos-v703-public-linkbar .btn{border-radius:14px!important;font-weight:800}
+</style>
+<script id="haos-v70-3-stability-script">
+(function(){
+  const PATCH='v70.3-stability-public-it-forms';
+  if(window.__HAOS_V703_STABILITY__)return;
+  window.__HAOS_V703_STABILITY__=true;
+  const $=id=>document.getElementById(id);
+  const qa=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const clean=v=>String(v??'').replace(/\s+/g,' ').trim();
+  function getUserV703(){try{return window.user||user||{};}catch(e){return window.user||{};}}
+  function actorV703(){const u=getUserV703();return {phone:u.phone||'',name:u.fullName||u.name||'',department:u.department||'',role:u.role||''};}
+  function gasV703(fn,args){return new Promise((resolve,reject)=>{try{google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run,args||[]);}catch(e){reject(e);}});}
+  function readFileBase64V703(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=e=>{const s=String(e.target.result||'');resolve(s.includes(',')?s.split(',')[1]:s);};r.onerror=()=>reject(r.error||new Error('อ่านไฟล์ไม่สำเร็จ'));r.readAsDataURL(file);});}
+  async function uploadImagesV703(inputId,existing){
+    const input=$(inputId), files=Array.from(input?.files||[]);
+    if(files.length>10)throw new Error('แนบรูปได้สูงสุด 10 รูป');
+    if(!files.length)return existing||'';
+    const urls=[];
+    for(let i=0;i<files.length;i++){
+      if(!String(files[i].type||'').startsWith('image/'))throw new Error('ไฟล์แนบต้องเป็นรูปภาพเท่านั้น');
+      Swal.update({html:'<div class="py-4"><span class="spinner-border text-primary"></span><div class="fw-bold mt-3">กำลังอัปโหลดรูป '+(i+1)+'/'+files.length+'</div></div>'});
+      const b64=await readFileBase64V703(files[i]);
+      const up=await gasV703('uploadFileToDrive',[b64,files[i].name,files[i].type||'image/png']);
+      if(!up||!up.success)throw new Error(up?.message||'อัปโหลดรูปไม่สำเร็จ');
+      urls.push(up.url);
+    }
+    return [existing||'',urls.join('\n')].filter(Boolean).join('\n');
+  }
+  let itCacheV703=null, deptCacheV703=null;
+  async function loadITDataV703(force){
+    if(!force&&window.haosITV702Data)return window.haosITV702Data;
+    if(!force&&itCacheV703)return itCacheV703;
+    const res=await gasV703('getITAssetModuleDataV70',[getUserV703().phone||'',getUserV703().role||'',getUserV703().department||'']);
+    if(!res||!res.success)throw new Error(res?.message||'โหลดข้อมูล IT ไม่สำเร็จ');
+    itCacheV703=res; window.haosITV702Data=res; return res;
+  }
+  async function getDepartmentsV703(data){
+    if(deptCacheV703)return deptCacheV703;
+    const set=new Set();
+    const u=getUserV703(); if(u.department)set.add(u.department);
+    (data?.assets||[]).forEach(a=>{if(a.ownerDepartment)set.add(a.ownerDepartment);});
+    try{
+      const res=await gasV703('getAllUsers',[]);
+      const users=Array.isArray(res)?res:(res?.data||res?.users||res?.result||[]);
+      users.forEach(x=>{
+        const d=(x&&typeof x==='object'&&!Array.isArray(x))?(x.department||x.dept||x.group||''):(Array.isArray(x)?(x[4]||x[5]||''):'');
+        if(d)set.add(String(d).trim());
+      });
+    }catch(ignore){}
+    deptCacheV703=Array.from(set).filter(Boolean).sort((a,b)=>a.localeCompare(b,'th'));
+    return deptCacheV703;
+  }
+  function labelV703(text,info){return '<label class="small fw-bold">'+esc(text)+' <button type="button" class="haos-v703-info-btn" data-title="'+esc(text)+'" data-info="'+esc(info||'')+'"><i class="bi bi-info"></i></button></label>';}
+  function bindInfoV703(root=document){qa('.haos-v703-info-btn',root).forEach(btn=>{btn.addEventListener('click',ev=>{ev.preventDefault();ev.stopPropagation();Swal.fire({icon:'info',title:btn.dataset.title||'คำอธิบาย',text:btn.dataset.info||'',confirmButtonText:'เข้าใจแล้ว'});});});}
+  function optionsV703(list,value){
+    const arr=Array.from(new Set([value,...list].filter(Boolean)));
+    return arr.map(v=>'<option value="'+esc(v)+'" '+(String(v)===String(value)?'selected':'')+'>'+esc(v)+'</option>').join('');
+  }
+  function imageInputV703(id,existing){
+    const link=(existing||'').split(/\n|,/).filter(Boolean).slice(0,3).map((u,i)=>'<a href="'+esc(u)+'" target="_blank">รูปเดิม '+(i+1)+'</a>').join(' ');
+    return '<input id="'+id+'" type="file" accept="image/*" multiple class="form-control"><div class="haos-v703-attachment-note mt-2"><i class="bi bi-images"></i> แนบรูปได้สูงสุด 10 รูป '+(link?'<div class="mt-1">'+link+'</div>':'')+'<div id="'+id+'Count" class="small text-muted mt-1">ยังไม่ได้เลือกรูปใหม่</div></div>';
+  }
+  function bindFileCountV703(id){const el=$(id), box=$(id+'Count'); if(!el||!box)return; el.addEventListener('change',()=>{const n=el.files?.length||0; box.textContent=n?('เลือกรูปใหม่ '+n+' รูป'):'ยังไม่ได้เลือกรูปใหม่'; if(n>10){el.value='';box.textContent='แนบรูปได้สูงสุด 10 รูป';Swal.fire('แนบรูปมากเกินไป','กรุณาเลือกไม่เกิน 10 รูป','warning');}});}
+
+  const reportText={list:'รายการ',card:'การ์ด',calendar:'ปฏิทิน'};
+  function ensureReportToolsV703(kind){
+    const isMy=kind==='my';
+    const holder=$(isMy?'myReportPageSize':'headReportPageSize')?.parentElement;
+    if(!holder)return;
+    holder.classList.add('haos-v703-report-tool-wrap');
+    const fn=isMy?'setMyReportViewMode':'setHeadReportViewMode';
+    qa('.haos-v702-current-view',holder).forEach(x=>x.classList.add('haos-v703-legacy-hidden'));
+    qa('button',holder).forEach(btn=>{const oc=btn.getAttribute('onclick')||''; if(oc.includes(fn)&&!btn.closest('.haos-v703-report-button-set'))btn.classList.add('haos-v703-legacy-hidden');});
+    const id=(isMy?'my':'head')+'ReportToolsV703';
+    let wrap=$(id);
+    if(!wrap){
+      holder.insertAdjacentHTML('afterbegin','<span id="'+id+'" class="haos-v703-report-button-set"><span class="haos-v703-report-current" id="'+id+'Current">กำลังดู: รายการ</span><button type="button" class="btn btn-sm btn-outline-primary" data-mode="list" onclick="'+fn+'(\'list\')"><i class="bi bi-list"></i> รายการ</button><button type="button" class="btn btn-sm btn-outline-primary" data-mode="card" onclick="'+fn+'(\'card\')"><i class="bi bi-grid-3x3-gap"></i> การ์ด</button><button type="button" class="btn btn-sm btn-outline-primary" data-mode="calendar" onclick="'+fn+'(\'calendar\')"><i class="bi bi-calendar3"></i> ปฏิทิน</button></span>');
+      wrap=$(id);
+    }
+    const mode=isMy?(window.myReportViewMode||'list'):(window.headReportViewMode||window.haosHeadReportViewMode||'list');
+    qa('button',wrap).forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));
+    const cur=$(id+'Current'); if(cur)cur.textContent='กำลังดู: '+(reportText[mode]||'รายการ');
+  }
+  function syncReportToolsV703(){ensureReportToolsV703('my');ensureReportToolsV703('team');}
+  const prevSetMy=window.setMyReportViewMode;
+  window.setMyReportViewMode=function(mode){window.myReportViewMode=mode||'list';const r=prevSetMy?prevSetMy.apply(this,arguments):(window.renderMyReports&&window.renderMyReports());setTimeout(syncReportToolsV703,0);setTimeout(syncReportToolsV703,160);return r;};
+  const prevSetHead=window.setHeadReportViewMode;
+  window.setHeadReportViewMode=function(mode){window.headReportViewMode=mode||'list';window.haosHeadReportViewMode=mode||'list';const r=prevSetHead?prevSetHead.apply(this,arguments):(window.renderHeadReports&&window.renderHeadReports());setTimeout(syncReportToolsV703,0);setTimeout(syncReportToolsV703,160);return r;};
+  const prevRenderMy=window.renderMyReports;
+  if(typeof prevRenderMy==='function')window.renderMyReports=function(){const r=prevRenderMy.apply(this,arguments);setTimeout(syncReportToolsV703,0);return r;};
+  const prevRenderHead=window.renderHeadReports;
+  if(typeof prevRenderHead==='function')window.renderHeadReports=function(){const r=prevRenderHead.apply(this,arguments);setTimeout(syncReportToolsV703,0);return r;};
+
+  function enforceUnifiedScheduleV703(){
+    const shell=$('haosUnifiedScheduleShellV692');
+    if(shell)shell.classList.add('haos-v703-merged');
+    const mode=window.haosUnifiedScheduleModeV702||'list';
+    const boxes={list:$('unifiedScheduleListV702'),card:$('unifiedScheduleCardV702'),calendar:$('unifiedScheduleCalendarV702')};
+    Object.entries(boxes).forEach(([name,el])=>{if(!el)return;const on=name===mode;el.classList.toggle('d-none',!on);el.style.display=on?'':'none';});
+    qa('#unifiedScheduleViewToolsV702 .btn').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));
+    if($('unifiedScheduleCurrentViewV702'))$('unifiedScheduleCurrentViewV702').textContent='กำลังดู: '+(reportText[mode]||'รายการ');
+  }
+  const prevUnifiedSet=window.setUnifiedScheduleViewV702;
+  if(typeof prevUnifiedSet==='function')window.setUnifiedScheduleViewV702=function(mode){window.haosUnifiedScheduleModeV702=mode||'list';const r=prevUnifiedSet.apply(this,arguments);setTimeout(enforceUnifiedScheduleV703,0);setTimeout(enforceUnifiedScheduleV703,160);return r;};
+  const prevUnifiedRender=window.renderUnifiedScheduleV702;
+  if(typeof prevUnifiedRender==='function')window.renderUnifiedScheduleV702=function(){const r=prevUnifiedRender.apply(this,arguments);setTimeout(enforceUnifiedScheduleV703,0);return r;};
+
+  function publicITUrlV703(module){return location.origin+'/public?module='+encodeURIComponent(module||'itservices');}
+  window.copyITDashboardLinkV702=function(module){const url=publicITUrlV703(module||'itservices');navigator.clipboard?.writeText(url);Swal.fire('คัดลอกลิงก์สาธารณะแล้ว','<div class="text-break small">'+esc(url)+'</div><div class="small text-muted mt-2">ลิงก์นี้ดูได้โดยไม่ต้องล็อกอิน แต่จะแสดงเฉพาะข้อมูลภาพรวมและไม่สามารถจัดการข้อมูลได้</div>','success');};
+  window.openITPublicDashboardLinkV703=function(module){window.copyITDashboardLinkV702(module||'itservices');};
+  function ensureITPublicLinksV703(){
+    const pane=$('itservices-pane'); if(!pane||$('itPublicLinksV703'))return;
+    const host=pane.querySelector('.card-header .d-flex.gap-2')||pane.querySelector('.d-flex.gap-2')||pane;
+    host.insertAdjacentHTML('beforeend','<div id="itPublicLinksV703" class="haos-v703-public-linkbar"><button type="button" class="btn btn-sm btn-outline-primary" onclick="openITPublicDashboardLinkV703(\'itservices\')"><i class="bi bi-link-45deg"></i> ลิงก์ IT Dashboard สาธารณะ</button><button type="button" class="btn btn-sm btn-outline-info" onclick="openITPublicDashboardLinkV703(\'itasset-dashboard\')"><i class="bi bi-hdd-network"></i> ลิงก์ทรัพย์สิน/License</button><button type="button" class="btn btn-sm btn-outline-danger" onclick="openITPublicDashboardLinkV703(\'itrepair-dashboard\')"><i class="bi bi-tools"></i> ลิงก์ Helpdesk</button></div>');
+  }
+
+  window.openITAssetFormV70=async function(assetId){
+    let data={assets:[]}; try{data=await loadITDataV703(false);}catch(e){}
+    const a=(data.assets||[]).find(x=>String(x.assetId)===String(assetId))||{};
+    const depts=await getDepartmentsV703(data);
+    const html='<div class="haos-v703-form"><div class="haos-form-hero"><h5 class="fw-bold mb-1"><i class="bi bi-hdd-network"></i> '+(assetId?'แก้ไขทรัพย์สิน IT':'เพิ่มทรัพย์สิน IT')+'</h5><div class="small opacity-75">กรอกข้อมูลอุปกรณ์ ผู้ใช้งาน กลุ่มงาน สถานที่ สถานะ และรูปประกอบในหน้าเดียว</div></div>'+
+      '<div class="haos-form-section"><div class="haos-form-title"><i class="bi bi-info-circle"></i> ข้อมูลทรัพย์สิน</div><div class="row g-2">'+
+      '<div class="col-md-4">'+labelV703('รหัสทรัพย์สิน','รหัสครุภัณฑ์หรือรหัสที่หน่วยงานใช้ติดตามอุปกรณ์')+'<input id="assetCodeV70" class="form-control" value="'+esc(a.assetCode||'')+'"></div>'+
+      '<div class="col-md-8">'+labelV703('ชื่อทรัพย์สิน *','ชื่ออุปกรณ์ที่ผู้ใช้เข้าใจง่าย เช่น Notebook Dell งานบริหาร')+'<input id="assetNameV70" class="form-control" value="'+esc(a.assetName||'')+'" placeholder="เช่น Notebook Dell งานบริหาร"></div>'+
+      '<div class="col-md-4">'+labelV703('หมวดอุปกรณ์','เลือกชนิดอุปกรณ์เพื่อใช้ค้นหาและสรุป Dashboard')+'<select id="assetCategoryV70" class="form-select">'+optionsV703(['คอมพิวเตอร์ตั้งโต๊ะ','โน้ตบุ๊ก','เครื่องพิมพ์','อุปกรณ์เครือข่าย','แท็บเล็ต','อุปกรณ์ต่อพ่วง','อื่นๆ'],a.category||'โน้ตบุ๊ก')+'</select></div>'+
+      '<div class="col-md-4">'+labelV703('ยี่ห้อ','ระบุยี่ห้ออุปกรณ์ เช่น Dell, HP, Lenovo')+'<input id="assetBrandV70" class="form-control" value="'+esc(a.brand||'')+'"></div>'+
+      '<div class="col-md-4">'+labelV703('รุ่น','ระบุรุ่นหรือ Model ของอุปกรณ์')+'<input id="assetModelV70" class="form-control" value="'+esc(a.model||'')+'"></div>'+
+      '<div class="col-md-4">'+labelV703('เลขประจำเครื่อง','Serial Number หรือเลขเครื่องสำหรับตรวจสอบประกัน')+'<input id="assetSerialV70" class="form-control" value="'+esc(a.serialNumber||'')+'"></div>'+
+      '<div class="col-md-8">'+labelV703('รายละเอียดสเปก','ระบุ CPU, RAM, Storage หรือรายละเอียดสำคัญอื่นๆ')+'<input id="assetSpecV70" class="form-control" value="'+esc(a.spec||'')+'" placeholder="CPU / RAM / Storage"></div>'+
+      '</div></div>'+
+      '<div class="haos-form-section"><div class="haos-form-title"><i class="bi bi-person-badge"></i> ผู้ใช้งานและสถานที่</div><div class="row g-2">'+
+      '<div class="col-md-4">'+labelV703('ผู้ใช้งาน','ชื่อผู้รับผิดชอบหรือผู้ใช้งานหลัก')+'<input id="assetUserV70" class="form-control" value="'+esc(a.currentUserName||'')+'"></div>'+
+      '<div class="col-md-4">'+labelV703('เบอร์ผู้ใช้งาน','เบอร์ที่ติดต่อได้เมื่อมีการซ่อมหรือตรวจสอบ')+'<input id="assetUserPhoneV70" class="form-control" value="'+esc(a.currentUserPhone||'')+'"></div>'+
+      '<div class="col-md-4">'+labelV703('กลุ่มงานเจ้าของ','เลือกกลุ่มงานจากข้อมูลผู้ใช้ในระบบ เพื่อลดการพิมพ์ผิด')+'<select id="assetDeptV70" class="form-select">'+optionsV703(depts,a.ownerDepartment||getUserV703().department||'')+'</select></div>'+
+      '<div class="col-md-6">'+labelV703('สถานที่ติดตั้ง','ห้อง อาคาร หรือจุดติดตั้งอุปกรณ์')+'<input id="assetLocationV70" class="form-control" value="'+esc(a.location||'')+'"></div>'+
+      '<div class="col-md-3">'+labelV703('สถานะ','สถานะการใช้งานปัจจุบันของทรัพย์สิน')+'<select id="assetStatusV70" class="form-select">'+optionsV703(['ใช้งาน','ว่าง','ส่งซ่อม','ชำรุด','จำหน่าย'],a.status||'ใช้งาน')+'</select></div>'+
+      '<div class="col-md-3">'+labelV703('สภาพ','สภาพโดยรวมของอุปกรณ์')+'<select id="assetConditionV70" class="form-select">'+optionsV703(['ดี','พอใช้','ต้องซ่อม','เสื่อมสภาพ'],a.condition||'ดี')+'</select></div>'+
+      '</div></div>'+
+      '<div class="haos-form-section"><div class="haos-form-title"><i class="bi bi-images"></i> รูปภาพและหมายเหตุ</div><div class="row g-2">'+
+      '<div class="col-md-4">'+labelV703('วันหมดประกัน','วันสิ้นสุดประกันของอุปกรณ์ ถ้ามี')+'<input id="assetWarrantyEndV70" type="date" class="form-control" value="'+esc(a.warrantyEnd||'')+'"></div>'+
+      '<div class="col-md-8">'+labelV703('หมายเหตุ','ข้อมูลเพิ่มเติมที่ควรทราบ')+'<input id="assetRemarkV70" class="form-control" value="'+esc(a.remark||'')+'"></div>'+
+      '<div class="col-md-12">'+labelV703('รูปภาพทรัพย์สิน','แนบรูปอุปกรณ์ ป้ายครุภัณฑ์ หรือจุดติดตั้งได้สูงสุด 10 รูป')+imageInputV703('assetPhotosV703',a.photoUrl||'')+'</div>'+
+      '</div></div></div>';
+    const r=await Swal.fire({title:'',html,width:980,customClass:{popup:'haos-v703-form'},showCancelButton:true,confirmButtonText:'บันทึกทรัพย์สิน',cancelButtonText:'ยกเลิก',showLoaderOnConfirm:true,allowOutsideClick:()=>!Swal.isLoading(),didOpen:()=>{bindInfoV703(Swal.getPopup());bindFileCountV703('assetPhotosV703');},preConfirm:async()=>{const assetName=$('assetNameV70').value.trim();if(!assetName){Swal.showValidationMessage('กรุณาระบุชื่อทรัพย์สิน');return false;}try{const photoUrl=await uploadImagesV703('assetPhotosV703',a.photoUrl||'');return {assetId:a.assetId||'',assetCode:$('assetCodeV70').value.trim(),assetName,category:$('assetCategoryV70').value,brand:$('assetBrandV70').value.trim(),model:$('assetModelV70').value.trim(),serialNumber:$('assetSerialV70').value.trim(),spec:$('assetSpecV70').value.trim(),currentUserName:$('assetUserV70').value.trim(),currentUserPhone:$('assetUserPhoneV70').value.trim(),ownerDepartment:$('assetDeptV70').value,location:$('assetLocationV70').value.trim(),status:$('assetStatusV70').value,condition:$('assetConditionV70').value,warrantyEnd:$('assetWarrantyEndV70').value,photoUrl,remark:$('assetRemarkV70').value.trim()};}catch(e){Swal.showValidationMessage(e.message||String(e));return false;}}});
+    if(!r.isConfirmed)return;
+    try{const res=await gasV703('saveITAssetV70',[r.value,actorV703()]);if(!res||!res.success)throw new Error(res?.message||'บันทึกไม่สำเร็จ');itCacheV703=null;window.haosITV702Data=null;Swal.fire({icon:'success',title:'บันทึกทรัพย์สินแล้ว',timer:1200,showConfirmButton:false});if(typeof loadITAssetModuleV70==='function')loadITAssetModuleV70();}catch(e){Swal.fire('ผิดพลาด',e.message||String(e),'error');}
+  };
+
+  window.openITLicenseFormV70=async function(assetId){
+    let data={assets:[]}; try{data=await loadITDataV703(false);}catch(e){}
+    const assetOptions='<option value="">ไม่ผูกกับอุปกรณ์ตอนนี้</option>'+(data.assets||[]).map(a=>'<option value="'+esc(a.assetId)+'" '+(String(assetId)===String(a.assetId)?'selected':'')+'>'+esc((a.assetCode||a.assetName||'')+' - '+(a.assetName||''))+'</option>').join('');
+    const html='<div class="haos-v703-form"><div class="haos-form-hero" style="background:linear-gradient(135deg,#7c3aed,#0ea5e9)"><h5 class="fw-bold mb-1"><i class="bi bi-key"></i> เพิ่ม Software / License</h5><div class="small opacity-75">บันทึกซอฟต์แวร์ สิทธิ์ใช้งาน วันหมดอายุ การแจ้งเตือน และจับคู่กับทรัพย์สิน IT</div></div>'+
+      '<div class="haos-form-section"><div class="haos-form-title"><i class="bi bi-window-stack"></i> ข้อมูลซอฟต์แวร์</div><div class="row g-2">'+
+      '<div class="col-md-6">'+labelV703('ชื่อซอฟต์แวร์ *','ชื่อโปรแกรมหรือบริการ เช่น Microsoft 365, Antivirus, Adobe')+'<input id="swNameV70" class="form-control" placeholder="เช่น Microsoft 365 / Antivirus"></div>'+
+      '<div class="col-md-3">'+labelV703('หมวดซอฟต์แวร์','ใช้แยกประเภทเพื่อค้นหาและสรุปผล')+'<input id="swCatV70" class="form-control" value="โปรแกรมสำนักงาน"></div>'+
+      '<div class="col-md-3">'+labelV703('ประเภทสิทธิ์','รูปแบบการนับสิทธิ์ใช้งานของ License')+'<select id="licTypeV70" class="form-select"><option>รายเครื่อง</option><option>รายผู้ใช้</option><option>องค์กร/หลายสิทธิ์</option><option>รายปี/สมัครสมาชิก</option><option>ฟรีแวร์</option><option>โอเพนซอร์ส</option></select></div>'+
+      '<div class="col-md-6">'+labelV703('ชื่อ License','ชื่อแพ็กเกจหรือชื่อสัญญา License')+'<input id="licNameV70" class="form-control"></div>'+
+      '<div class="col-md-3">'+labelV703('จำนวนสิทธิ์','จำนวนสิทธิ์ทั้งหมดที่หน่วยงานมี')+'<input id="seatTotalV70" type="number" min="0" class="form-control" value="1"></div>'+
+      '<div class="col-md-3">'+labelV703('ใช้งานแล้ว','จำนวนสิทธิ์ที่ถูกใช้งานแล้ว')+'<input id="seatUsedV70" type="number" min="0" class="form-control" value="1"></div>'+
+      '</div></div>'+
+      '<div class="haos-form-section"><div class="haos-form-title"><i class="bi bi-shield-lock"></i> วันหมดอายุและการจับคู่</div><div class="row g-2">'+
+      '<div class="col-md-4">'+labelV703('รหัส License แบบปิดบางส่วน','เก็บเฉพาะบางส่วนเพื่อความปลอดภัย เช่น XXXXX-1234')+'<input id="licKeyV70" class="form-control" placeholder="XXXXX-1234"></div>'+
+      '<div class="col-md-4">'+labelV703('วันหมดอายุ','วันที่ License หรือสัญญาสิ้นสุด')+'<input id="licExpiryV70" type="date" class="form-control"></div>'+
+      '<div class="col-md-4">'+labelV703('แจ้งเตือนก่อน (วัน)','ระบบใช้ค่านี้เพื่อเตือนก่อนหมดอายุ อย่างน้อยควรเป็น 60 วัน')+'<input id="licAlertDaysV70" type="number" min="1" class="form-control" value="60"></div>'+
+      '<div class="col-md-12">'+labelV703('จับคู่กับทรัพย์สิน IT','เลือกอุปกรณ์ที่ติดตั้งหรือใช้งาน License นี้')+'<select id="licAssetV70" class="form-select">'+assetOptions+'</select></div>'+
+      '<div class="col-md-12">'+labelV703('แนบรูป/หลักฐาน License','แนบรูปใบเสนอราคา หน้าจอ License หรือเอกสารยืนยันได้สูงสุด 10 รูป')+imageInputV703('licensePhotosV703','')+'</div>'+
+      '<div class="col-md-12">'+labelV703('หมายเหตุ','ข้อมูลเพิ่มเติมเกี่ยวกับ License นี้')+'<input id="licRemarkV70" class="form-control"></div>'+
+      '</div></div></div>';
+    const r=await Swal.fire({title:'',html,width:900,customClass:{popup:'haos-v703-form'},showCancelButton:true,confirmButtonText:'บันทึก License',cancelButtonText:'ยกเลิก',showLoaderOnConfirm:true,allowOutsideClick:()=>!Swal.isLoading(),didOpen:()=>{bindInfoV703(Swal.getPopup());bindFileCountV703('licensePhotosV703');},preConfirm:async()=>{const softwareName=$('swNameV70').value.trim();if(!softwareName){Swal.showValidationMessage('กรุณาระบุชื่อซอฟต์แวร์');return false;}try{const attachmentUrl=await uploadImagesV703('licensePhotosV703','');return {softwareName,softwareCategory:$('swCatV70').value.trim(),licenseType:$('licTypeV70').value,licenseName:$('licNameV70').value.trim(),seatTotal:$('seatTotalV70').value,seatUsed:$('seatUsedV70').value,licenseKeyMasked:$('licKeyV70').value.trim(),expiryDate:$('licExpiryV70').value,renewalAlertDays:$('licAlertDaysV70').value||60,assetId:$('licAssetV70').value,attachmentUrl,remark:$('licRemarkV70').value.trim()};}catch(e){Swal.showValidationMessage(e.message||String(e));return false;}}});
+    if(!r.isConfirmed)return;
+    try{const res=await gasV703('saveITSoftwareLicenseV70',[r.value,actorV703()]);if(!res||!res.success)throw new Error(res?.message||'บันทึกไม่สำเร็จ');itCacheV703=null;window.haosITV702Data=null;Swal.fire({icon:'success',title:'บันทึก License แล้ว',timer:1200,showConfirmButton:false});if(typeof loadITAssetModuleV70==='function')loadITAssetModuleV70();}catch(e){Swal.fire('ผิดพลาด',e.message||String(e),'error');}
+  };
+
+  window.openITRepairTicketFormV70=async function(assetId){
+    let data={assets:[]}; try{data=await loadITDataV703(false);}catch(e){}
+    const assets=data.assets||[], u=getUserV703();
+    const assetOptions='<option value="">ไม่ผูกกับทรัพย์สิน / ไม่พบในทะเบียน</option>'+assets.map(a=>'<option value="'+esc(a.assetId)+'" '+(String(assetId)===String(a.assetId)?'selected':'')+'>'+esc((a.assetCode||a.assetName||'')+' - '+(a.assetName||''))+'</option>').join('');
+    const html='<div class="haos-v703-form"><div class="haos-form-hero" style="background:linear-gradient(135deg,#ef4444,#f97316)"><h5 class="fw-bold mb-1"><i class="bi bi-tools"></i> แจ้งซ่อม IT / Helpdesk</h5><div class="small opacity-75">เลือกทรัพย์สินจากทะเบียน อธิบายปัญหา และแนบรูปประกอบเพื่อให้ทีม IT ประเมินได้เร็วขึ้น</div></div>'+
+      '<div class="haos-form-section"><div class="haos-form-title"><i class="bi bi-hdd-network"></i> ทรัพย์สินที่เกี่ยวข้อง</div>'+labelV703('เลือกทรัพย์สิน','ถ้าเลือกจากทะเบียน ระบบจะดึงชื่อเครื่องและสถานที่มาช่วยลดการกรอกซ้ำ')+'<select id="repairAssetV70" class="form-select">'+assetOptions+'</select><div id="repairAssetPreviewV703" class="haos-v703-attachment-note mt-2">เลือกทรัพย์สินเพื่อดูข้อมูลย่อ</div></div>'+
+      '<div class="haos-form-section"><div class="haos-form-title"><i class="bi bi-exclamation-triangle"></i> รายละเอียดปัญหา</div><div class="row g-2">'+
+      '<div class="col-md-4">'+labelV703('หมวดปัญหา','เลือกกลุ่มปัญหาเพื่อส่งต่อและวิเคราะห์สถิติ')+'<select id="repairCatV70" class="form-select"><option>ฮาร์ดแวร์</option><option>ซอฟต์แวร์</option><option>ระบบเครือข่าย</option><option>เครื่องพิมพ์</option><option>บัญชีผู้ใช้</option><option>อื่นๆ</option></select></div>'+
+      '<div class="col-md-4">'+labelV703('ความเร่งด่วน','เลือกระดับความเร่งด่วนตามผลกระทบต่อการทำงาน')+'<select id="repairPriorityV70" class="form-select"><option>ปกติ</option><option>ต่ำ</option><option>สูง</option><option>วิกฤต</option></select></div>'+
+      '<div class="col-md-4">'+labelV703('ผลกระทบ','ระบุว่าปัญหากระทบใครหรืองานใด เช่น ใช้งานไม่ได้ทั้งห้อง')+'<input id="repairImpactV70" class="form-control" placeholder="เช่น ใช้งานไม่ได้ / กระทบงานบริการ"></div>'+
+      '<div class="col-md-12">'+labelV703('หัวข้อปัญหา *','สรุปปัญหาให้สั้นและชัดเจน')+'<input id="repairTitleV70" class="form-control" placeholder="เช่น เครื่องเปิดไม่ติด / พิมพ์เอกสารไม่ได้"></div>'+
+      '<div class="col-md-12">'+labelV703('รายละเอียดเพิ่มเติม','อธิบายอาการ ขั้นตอนก่อนเกิดปัญหา หรือข้อความแจ้งเตือนที่พบ')+'<textarea id="repairDetailV70" class="form-control" rows="5" placeholder="อธิบายอาการหรือ error ที่พบ"></textarea></div>'+
+      '<div class="col-md-12">'+labelV703('แนบรูปปัญหา','แนบรูปหน้าจอ อุปกรณ์ หรือข้อความ error ได้สูงสุด 10 รูป')+imageInputV703('repairPhotosV703','')+'</div>'+
+      '</div></div></div>';
+    function preview(){const a=assets.find(x=>String(x.assetId)===String($('repairAssetV70')?.value));const box=$('repairAssetPreviewV703');if(!box)return;box.innerHTML=a?'<b>'+esc(a.assetName||'-')+'</b><div class="small">'+esc(a.assetCode||'-')+' • '+esc(a.currentUserName||'-')+' • '+esc(a.location||'-')+'</div><div class="small">สถานะ: '+esc(a.status||'-')+' • ประกันถึง '+esc(a.warrantyEnd||'-')+'</div>':'เลือกทรัพย์สินเพื่อดูข้อมูลย่อ';}
+    const r=await Swal.fire({title:'',html,width:920,customClass:{popup:'haos-v703-form'},showCancelButton:true,confirmButtonText:'ส่งแจ้งซ่อม',cancelButtonText:'ยกเลิก',showLoaderOnConfirm:true,allowOutsideClick:()=>!Swal.isLoading(),didOpen:()=>{bindInfoV703(Swal.getPopup());bindFileCountV703('repairPhotosV703');$('repairAssetV70')?.addEventListener('change',preview);preview();},preConfirm:async()=>{const a=assets.find(x=>String(x.assetId)===String($('repairAssetV70').value))||{};const problemTitle=$('repairTitleV70').value.trim();if(!problemTitle){Swal.showValidationMessage('กรุณาระบุหัวข้อปัญหา');return false;}try{const attachmentUrl=await uploadImagesV703('repairPhotosV703','');return {assetId:$('repairAssetV70').value,assetCode:a.assetCode||'',assetName:a.assetName||'',requesterName:u.fullName||u.name||'',requesterPhone:u.phone||'',requesterDepartment:u.department||'',location:a.location||'',problemCategory:$('repairCatV70').value,priority:$('repairPriorityV70').value,impact:$('repairImpactV70').value.trim(),problemTitle,problemDetail:$('repairDetailV70').value.trim(),attachmentUrl};}catch(e){Swal.showValidationMessage(e.message||String(e));return false;}}});
+    if(!r.isConfirmed)return;
+    try{const res=await gasV703('saveITRepairTicketV70',[r.value,actorV703()]);if(!res||!res.success)throw new Error(res?.message||'บันทึกไม่สำเร็จ');itCacheV703=null;window.haosITV702Data=null;Swal.fire({icon:'success',title:'ส่งแจ้งซ่อมแล้ว',text:res.ticketNo||'',timer:1500,showConfirmButton:false});if(typeof loadITAssetModuleV70==='function')loadITAssetModuleV70();}catch(e){Swal.fire('ผิดพลาด',e.message||String(e),'error');}
+  };
+
+  function localizeITRepairFiltersV703(){
+    const st=$('itRepairStatusV70'); if(st&&!st.dataset.v703Thai){st.dataset.v703Thai='1';st.innerHTML='<option value="">ทั้งหมด</option><option value="New">ใหม่</option><option value="Assigned">รับงานแล้ว</option><option value="In Progress">กำลังดำเนินการ</option><option value="Waiting Parts">รออะไหล่</option><option value="Waiting Vendor">รอผู้จำหน่าย</option><option value="Resolved">แก้ไขแล้ว</option><option value="Closed">ปิดงาน</option><option value="Cancelled">ยกเลิก</option>';}
+    const pr=$('itRepairPriorityV70'); if(pr&&!pr.dataset.v703Thai){pr.dataset.v703Thai='1';pr.innerHTML='<option value="">ทั้งหมด</option><option>ต่ำ</option><option>ปกติ</option><option>สูง</option><option>วิกฤต</option><option value="Low">ต่ำ (ข้อมูลเดิม)</option><option value="Normal">ปกติ (ข้อมูลเดิม)</option><option value="High">สูง (ข้อมูลเดิม)</option><option value="Critical">วิกฤต (ข้อมูลเดิม)</option>';}
+  }
+
+  const prevInitIT=window.initItServicesHub;
+  window.initItServicesHub=function(){const r=prevInitIT?prevInitIT.apply(this,arguments):true;setTimeout(()=>{ensureITPublicLinksV703();localizeITRepairFiltersV703();},300);return r;};
+  const prevLoadIT=window.loadITAssetModuleV70;
+  if(typeof prevLoadIT==='function')window.loadITAssetModuleV70=function(){const r=prevLoadIT.apply(this,arguments);setTimeout(()=>{ensureITPublicLinksV703();localizeITRepairFiltersV703();},500);return r;};
+
+  function installV703(){syncReportToolsV703();enforceUnifiedScheduleV703();ensureITPublicLinksV703();localizeITRepairFiltersV703();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installV703,{once:true}); else installV703();
+  setTimeout(installV703,800); setTimeout(installV703,1800);
+  let queued=false; new MutationObserver(()=>{if(queued)return;queued=true;setTimeout(()=>{queued=false;installV703();},180);}).observe(document.documentElement,{childList:true,subtree:true});
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
