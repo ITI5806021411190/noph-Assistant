@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-2-schedule-report-it-ux';
+const CACHE_NAME = 'haos-v70-3-stability-public-it-forms';
 const CORE = ['/', '/index.html', '/public.html', '/manifest.json', '/icon-192.png', '/icon-512.png', '/logo-moph.png'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(CORE)).catch(() => {}));
