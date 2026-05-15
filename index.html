@@ -9280,7 +9280,12 @@ HAOS v68.6 FINISHING FIX
     unlockSignatureName();
   }
   ready(()=>{installAll(); setTimeout(installAll,700); setTimeout(installAll,1800);});
-  const observer=new MutationObserver(()=>installAll());
+  let observerQueued=false;
+  const observer=new MutationObserver(()=>{
+    if(observerQueued) return;
+    observerQueued=true;
+    setTimeout(()=>{observerQueued=false; installAll();},150);
+  });
   ready(()=>observer.observe(document.body,{childList:true,subtree:true}));
   console.info('HAOS '+PATCH+' loaded');
 })();
@@ -9442,17 +9447,40 @@ HAOS v68.6 FINISHING FIX
   window.renderReportCalendar_=function(elementId,reports,type){ return renderReportCalendarFull(type==='my'?'my':'team'); };
   function installReportButtons(){
     [['myReport','setMyReportViewMode'],['headReport','setHeadReportViewMode']].forEach(([scope,fn])=>{
-      const btn=qa('button').find(b=>(b.getAttribute('onclick')||'').includes(fn+"('calendar')")||(b.getAttribute('onclick')||'').includes(fn+"('month')"));
+      const btn=qa('button').find(b=>(b.getAttribute('onclick')||'').includes(fn+"('list')")||(b.getAttribute('onclick')||'').includes(fn+"('calendar')")||(b.getAttribute('onclick')||'').includes(fn+"('month')")||(b.dataset.haosV69View===scope));
       const holder=btn?.parentElement; if(!holder) return;
-      let hasCard=false, hasCalendar=false;
-      qa('button',holder).forEach(b=>{
+      const buttons=qa('button',holder);
+      const listBtn=buttons.find(b=>(b.getAttribute('onclick')||'').includes(fn+"('list')"));
+      let cardBtn=buttons.find(b=>b.dataset.mode==='card'||(b.getAttribute('onclick')||'').includes(fn+"('card')"));
+      let calBtn=buttons.find(b=>b.dataset.mode==='calendar'||(b.getAttribute('onclick')||'').includes(fn+"('month')"));
+      if(!cardBtn) cardBtn=buttons.find(b=>(b.getAttribute('onclick')||'').includes(fn+"('calendar')")&&b!==calBtn);
+      if(!calBtn) calBtn=buttons.find(b=>(b.getAttribute('onclick')||'').includes(fn+"('calendar')")&&b!==cardBtn);
+      if(!calBtn&&cardBtn){
+        cardBtn.insertAdjacentHTML('afterend','<button type="button" data-haos-v69-view="'+scope+'" data-mode="calendar" class="btn btn-sm btn-outline-primary" onclick="'+fn+'(\'calendar\')"><i class="bi bi-calendar3"></i> ปฏิทิน</button>');
+        calBtn=cardBtn.nextElementSibling;
+      }
+      if(listBtn){
+        listBtn.setAttribute('data-haos-v69-view',scope);
+        listBtn.dataset.mode='list';
+        listBtn.setAttribute('onclick',fn+"('list')");
+      }
+      if(cardBtn){
+        cardBtn.setAttribute('data-haos-v69-view',scope);
+        cardBtn.dataset.mode='card';
+        cardBtn.setAttribute('onclick',fn+"('card')");
+        cardBtn.innerHTML='<i class="bi bi-grid-3x3-gap"></i> การ์ด';
+      }
+      if(calBtn){
+        calBtn.setAttribute('data-haos-v69-view',scope);
+        calBtn.dataset.mode='calendar';
+        calBtn.setAttribute('onclick',fn+"('calendar')");
+        calBtn.innerHTML='<i class="bi bi-calendar3"></i> ปฏิทิน';
+      }
+      buttons.forEach(b=>{
         const oc=b.getAttribute('onclick')||'';
-        b.setAttribute('data-haos-v69-view',scope);
-        if(oc.includes("('list')")){b.dataset.mode='list';}
-        else if(oc.includes("('calendar')")&&!hasCard){b.dataset.mode='card'; b.setAttribute('onclick',fn+"('card')"); b.innerHTML='<i class="bi bi-grid-3x3-gap"></i> การ์ด'; hasCard=true;}
-        else if(oc.includes("('month')")||oc.includes("('calendar')")){b.dataset.mode='calendar'; b.setAttribute('onclick',fn+"('calendar')"); b.innerHTML='<i class="bi bi-calendar3"></i> ปฏิทิน'; hasCalendar=true;}
+        const isReportBtn=b.dataset.haosV69View===scope||oc.includes(fn+'(');
+        if(isReportBtn&&b!==listBtn&&b!==cardBtn&&b!==calBtn) b.remove();
       });
-      if(!hasCalendar) holder.insertAdjacentHTML('beforeend','<button type="button" data-haos-v69-view="'+scope+'" data-mode="calendar" class="btn btn-sm btn-outline-primary" onclick="'+fn+'(\'calendar\')"><i class="bi bi-calendar3"></i> ปฏิทิน</button>');
     });
   }
 
@@ -9488,7 +9516,12 @@ HAOS v68.6 FINISHING FIX
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install,{once:true}); else install();
   setTimeout(install,500); setTimeout(install,1500);
-  new MutationObserver(()=>install()).observe(document.documentElement,{childList:true,subtree:true});
+  let installQueued=false;
+  new MutationObserver(()=>{
+    if(installQueued) return;
+    installQueued=true;
+    setTimeout(()=>{installQueued=false; install();},120);
+  }).observe(document.documentElement,{childList:true,subtree:true});
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
