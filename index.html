@@ -9935,5 +9935,328 @@ HAOS v68.6 FINISHING FIX
 })();
 </script>
 
+<style id="haos-v70-2-ux-style">
+  #workspaceFilterBoxV684{margin-bottom:16px!important}
+  .workspace-table-card .haos-v691-table-wrap{padding-top:8px!important}
+  #haosUnifiedScheduleShellV692.haos-v702-merged #haosUnifiedScheduleBodyV692{display:none!important}
+  .haos-v702-unified-card{border:1px solid rgba(37,99,235,.20)!important;border-radius:22px!important;overflow:hidden;background:#fff;box-shadow:0 16px 42px rgba(15,23,42,.08)}
+  .haos-v702-unified-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 18px;background:linear-gradient(90deg,#eff6ff,#ecfeff);border-bottom:1px solid rgba(148,163,184,.25)}
+  .haos-v702-view-tools{display:inline-flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .haos-v702-view-tools .btn{border-radius:14px!important;font-weight:800;transition:none!important}
+  .haos-v702-view-tools .active{background:#0d6efd!important;color:#fff!important;border-color:#0d6efd!important;box-shadow:0 8px 18px rgba(13,110,253,.18)}
+  .haos-v702-current-view{font-size:.84rem;font-weight:800;color:#075985;background:#e0f2fe;border:1px solid #bae6fd;border-radius:999px;padding:7px 11px}
+  .haos-v702-filter{margin:14px;border:1px solid rgba(14,165,233,.22);border-radius:18px;background:linear-gradient(180deg,#f0f9ff,#f8fafc);padding:14px}
+  .haos-v702-table{border-collapse:separate!important;border-spacing:0 8px!important;margin-bottom:0!important}
+  .haos-v702-table thead th{background:#e0f2fe!important;color:#075985!important;border:0!important;font-weight:900!important;padding:12px 14px!important;white-space:nowrap}
+  .haos-v702-table tbody tr{background:#fff;box-shadow:0 8px 20px rgba(15,23,42,.06)}
+  .haos-v702-table tbody td{border-top:1px solid rgba(148,163,184,.16)!important;border-bottom:1px solid rgba(148,163,184,.16)!important;padding:12px 14px!important}
+  .haos-v702-kind{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 10px;font-size:.78rem;font-weight:900;white-space:nowrap}
+  .haos-v702-kind.my{background:#dbeafe;color:#1d4ed8}
+  .haos-v702-kind.dept{background:#ccfbf1;color:#0f766e}
+  .haos-v702-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;padding:14px}
+  .haos-v702-card{border:1px solid rgba(148,163,184,.25);border-radius:18px;background:#fff;padding:14px;box-shadow:0 10px 26px rgba(15,23,42,.06)}
+  .haos-v702-card .title{font-weight:900;color:#0f172a;margin-bottom:7px}
+  .haos-v702-card .meta{font-size:.86rem;color:#64748b;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+  .haos-v702-report-tools{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .haos-v702-report-tools .btn{border-radius:14px!important;font-weight:800;transition:none!important}
+  .haos-v702-report-tools .active{background:#0d6efd!important;color:#fff!important;border-color:#0d6efd!important}
+  .haos-v702-report-popup{font-family:inherit;text-align:left}
+  .haos-v702-report-hero{margin:-4px -2px 14px;border-radius:18px;padding:16px;color:#fff;background:linear-gradient(135deg,#2563eb,#0891b2)}
+  .haos-v702-report-hero h5{font-weight:900;margin:0 0 5px}
+  .haos-v702-report-detail{border:1px solid rgba(148,163,184,.26);border-radius:16px;background:#fff;padding:14px;white-space:pre-wrap;line-height:1.7}
+  .haos-v702-dashboard-card{border:1px solid rgba(14,165,233,.22);border-radius:22px;background:linear-gradient(180deg,#fff,#f8fbff);box-shadow:0 16px 42px rgba(15,23,42,.08);overflow:hidden}
+  .haos-v702-dashboard-hero{padding:18px;background:linear-gradient(135deg,#0f766e,#0284c7);color:#fff;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+  .haos-v702-dashboard-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+  .haos-v702-kpi{border:1px solid rgba(148,163,184,.22);border-radius:18px;background:#fff;padding:14px;box-shadow:0 8px 20px rgba(15,23,42,.05)}
+  .haos-v702-kpi small{display:block;color:#64748b;font-weight:800}.haos-v702-kpi b{display:block;font-size:1.75rem;color:#0f172a;margin-top:4px}
+  .haos-v702-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+  .haos-v702-list-item{border:1px solid rgba(148,163,184,.22);border-radius:16px;background:#fff;padding:12px}
+  .haos-v702-form .haos-form-hero{border-radius:20px;padding:16px;color:#fff;background:linear-gradient(135deg,#0ea5e9,#2563eb);margin-bottom:14px;text-align:left}
+  .haos-v702-form .haos-form-section{border:1px solid rgba(148,163,184,.24);border-radius:18px;background:#fff;padding:14px;margin-bottom:12px;text-align:left}
+  .haos-v702-form .haos-form-title{font-weight:900;color:#075985;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .haos-v702-asset-preview{border:1px dashed rgba(14,165,233,.45);border-radius:16px;background:#f0f9ff;padding:12px;margin-top:10px}
+</style>
+<script id="haos-v70-2-ux-script">
+(function(){
+  const PATCH='v70.2-schedule-report-it-ux';
+  if(window.__HAOS_V702_UX__)return;
+  window.__HAOS_V702_UX__=true;
+  const $=id=>document.getElementById(id);
+  const qa=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const clean=v=>String(v??'').replace(/\s+/g,' ').trim();
+  function getUserV702(){try{return window.user||user||{};}catch(e){return window.user||{};}}
+  function phoneKey(v){return String(v||'').replace(/'/g,'').trim();}
+  function gasV702(fn,args){return new Promise((resolve,reject)=>{try{google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run,args||[]);}catch(e){reject(e);}});}
+  function dateObj(v){if(!v)return null;if(v instanceof Date&&!isNaN(v))return v;let d=new Date(v);if(!isNaN(d))return d;const m=String(v).match(/(\d{1,2})[\/\-. ](\d{1,2})[\/\-. ](\d{4})/);if(m){let y=+m[3];if(y>2400)y-=543;d=new Date(y,+m[2]-1,+m[1]);if(!isNaN(d))return d;}return null;}
+  function thDate(v){const d=dateObj(v);return d?d.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'numeric'}):esc(v||'-');}
+  function badgeCls(status){try{return window.getScheduleBadgeClass?window.getScheduleBadgeClass(status):'bg-info text-dark';}catch(e){return 'bg-info text-dark';}}
+
+  function cleanBookingLinkButton(){
+    const btn=$('itBookingLinkBtnV49');
+    if(!btn)return;
+    if(btn.closest('#itAssetPanelV70,#itRepairPanelV70,#itAssetDashboardPanelV702,#itRepairDashboardPanelV702')){
+      const target=document.querySelector('#itBookingPanel .card-header .d-flex.gap-2') || document.querySelector('#itservices-pane>.d-flex .d-flex');
+      if(target) target.insertBefore(btn,target.firstChild);
+      else btn.remove();
+    }
+  }
+
+  function allSchedules(){
+    const my=(window.mySchedulesGlobal||[]).map(x=>Object.assign({},x,{__scope:'my'}));
+    const dept=(window.departmentSchedulesGlobal||[]).map(x=>Object.assign({},x,{__scope:'dept'}));
+    const seen=new Set(), out=[];
+    my.concat(dept).forEach((x,i)=>{
+      const key=(x.id||x.publicId||x.eventId||i)+'|'+x.__scope;
+      if(!seen.has(key)){seen.add(key);out.push(x);}
+    });
+    return out;
+  }
+  function passPeriod(item,period){
+    if(!period)return true;
+    const d=dateObj(item.rawStartTime||item.startTime||item.start||item.date);
+    if(!d)return true;
+    const now=new Date(); const start=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    const diff=Math.floor((new Date(d.getFullYear(),d.getMonth(),d.getDate())-start)/86400000);
+    if(period==='today')return diff===0;
+    if(period==='week')return diff>=0&&diff<=7;
+    if(period==='month')return diff>=0&&diff<=30;
+    return true;
+  }
+  function filteredSchedules(){
+    const q=clean($('unifiedScheduleSearchV702')?.value).toLowerCase();
+    const scope=$('unifiedScheduleScopeV702')?.value||'';
+    const status=$('unifiedScheduleStatusV702')?.value||'';
+    const period=$('unifiedSchedulePeriodV702')?.value||'';
+    const sort=$('unifiedScheduleSortV702')?.value||'newest';
+    let list=allSchedules().filter(x=>(!scope||x.__scope===scope)&&(!status||String(x.workStatus||x.status||'')===status)&&passPeriod(x,period)&&(!q||clean(Object.values(x).join(' ')).toLowerCase().includes(q)));
+    list.sort((a,b)=>{
+      if(sort==='name')return clean(a.eventName||a.title).localeCompare(clean(b.eventName||b.title),'th');
+      const da=dateObj(a.rawStartTime||a.startTime||a.start||a.date)?.getTime()||0;
+      const db=dateObj(b.rawStartTime||b.startTime||b.start||b.date)?.getTime()||0;
+      return sort==='oldest'?da-db:db-da;
+    });
+    return list;
+  }
+  function scheduleActions(item){
+    const u=getUserV702();
+    const id=esc(item.id||item.publicId||item.eventId||'');
+    const can=item.__scope==='my'||phoneKey(item.ownerPhone||item.createdByPhone)===phoneKey(u.phone);
+    let html='<button type="button" class="btn btn-outline-info btn-sm text-dark me-1" onclick="viewScheduleDetail(\''+id+'\')"><i class="bi bi-eye"></i></button>';
+    if(can) html+='<button type="button" class="btn btn-outline-warning btn-sm text-dark me-1" onclick="editSchedule(\''+id+'\')"><i class="bi bi-pencil"></i></button><button type="button" class="btn btn-outline-danger btn-sm" onclick="handleDelete(\''+id+'\')"><i class="bi bi-trash"></i></button>';
+    return html;
+  }
+  function scheduleRow(item){
+    const scope=item.__scope==='dept'?'dept':'my';
+    const scopeText=scope==='dept'?'กลุ่มงาน':'ส่วนตัว';
+    const title=item.eventName||item.title||item.name||'-';
+    const loc=item.location||item.eventLocation||'-';
+    const owner=item.ownerName||item.createdBy||item.assigneeName||'-';
+    const status=item.workStatus||item.status||'-';
+    return '<tr><td><span class="haos-v702-kind '+scope+'"><i class="bi '+(scope==='dept'?'bi-people-fill':'bi-person-check')+'"></i>'+scopeText+'</span></td><td><div class="fw-bold text-primary">'+esc(title)+'</div><small class="text-muted">'+esc(loc)+'</small></td><td class="small text-muted">'+esc(item.startTime||item.start||'-')+'</td><td>'+esc(owner)+'</td><td><span class="badge '+badgeCls(status)+'">'+esc(status)+'</span></td><td class="text-end action-menu">'+scheduleActions(item)+'</td></tr>';
+  }
+  function ensureUnifiedSchedule(){
+    const myCard=$('scheduleListDiv')?.closest('.card');
+    const deptCard=$('departmentScheduleTable')?.closest('.card');
+    if(!myCard||!deptCard)return;
+    let shell=$('haosUnifiedScheduleShellV692');
+    if(!shell){
+      shell=document.createElement('section');
+      shell.id='haosUnifiedScheduleShellV692';
+      myCard.parentNode.insertBefore(shell,myCard);
+      shell.appendChild(myCard); shell.appendChild(deptCard);
+    }
+    shell.classList.add('haos-v702-merged');
+    if(!$('haosUnifiedScheduleViewV702')){
+      shell.insertAdjacentHTML('afterbegin',`
+        <section id="haosUnifiedScheduleViewV702" class="haos-v702-unified-card mb-3">
+          <div class="haos-v702-unified-head">
+            <div><h6 class="fw-bold mb-1"><i class="bi bi-calendar2-week text-primary"></i> ตารางงาน/นัดหมายรวม</h6><small class="text-muted">รวมงานส่วนตัวและงานกลุ่มงานไว้ในตารางเดียว โดยแยกด้วยป้ายประเภทในแต่ละแถว</small></div>
+            <div class="haos-v702-view-tools" id="unifiedScheduleViewToolsV702">
+              <span class="haos-v702-current-view" id="unifiedScheduleCurrentViewV702">กำลังดู: รายการ</span>
+              <button type="button" class="btn btn-sm btn-outline-primary active" data-mode="list" onclick="setUnifiedScheduleViewV702('list')"><i class="bi bi-list"></i> รายการ</button>
+              <button type="button" class="btn btn-sm btn-outline-primary" data-mode="card" onclick="setUnifiedScheduleViewV702('card')"><i class="bi bi-grid-3x3-gap"></i> การ์ด</button>
+              <button type="button" class="btn btn-sm btn-outline-primary" data-mode="calendar" onclick="setUnifiedScheduleViewV702('calendar')"><i class="bi bi-calendar3"></i> ปฏิทิน</button>
+            </div>
+          </div>
+          <div class="haos-v702-filter">
+            <div class="row g-2 align-items-end">
+              <div class="col-md-4"><label class="small fw-bold text-muted">ค้นหางาน</label><input id="unifiedScheduleSearchV702" class="form-control" placeholder="ชื่อ สถานที่ รายละเอียด ผู้สร้าง..." oninput="renderUnifiedScheduleV702()"></div>
+              <div class="col-md-2"><label class="small fw-bold text-muted">ประเภท</label><select id="unifiedScheduleScopeV702" class="form-select" onchange="renderUnifiedScheduleV702()"><option value="">ทั้งหมด</option><option value="my">ส่วนตัว</option><option value="dept">กลุ่มงาน</option></select></div>
+              <div class="col-md-2"><label class="small fw-bold text-muted">สถานะ</label><select id="unifiedScheduleStatusV702" class="form-select" onchange="renderUnifiedScheduleV702()"><option value="">ทั้งหมด</option><option>อยู่ระหว่างการดำเนินการ</option><option>ดำเนินการแล้ว</option><option>ยกเลิกสถานะ</option><option>เสร็จสิ้นแต่ยังไม่สมบูรณ์</option></select></div>
+              <div class="col-md-2"><label class="small fw-bold text-muted">ช่วงเวลา</label><select id="unifiedSchedulePeriodV702" class="form-select" onchange="renderUnifiedScheduleV702()"><option value="">ทั้งหมด</option><option value="today">วันนี้</option><option value="week">7 วัน</option><option value="month">30 วัน</option></select></div>
+              <div class="col-md-1"><label class="small fw-bold text-muted">เรียง</label><select id="unifiedScheduleSortV702" class="form-select" onchange="renderUnifiedScheduleV702()"><option value="newest">ล่าสุด</option><option value="oldest">เก่าสุด</option><option value="name">ชื่อ</option></select></div>
+              <div class="col-md-1 d-grid"><button type="button" class="btn btn-outline-secondary" onclick="resetUnifiedScheduleFiltersV702()"><i class="bi bi-arrow-counterclockwise"></i></button></div>
+            </div>
+          </div>
+          <div id="unifiedScheduleListV702" class="table-responsive p-3 pt-0"></div>
+          <div id="unifiedScheduleCardV702" class="haos-v702-card-grid d-none"></div>
+          <div id="unifiedScheduleCalendarV702" class="bg-white p-3 d-none"></div>
+        </section>`);
+    }
+  }
+  window.renderUnifiedScheduleV702=function(){
+    ensureUnifiedSchedule();
+    const mode=window.haosUnifiedScheduleModeV702||'list';
+    const list=filteredSchedules();
+    qa('#unifiedScheduleViewToolsV702 .btn').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));
+    if($('unifiedScheduleCurrentViewV702')) $('unifiedScheduleCurrentViewV702').textContent='กำลังดู: '+({list:'รายการ',card:'การ์ด',calendar:'ปฏิทิน'}[mode]||'รายการ');
+    const listBox=$('unifiedScheduleListV702'), cardBox=$('unifiedScheduleCardV702'), calBox=$('unifiedScheduleCalendarV702');
+    if(listBox)listBox.classList.toggle('d-none',mode!=='list');
+    if(cardBox)cardBox.classList.toggle('d-none',mode!=='card');
+    if(calBox)calBox.classList.toggle('d-none',mode!=='calendar');
+    if(mode==='card'&&cardBox){
+      cardBox.innerHTML=list.length?list.map(item=>'<div class="haos-v702-card"><div class="d-flex justify-content-between gap-2 mb-2"><span class="haos-v702-kind '+(item.__scope==='dept'?'dept':'my')+'">'+(item.__scope==='dept'?'กลุ่มงาน':'ส่วนตัว')+'</span><span class="badge '+badgeCls(item.workStatus||item.status)+'">'+esc(item.workStatus||item.status||'-')+'</span></div><div class="title">'+esc(item.eventName||item.title||'-')+'</div><div class="meta"><span><i class="bi bi-clock"></i> '+esc(item.startTime||item.start||'-')+'</span><span><i class="bi bi-geo-alt"></i> '+esc(item.location||item.eventLocation||'-')+'</span></div><div class="text-end">'+scheduleActions(item)+'</div></div>').join(''):'<div class="text-muted small p-3">ไม่พบรายการตามเงื่อนไข</div>';
+    }
+    if(mode==='calendar'&&calBox){
+      calBox.innerHTML='<div id="unifiedScheduleCalendarInnerV702"></div>';
+      if(window.haosUnifiedScheduleCalendarV702){try{window.haosUnifiedScheduleCalendarV702.destroy();}catch(e){}}
+      if(window.FullCalendar){
+        const events=list.map(item=>{const d=dateObj(item.rawStartTime||item.startTime||item.start||item.date);if(!d)return null;return {title:(item.__scope==='dept'?'[กลุ่มงาน] ':'[ส่วนตัว] ')+(item.eventName||item.title||'-'),start:d,allDay:true,backgroundColor:item.__scope==='dept'?'#0891b2':'#2563eb',borderColor:'transparent',extendedProps:{id:item.id||item.publicId||'',scope:item.__scope}};}).filter(Boolean);
+        const cal=new FullCalendar.Calendar($('unifiedScheduleCalendarInnerV702'),{initialView:'dayGridMonth',locale:'th',height:'auto',headerToolbar:{left:'prev,next today',center:'title',right:'dayGridMonth,timeGridWeek,timeGridDay'},events,eventClick:info=>{const id=info.event.extendedProps.id;if(id&&typeof viewScheduleDetail==='function')viewScheduleDetail(id);}});
+        cal.render(); window.haosUnifiedScheduleCalendarV702=cal;
+      }else calBox.innerHTML='<div class="text-muted p-3">ไม่พบ FullCalendar</div>';
+    }
+    if(mode==='list'&&listBox){
+      listBox.innerHTML='<table class="table haos-v702-table align-middle small"><thead><tr><th>ประเภท</th><th>ชื่องาน</th><th>เวลาเริ่ม</th><th>ผู้สร้าง/เจ้าของ</th><th>สถานะ</th><th class="text-end">จัดการ</th></tr></thead><tbody>'+(list.length?list.map(scheduleRow).join(''):'<tr><td colspan="6" class="text-center text-muted py-4">ไม่พบรายการตามเงื่อนไข</td></tr>')+'</tbody></table>';
+    }
+  };
+  window.setUnifiedScheduleViewV702=function(mode){window.haosUnifiedScheduleModeV702=mode||'list';window.renderUnifiedScheduleV702();};
+  window.resetUnifiedScheduleFiltersV702=function(){['unifiedScheduleSearchV702','unifiedScheduleScopeV702','unifiedScheduleStatusV702','unifiedSchedulePeriodV702'].forEach(id=>{const el=$(id);if(el)el.value='';});if($('unifiedScheduleSortV702'))$('unifiedScheduleSortV702').value='newest';window.renderUnifiedScheduleV702();};
+
+  function reportArray(kind){
+    const arr=kind==='my'?(window.myReportsGlobal||[]):(window.teamReportsGlobal||[]);
+    return Array.isArray(arr)?arr:[];
+  }
+  function reportDate(r){return dateObj(r.rawDate||r.reportDate||r.workDate||r.date||r.createdAt||r.timestamp);}
+  function reportTitle(r,kind){return (kind==='team'&&r.name?String(r.name)+' - ':'')+(r.leaveType||r.status||'รายงาน');}
+  function reportDetailHtml(r,kind){
+    const title=reportTitle(r,kind), status=r.leaveType||r.status||'-', detail=r.details||r.workDetails||r.detail||'-';
+    return '<div class="haos-v702-report-popup"><div class="haos-v702-report-hero"><h5><i class="bi bi-journal-text me-1"></i>'+esc(title)+'</h5><div>'+esc(thDate(r.rawDate||r.reportDate||r.workDate||r.date||r.createdAt))+' '+esc(r.time||r.reportTime||'')+'</div></div><div class="row g-2 mb-3"><div class="col-md-6"><div class="haos-v702-kpi"><small>สถานะรายงาน</small><b style="font-size:1.1rem">'+esc(status)+'</b></div></div><div class="col-md-6"><div class="haos-v702-kpi"><small>ผู้รายงาน</small><b style="font-size:1.1rem">'+esc(r.name||r.reporterName||getUserV702().fullName||'-')+'</b></div></div></div><div class="haos-v702-report-detail">'+esc(detail)+'</div>'+(r.remarks||r.remark?'<div class="small text-muted mt-2">'+esc(r.remarks||r.remark)+'</div>':'')+'</div>';
+  }
+  function updateReportTools(kind,mode){
+    const scope=kind==='my'?'myReport':'headReport';
+    const holder=$(kind==='my'?'myReportPageSize':'headReportPageSize')?.parentElement;
+    if(!holder)return;
+    holder.classList.add('haos-v702-report-tools');
+    holder.id=scope+'ViewToolsV702';
+    qa('button',holder).forEach(btn=>{const oc=btn.getAttribute('onclick')||'';if(btn.closest('.haos-v702-report-button-set'))return;if(oc.includes(kind==='my'?'setMyReportViewMode':'setHeadReportViewMode'))btn.remove();});
+    if(!holder.querySelector('.haos-v702-report-button-set')){
+      holder.insertAdjacentHTML('afterbegin','<span class="haos-v702-current-view" id="'+scope+'CurrentV702"></span><span class="haos-v702-report-button-set d-inline-flex gap-2 flex-wrap"><button type="button" class="btn btn-sm btn-outline-primary" data-mode="list" onclick="'+(kind==='my'?'setMyReportViewMode':'setHeadReportViewMode')+'(\'list\')"><i class="bi bi-list"></i> รายการ</button><button type="button" class="btn btn-sm btn-outline-primary" data-mode="card" onclick="'+(kind==='my'?'setMyReportViewMode':'setHeadReportViewMode')+'(\'card\')"><i class="bi bi-grid-3x3-gap"></i> การ์ด</button><button type="button" class="btn btn-sm btn-outline-primary" data-mode="calendar" onclick="'+(kind==='my'?'setMyReportViewMode':'setHeadReportViewMode')+'(\'calendar\')"><i class="bi bi-calendar3"></i> ปฏิทิน</button></span>');
+    }
+    qa('.haos-v702-report-button-set button',holder).forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));
+    const cur=$(scope+'CurrentV702'); if(cur)cur.textContent='กำลังดู: '+({list:'รายการ',card:'การ์ด',calendar:'ปฏิทิน'}[mode]||'รายการ');
+  }
+  function renderReportCards702(kind){
+    const pane=$(kind==='my'?'myReportCalendarView':'headReportCalendarView'), list=$(kind==='my'?'myReportListView':'headReportListView');
+    if(!pane)return; list?.classList.add('d-none'); pane.classList.remove('d-none'); pane.style.display='block';
+    const arr=reportArray(kind); const size=$(kind==='my'?'myReportPageSize':'headReportPageSize')?.value||'20'; const show=size==='all'?arr:arr.slice(0,Number(size)||20);
+    pane.innerHTML=show.length?'<div class="haos-v702-card-grid">'+show.map((r,i)=>'<div class="haos-v702-card" role="button" onclick="haosOpenReportDetailV702(\''+kind+'\','+i+')"><div class="title">'+esc(reportTitle(r,kind))+'</div><div class="meta"><span><i class="bi bi-calendar3"></i> '+esc(thDate(r.rawDate||r.reportDate||r.workDate||r.date||r.createdAt))+'</span><span>'+esc(r.time||r.reportTime||'')+'</span></div><div class="small text-muted">'+esc(clean(r.details||r.workDetails||r.detail||'-')).slice(0,180)+'</div></div>').join('')+'</div>':'<div class="empty-state"><i class="bi bi-journal-x"></i><div class="fw-bold">ยังไม่มีข้อมูลสำหรับมุมมองนี้</div></div>';
+  }
+  function renderReportCalendar702(kind){
+    const pane=$(kind==='my'?'myReportCalendarView':'headReportCalendarView'), list=$(kind==='my'?'myReportListView':'headReportListView');
+    if(!pane)return; list?.classList.add('d-none'); pane.classList.remove('d-none'); pane.style.display='block';
+    const key=kind==='my'?'haosMyReportCalendarV702':'haosHeadReportCalendarV702';
+    if(window[key]){try{window[key].destroy();}catch(e){}}
+    pane.innerHTML='<div class="haos-v691-report-calendar" id="haosReportCalendarV702_'+kind+'"></div>';
+    if(!window.FullCalendar){renderReportCards702(kind);return;}
+    const events=reportArray(kind).map((r,i)=>{const d=reportDate(r);if(!d)return null;const normal=String(r.leaveType||r.status||'').includes('ปกติ');return {title:reportTitle(r,kind),start:d,allDay:true,backgroundColor:normal?'#16a34a':'#7c3aed',borderColor:'transparent',extendedProps:{idx:i}};}).filter(Boolean);
+    const cal=new FullCalendar.Calendar($('haosReportCalendarV702_'+kind),{initialView:'dayGridMonth',locale:'th',height:'auto',headerToolbar:{left:'prev,next today',center:'title',right:'dayGridMonth,timeGridWeek,timeGridDay'},events,eventClick:info=>window.haosOpenReportDetailV702(kind,info.event.extendedProps.idx)});
+    cal.render(); window[key]=cal;
+  }
+  window.haosOpenReportDetailV702=function(kind,index){const r=reportArray(kind)[index];if(!r)return;Swal.fire({title:'',html:reportDetailHtml(r,kind),width:760,confirmButtonText:'ปิด'});};
+  const baseRenderMy=window.renderMyReports, baseRenderHead=window.renderHeadReports;
+  window.setMyReportViewMode=function(mode){mode=mode||'list';window.myReportViewMode=mode;updateReportTools('my',mode);if(mode==='card')return renderReportCards702('my');if(mode==='calendar'||mode==='month')return renderReportCalendar702('my');$('myReportCalendarView')?.classList.add('d-none');$('myReportListView')?.classList.remove('d-none');return baseRenderMy?baseRenderMy():undefined;};
+  window.setHeadReportViewMode=function(mode){mode=mode||'list';window.headReportViewMode=mode;window.haosHeadReportViewMode=mode;updateReportTools('team',mode);if(mode==='card')return renderReportCards702('team');if(mode==='calendar'||mode==='month')return renderReportCalendar702('team');$('headReportCalendarView')?.classList.add('d-none');$('headReportListView')?.classList.remove('d-none');return baseRenderHead?baseRenderHead():undefined;};
+  window.renderMyReports=function(){const m=window.myReportViewMode||'list';updateReportTools('my',m);if(m==='card')return renderReportCards702('my');if(m==='calendar'||m==='month')return renderReportCalendar702('my');return baseRenderMy?baseRenderMy():undefined;};
+  window.renderHeadReports=function(){const m=window.headReportViewMode||window.haosHeadReportViewMode||'list';updateReportTools('team',m);if(m==='card')return renderReportCards702('team');if(m==='calendar'||m==='month')return renderReportCalendar702('team');return baseRenderHead?baseRenderHead():undefined;};
+
+  async function loadITData(force){
+    if(!force&&window.haosITV702Data)return window.haosITV702Data;
+    const u=getUserV702();
+    const res=await gasV702('getITAssetModuleDataV70',[u.phone||'',u.role||'',u.department||'']);
+    if(!res||!res.success)throw new Error(res?.message||'โหลดข้อมูล IT ไม่สำเร็จ');
+    window.haosITV702Data=res; return res;
+  }
+  function ensureITDashboards(){
+    const pane=$('itservices-pane'); if(!pane)return;
+    cleanBookingLinkButton();
+    const assetPanel=$('itAssetPanelV70'), repairPanel=$('itRepairPanelV70');
+    if(assetPanel&&!$('itAssetDashboardPanelV702')){
+      assetPanel.insertAdjacentHTML('afterend','<section id="itAssetDashboardPanelV702" class="haos-v702-dashboard-card d-none mb-4"><div class="haos-v702-dashboard-hero"><div><h5 class="fw-bold mb-1"><i class="bi bi-hdd-network"></i> Dashboard ทะเบียนทรัพย์สิน IT</h5><div class="small opacity-75">ภาพรวมทรัพย์สิน ซอฟต์แวร์ License และรายการใกล้หมดอายุ</div></div><div class="d-flex gap-2 flex-wrap"><button class="btn btn-light btn-sm fw-bold" onclick="openITAssetDashboardV702(true)"><i class="bi bi-arrow-clockwise"></i> โหลดใหม่</button><button class="btn btn-outline-light btn-sm" onclick="copyITDashboardLinkV702(\'itasset-dashboard\')"><i class="bi bi-link-45deg"></i> ลิงก์ตรง</button><button class="btn btn-outline-light btn-sm" onclick="togglePanelV70(\'itAssetDashboardPanelV702\',false)"><i class="bi bi-x-lg"></i> ปิด</button></div></div><div class="p-3" id="itAssetDashboardBodyV702"></div></section>');
+    }
+    if(repairPanel&&!$('itRepairDashboardPanelV702')){
+      repairPanel.insertAdjacentHTML('afterend','<section id="itRepairDashboardPanelV702" class="haos-v702-dashboard-card d-none mb-4"><div class="haos-v702-dashboard-hero" style="background:linear-gradient(135deg,#b91c1c,#f97316)"><div><h5 class="fw-bold mb-1"><i class="bi bi-tools"></i> Dashboard แจ้งซ่อม IT / Helpdesk</h5><div class="small opacity-75">ภาพรวมใบงานซ่อม สถานะ ความเร่งด่วน และทรัพย์สินที่เกี่ยวข้อง</div></div><div class="d-flex gap-2 flex-wrap"><button class="btn btn-light btn-sm fw-bold" onclick="openITRepairDashboardV702(true)"><i class="bi bi-arrow-clockwise"></i> โหลดใหม่</button><button class="btn btn-outline-light btn-sm" onclick="copyITDashboardLinkV702(\'itrepair-dashboard\')"><i class="bi bi-link-45deg"></i> ลิงก์ตรง</button><button class="btn btn-outline-light btn-sm" onclick="togglePanelV70(\'itRepairDashboardPanelV702\',false)"><i class="bi bi-x-lg"></i> ปิด</button></div></div><div class="p-3" id="itRepairDashboardBodyV702"></div></section>');
+    }
+    const assetTools=assetPanel?.querySelector('.card-header .d-flex.gap-2');
+    if(assetTools&&!$('btnITAssetDashboardV702'))assetTools.insertAdjacentHTML('afterbegin','<button id="btnITAssetDashboardV702" class="btn btn-sm btn-outline-primary" onclick="openITAssetDashboardV702()"><i class="bi bi-speedometer2"></i> Dashboard</button>');
+    const repairTools=repairPanel?.querySelector('.card-header .d-flex.gap-2');
+    if(repairTools&&!$('btnITRepairDashboardV702'))repairTools.insertAdjacentHTML('afterbegin','<button id="btnITRepairDashboardV702" class="btn btn-sm btn-outline-danger" onclick="openITRepairDashboardV702()"><i class="bi bi-speedometer2"></i> Dashboard</button>');
+  }
+  function countBy(arr,key){const o={};(arr||[]).forEach(x=>{const k=x[key]||'ไม่ระบุ';o[k]=(o[k]||0)+1;});return o;}
+  function smallRows(obj){return Object.keys(obj||{}).sort((a,b)=>obj[b]-obj[a]).slice(0,8).map(k=>'<div class="d-flex justify-content-between border-bottom py-1"><span>'+esc(k)+'</span><b>'+esc(obj[k])+'</b></div>').join('')||'<div class="text-muted small">ไม่มีข้อมูล</div>';}
+  function renderAssetDashboard(data){
+    const d=data.dashboard||{}, alerts=data.alerts||[], assets=data.assets||[], licenses=data.licenses||[];
+    const body=$('itAssetDashboardBodyV702'); if(!body)return;
+    body.innerHTML='<div class="haos-v702-dashboard-grid mb-3"><div class="haos-v702-kpi"><small>ทรัพย์สินทั้งหมด</small><b>'+esc(d.totalAssets||assets.length||0)+'</b></div><div class="haos-v702-kpi"><small>ใช้งานอยู่</small><b>'+esc(d.activeAssets||0)+'</b></div><div class="haos-v702-kpi"><small>License ทั้งหมด</small><b>'+esc(d.totalLicenses||licenses.length||0)+'</b></div><div class="haos-v702-kpi"><small>ใกล้หมดอายุ</small><b>'+esc(alerts.length||0)+'</b></div></div><div class="haos-v702-list"><div class="haos-v702-list-item"><h6 class="fw-bold">ทรัพย์สินตามสถานะ</h6>'+smallRows(countBy(assets,'status'))+'</div><div class="haos-v702-list-item"><h6 class="fw-bold">ทรัพย์สินตามหมวด</h6>'+smallRows(countBy(assets,'category'))+'</div><div class="haos-v702-list-item"><h6 class="fw-bold text-danger">License ใกล้หมดอายุ</h6>'+((alerts||[]).slice(0,8).map(a=>'<div class="border-bottom py-2"><b>'+esc(a.softwareName||a.licenseName||a.licenseId)+'</b><div class="small text-muted">หมดอายุ '+esc(a.expiryDate)+' • เหลือ '+esc(a.daysLeft)+' วัน</div></div>').join('')||'<div class="text-muted small">ไม่มีรายการใกล้หมดอายุ</div>')+'</div></div>';
+  }
+  function renderRepairDashboard(data){
+    const tickets=data.tickets||[], open=['New','Assigned','In Progress','Waiting Parts','Waiting Vendor'];
+    const body=$('itRepairDashboardBodyV702'); if(!body)return;
+    body.innerHTML='<div class="haos-v702-dashboard-grid mb-3"><div class="haos-v702-kpi"><small>ใบงานทั้งหมด</small><b>'+tickets.length+'</b></div><div class="haos-v702-kpi"><small>ยังเปิดอยู่</small><b>'+tickets.filter(t=>open.includes(t.status)).length+'</b></div><div class="haos-v702-kpi"><small>เร่งด่วน</small><b>'+tickets.filter(t=>['High','Critical'].includes(t.priority)).length+'</b></div><div class="haos-v702-kpi"><small>ปิดแล้ว</small><b>'+tickets.filter(t=>['Resolved','Closed'].includes(t.status)).length+'</b></div></div><div class="haos-v702-list"><div class="haos-v702-list-item"><h6 class="fw-bold">สถานะใบงาน</h6>'+smallRows(countBy(tickets,'status'))+'</div><div class="haos-v702-list-item"><h6 class="fw-bold">ความเร่งด่วน</h6>'+smallRows(countBy(tickets,'priority'))+'</div><div class="haos-v702-list-item"><h6 class="fw-bold text-danger">ใบงานล่าสุด</h6>'+tickets.slice(0,8).map(t=>'<div class="border-bottom py-2"><b>'+esc(t.ticketNo||t.ticketId)+'</b><div>'+esc(t.problemTitle||'-')+'</div><div class="small text-muted">'+esc(t.assetName||'-')+' • '+esc(t.status||'-')+'</div></div>').join('')+'</div></div>';
+  }
+  window.openITAssetDashboardV702=async function(force){try{ensureITDashboards();togglePanelV70('itAssetDashboardPanelV702',true);const data=await loadITData(!!force);renderAssetDashboard(data);}catch(e){Swal.fire('โหลด Dashboard ไม่สำเร็จ',e.message||String(e),'error');}};
+  window.openITRepairDashboardV702=async function(force){try{ensureITDashboards();togglePanelV70('itRepairDashboardPanelV702',true);const data=await loadITData(!!force);renderRepairDashboard(data);}catch(e){Swal.fire('โหลด Dashboard ไม่สำเร็จ',e.message||String(e),'error');}};
+  window.copyITDashboardLinkV702=function(module){const url=location.origin+location.pathname+'?module='+encodeURIComponent(module);navigator.clipboard?.writeText(url);Swal.fire('คัดลอกลิงก์แล้ว','<div class="text-break small">'+esc(url)+'</div>','success');};
+
+  window.openITAssetFormV70=async function(assetId){
+    let data={assets:[]}; try{data=await loadITData(false);}catch(e){}
+    const a=(data.assets||[]).find(x=>String(x.assetId)===String(assetId))||{};
+    const html='<div class="haos-v702-form"><div class="haos-form-hero"><h5 class="fw-bold mb-1"><i class="bi bi-hdd-network"></i> '+(assetId?'แก้ไขทรัพย์สิน IT':'เพิ่มทรัพย์สิน IT')+'</h5><div class="small opacity-75">บันทึกข้อมูลเครื่อง ผู้ใช้งาน สถานที่ สถานะ และประกันในหน้าต่างเดียว</div></div><div class="haos-form-section"><div class="haos-form-title"><i class="bi bi-info-circle"></i> ข้อมูลทรัพย์สิน</div><div class="row g-2"><div class="col-md-4"><label class="small fw-bold">รหัสทรัพย์สิน</label><input id="assetCodeV70" class="form-control" value="'+esc(a.assetCode||'')+'"></div><div class="col-md-8"><label class="small fw-bold">ชื่อทรัพย์สิน *</label><input id="assetNameV70" class="form-control" value="'+esc(a.assetName||'')+'" placeholder="เช่น Notebook Dell งานบริหาร"></div><div class="col-md-4"><label class="small fw-bold">หมวด</label><select id="assetCategoryV70" class="form-select"><option>Computer</option><option>Notebook</option><option>Printer</option><option>Network</option><option>Tablet</option><option>Other</option></select></div><div class="col-md-4"><label class="small fw-bold">ยี่ห้อ</label><input id="assetBrandV70" class="form-control" value="'+esc(a.brand||'')+'"></div><div class="col-md-4"><label class="small fw-bold">รุ่น</label><input id="assetModelV70" class="form-control" value="'+esc(a.model||'')+'"></div><div class="col-md-4"><label class="small fw-bold">Serial Number</label><input id="assetSerialV70" class="form-control" value="'+esc(a.serialNumber||'')+'"></div><div class="col-md-8"><label class="small fw-bold">รายละเอียดสเปก</label><input id="assetSpecV70" class="form-control" value="'+esc(a.spec||'')+'" placeholder="CPU/RAM/Storage หรือรายละเอียดสำคัญ"></div></div></div><div class="haos-form-section"><div class="haos-form-title"><i class="bi bi-person-badge"></i> ผู้ใช้งานและสถานที่</div><div class="row g-2"><div class="col-md-4"><label class="small fw-bold">ผู้ใช้งาน</label><input id="assetUserV70" class="form-control" value="'+esc(a.currentUserName||'')+'"></div><div class="col-md-4"><label class="small fw-bold">เบอร์ผู้ใช้งาน</label><input id="assetUserPhoneV70" class="form-control" value="'+esc(a.currentUserPhone||'')+'"></div><div class="col-md-4"><label class="small fw-bold">กลุ่มงานเจ้าของ</label><input id="assetDeptV70" class="form-control" value="'+esc(a.ownerDepartment||getUserV702().department||'')+'"></div><div class="col-md-6"><label class="small fw-bold">สถานที่</label><input id="assetLocationV70" class="form-control" value="'+esc(a.location||'')+'"></div><div class="col-md-3"><label class="small fw-bold">สถานะ</label><select id="assetStatusV70" class="form-select"><option>ใช้งาน</option><option>ว่าง</option><option>ส่งซ่อม</option><option>ชำรุด</option><option>จำหน่าย</option></select></div><div class="col-md-3"><label class="small fw-bold">สภาพ</label><select id="assetConditionV70" class="form-select"><option>ดี</option><option>พอใช้</option><option>ต้องซ่อม</option><option>เสื่อมสภาพ</option></select></div></div></div><div class="haos-form-section"><div class="haos-form-title"><i class="bi bi-shield-check"></i> ประกันและหมายเหตุ</div><div class="row g-2"><div class="col-md-4"><label class="small fw-bold">วันหมดประกัน</label><input id="assetWarrantyEndV70" type="date" class="form-control" value="'+esc(a.warrantyEnd||'')+'"></div><div class="col-md-8"><label class="small fw-bold">หมายเหตุ</label><input id="assetRemarkV70" class="form-control" value="'+esc(a.remark||'')+'"></div></div></div></div>';
+    const r=await Swal.fire({title:'',html,width:980,customClass:{popup:'haos-v702-form'},showCancelButton:true,confirmButtonText:'บันทึกทรัพย์สิน',cancelButtonText:'ยกเลิก',didOpen:()=>{['assetCategoryV70','assetStatusV70','assetConditionV70'].forEach(id=>{const el=$(id);if(!el)return;const val=id==='assetCategoryV70'?a.category:(id==='assetStatusV70'?a.status:a.condition);if(val&&!qa('option',el).some(o=>o.value===val))el.insertAdjacentHTML('afterbegin','<option>'+esc(val)+'</option>');if(val)el.value=val;});},preConfirm:()=>{const assetName=$('assetNameV70').value.trim();if(!assetName){Swal.showValidationMessage('กรุณาระบุชื่อทรัพย์สิน');return false;}return {assetId:a.assetId||'',assetCode:$('assetCodeV70').value.trim(),assetName,category:$('assetCategoryV70').value,brand:$('assetBrandV70').value.trim(),model:$('assetModelV70').value.trim(),serialNumber:$('assetSerialV70').value.trim(),spec:$('assetSpecV70').value.trim(),currentUserName:$('assetUserV70').value.trim(),currentUserPhone:$('assetUserPhoneV70').value.trim(),ownerDepartment:$('assetDeptV70').value.trim(),location:$('assetLocationV70').value.trim(),status:$('assetStatusV70').value,condition:$('assetConditionV70').value,warrantyEnd:$('assetWarrantyEndV70').value,remark:$('assetRemarkV70').value.trim()};}});
+    if(!r.isConfirmed)return;
+    try{const res=await gasV702('saveITAssetV70',[r.value,{phone:getUserV702().phone||'',name:getUserV702().fullName||getUserV702().name||'',department:getUserV702().department||'',role:getUserV702().role||''}]);if(!res||!res.success)throw new Error(res?.message||'บันทึกไม่สำเร็จ');window.haosITV702Data=null;Swal.fire({icon:'success',title:'บันทึกทรัพย์สินแล้ว',timer:1200,showConfirmButton:false});if(typeof loadITAssetModuleV70==='function')loadITAssetModuleV70();}catch(e){Swal.fire('ผิดพลาด',e.message||String(e),'error');}
+  };
+  window.openITRepairTicketFormV70=async function(assetId){
+    let data={assets:[]}; try{data=await loadITData(false);}catch(e){}
+    const assets=data.assets||[];
+    const options='<option value="">ไม่ผูกทรัพย์สิน / ไม่พบในทะเบียน</option>'+assets.map(a=>'<option value="'+esc(a.assetId)+'" '+(String(assetId)===String(a.assetId)?'selected':'')+'>'+esc((a.assetCode||a.assetName)+' - '+a.assetName)+'</option>').join('');
+    const u=getUserV702();
+    const html='<div class="haos-v702-form"><div class="haos-form-hero" style="background:linear-gradient(135deg,#ef4444,#f97316)"><h5 class="fw-bold mb-1"><i class="bi bi-tools"></i> แจ้งซ่อม IT / Helpdesk</h5><div class="small opacity-75">เลือกทรัพย์สินจากทะเบียน ระบบจะดึงชื่อเครื่องและสถานที่มาช่วยลดการกรอกซ้ำ</div></div><div class="haos-form-section"><div class="haos-form-title"><i class="bi bi-hdd-network"></i> ทรัพย์สินที่เกี่ยวข้อง</div><label class="small fw-bold">เลือกทรัพย์สิน</label><select id="repairAssetV70" class="form-select">'+options+'</select><div id="repairAssetPreviewV702" class="haos-v702-asset-preview text-muted small">เลือกทรัพย์สินเพื่อดูข้อมูลย่อ</div></div><div class="haos-form-section"><div class="haos-form-title"><i class="bi bi-exclamation-triangle"></i> รายละเอียดปัญหา</div><div class="row g-2"><div class="col-md-4"><label class="small fw-bold">หมวดปัญหา</label><select id="repairCatV70" class="form-select"><option>Hardware</option><option>Software</option><option>Network</option><option>Printer</option><option>Account</option><option>Other</option></select></div><div class="col-md-4"><label class="small fw-bold">ความเร่งด่วน</label><select id="repairPriorityV70" class="form-select"><option>Normal</option><option>Low</option><option>High</option><option>Critical</option></select></div><div class="col-md-4"><label class="small fw-bold">ผลกระทบ</label><input id="repairImpactV70" class="form-control" placeholder="เช่น ใช้งานไม่ได้ / กระทบงานบริการ"></div><div class="col-md-12"><label class="small fw-bold">หัวข้อปัญหา *</label><input id="repairTitleV70" class="form-control" placeholder="สรุปปัญหาแบบสั้นและชัดเจน"></div><div class="col-md-12"><label class="small fw-bold">รายละเอียดเพิ่มเติม</label><textarea id="repairDetailV70" class="form-control" rows="5" placeholder="อธิบายอาการ ขั้นตอนที่ทำก่อนเกิดปัญหา หรือข้อความ error ที่พบ"></textarea></div></div></div></div>';
+    function preview(){const a=assets.find(x=>String(x.assetId)===String($('repairAssetV70')?.value));const box=$('repairAssetPreviewV702');if(!box)return;box.innerHTML=a?'<b>'+esc(a.assetName||'-')+'</b><div>'+esc(a.assetCode||'-')+' • '+esc(a.currentUserName||'-')+' • '+esc(a.location||'-')+'</div><div>สถานะ: '+esc(a.status||'-')+' • ประกันถึง '+esc(a.warrantyEnd||'-')+'</div>':'เลือกทรัพย์สินเพื่อดูข้อมูลย่อ';}
+    const r=await Swal.fire({title:'',html,width:920,customClass:{popup:'haos-v702-form'},showCancelButton:true,confirmButtonText:'ส่งแจ้งซ่อม',cancelButtonText:'ยกเลิก',didOpen:()=>{$('repairAssetV70')?.addEventListener('change',preview);preview();},preConfirm:()=>{const a=assets.find(x=>String(x.assetId)===String($('repairAssetV70').value))||{};const problemTitle=$('repairTitleV70').value.trim();if(!problemTitle){Swal.showValidationMessage('กรุณาระบุหัวข้อปัญหา');return false;}return {assetId:$('repairAssetV70').value,assetCode:a.assetCode||'',assetName:a.assetName||'',requesterName:u.fullName||u.name||'',requesterPhone:u.phone||'',requesterDepartment:u.department||'',location:a.location||'',problemCategory:$('repairCatV70').value,priority:$('repairPriorityV70').value,impact:$('repairImpactV70').value.trim(),problemTitle,problemDetail:$('repairDetailV70').value.trim()};}});
+    if(!r.isConfirmed)return;
+    try{const res=await gasV702('saveITRepairTicketV70',[r.value,{phone:u.phone||'',name:u.fullName||u.name||'',department:u.department||'',role:u.role||''}]);if(!res||!res.success)throw new Error(res?.message||'บันทึกไม่สำเร็จ');window.haosITV702Data=null;Swal.fire({icon:'success',title:'ส่งแจ้งซ่อมแล้ว',text:res.ticketNo||'',timer:1500,showConfirmButton:false});if(typeof loadITAssetModuleV70==='function')loadITAssetModuleV70();}catch(e){Swal.fire('ผิดพลาด',e.message||String(e),'error');}
+  };
+
+  const oldInitIT=window.initItServicesHub;
+  window.initItServicesHub=function(){const r=oldInitIT?oldInitIT.apply(this,arguments):true;setTimeout(()=>{try{ensureITDashboards();cleanBookingLinkButton();}catch(e){}},200);return r;};
+  const oldLoadMy=window.loadMySchedules, oldLoadDept=window.loadDepartmentSchedules;
+  if(typeof oldLoadMy==='function')window.loadMySchedules=function(){const r=oldLoadMy.apply(this,arguments);setTimeout(window.renderUnifiedScheduleV702,500);setTimeout(window.renderUnifiedScheduleV702,1200);return r;};
+  if(typeof oldLoadDept==='function')window.loadDepartmentSchedules=function(){const r=oldLoadDept.apply(this,arguments);setTimeout(window.renderUnifiedScheduleV702,500);setTimeout(window.renderUnifiedScheduleV702,1200);return r;};
+  const oldToggleCal=window.toggleCalendarView;
+  window.toggleCalendarView=function(type){if(type==='card'||type==='calendar'||type==='list'){ensureUnifiedSchedule();return window.setUnifiedScheduleViewV702(type==='calendar'?'calendar':(type==='card'?'card':'list'));}return oldToggleCal?oldToggleCal.apply(this,arguments):undefined;};
+  function routeDashboard(){
+    const module=new URLSearchParams(location.search).get('module');
+    if(module==='itasset-dashboard'||module==='itrepair-dashboard'){
+      $('itservices-tab')?.click();
+      setTimeout(()=>{try{initItServicesHub(); module==='itasset-dashboard'?openITAssetDashboardV702():openITRepairDashboardV702();}catch(e){}},900);
+    }
+  }
+  function install(){
+    ensureUnifiedSchedule();
+    window.renderUnifiedScheduleV702();
+    updateReportTools('my',window.myReportViewMode||'list');
+    updateReportTools('team',window.headReportViewMode||window.haosHeadReportViewMode||'list');
+    cleanBookingLinkButton();
+    ensureITDashboards();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{install();routeDashboard();},{once:true}); else {install();routeDashboard();}
+  setTimeout(install,800); setTimeout(install,1800);
+  let queued=false; new MutationObserver(()=>{if(queued)return;queued=true;setTimeout(()=>{queued=false;install();},220);}).observe(document.documentElement,{childList:true,subtree:true});
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
+
 </body>
 </html>
