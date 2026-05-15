@@ -9526,5 +9526,212 @@ HAOS v68.6 FINISHING FIX
 })();
 </script>
 
+<style id="haos-v692-polish-style">
+  .haos-v692-report-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;padding:16px;background:linear-gradient(180deg,#f8fbff,#eef7ff)}
+  .haos-v692-report-card{border:1px solid rgba(148,163,184,.28);border-radius:18px;background:linear-gradient(180deg,#fff,#f8fafc);padding:16px;box-shadow:0 14px 36px rgba(15,23,42,.08);min-height:210px;display:flex;flex-direction:column;gap:10px}
+  .haos-v692-report-card:hover{transform:translateY(-1px);box-shadow:0 18px 42px rgba(15,23,42,.11)}
+  .haos-v692-report-top{display:flex;gap:12px;align-items:flex-start}
+  .haos-v692-date-pill{min-width:70px;border-radius:16px;background:linear-gradient(180deg,#e0f2fe,#dbeafe);border:1px solid #bfdbfe;color:#075985;text-align:center;padding:9px 8px;font-weight:900}
+  .haos-v692-date-pill b{display:block;font-size:1.35rem;line-height:1}
+  .haos-v692-date-pill small{display:block;font-size:.76rem;color:#2563eb;margin-top:3px}
+  .haos-v692-report-title{font-weight:900;color:#0f172a;font-size:1.02rem;line-height:1.35}
+  .haos-v692-report-meta{font-size:.86rem;color:#64748b;margin-top:5px}
+  .haos-v692-report-detail{color:#334155;line-height:1.55;white-space:pre-wrap;max-height:116px;overflow:auto;padding-right:4px}
+  .haos-v692-report-footer{margin-top:auto;display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+  .haos-v692-status{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:6px 10px;font-size:.8rem;font-weight:900}
+  .haos-v692-status.normal{background:#dcfce7;color:#166534}.haos-v692-status.warn{background:#fef3c7;color:#92400e}
+  .haos-v692-view-tools{display:inline-flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .haos-v692-view-tools .form-select{margin-left:4px}
+  .haos-v692-schedule-shell{border:1px solid rgba(14,165,233,.22);border-radius:24px;background:linear-gradient(180deg,#f8fbff,#eef7ff);padding:14px;margin-top:4px;box-shadow:0 18px 50px rgba(15,23,42,.08)}
+  .haos-v692-schedule-shell-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 10px 16px}
+  .haos-v692-schedule-shell-title{font-weight:900;color:#0f172a;font-size:1.05rem}
+  .haos-v692-schedule-legend{display:flex;gap:8px;flex-wrap:wrap}
+  .haos-v692-schedule-legend span{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:7px 11px;font-weight:800;font-size:.84rem;background:#fff;border:1px solid rgba(148,163,184,.28)}
+  .haos-v692-dot{width:10px;height:10px;border-radius:999px;display:inline-block}.haos-v692-dot.my{background:#2563eb}.haos-v692-dot.dept{background:#0891b2}
+  .haos-v692-schedule-shell #haosUnifiedScheduleBodyV692{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+  .haos-v692-schedule-shell .card{margin:0!important}
+  .haos-v692-schedule-shell .card:first-of-type{border-left:5px solid #2563eb!important}
+  .haos-v692-schedule-shell .card:nth-of-type(2){border-left:5px solid #0891b2!important}
+  .haos-v692-schedule-kind{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 10px;font-size:.78rem;font-weight:900;margin-left:8px}
+  .haos-v692-schedule-kind.my{background:#dbeafe;color:#1d4ed8}.haos-v692-schedule-kind.dept{background:#ccfbf1;color:#0f766e}
+  #haosMyScheduleFilterV69Wrap{display:none!important}
+  .haos-v692-survey-filter{margin:12px;border:1px solid rgba(14,165,233,.22);border-radius:16px;background:linear-gradient(180deg,#eff6ff,#f8fafc);padding:14px}
+  .haos-v692-survey-filter label{font-weight:900;color:#075985;font-size:.85rem}
+  .haos-v692-header-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto}
+  .haos-v692-header-tools .btn{white-space:nowrap}
+  #schedule-pane .card-header h6{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  #sigModalV692{z-index:20000}
+  #sigModalV692 .modal-dialog{max-width:680px}
+  #sigModalV692 #sigNameV692{pointer-events:auto!important;user-select:text!important;background:#fff!important}
+</style>
+<script id="haos-v692-polish-script">
+(function(){
+  'use strict';
+  const PATCH='v69.2-polish';
+  const $=id=>document.getElementById(id);
+  const qa=(sel,root=document)=>Array.from((root||document).querySelectorAll(sel));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const clean=v=>String(v??'').replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim();
+  const getUserSafe=()=>{try{return typeof getUser==='function'?getUser():(window.user||user||{});}catch(e){return window.user||{};}};
+  function gas(fn,args){return new Promise((resolve,reject)=>{try{google.script.run.withSuccessHandler(resolve).withFailureHandler(e=>reject(new Error(e&&e.message?e.message:String(e))))[fn].apply(google.script.run,args||[]);}catch(e){reject(e);}});}
+
+  function reports(kind){
+    try{ if(kind==='my'&&typeof myReportsGlobal!=='undefined'&&Array.isArray(myReportsGlobal)) return myReportsGlobal; }catch(e){}
+    try{ if(kind==='team'&&typeof teamReportsGlobal!=='undefined'&&Array.isArray(teamReportsGlobal)) return teamReportsGlobal; }catch(e){}
+    const w=kind==='my'?window.myReportsGlobal:window.teamReportsGlobal;
+    if(Array.isArray(w)&&w.length) return w;
+    const rows=qa(kind==='my'?'#myReportTable tr':'#headReportTable tr').filter(tr=>!tr.querySelector('[colspan]'));
+    return rows.map(tr=>{const tds=qa('td',tr);return {date:clean(tds[0]?.innerText),name:kind==='team'?clean(tds[1]?.innerText):'',leaveType:kind==='my'?clean(tds[1]?.innerText):clean(tds[2]?.innerText),time:clean(tds[0]?.innerText),details:kind==='my'?clean(tds[2]?.innerText):clean(tds[3]?.innerText),fileUrl:''};});
+  }
+  function parseDate(v){
+    if(v instanceof Date&&!isNaN(v)) return v;
+    const s=String(v||'').trim(); if(!s)return null;
+    let m=s.match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/); if(m){let y=+m[1]; if(y>2400)y-=543; return new Date(y,+m[2]-1,+m[3]);}
+    m=s.match(/(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/); if(m){let y=+m[3]; if(y>2400)y-=543; return new Date(y,+m[2]-1,+m[1]);}
+    const d=new Date(s); return isNaN(d)?null:d;
+  }
+  function dateParts(r){
+    const d=parseDate(r.rawDate||r.date||r.reportDate||r.workDate||r.createdAt);
+    if(!d)return {day:'--',my:esc(String(r.date||'ไม่ระบุวันที่'))};
+    return {day:String(d.getDate()).padStart(2,'0'),my:d.toLocaleDateString('th-TH',{month:'short',year:'numeric'}),date:d};
+  }
+  function reportTitle(r,kind){return (kind==='team'?(r.name||r.userName||'ไม่ระบุชื่อ')+' - ':'')+(r.leaveType||r.status||'รายงาน');}
+  function renderReportCardsV692(kind){
+    const pane=$(kind==='my'?'myReportCalendarView':'headReportCalendarView');
+    const list=$(kind==='my'?'myReportListView':'headReportListView');
+    if(!pane)return;
+    list?.classList.add('d-none'); pane.classList.remove('d-none'); pane.style.display='block';
+    const arr=reports(kind);
+    const size=$(kind==='my'?'myReportPageSize':'headReportPageSize')?.value||'20';
+    const show=size==='all'?arr:arr.slice(0,Number(size)||20);
+    if(!show.length){pane.innerHTML='<div class="empty-state"><i class="bi bi-journal-x"></i><div class="fw-bold">ยังไม่มีข้อมูลสำหรับมุมมองนี้</div></div>';return;}
+    pane.innerHTML='<div class="haos-v692-report-grid">'+show.map(r=>{
+      const p=dateParts(r), status=r.leaveType||r.status||'รายงาน', normal=String(status).includes('ปกติ');
+      const detail=clean(r.details||r.workDetails||r.detail||r.description||'-');
+      const files=r.fileUrl?'<span class="text-primary small"><i class="bi bi-paperclip"></i> มีไฟล์แนบ</span>':'';
+      return '<article class="haos-v692-report-card"><div class="haos-v692-report-top"><div class="haos-v692-date-pill"><b>'+esc(p.day)+'</b><small>'+esc(p.my)+'</small></div><div><div class="haos-v692-report-title">'+esc(reportTitle(r,kind))+'</div><div class="haos-v692-report-meta"><i class="bi bi-clock"></i> '+esc(r.time||r.reportTime||'')+'</div></div></div><div class="haos-v692-report-detail">'+esc(detail).slice(0,360)+'</div><div class="haos-v692-report-footer"><span class="haos-v692-status '+(normal?'normal':'warn')+'"><i class="bi '+(normal?'bi-check-circle':'bi-exclamation-circle')+'"></i>'+esc(status)+'</span>'+files+'</div></article>';
+    }).join('')+'</div>';
+  }
+  function renderReportCalendarV692(kind){
+    const pane=$(kind==='my'?'myReportCalendarView':'headReportCalendarView');
+    const list=$(kind==='my'?'myReportListView':'headReportListView');
+    if(!pane)return;
+    list?.classList.add('d-none'); pane.classList.remove('d-none'); pane.style.display='block';
+    if(window[kind==='my'?'haosMyReportCalendarV691':'haosHeadReportCalendarV691']){try{window[kind==='my'?'haosMyReportCalendarV691':'haosHeadReportCalendarV691'].destroy();}catch(e){}}
+    pane.innerHTML='<div class="haos-v691-report-calendar" id="haosReportCalendarV692_'+kind+'"></div>';
+    const el=$('haosReportCalendarV692_'+kind);
+    const events=reports(kind).map(r=>{const d=dateParts(r).date;if(!d)return null;const normal=String(r.leaveType||r.status||'').includes('ปกติ');return {title:reportTitle(r,kind),start:d,allDay:true,backgroundColor:normal?'#22c55e':'#7c3aed',borderColor:'transparent',extendedProps:{details:r.details||r.workDetails||r.detail||'',time:r.time||r.reportTime||''}};}).filter(Boolean);
+    if(!window.FullCalendar){return renderReportCardsV692(kind);}
+    const cal=new FullCalendar.Calendar(el,{initialView:'dayGridMonth',locale:'th',height:'auto',headerToolbar:{left:'prev,next today',center:'title',right:'dayGridMonth,timeGridWeek,timeGridDay'},events,eventClick:info=>{const p=info.event.extendedProps||{};Swal.fire({title:esc(info.event.title),html:'<div class="text-start"><b>เวลา:</b> '+esc(p.time||'-')+'<br><b>รายละเอียด:</b><br>'+esc(clean(p.details||'-'))+'</div>',width:650});}});
+    cal.render();
+    window[kind==='my'?'haosMyReportCalendarV691':'haosHeadReportCalendarV691']=cal;
+  }
+  const baseRenderMy=window.renderMyReports;
+  const baseRenderHead=window.renderHeadReports;
+  window.setMyReportViewMode=function(mode){
+    window.myReportViewMode=mode||'list';
+    if(mode==='card')return renderReportCardsV692('my');
+    if(mode==='calendar'||mode==='month')return renderReportCalendarV692('my');
+    $('myReportCalendarView')?.classList.add('d-none'); $('myReportListView')?.classList.remove('d-none'); return baseRenderMy?baseRenderMy():undefined;
+  };
+  window.setHeadReportViewMode=function(mode){
+    window.headReportViewMode=mode||'list'; window.haosHeadReportViewMode=mode||'list';
+    if(mode==='card')return renderReportCardsV692('team');
+    if(mode==='calendar'||mode==='month')return renderReportCalendarV692('team');
+    $('headReportCalendarView')?.classList.add('d-none'); $('headReportListView')?.classList.remove('d-none'); return baseRenderHead?baseRenderHead():undefined;
+  };
+  window.renderMyReports=function(){if(window.myReportViewMode==='card')return renderReportCardsV692('my'); if(window.myReportViewMode==='calendar'||window.myReportViewMode==='month')return renderReportCalendarV692('my'); return baseRenderMy?baseRenderMy():undefined;};
+  window.renderHeadReports=function(){if(window.headReportViewMode==='card'||window.haosHeadReportViewMode==='card')return renderReportCardsV692('team'); if(window.headReportViewMode==='calendar'||window.haosHeadReportViewMode==='calendar'||window.haosHeadReportViewMode==='month')return renderReportCalendarV692('team'); return baseRenderHead?baseRenderHead():undefined;};
+  window.renderHeadReportsV687=window.renderHeadReports;
+
+  function normalizeReportControls(){
+    [['myReport','setMyReportViewMode','myReportPageSize'],['headReport','setHeadReportViewMode','headReportPageSize']].forEach(([scope,fn,selectId])=>{
+      const select=$(selectId); if(!select)return;
+      const holder=select.parentElement; if(!holder)return;
+      holder.classList.add('haos-v692-view-tools');
+      let list=qa('button',holder).find(b=>(b.getAttribute('onclick')||'').includes(fn+"('list')"));
+      let card=qa('button',holder).find(b=>(b.getAttribute('onclick')||'').includes(fn+"('card')")||b.dataset.mode==='card');
+      let cal=qa('button',holder).find(b=>(b.getAttribute('onclick')||'').includes(fn+"('calendar')")||b.dataset.mode==='calendar'||b.dataset.mode==='month');
+      if(!card&&cal){card=cal; card.setAttribute('onclick',fn+"('card')"); card.dataset.mode='card'; card.innerHTML='<i class="bi bi-grid-3x3-gap"></i> การ์ด'; cal=null;}
+      if(!cal){select.insertAdjacentHTML('beforebegin','<button type="button" data-haos-v69-view="'+scope+'" data-mode="calendar" class="btn btn-sm btn-outline-primary" onclick="'+fn+'(\'calendar\')"><i class="bi bi-calendar3"></i> ปฏิทิน</button>'); cal=select.previousElementSibling;}
+      if(list) holder.insertBefore(list,select);
+      if(card) holder.insertBefore(card,select);
+      if(cal) holder.insertBefore(cal,select);
+      qa('button',holder).forEach(b=>{if((b.getAttribute('onclick')||'').includes(fn+'(')){b.setAttribute('data-haos-v69-view',scope);}});
+    });
+  }
+
+  function removeDuplicatePersonalFilter(){ $('haosMyScheduleFilterV69Wrap')?.remove(); }
+  function installSurveyFilter(){
+    $('haosLiveSurveyFilterV69Wrap')?.remove();
+    const tbody=$('liveSurveyTableBody'), wrap=tbody?.closest('.table-responsive'); if(!wrap||$('haosLiveSurveyFilterV692'))return;
+    wrap.insertAdjacentHTML('beforebegin','<div id="haosLiveSurveyFilterV692" class="haos-v692-survey-filter"><div class="row g-2 align-items-end"><div class="col-md-6"><label>ค้นหาแบบสำรวจ</label><input id="liveSurveySearchV692" class="form-control" placeholder="ค้นหาชื่อ คำถาม คำยอดนิยม..." oninput="haosFilterLiveSurveyV692()"></div><div class="col-md-3"><label>จำนวนคำตอบ</label><select id="liveSurveyResponseV692" class="form-select" onchange="haosFilterLiveSurveyV692()"><option value="">ทั้งหมด</option><option value="has">มีคำตอบแล้ว</option><option value="none">ยังไม่มีคำตอบ</option></select></div><div class="col-md-2"><label>เรียง</label><select id="liveSurveySortV692" class="form-select" onchange="haosFilterLiveSurveyV692()"><option value="default">ค่าเดิม</option><option value="responses">คำตอบมากสุด</option><option value="name">ชื่อแบบสำรวจ</option></select></div><div class="col-md-1 d-grid"><button type="button" class="btn btn-outline-secondary" onclick="haosResetLiveSurveyFilterV692()"><i class="bi bi-arrow-counterclockwise"></i></button></div></div></div>');
+  }
+  window.haosFilterLiveSurveyV692=function(){
+    const q=clean($('liveSurveySearchV692')?.value).toLowerCase(), mode=$('liveSurveyResponseV692')?.value||'', sort=$('liveSurveySortV692')?.value||'default';
+    const tbody=$('liveSurveyTableBody'); if(!tbody)return;
+    const rows=qa('tr',tbody).filter(r=>!r.querySelector('[colspan]'));
+    rows.forEach(r=>{const count=Number((qa('td',r)[2]?.innerText||'0').match(/\d+/)?.[0]||0); const hit=!q||clean(r.innerText).toLowerCase().includes(q); const ok=mode==='has'?count>0:(mode==='none'?count===0:true); r.style.display=hit&&ok?'':'none';});
+    if(sort!=='default'){rows.sort((a,b)=>{if(sort==='name')return clean(a.innerText).localeCompare(clean(b.innerText),'th'); const ca=Number((qa('td',a)[2]?.innerText||'0').match(/\d+/)?.[0]||0), cb=Number((qa('td',b)[2]?.innerText||'0').match(/\d+/)?.[0]||0); return cb-ca;}).forEach(r=>tbody.appendChild(r));}
+  };
+  window.haosResetLiveSurveyFilterV692=function(){['liveSurveySearchV692','liveSurveyResponseV692','liveSurveySortV692'].forEach(id=>{const el=$(id); if(el)el.value=id==='liveSurveySortV692'?'default':'';}); window.haosFilterLiveSurveyV692();};
+
+  function unifyScheduleArea(){
+    const myCard=$('scheduleListDiv')?.closest('.card'), deptCard=$('departmentScheduleTable')?.closest('.card');
+    if(!myCard||!deptCard||$('haosUnifiedScheduleShellV692'))return;
+    const shell=document.createElement('section');
+    shell.id='haosUnifiedScheduleShellV692';
+    shell.className='haos-v692-schedule-shell';
+    shell.innerHTML='<div class="haos-v692-schedule-shell-head"><div class="haos-v692-schedule-shell-title"><i class="bi bi-calendar2-week text-primary"></i> ตารางงาน/นัดหมายรวม</div><div class="haos-v692-schedule-legend"><span><i class="haos-v692-dot my"></i> ส่วนตัว</span><span><i class="haos-v692-dot dept"></i> กลุ่มงาน</span></div></div><div id="haosUnifiedScheduleBodyV692"></div>';
+    myCard.parentNode.insertBefore(shell,myCard);
+    const body=shell.querySelector('#haosUnifiedScheduleBodyV692');
+    body.appendChild(myCard); body.appendChild(deptCard);
+    myCard.querySelector('.card-header h6')?.insertAdjacentHTML('beforeend','<span class="haos-v692-schedule-kind my">ส่วนตัว</span>');
+    deptCard.querySelector('.card-header h6')?.insertAdjacentHTML('beforeend','<span class="haos-v692-schedule-kind dept">กลุ่มงาน</span>');
+  }
+  function fixDeptHeaderTools(){
+    const card=$('departmentScheduleTable')?.closest('.card'); const header=card?.querySelector('.card-header'); if(!header)return;
+    let tools=header.querySelector('.haos-v692-header-tools');
+    if(!tools){tools=document.createElement('div');tools.className='haos-v692-header-tools';header.appendChild(tools);}
+    qa('button',header).forEach(btn=>{if(btn.closest('.haos-v692-header-tools'))return; const oc=btn.getAttribute('onclick')||''; if(oc.includes('loadDepartmentSchedules')||oc.includes('toggleDeptScheduleViewV69'))tools.appendChild(btn);});
+    const reload=qa('button',tools).find(b=>(b.getAttribute('onclick')||'').includes('loadDepartmentSchedules'));
+    if(reload)tools.appendChild(reload);
+  }
+
+  function makeSigCanvas(canvas){
+    if(!canvas)return; const ctx=canvas.getContext('2d'); ctx.lineWidth=2.4; ctx.lineCap='round'; ctx.strokeStyle='#111827'; let drawing=false;
+    const pos=ev=>{const r=canvas.getBoundingClientRect(); const p=ev.touches?ev.touches[0]:ev; return {x:(p.clientX-r.left)*(canvas.width/r.width),y:(p.clientY-r.top)*(canvas.height/r.height)};};
+    const down=ev=>{drawing=true;canvas.dataset.hasInk='1';const p=pos(ev);ctx.beginPath();ctx.moveTo(p.x,p.y);ev.preventDefault();};
+    const move=ev=>{if(!drawing)return;const p=pos(ev);ctx.lineTo(p.x,p.y);ctx.stroke();ev.preventDefault();};
+    ['pointerdown','mousedown','touchstart'].forEach(n=>canvas.addEventListener(n,down,{passive:false}));
+    ['pointermove','mousemove','touchmove'].forEach(n=>canvas.addEventListener(n,move,{passive:false}));
+    ['pointerup','pointerleave','mouseup','mouseleave','touchend','touchcancel'].forEach(n=>canvas.addEventListener(n,()=>{drawing=false;},{passive:false}));
+  }
+  window.addProfileSignatureV49_=function(){
+    $('sigModalV692')?.remove();
+    document.body.insertAdjacentHTML('beforeend','<div class="modal fade" id="sigModalV692" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content rounded-4"><div class="modal-header"><h5 class="modal-title fw-bold">เพิ่มลายเซ็น</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><label class="small fw-bold text-muted">ชื่อเรียกลายเซ็น</label><input id="sigNameV692" type="text" class="form-control mb-3" autocomplete="off" placeholder="เช่น ลายเซ็นหลัก / ลายเซ็นอนุมัติ"><label class="small fw-bold text-muted">แนบรูปภาพลายเซ็น</label><input id="sigFileV692" type="file" accept="image/*" class="form-control mb-3"><canvas id="sigCanvasV692" width="620" height="170" style="width:100%;height:170px;border:1px dashed #94a3b8;border-radius:14px;background:#fff;touch-action:none;"></canvas><div class="small text-muted mt-2">อัปโหลดรูป หรือเซ็นสดในช่องนี้ แล้วตั้งชื่อได้ตามต้องการ</div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button><button type="button" id="btnSaveSigV692" class="btn btn-primary fw-bold">บันทึก</button></div></div></div></div>');
+    const modalEl=$('sigModalV692'), modal=new bootstrap.Modal(modalEl,{backdrop:'static'});
+    const canvas=$('sigCanvasV692'); makeSigCanvas(canvas);
+    $('sigFileV692')?.addEventListener('change',ev=>{const f=ev.target.files?.[0]; if(!f)return; const r=new FileReader(); r.onload=e=>{const img=new Image(); img.onload=()=>{const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);const scale=Math.min(canvas.width/img.width,canvas.height/img.height);const w=img.width*scale,h=img.height*scale;ctx.drawImage(img,(canvas.width-w)/2,(canvas.height-h)/2,w,h);canvas.dataset.hasInk='1';}; img.src=e.target.result;}; r.readAsDataURL(f);});
+    $('btnSaveSigV692')?.addEventListener('click',async()=>{try{const data=canvas.dataset.hasInk?canvas.toDataURL('image/png'):''; if(!data)return Swal.fire('ยังไม่มีลายเซ็น','กรุณาอัปโหลดหรือเซ็นลายเซ็นก่อน','warning'); const u=getUserSafe(); const current=await gas('getMySignatures',[u.phone||'']); const arr=current&&current.success?(current.signatures||[]):[]; if(arr.length>=10)return Swal.fire('เก็บได้สูงสุด 10 รายการ','','warning'); const name=($('sigNameV692')?.value||'').trim()||('ลายเซ็น '+(arr.length+1)); arr.push({name,data,isDefault:arr.length===0}); const save=await gas('saveMySignatures',[u.phone||'',arr]); if(!save||!save.success)throw new Error(save&&save.message?save.message:'บันทึกไม่สำเร็จ'); modal.hide(); if(typeof window.loadProfileSignaturesV49_==='function')window.loadProfileSignaturesV49_(); Swal.fire({icon:'success',title:'บันทึกแล้ว',timer:1200,showConfirmButton:false});}catch(err){Swal.fire('ผิดพลาด',err.message||String(err),'error');}});
+    modalEl.addEventListener('shown.bs.modal',()=>{$('sigNameV692')?.focus();},{once:true});
+    modalEl.addEventListener('hidden.bs.modal',()=>modalEl.remove(),{once:true});
+    modal.show();
+  };
+
+  function install(){
+    normalizeReportControls();
+    removeDuplicatePersonalFilter();
+    installSurveyFilter();
+    unifyScheduleArea();
+    fixDeptHeaderTools();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true}); else install();
+  setTimeout(install,600); setTimeout(install,1600);
+  let queued=false; new MutationObserver(()=>{if(queued)return; queued=true; setTimeout(()=>{queued=false; install();},180);}).observe(document.documentElement,{childList:true,subtree:true});
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
+
 </body>
 </html>
