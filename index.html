@@ -9892,5 +9892,48 @@ HAOS v68.6 FINISHING FIX
 })();
 </script>
 
+<style id="haos-v70-1-hotfix-style">
+  #haosLiveSurveyFilterV69Wrap{display:none!important}
+  .tab-content>.tab-pane:not(.active):not(.show){display:none!important}
+</style>
+<script id="haos-v70-1-hotfix-script">
+(function(){
+  const PATCH='v70.1-tab-survey-filter-hotfix';
+  if(window.__HAOS_V701_TAB_SURVEY_FILTER_HOTFIX__)return;
+  window.__HAOS_V701_TAB_SURVEY_FILTER_HOTFIX__=true;
+  const $=id=>document.getElementById(id);
+  function removeLegacySurveyFilter(){
+    const old=$('haosLiveSurveyFilterV69Wrap');
+    if(old) old.remove();
+  }
+  function enforceTabIsolation(){
+    const active=document.querySelector('.nav-tabs .nav-link.active[data-bs-target]');
+    const target=active&&active.getAttribute('data-bs-target');
+    if(!target) return;
+    document.querySelectorAll('.tab-content>.tab-pane').forEach(pane=>{
+      const on=('#'+pane.id)===target;
+      pane.classList.toggle('active',on);
+      pane.classList.toggle('show',on);
+    });
+  }
+  function install(){
+    removeLegacySurveyFilter();
+    enforceTabIsolation();
+  }
+  document.addEventListener('shown.bs.tab',()=>setTimeout(install,60),true);
+  document.addEventListener('click',ev=>{ if(ev.target.closest('[data-bs-toggle="tab"]')) setTimeout(install,180); },true);
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install,{once:true}); else install();
+  setTimeout(install,800);
+  setTimeout(install,2000);
+  let queued=false;
+  new MutationObserver(()=>{
+    if(queued)return;
+    queued=true;
+    setTimeout(()=>{queued=false;install();},120);
+  }).observe(document.documentElement,{childList:true,subtree:true});
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
+
 </body>
 </html>
