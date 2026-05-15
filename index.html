@@ -9031,12 +9031,7 @@ HAOS v68.6 FINISHING FIX
       brand.classList.add('haos-brand-v69');
       brand.innerHTML='<img class="haos-brand-logo" src="/logo-moph.png" alt="Ministry of Public Health logo" onerror="this.style.display=\'none\'"><span>Health Assistant OS</span>';
     }
-    qa('button[onclick*="openProgramGuide"],a[onclick*="openProgramGuide"]').forEach(btn=>{
-      btn.setAttribute('onclick','openHelpCenterV69()');
-      btn.classList.remove('btn-outline-secondary');
-      btn.classList.add('btn-outline-info');
-      btn.innerHTML='<i class="bi bi-question-circle me-1"></i>ศูนย์ช่วยเหลือ Health Assistant OS';
-    });
+    // v69.1: keep the original program guide button/behavior. Help Center remains separate.
     const app=$('appSection');
     if(app&&!$('haosAppFooter')){
       app.insertAdjacentHTML('beforeend','<footer id="haosAppFooter">all rights reserved - พัฒนาและดูแลระบบโดย กลุ่มงานสุขภาพดิจิทัล สสจ.นครนายก</footer>');
@@ -9055,16 +9050,14 @@ HAOS v68.6 FINISHING FIX
     return '<div class="text-start"><div class="p-3 rounded-4 mb-3 text-white" style="background:linear-gradient(135deg,#0f766e,#0284c7)"><h5 class="fw-bold mb-1">ศูนย์ช่วยเหลือ Health Assistant OS</h5><div class="small opacity-75">อัปเดตตามความสามารถล่าสุดของโปรแกรม เพื่อให้ผู้ใช้งานเห็นภาพรวมในที่เดียว</div></div><div class="row g-2">'+items.map(x=>'<div class="col-md-6"><div class="border rounded-4 p-3 h-100 bg-light"><div class="fw-bold text-primary mb-1"><i class="bi '+x[0]+' me-1"></i>'+x[1]+'</div><div class="small text-muted">'+x[2]+'</div></div></div>').join('')+'</div><div class="alert alert-info mt-3 mb-0 small"><b>อัปเดตล่าสุด:</b> เพิ่มโลโก้หน่วยงาน, footer, card view ในตารางงาน, ปฏิทินจริงของรายงาน, ตัวกรองที่ขาด และปรับ Public booking ให้ใกล้ฟอร์มจองปกติ</div></div>';
   }
   window.openHelpCenterV69=function(){ if(window.Swal) Swal.fire({title:'',html:helpCenterHtml(),width:880,confirmButtonText:'เข้าใจแล้ว'}); else alert('ศูนย์ช่วยเหลือ Health Assistant OS'); };
-  window.openHelpCenterV60=window.openHelpCenterV69;
-  window.openProgramGuide=function(force){ if(force) window.openHelpCenterV69(); };
+  // v69.1: do not override openHelpCenterV60 or openProgramGuide.
 
   function enhanceModal(modalId,title,subtitle,icon){
     const modal=$(modalId); if(!modal) return;
     modal.classList.add('haos-v69-modal');
     const content=modal.querySelector('.modal-content'); if(!content) return;
-    if(!content.querySelector('.haos-v69-modal-hero')){
-      content.insertAdjacentHTML('afterbegin','<div class="haos-v69-modal-hero"><h5><i class="bi '+icon+' me-2"></i>'+title+'</h5><small>'+subtitle+'</small></div>');
-    }
+    content.querySelectorAll('.haos-v69-modal-hero').forEach(el=>el.remove());
+    content.querySelector('.modal-header')?.classList.add('haos-v69-native-header');
   }
   function enhanceFocusModals(){
     enhanceModal('scheduleFocusModal','สร้าง/แก้ไขตารางงาน','จัดรูปแบบฟอร์มให้อ่านง่ายขึ้น เหมือนคำขอจองห้องประชุม / Zoom','bi-calendar-plus');
@@ -9289,6 +9282,213 @@ HAOS v68.6 FINISHING FIX
   ready(()=>{installAll(); setTimeout(installAll,700); setTimeout(installAll,1800);});
   const observer=new MutationObserver(()=>installAll());
   ready(()=>observer.observe(document.body,{childList:true,subtree:true}));
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
+
+<style id="haos-v691-fixes-style">
+  .haos-v69-modal-hero{display:none!important}
+  .haos-v69-modal .haos-v69-native-header{box-shadow:0 8px 22px rgba(15,23,42,.12)}
+  .swal2-popup #sigNameV49{display:block!important;width:100%!important;pointer-events:auto!important;user-select:text!important;-webkit-user-select:text!important;background:#fff!important;position:relative!important;z-index:9999!important;opacity:1!important}
+  .haos-v691-sig-box{position:relative;z-index:5;text-align:left}
+  .haos-v691-sig-box input,.haos-v691-sig-box canvas{pointer-events:auto!important}
+  .haos-v691-report-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;padding:14px;background:#f8fafc}
+  .haos-v691-report-card{border:1px solid rgba(148,163,184,.28);border-radius:16px;background:#fff;padding:14px;box-shadow:0 10px 24px rgba(15,23,42,.06)}
+  .haos-v691-report-card .name{font-weight:900;color:#0f172a;margin-bottom:4px}
+  .haos-v691-report-card .meta{font-size:.86rem;color:#64748b;margin-bottom:8px}
+  .haos-v691-report-card .detail{font-size:.9rem;color:#334155;line-height:1.45}
+  .haos-v691-report-calendar{background:#fff;border-radius:18px;padding:14px;border:1px solid rgba(148,163,184,.25)}
+  .haos-v691-report-calendar .fc-toolbar-title{font-weight:900;color:#0f172a}
+  .haos-v691-report-calendar .fc-button{border:0!important;border-radius:10px!important;background:#1d8fe8!important;font-weight:800!important}
+  .haos-v691-report-calendar .fc-event{border:0!important;border-radius:9px!important;padding:2px 6px!important;font-weight:800!important}
+  #schedule-pane .card{border-radius:18px!important;border:1px solid rgba(148,163,184,.28)!important;box-shadow:0 14px 36px rgba(15,23,42,.06);overflow:hidden}
+  #schedule-pane .card-header{border-bottom:1px solid rgba(148,163,184,.25)!important}
+  #schedule-pane .filter-panel,#schedule-pane .haos-v69-filter{margin:12px;border:1px solid rgba(14,165,233,.22);border-radius:16px;background:linear-gradient(180deg,#eff6ff,#f8fafc);box-shadow:inset 0 1px 0 rgba(255,255,255,.65)}
+  #schedule-pane .filter-panel label{color:#075985!important}
+  .haos-v691-table-wrap{padding:12px;background:#f8fafc}
+  .haos-v691-table{border-collapse:separate!important;border-spacing:0 8px!important;margin-bottom:0!important}
+  .haos-v691-table thead th{background:#e0f2fe!important;color:#075985!important;border:0!important;font-weight:900!important;padding:12px 14px!important;white-space:nowrap}
+  .haos-v691-table tbody tr{background:#fff;box-shadow:0 8px 18px rgba(15,23,42,.045)}
+  .haos-v691-table tbody td{background:#fff!important;border-top:1px solid rgba(148,163,184,.20)!important;border-bottom:1px solid rgba(148,163,184,.20)!important;padding:13px 14px!important;vertical-align:middle!important}
+  .haos-v691-table tbody td:first-child{border-left:1px solid rgba(148,163,184,.20)!important;border-radius:14px 0 0 14px}
+  .haos-v691-table tbody td:last-child{border-right:1px solid rgba(148,163,184,.20)!important;border-radius:0 14px 14px 0}
+  .haos-v691-table tbody tr:hover td{background:#f0f9ff!important}
+  .haos-v691-digital-btn{border-radius:14px!important;font-weight:900!important;background:linear-gradient(135deg,#0ea5e9,#2563eb)!important;border:0!important;color:#fff!important}
+</style>
+<script id="haos-v691-fixes-script">
+(function(){
+  'use strict';
+  const PATCH='v69.1-fixes';
+  const $=id=>document.getElementById(id);
+  const qa=(sel,root=document)=>Array.from((root||document).querySelectorAll(sel));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const plain=v=>String(v??'').replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim();
+  const userObj=()=>{try{return window.user||user||{};}catch(e){return window.user||{};}};
+  function gas(fn,args){return new Promise((resolve,reject)=>{try{google.script.run.withSuccessHandler(resolve).withFailureHandler(e=>reject(new Error(e&&e.message?e.message:String(e))))[fn].apply(google.script.run,args||[]);}catch(e){reject(e);}});}
+
+  function removeDuplicateFormHeroes(){
+    qa('.haos-v69-modal-hero').forEach(el=>el.remove());
+    qa('#scheduleFocusModal,#reportFocusModal').forEach(modal=>{
+      modal.classList.add('haos-v69-modal');
+      modal.querySelector('.modal-header')?.classList.add('haos-v69-native-header');
+    });
+  }
+
+  function markScheduleTables(){
+    ['myTable','departmentScheduleTable','liveSurveyTableBody'].forEach(id=>{
+      const table=$(id)?.closest('table');
+      const wrap=table?.closest('.table-responsive');
+      if(table) table.classList.add('haos-v691-table');
+      if(wrap) wrap.classList.add('haos-v691-table-wrap');
+    });
+  }
+
+  function cleanAiText(raw){
+    const lines=String(raw||'').replace(/\*\*/g,'').replace(/^\s*[*•-]\s*/gm,'- ').split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+    let html='', list=false;
+    lines.forEach(line=>{
+      if(/^-\s+/.test(line)){ if(!list){html+='<ul>'; list=true;} html+='<li>'+esc(line.replace(/^-\s+/,''))+'</li>'; }
+      else { if(list){html+='</ul>'; list=false;} html+='<h6 class="fw-bold text-primary mt-3">'+esc(line.replace(/:$/,''))+'</h6>'; }
+    });
+    if(list) html+='</ul>';
+    return html||'<div class="text-muted">ไม่มีข้อความสรุป</div>';
+  }
+  window.haosOpenHeadSummaryDigitalViewV691=function(){
+    const content=$('headSummaryContent');
+    const raw=content?.innerText||content?.textContent||'';
+    const html=cleanAiText(raw);
+    const w=window.open('','_blank','noopener,noreferrer,width=980,height=720');
+    if(!w) return Swal.fire('เปิด Digital View ไม่ได้','กรุณาอนุญาต popup แล้วลองใหม่','info');
+    w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Digital View - Daily Report Summary</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"><style>body{background:#f8fafc;padding:28px;font-family:Prompt,Arial,sans-serif}.paper{max-width:900px;margin:auto;background:#fff;border:1px solid #cbd5e1;border-radius:20px;overflow:hidden;box-shadow:0 18px 50px rgba(15,23,42,.08)}.hero{padding:22px;color:#fff;background:linear-gradient(135deg,#0f766e,#0284c7)}.body{padding:24px}.body h6{color:#075985;font-weight:900}.body li{margin-bottom:6px}.no-print{text-align:center;margin-bottom:14px}@media print{body{background:#fff;padding:0}.paper{box-shadow:none;border-radius:0}.no-print{display:none}}</style></head><body><div class="no-print"><button class="btn btn-primary fw-bold" onclick="window.print()">พิมพ์ / บันทึก PDF</button></div><div class="paper"><div class="hero"><h3 class="fw-bold mb-1">สรุปภาพรวมรายงานประจำวัน</h3><div>Health Assistant OS Digital View</div></div><div class="body">'+html+'</div></div></body></html>');
+    w.document.close();
+  };
+  function installHeadSummaryDigitalButton(){
+    const modal=$('headSummaryModal'); if(!modal||$('btnHeadSummaryDigitalV691')) return;
+    const footer=modal.querySelector('.modal-footer');
+    if(footer) footer.insertAdjacentHTML('afterbegin','<button type="button" id="btnHeadSummaryDigitalV691" class="btn haos-v691-digital-btn" onclick="haosOpenHeadSummaryDigitalViewV691()"><i class="bi bi-window-fullscreen"></i> Digital View</button>');
+  }
+
+  function parseDateAny(v){
+    if(v instanceof Date&&!isNaN(v)) return v;
+    let s=String(v||'').trim(); if(!s) return null;
+    let m=s.match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/); if(m){let y=+m[1]; if(y>2400)y-=543; return new Date(y,+m[2]-1,+m[3]);}
+    m=s.match(/(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/); if(m){let y=+m[3]; if(y>2400)y-=543; return new Date(y,+m[2]-1,+m[1]);}
+    const d=new Date(s); return isNaN(d)?null:d;
+  }
+  function reportList(kind){
+    const list=kind==='my'?(window.myReportsGlobal||[]):(window.teamReportsGlobal||[]);
+    return Array.isArray(list)?list:[];
+  }
+  function reportDate(r){return parseDateAny(r.rawDate||r.date||r.reportDate||r.workDate||r.createdAt||r.timestamp);}
+  function reportTitle(r,kind){return (kind==='team'&&r.name?String(r.name)+' - ':'')+(r.leaveType||r.status||'รายงาน');}
+  function showReportPane(kind){
+    const list=$(kind==='my'?'myReportListView':'headReportListView');
+    const pane=$(kind==='my'?'myReportCalendarView':'headReportCalendarView');
+    if(list) list.classList.add('d-none');
+    if(pane){pane.classList.remove('d-none'); pane.style.display='block';}
+    return pane;
+  }
+  function destroyReportCalendar(kind){
+    const key=kind==='my'?'haosMyReportCalendarV691':'haosHeadReportCalendarV691';
+    if(window[key]){try{window[key].destroy();}catch(e){} window[key]=null;}
+  }
+  function renderReportCards(kind){
+    destroyReportCalendar(kind);
+    const pane=showReportPane(kind);
+    if(!pane) return;
+    const rows=reportList(kind);
+    if(!rows.length){pane.innerHTML='<div class="empty-state"><i class="bi bi-journal-x"></i><div class="fw-bold">ยังไม่มีข้อมูลรายงาน</div></div>'; return;}
+    pane.innerHTML='<div class="haos-v691-report-card-grid">'+rows.map(r=>{
+      const d=reportDate(r);
+      const dateText=d?d.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'numeric'}):(r.date||'-');
+      return '<div class="haos-v691-report-card"><div class="name">'+esc(reportTitle(r,kind))+'</div><div class="meta"><i class="bi bi-calendar3"></i> '+esc(dateText)+' '+esc(r.time||r.reportTime||'')+'</div><div class="detail">'+esc(plain(r.details||r.workDetails||r.detail||'-')).slice(0,220)+'</div></div>';
+    }).join('')+'</div>';
+  }
+  function renderReportCalendarFull(kind){
+    destroyReportCalendar(kind);
+    const pane=showReportPane(kind);
+    if(!pane) return;
+    if(!window.FullCalendar){renderReportCards(kind); return;}
+    pane.innerHTML='<div class="haos-v691-report-calendar" id="haosReportCalendarInner_'+kind+'"></div>';
+    const el=$('haosReportCalendarInner_'+kind);
+    const events=reportList(kind).map(r=>{
+      const d=reportDate(r); if(!d) return null;
+      const normal=String(r.leaveType||r.status||'').includes('ปกติ');
+      return {title:reportTitle(r,kind),start:d,allDay:true,backgroundColor:normal?'#22c55e':'#7c3aed',borderColor:'transparent',extendedProps:{details:r.details||r.workDetails||r.detail||'',time:r.time||r.reportTime||'',remarks:r.remarks||r.remark||''}};
+    }).filter(Boolean);
+    const cal=new FullCalendar.Calendar(el,{initialView:'dayGridMonth',locale:'th',height:'auto',headerToolbar:{left:'prev,next today',center:'title',right:'dayGridMonth,timeGridWeek,timeGridDay'},events,eventClick:info=>{const p=info.event.extendedProps||{};Swal.fire({title:esc(info.event.title),html:'<div class="text-start"><b>เวลา:</b> '+esc(p.time||'-')+'<br><b>รายละเอียด:</b><br>'+esc(plain(p.details||'-')).replace(/\n/g,'<br>')+'<br><span class="text-muted">'+esc(p.remarks||'')+'</span></div>',width:650});}});
+    cal.render();
+    window[kind==='my'?'haosMyReportCalendarV691':'haosHeadReportCalendarV691']=cal;
+  }
+  const previousRenderMy=window.renderMyReports;
+  const previousRenderHead=window.renderHeadReports;
+  window.setMyReportViewMode=function(mode){
+    const m=mode==='month'?'calendar':(mode||'list');
+    window.myReportViewMode=m; try{myReportViewMode=m==='calendar'||m==='card'?'list':'list';}catch(e){}
+    if(m==='card') return renderReportCards('my');
+    if(m==='calendar') return renderReportCalendarFull('my');
+    destroyReportCalendar('my'); $('myReportCalendarView')?.classList.add('d-none'); $('myReportListView')?.classList.remove('d-none'); return previousRenderMy?previousRenderMy():undefined;
+  };
+  window.setHeadReportViewMode=function(mode){
+    const m=mode==='month'?'calendar':(mode||'list');
+    window.headReportViewMode=m; window.haosHeadReportViewMode=m; try{headReportViewMode='list';}catch(e){}
+    if(m==='card') return renderReportCards('team');
+    if(m==='calendar') return renderReportCalendarFull('team');
+    destroyReportCalendar('team'); $('headReportCalendarView')?.classList.add('d-none'); $('headReportListView')?.classList.remove('d-none'); return previousRenderHead?previousRenderHead():undefined;
+  };
+  window.renderMyReports=function(){ if(window.myReportViewMode==='card') return renderReportCards('my'); if(window.myReportViewMode==='calendar') return renderReportCalendarFull('my'); return previousRenderMy?previousRenderMy():undefined; };
+  window.renderHeadReports=function(){ if(window.headReportViewMode==='card'||window.haosHeadReportViewMode==='card') return renderReportCards('team'); if(window.headReportViewMode==='calendar'||window.haosHeadReportViewMode==='calendar') return renderReportCalendarFull('team'); return previousRenderHead?previousRenderHead():undefined; };
+  window.renderHeadReportsV687=window.renderHeadReports;
+  window.renderReportCalendar_=function(elementId,reports,type){ return renderReportCalendarFull(type==='my'?'my':'team'); };
+  function installReportButtons(){
+    [['myReport','setMyReportViewMode'],['headReport','setHeadReportViewMode']].forEach(([scope,fn])=>{
+      const btn=qa('button').find(b=>(b.getAttribute('onclick')||'').includes(fn+"('calendar')")||(b.getAttribute('onclick')||'').includes(fn+"('month')"));
+      const holder=btn?.parentElement; if(!holder) return;
+      let hasCard=false, hasCalendar=false;
+      qa('button',holder).forEach(b=>{
+        const oc=b.getAttribute('onclick')||'';
+        b.setAttribute('data-haos-v69-view',scope);
+        if(oc.includes("('list')")){b.dataset.mode='list';}
+        else if(oc.includes("('calendar')")&&!hasCard){b.dataset.mode='card'; b.setAttribute('onclick',fn+"('card')"); b.innerHTML='<i class="bi bi-grid-3x3-gap"></i> การ์ด'; hasCard=true;}
+        else if(oc.includes("('month')")||oc.includes("('calendar')")){b.dataset.mode='calendar'; b.setAttribute('onclick',fn+"('calendar')"); b.innerHTML='<i class="bi bi-calendar3"></i> ปฏิทิน'; hasCalendar=true;}
+      });
+      if(!hasCalendar) holder.insertAdjacentHTML('beforeend','<button type="button" data-haos-v69-view="'+scope+'" data-mode="calendar" class="btn btn-sm btn-outline-primary" onclick="'+fn+'(\'calendar\')"><i class="bi bi-calendar3"></i> ปฏิทิน</button>');
+    });
+  }
+
+  function setupSigCanvas(id){
+    if(typeof window.setupItBookingSignature_==='function'){try{return window.setupItBookingSignature_(id);}catch(e){}}
+    const c=$(id); if(!c) return; const ctx=c.getContext('2d'); ctx.lineWidth=2.5; ctx.lineCap='round'; ctx.strokeStyle='#0f172a'; let drawing=false;
+    const pos=ev=>{const r=c.getBoundingClientRect(); const p=ev.touches?ev.touches[0]:ev; return {x:(p.clientX-r.left)*(c.width/r.width),y:(p.clientY-r.top)*(c.height/r.height)};};
+    const down=ev=>{drawing=true;c.dataset.hasInk='1';const p=pos(ev);ctx.beginPath();ctx.moveTo(p.x,p.y);ev.preventDefault();};
+    const move=ev=>{if(!drawing)return;const p=pos(ev);ctx.lineTo(p.x,p.y);ctx.stroke();ev.preventDefault();};
+    const up=()=>{drawing=false;};
+    ['pointerdown','mousedown','touchstart'].forEach(n=>c.addEventListener(n,down,{passive:false}));
+    ['pointermove','mousemove','touchmove'].forEach(n=>c.addEventListener(n,move,{passive:false}));
+    ['pointerup','pointerleave','mouseup','mouseleave','touchend','touchcancel'].forEach(n=>c.addEventListener(n,up,{passive:false}));
+  }
+  function drawImageToCanvas(id,data){
+    const c=$(id); if(!c) return; const ctx=c.getContext('2d'); const img=new Image();
+    img.onload=()=>{ctx.clearRect(0,0,c.width,c.height); const scale=Math.min(c.width/img.width,c.height/img.height); const w=img.width*scale,h=img.height*scale; ctx.drawImage(img,(c.width-w)/2,(c.height-h)/2,w,h); c.dataset.hasInk='1';};
+    img.src=data;
+  }
+  function canvasData(id){
+    if(typeof window.getItBookingCanvasData_==='function'){try{const data=window.getItBookingCanvasData_(id); if(data) return data;}catch(e){}}
+    const c=$(id); return c&&c.dataset.hasInk?c.toDataURL('image/png'):'';
+  }
+  window.addProfileSignatureV49_=function(){
+    Swal.fire({title:'เพิ่มลายเซ็น',width:640,html:'<div class="haos-v691-sig-box"><label class="small fw-bold text-muted">ชื่อเรียกลายเซ็น</label><input id="sigNameV49" type="text" class="form-control mb-2" autocomplete="off" placeholder="เช่น ลายเซ็นหลัก / ลายเซ็นอนุมัติ"><label class="small fw-bold text-muted">แนบรูปภาพลายเซ็น</label><input id="sigFileV49" type="file" accept="image/*" class="form-control mb-2"><canvas id="sigCanvasV49" width="520" height="160" style="width:100%;height:160px;border:1px dashed #94a3b8;border-radius:14px;background:#fff;touch-action:none;"></canvas><div class="small text-muted mt-2">อัปโหลดรูป หรือเซ็นสดในช่องนี้ แล้วตั้งชื่อได้ตามต้องการ</div></div>',showCancelButton:true,confirmButtonText:'บันทึก',cancelButtonText:'ยกเลิก',focusConfirm:false,stopKeydownPropagation:false,didOpen:()=>{const input=$('sigNameV49'); if(input){input.disabled=false;input.readOnly=false;input.removeAttribute('disabled');input.removeAttribute('readonly');['keydown','keyup','keypress','input','click','mousedown','touchstart'].forEach(ev=>input.addEventListener(ev,e=>e.stopPropagation(),true)); setTimeout(()=>input.focus(),80);} setupSigCanvas('sigCanvasV49'); const file=$('sigFileV49'); if(file) file.addEventListener('change',ev=>{const f=ev.target.files&&ev.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=async e=>{let data=e.target.result; try{if(typeof window.removeWhiteBgSignatureV49_==='function') data=await window.removeWhiteBgSignatureV49_(data);}catch(err){} if(typeof window.drawSignatureToCanvas_==='function') window.drawSignatureToCanvas_('sigCanvasV49',data); else drawImageToCanvas('sigCanvasV49',data);}; r.readAsDataURL(f);});},preConfirm:async()=>{const data=canvasData('sigCanvasV49'); if(!data)return Swal.showValidationMessage('กรุณาอัปโหลดหรือเซ็นลายเซ็น'); const u=userObj(); const current=await gas('getMySignatures',[u.phone||'']); const arr=current&&current.success?(current.signatures||[]):[]; if(arr.length>=10)return Swal.showValidationMessage('เก็บลายเซ็นได้สูงสุด 10 รายการ'); const name=($('sigNameV49')?.value||'').trim()||('ลายเซ็น '+(arr.length+1)); arr.push({name,data,isDefault:arr.length===0}); const save=await gas('saveMySignatures',[u.phone||'',arr]); if(!save||!save.success)return Swal.showValidationMessage(save&&save.message?save.message:'บันทึกไม่สำเร็จ'); return true;}}).then(r=>{if(r.isConfirmed&&typeof window.loadProfileSignaturesV49_==='function')window.loadProfileSignaturesV49_();});
+  };
+
+  function install(){
+    removeDuplicateFormHeroes();
+    installHeadSummaryDigitalButton();
+    installReportButtons();
+    markScheduleTables();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install,{once:true}); else install();
+  setTimeout(install,500); setTimeout(install,1500);
+  new MutationObserver(()=>install()).observe(document.documentElement,{childList:true,subtree:true});
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
