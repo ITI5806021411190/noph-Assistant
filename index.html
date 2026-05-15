@@ -9733,5 +9733,164 @@ HAOS v68.6 FINISHING FIX
 })();
 </script>
 
+<style id="haos-v70-it-asset-repair-style">
+  .haos-v70-panel{border-radius:22px!important;overflow:hidden;box-shadow:0 18px 48px rgba(15,23,42,.08)}
+  .haos-v70-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+  .haos-v70-kpi{border:1px solid rgba(148,163,184,.25);border-radius:16px;background:linear-gradient(180deg,#fff,#f8fafc);padding:14px}
+  .haos-v70-kpi small{color:#64748b;font-weight:800}
+  .haos-v70-kpi b{display:block;font-size:1.65rem;line-height:1.1;color:#0f172a;margin-top:5px}
+  .haos-v70-filter{border:1px solid rgba(14,165,233,.22);border-radius:16px;background:linear-gradient(180deg,#eff6ff,#f8fafc);padding:14px;margin:14px 0}
+  .haos-v70-table{border-collapse:separate!important;border-spacing:0 8px!important;margin:0!important}
+  .haos-v70-table thead th{background:#e0f2fe!important;color:#075985!important;border:0!important;font-weight:900!important;padding:12px!important}
+  .haos-v70-table tbody td{background:#fff!important;border-top:1px solid rgba(148,163,184,.18)!important;border-bottom:1px solid rgba(148,163,184,.18)!important;padding:12px!important;vertical-align:middle}
+  .haos-v70-table tbody td:first-child{border-left:1px solid rgba(148,163,184,.18)!important;border-radius:14px 0 0 14px}
+  .haos-v70-table tbody td:last-child{border-right:1px solid rgba(148,163,184,.18)!important;border-radius:0 14px 14px 0}
+  .haos-v70-status{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 10px;font-size:.78rem;font-weight:900}
+  .haos-v70-status.ok{background:#dcfce7;color:#166534}.haos-v70-status.warn{background:#fef3c7;color:#92400e}.haos-v70-status.bad{background:#fee2e2;color:#991b1b}.haos-v70-status.info{background:#dbeafe;color:#1d4ed8}
+  .haos-v70-alert-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+  .haos-v70-alert{border:1px solid rgba(245,158,11,.3);border-radius:14px;background:#fffbeb;padding:12px;color:#92400e}
+  .haos-v70-asset-mini{border:1px solid rgba(148,163,184,.25);border-radius:16px;padding:12px;background:#f8fafc}
+  .haos-v70-tabbar{display:flex;gap:8px;flex-wrap:wrap}
+</style>
+<script id="haos-v70-it-asset-repair-script">
+(function(){
+  'use strict';
+  const PATCH='v70-it-asset-repair';
+  const $=id=>document.getElementById(id);
+  const qa=(sel,root=document)=>Array.from((root||document).querySelectorAll(sel));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const clean=v=>String(v??'').replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim();
+  const state={assets:[],software:[],licenses:[],maps:[],tickets:[],alerts:[],dashboard:{}};
+  function currentUserV70(){try{return window.user||user||{};}catch(e){return window.user||{};}}
+  function gasV70(fn,args){ if(typeof gasRunPromise_==='function') return gasRunPromise_(fn,args||[]); return new Promise((resolve,reject)=>google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run,args||[])); }
+  function isStaffV70(){const u=currentUserV70(); return /admin|super/i.test(u.role||'') || String(u.department||'').includes('สุขภาพดิจิทัล');}
+  function statusBadgeV70(v,type){
+    const s=String(v||'ไม่ระบุ');
+    let cls='info';
+    if(/ใช้งาน|Active|Resolved|Closed|ดำเนินการแล้ว/.test(s)) cls='ok';
+    if(/ซ่อม|Waiting|Expiring|New|Assigned|In Progress|รอ/.test(s)) cls='warn';
+    if(/ชำรุด|Expired|Cancelled|เสีย|หมดอายุ/.test(s)) cls='bad';
+    return '<span class="haos-v70-status '+cls+'">'+esc(s)+'</span>';
+  }
+  function assetByIdV70(id){return state.assets.find(a=>String(a.assetId)===String(id))||null;}
+  function softwareByIdV70(id){return state.software.find(s=>String(s.softwareId)===String(id))||null;}
+  function licenseByIdV70(id){return state.licenses.find(l=>String(l.licenseId)===String(id))||null;}
+  function actorV70(){const u=currentUserV70();return {phone:u.phone||'',name:u.fullName||u.name||'',department:u.department||'',role:u.role||''};}
+
+  function ensureITHubV70(){
+    const pane=$('itservices-pane'); if(!pane) return;
+    const row=pane.querySelector('.row.g-3.mb-4');
+    if(row&&!$('itAssetCardV70')){
+      row.insertAdjacentHTML('beforeend',
+        '<div class="col-md-4" id="itAssetCardV70"><div class="card h-100 border-info it-service-card"><div class="card-body p-4 d-flex flex-column"><div class="display-6 text-info mb-3"><i class="bi bi-hdd-network"></i></div><h6 class="fw-bold">ทะเบียนทรัพย์สิน IT</h6><p class="text-muted small flex-grow-1">ทะเบียน Hardware, Software/License, วันหมดอายุ และการจับคู่ License กับเครื่อง</p><button class="btn btn-info btn-sm fw-bold text-white" onclick="openITAssetModuleV70()"><i class="bi bi-box-arrow-in-right"></i> เปิดทะเบียน</button></div></div></div>'+
+        '<div class="col-md-4" id="itRepairCardV70"><div class="card h-100 border-danger it-service-card"><div class="card-body p-4 d-flex flex-column"><div class="display-6 text-danger mb-3"><i class="bi bi-tools"></i></div><h6 class="fw-bold">แจ้งซ่อม IT</h6><p class="text-muted small flex-grow-1">แจ้งซ่อมโดยเลือกทรัพย์สินจากทะเบียน ดึงข้อมูลเครื่อง ผู้ใช้ สถานที่ ประกัน และ License ได้ทันที</p><button class="btn btn-danger btn-sm fw-bold" onclick="openITRepairModuleV70()"><i class="bi bi-wrench-adjustable-circle"></i> เปิดแจ้งซ่อม</button></div></div></div>'
+      );
+    }
+    if(row&&!$('itAssetPanelV70')){
+      row.insertAdjacentHTML('afterend',
+        '<div id="itAssetPanelV70" class="card border-info haos-v70-panel d-none mb-4"><div class="card-header bg-info bg-opacity-10 d-flex justify-content-between align-items-center flex-wrap gap-2"><div><h6 class="fw-bold mb-0 text-info-emphasis"><i class="bi bi-hdd-network"></i> ทะเบียนทรัพย์สิน IT และ Software License</h6><small class="text-muted">บริหาร Hardware, Software/License, วันหมดอายุ และการจับคู่ license กับเครื่อง</small></div><div class="d-flex gap-2 flex-wrap"><button class="btn btn-sm btn-info text-white fw-bold" onclick="openITAssetFormV70()"><i class="bi bi-plus-circle"></i> เพิ่มทรัพย์สิน</button><button class="btn btn-sm btn-outline-info" onclick="openITLicenseFormV70()"><i class="bi bi-key"></i> เพิ่ม License</button><button class="btn btn-sm btn-outline-warning" onclick="runITLicenseExpiryAlertV70Ui()"><i class="bi bi-bell"></i> ตรวจแจ้งเตือน</button><button class="btn btn-sm btn-outline-secondary" onclick="togglePanelV70(\'itAssetPanelV70\',false)"><i class="bi bi-x-lg"></i> ปิด</button></div></div><div class="card-body"><div id="itAssetDashboardV70" class="haos-v70-kpi-grid mb-3"></div><div id="itLicenseAlertsV70" class="haos-v70-alert-list mb-3"></div><div class="haos-v70-filter"><div class="row g-2 align-items-end"><div class="col-md-5"><label class="small fw-bold text-muted">ค้นหาทรัพย์สิน</label><input id="itAssetSearchV70" class="form-control" placeholder="ชื่อ รหัสทรัพย์สิน serial ผู้ใช้งาน สถานที่..." oninput="renderITAssetsV70()"></div><div class="col-md-3"><label class="small fw-bold text-muted">หมวด</label><select id="itAssetCategoryV70" class="form-select" onchange="renderITAssetsV70()"><option value="">ทั้งหมด</option></select></div><div class="col-md-3"><label class="small fw-bold text-muted">สถานะ</label><select id="itAssetStatusV70" class="form-select" onchange="renderITAssetsV70()"><option value="">ทั้งหมด</option></select></div><div class="col-md-1 d-grid"><button class="btn btn-outline-secondary" onclick="resetITAssetFiltersV70()"><i class="bi bi-arrow-counterclockwise"></i></button></div></div></div><div class="table-responsive"><table class="table haos-v70-table align-middle small"><thead><tr><th>ทรัพย์สิน</th><th>ผู้ใช้/สถานที่</th><th>สถานะ</th><th>License</th><th class="text-end">จัดการ</th></tr></thead><tbody id="itAssetTableV70"><tr><td colspan="5" class="text-center py-4 text-muted">ยังไม่ได้โหลดข้อมูล</td></tr></tbody></table></div></div></div>'+
+        '<div id="itRepairPanelV70" class="card border-danger haos-v70-panel d-none mb-4"><div class="card-header bg-danger bg-opacity-10 d-flex justify-content-between align-items-center flex-wrap gap-2"><div><h6 class="fw-bold mb-0 text-danger"><i class="bi bi-tools"></i> แจ้งซ่อม IT / Helpdesk</h6><small class="text-muted">เลือกทรัพย์สินจากทะเบียนแล้วสร้างใบแจ้งซ่อม พร้อม dashboard งานซ่อม</small></div><div class="d-flex gap-2 flex-wrap"><button class="btn btn-sm btn-danger fw-bold" onclick="openITRepairTicketFormV70()"><i class="bi bi-plus-circle"></i> แจ้งซ่อม</button><button class="btn btn-sm btn-outline-danger" onclick="loadITAssetModuleV70()"><i class="bi bi-arrow-clockwise"></i> โหลดใหม่</button><button class="btn btn-sm btn-outline-secondary" onclick="togglePanelV70(\'itRepairPanelV70\',false)"><i class="bi bi-x-lg"></i> ปิด</button></div></div><div class="card-body"><div id="itRepairDashboardV70" class="haos-v70-kpi-grid mb-3"></div><div class="haos-v70-filter"><div class="row g-2 align-items-end"><div class="col-md-5"><label class="small fw-bold text-muted">ค้นหาใบแจ้งซ่อม</label><input id="itRepairSearchV70" class="form-control" placeholder="เลขใบงาน ปัญหา ผู้แจ้ง ทรัพย์สิน..." oninput="renderITRepairTicketsV70()"></div><div class="col-md-3"><label class="small fw-bold text-muted">สถานะ</label><select id="itRepairStatusV70" class="form-select" onchange="renderITRepairTicketsV70()"><option value="">ทั้งหมด</option><option>New</option><option>Assigned</option><option>In Progress</option><option>Waiting Parts</option><option>Waiting Vendor</option><option>Resolved</option><option>Closed</option><option>Cancelled</option></select></div><div class="col-md-3"><label class="small fw-bold text-muted">ความเร่งด่วน</label><select id="itRepairPriorityV70" class="form-select" onchange="renderITRepairTicketsV70()"><option value="">ทั้งหมด</option><option>Low</option><option>Normal</option><option>High</option><option>Critical</option></select></div><div class="col-md-1 d-grid"><button class="btn btn-outline-secondary" onclick="resetITRepairFiltersV70()"><i class="bi bi-arrow-counterclockwise"></i></button></div></div></div><div class="table-responsive"><table class="table haos-v70-table align-middle small"><thead><tr><th>ใบงาน</th><th>ทรัพย์สิน/ผู้แจ้ง</th><th>ปัญหา</th><th>สถานะ</th><th class="text-end">จัดการ</th></tr></thead><tbody id="itRepairTableV70"><tr><td colspan="5" class="text-center py-4 text-muted">ยังไม่ได้โหลดข้อมูล</td></tr></tbody></table></div></div></div>'
+      );
+    }
+  }
+  window.togglePanelV70=function(id,show){const el=$(id); if(el)el.classList.toggle('d-none',!show); if(show) setTimeout(()=>el?.scrollIntoView({behavior:'smooth',block:'start'}),80);};
+  window.openITAssetModuleV70=function(){ensureITHubV70(); togglePanelV70('itAssetPanelV70',true); loadITAssetModuleV70();};
+  window.openITRepairModuleV70=function(){ensureITHubV70(); togglePanelV70('itRepairPanelV70',true); loadITAssetModuleV70();};
+
+  window.loadITAssetModuleV70=async function(){
+    const u=currentUserV70();
+    try{
+      const res=await gasV70('getITAssetModuleDataV70',[u.phone||'',u.role||'',u.department||'']);
+      if(!res||!res.success) throw new Error(res&&res.message?res.message:'โหลดข้อมูลไม่สำเร็จ');
+      state.assets=res.assets||[]; state.software=res.software||[]; state.licenses=res.licenses||[]; state.maps=res.maps||[]; state.tickets=res.tickets||[]; state.alerts=res.alerts||[]; state.dashboard=res.dashboard||{};
+      renderITAssetDashboardV70(); renderITAssetsV70(); renderITRepairDashboardV70(); renderITRepairTicketsV70();
+    }catch(err){Swal.fire('โหลดข้อมูล IT Asset ไม่สำเร็จ',err.message||String(err),'error');}
+  };
+  function fillOptionsV70(id,values){const sel=$(id); if(!sel)return; const cur=sel.value; const uniq=[...new Set(values.filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'th')); sel.innerHTML='<option value="">ทั้งหมด</option>'+uniq.map(v=>'<option>'+esc(v)+'</option>').join(''); sel.value=cur;}
+  window.renderITAssetDashboardV70=function(){
+    const d=state.dashboard||{};
+    const box=$('itAssetDashboardV70'); if(box)box.innerHTML=[
+      ['ทรัพย์สินทั้งหมด',d.totalAssets||0,'bi-hdd-stack text-info'],
+      ['ใช้งาน',d.activeAssets||0,'bi-check-circle text-success'],
+      ['ส่งซ่อม/ชำรุด',d.repairAssets||0,'bi-tools text-warning'],
+      ['License ใกล้หมดอายุ',d.expiringLicenses||0,'bi-bell text-danger']
+    ].map(x=>'<div class="haos-v70-kpi"><small><i class="bi '+x[2]+'"></i> '+x[0]+'</small><b>'+x[1]+'</b></div>').join('');
+    const alert=$('itLicenseAlertsV70'); if(alert) alert.innerHTML=(state.alerts||[]).slice(0,6).map(a=>'<div class="haos-v70-alert"><b><i class="bi bi-exclamation-triangle"></i> '+esc(a.softwareName||a.licenseName||a.licenseId)+'</b><div class="small">หมดอายุ: '+esc(a.expiryDate)+' • เหลือ '+esc(a.daysLeft)+' วัน</div></div>').join('') || '<div class="text-muted small">ไม่มี License ใกล้หมดอายุในช่วงแจ้งเตือน</div>';
+    fillOptionsV70('itAssetCategoryV70',state.assets.map(a=>a.category)); fillOptionsV70('itAssetStatusV70',state.assets.map(a=>a.status));
+  };
+  function assetLicenseCountV70(assetId){return state.maps.filter(m=>m.assetId===assetId&&m.activationStatus!=='Removed').length;}
+  window.renderITAssetsV70=function(){
+    const tbody=$('itAssetTableV70'); if(!tbody)return;
+    const q=clean($('itAssetSearchV70')?.value).toLowerCase(), cat=$('itAssetCategoryV70')?.value||'', st=$('itAssetStatusV70')?.value||'';
+    const list=state.assets.filter(a=>(!cat||a.category===cat)&&(!st||a.status===st)&&(!q||clean(Object.values(a).join(' ')).toLowerCase().includes(q)));
+    if(!list.length){tbody.innerHTML='<tr><td colspan="5" class="text-center py-4 text-muted">ยังไม่มีข้อมูลทรัพย์สิน IT</td></tr>';return;}
+    tbody.innerHTML=list.map(a=>'<tr><td><div class="fw-bold text-primary">'+esc(a.assetName||'-')+'</div><small class="text-muted">'+esc(a.assetCode||a.assetNumber||'-')+' • '+esc(a.category||'-')+'</small><br><small>'+esc([a.brand,a.model,a.serialNumber].filter(Boolean).join(' / '))+'</small></td><td><b>'+esc(a.currentUserName||'-')+'</b><br><small class="text-muted">'+esc(a.ownerDepartment||'')+' • '+esc(a.location||'-')+'</small></td><td>'+statusBadgeV70(a.status)+'<br><small class="text-muted">'+esc(a.condition||'')+'</small></td><td><span class="badge bg-info">'+assetLicenseCountV70(a.assetId)+' license</span><br><small class="text-muted">ประกันถึง '+esc(a.warrantyEnd||'-')+'</small></td><td class="text-end"><button class="btn btn-sm btn-outline-primary" onclick="openITAssetDetailV70(\''+esc(a.assetId)+'\')"><i class="bi bi-eye"></i></button> <button class="btn btn-sm btn-outline-warning text-dark" onclick="openITAssetFormV70(\''+esc(a.assetId)+'\')"><i class="bi bi-pencil"></i></button> <button class="btn btn-sm btn-outline-danger" onclick="openITRepairTicketFormV70(\''+esc(a.assetId)+'\')"><i class="bi bi-tools"></i></button></td></tr>').join('');
+  };
+  window.resetITAssetFiltersV70=function(){['itAssetSearchV70','itAssetCategoryV70','itAssetStatusV70'].forEach(id=>{const el=$(id); if(el)el.value='';}); renderITAssetsV70();};
+
+  window.openITAssetFormV70=async function(assetId){
+    const a=assetByIdV70(assetId)||{};
+    const html='<div class="text-start"><div class="row g-2"><div class="col-md-4"><label class="small fw-bold">รหัสทรัพย์สิน</label><input id="assetCodeV70" class="form-control" value="'+esc(a.assetCode||'')+'"></div><div class="col-md-8"><label class="small fw-bold">ชื่อทรัพย์สิน *</label><input id="assetNameV70" class="form-control" value="'+esc(a.assetName||'')+'"></div><div class="col-md-4"><label class="small fw-bold">หมวด</label><input id="assetCategoryV70" class="form-control" value="'+esc(a.category||'Computer')+'"></div><div class="col-md-4"><label class="small fw-bold">ยี่ห้อ</label><input id="assetBrandV70" class="form-control" value="'+esc(a.brand||'')+'"></div><div class="col-md-4"><label class="small fw-bold">รุ่น</label><input id="assetModelV70" class="form-control" value="'+esc(a.model||'')+'"></div><div class="col-md-4"><label class="small fw-bold">Serial Number</label><input id="assetSerialV70" class="form-control" value="'+esc(a.serialNumber||'')+'"></div><div class="col-md-4"><label class="small fw-bold">ผู้ใช้งาน</label><input id="assetUserV70" class="form-control" value="'+esc(a.currentUserName||'')+'"></div><div class="col-md-4"><label class="small fw-bold">เบอร์ผู้ใช้งาน</label><input id="assetUserPhoneV70" class="form-control" value="'+esc(a.currentUserPhone||'')+'"></div><div class="col-md-4"><label class="small fw-bold">กลุ่มงานเจ้าของ</label><input id="assetDeptV70" class="form-control" value="'+esc(a.ownerDepartment||currentUserV70().department||'')+'"></div><div class="col-md-4"><label class="small fw-bold">สถานที่</label><input id="assetLocationV70" class="form-control" value="'+esc(a.location||'')+'"></div><div class="col-md-2"><label class="small fw-bold">สถานะ</label><select id="assetStatusV70" class="form-select"><option>ใช้งาน</option><option>ว่าง</option><option>ส่งซ่อม</option><option>ชำรุด</option><option>จำหน่าย</option></select></div><div class="col-md-2"><label class="small fw-bold">สภาพ</label><select id="assetConditionV70" class="form-select"><option>ดี</option><option>พอใช้</option><option>ต้องซ่อม</option><option>เสื่อมสภาพ</option></select></div><div class="col-md-4"><label class="small fw-bold">วันหมดประกัน</label><input id="assetWarrantyEndV70" type="date" class="form-control" value="'+esc(a.warrantyEnd||'')+'"></div><div class="col-md-8"><label class="small fw-bold">หมายเหตุ</label><input id="assetRemarkV70" class="form-control" value="'+esc(a.remark||'')+'"></div></div></div>';
+    const r=await Swal.fire({title:assetId?'แก้ไขทรัพย์สิน IT':'เพิ่มทรัพย์สิน IT',html,width:880,showCancelButton:true,confirmButtonText:'บันทึก',didOpen:()=>{if($('assetStatusV70'))$('assetStatusV70').value=a.status||'ใช้งาน'; if($('assetConditionV70'))$('assetConditionV70').value=a.condition||'ดี';},preConfirm:()=>({assetId:a.assetId||'',assetCode:$('assetCodeV70').value.trim(),assetName:$('assetNameV70').value.trim(),category:$('assetCategoryV70').value.trim(),brand:$('assetBrandV70').value.trim(),model:$('assetModelV70').value.trim(),serialNumber:$('assetSerialV70').value.trim(),currentUserName:$('assetUserV70').value.trim(),currentUserPhone:$('assetUserPhoneV70').value.trim(),ownerDepartment:$('assetDeptV70').value.trim(),location:$('assetLocationV70').value.trim(),status:$('assetStatusV70').value,condition:$('assetConditionV70').value,warrantyEnd:$('assetWarrantyEndV70').value,remark:$('assetRemarkV70').value.trim()})});
+    if(!r.isConfirmed)return;
+    try{const res=await gasV70('saveITAssetV70',[r.value,actorV70()]); if(!res||!res.success)throw new Error(res?.message||'บันทึกไม่สำเร็จ'); Swal.fire({icon:'success',title:'บันทึกแล้ว',timer:1200,showConfirmButton:false}); loadITAssetModuleV70();}catch(err){Swal.fire('ผิดพลาด',err.message||String(err),'error');}
+  };
+  window.openITLicenseFormV70=async function(assetId){
+    const assetOptions='<option value="">ไม่ผูกกับเครื่องตอนนี้</option>'+state.assets.map(a=>'<option value="'+esc(a.assetId)+'" '+(assetId===a.assetId?'selected':'')+'>'+esc((a.assetCode||a.assetName)+' - '+a.assetName)+'</option>').join('');
+    const html='<div class="text-start"><div class="row g-2"><div class="col-md-6"><label class="small fw-bold">ซอฟต์แวร์ *</label><input id="swNameV70" class="form-control" placeholder="Microsoft Office / Antivirus / Adobe"></div><div class="col-md-3"><label class="small fw-bold">หมวด</label><input id="swCatV70" class="form-control" value="Office"></div><div class="col-md-3"><label class="small fw-bold">ประเภท License</label><select id="licTypeV70" class="form-select"><option>Per Device</option><option>Per User</option><option>Volume</option><option>Subscription</option><option>Freeware</option><option>Open Source</option></select></div><div class="col-md-6"><label class="small fw-bold">ชื่อ License</label><input id="licNameV70" class="form-control"></div><div class="col-md-3"><label class="small fw-bold">จำนวนสิทธิ์</label><input id="seatTotalV70" type="number" class="form-control" value="1"></div><div class="col-md-3"><label class="small fw-bold">ใช้งานแล้ว</label><input id="seatUsedV70" type="number" class="form-control" value="1"></div><div class="col-md-4"><label class="small fw-bold">Key แบบปิดบางส่วน</label><input id="licKeyV70" class="form-control" placeholder="XXXXX-1234"></div><div class="col-md-4"><label class="small fw-bold">วันหมดอายุ</label><input id="licExpiryV70" type="date" class="form-control"></div><div class="col-md-4"><label class="small fw-bold">แจ้งเตือนก่อน (วัน)</label><input id="licAlertDaysV70" type="number" class="form-control" value="60"></div><div class="col-md-12"><label class="small fw-bold">จับคู่กับ Hardware</label><select id="licAssetV70" class="form-select">'+assetOptions+'</select></div><div class="col-md-12"><label class="small fw-bold">หมายเหตุ</label><input id="licRemarkV70" class="form-control"></div></div></div>';
+    const r=await Swal.fire({title:'เพิ่ม Software / License',html,width:820,showCancelButton:true,confirmButtonText:'บันทึก',preConfirm:()=>({softwareName:$('swNameV70').value.trim(),softwareCategory:$('swCatV70').value.trim(),licenseType:$('licTypeV70').value,licenseName:$('licNameV70').value.trim(),seatTotal:$('seatTotalV70').value,seatUsed:$('seatUsedV70').value,licenseKeyMasked:$('licKeyV70').value.trim(),expiryDate:$('licExpiryV70').value,renewalAlertDays:$('licAlertDaysV70').value||60,assetId:$('licAssetV70').value,remark:$('licRemarkV70').value.trim()})});
+    if(!r.isConfirmed)return;
+    try{const res=await gasV70('saveITSoftwareLicenseV70',[r.value,actorV70()]); if(!res||!res.success)throw new Error(res?.message||'บันทึกไม่สำเร็จ'); Swal.fire({icon:'success',title:'บันทึกแล้ว',timer:1200,showConfirmButton:false}); loadITAssetModuleV70();}catch(err){Swal.fire('ผิดพลาด',err.message||String(err),'error');}
+  };
+  window.openITAssetDetailV70=function(assetId){
+    const a=assetByIdV70(assetId); if(!a)return;
+    const maps=state.maps.filter(m=>m.assetId===assetId&&m.activationStatus!=='Removed');
+    const licHtml=maps.map(m=>{const sw=softwareByIdV70(m.softwareId)||{}, lic=licenseByIdV70(m.licenseId)||{};return '<div class="haos-v70-asset-mini mb-2"><b>'+esc(sw.softwareName||'-')+'</b><div class="small text-muted">'+esc(lic.licenseName||'')+' • หมดอายุ '+esc(lic.expiryDate||'-')+'</div>'+statusBadgeV70(lic.licenseStatus||'Active')+'</div>';}).join('')||'<div class="text-muted small">ยังไม่มี Software/License ที่จับคู่</div>';
+    Swal.fire({title:esc(a.assetName),html:'<div class="text-start"><div class="haos-v70-asset-mini mb-2"><b>รหัส:</b> '+esc(a.assetCode||a.assetNumber||'-')+'<br><b>Serial:</b> '+esc(a.serialNumber||'-')+'<br><b>ผู้ใช้:</b> '+esc(a.currentUserName||'-')+'<br><b>สถานที่:</b> '+esc(a.location||'-')+'</div><h6 class="fw-bold">Software / License</h6>'+licHtml+'</div>',width:720,showCancelButton:true,confirmButtonText:'เพิ่ม License ให้เครื่องนี้',cancelButtonText:'ปิด'}).then(r=>{if(r.isConfirmed)openITLicenseFormV70(assetId);});
+  };
+
+  window.renderITRepairDashboardV70=function(){
+    const box=$('itRepairDashboardV70'); if(!box)return;
+    const open=['New','Assigned','In Progress','Waiting Parts','Waiting Vendor'];
+    const total=state.tickets.length, openCount=state.tickets.filter(t=>open.includes(t.status)).length, critical=state.tickets.filter(t=>t.priority==='Critical'||t.priority==='High').length, closed=state.tickets.filter(t=>t.status==='Closed'||t.status==='Resolved').length;
+    box.innerHTML=[['ใบงานทั้งหมด',total,'bi-ticket-perforated text-danger'],['เปิดอยู่',openCount,'bi-hourglass-split text-warning'],['เร่งด่วน',critical,'bi-exclamation-triangle text-danger'],['ปิดแล้ว',closed,'bi-check-circle text-success']].map(x=>'<div class="haos-v70-kpi"><small><i class="bi '+x[2]+'"></i> '+x[0]+'</small><b>'+x[1]+'</b></div>').join('');
+  };
+  window.renderITRepairTicketsV70=function(){
+    const tbody=$('itRepairTableV70'); if(!tbody)return;
+    const q=clean($('itRepairSearchV70')?.value).toLowerCase(), st=$('itRepairStatusV70')?.value||'', pr=$('itRepairPriorityV70')?.value||'';
+    const list=state.tickets.filter(t=>(!st||t.status===st)&&(!pr||t.priority===pr)&&(!q||clean(Object.values(t).join(' ')).toLowerCase().includes(q)));
+    if(!list.length){tbody.innerHTML='<tr><td colspan="5" class="text-center py-4 text-muted">ยังไม่มีใบแจ้งซ่อม</td></tr>';return;}
+    tbody.innerHTML=list.map(t=>'<tr><td><b>'+esc(t.ticketNo||t.ticketId)+'</b><br><small class="text-muted">'+esc(t.reportedAt||'')+'</small></td><td><b>'+esc(t.assetName||'-')+'</b><br><small class="text-muted">'+esc(t.requesterName||'-')+' • '+esc(t.location||'-')+'</small></td><td><div class="fw-bold">'+esc(t.problemTitle||'-')+'</div><small class="text-muted">'+esc(t.problemCategory||'')+' • '+esc(t.priority||'')+'</small></td><td>'+statusBadgeV70(t.status)+'</td><td class="text-end"><button class="btn btn-sm btn-outline-primary" onclick="openITRepairDetailV70(\''+esc(t.ticketId)+'\')"><i class="bi bi-eye"></i></button> '+(isStaffV70()?'<button class="btn btn-sm btn-outline-success" onclick="updateITRepairStatusUiV70(\''+esc(t.ticketId)+'\')"><i class="bi bi-gear"></i></button>':'')+'</td></tr>').join('');
+  };
+  window.resetITRepairFiltersV70=function(){['itRepairSearchV70','itRepairStatusV70','itRepairPriorityV70'].forEach(id=>{const el=$(id); if(el)el.value='';}); renderITRepairTicketsV70();};
+  window.openITRepairTicketFormV70=async function(assetId){
+    if(!state.assets.length) await loadITAssetModuleV70();
+    const u=currentUserV70();
+    const assetOptions='<option value="">ไม่ผูกทรัพย์สิน / ไม่พบในทะเบียน</option>'+state.assets.map(a=>'<option value="'+esc(a.assetId)+'" '+(assetId===a.assetId?'selected':'')+'>'+esc((a.assetCode||a.assetName)+' - '+a.assetName)+'</option>').join('');
+    const html='<div class="text-start"><div class="row g-2"><div class="col-md-12"><label class="small fw-bold">เลือกทรัพย์สิน</label><select id="repairAssetV70" class="form-select">'+assetOptions+'</select></div><div class="col-md-4"><label class="small fw-bold">หมวดปัญหา</label><select id="repairCatV70" class="form-select"><option>Hardware</option><option>Software</option><option>Network</option><option>Printer</option><option>Account</option><option>Other</option></select></div><div class="col-md-4"><label class="small fw-bold">ความเร่งด่วน</label><select id="repairPriorityV70" class="form-select"><option>Normal</option><option>Low</option><option>High</option><option>Critical</option></select></div><div class="col-md-4"><label class="small fw-bold">ผลกระทบ</label><input id="repairImpactV70" class="form-control" placeholder="ใช้งานไม่ได้ / กระทบทั้งกลุ่มงาน"></div><div class="col-md-12"><label class="small fw-bold">หัวข้อปัญหา *</label><input id="repairTitleV70" class="form-control"></div><div class="col-md-12"><label class="small fw-bold">รายละเอียด</label><textarea id="repairDetailV70" class="form-control" rows="4"></textarea></div></div></div>';
+    const r=await Swal.fire({title:'แจ้งซ่อม IT',html,width:820,showCancelButton:true,confirmButtonText:'ส่งแจ้งซ่อม',preConfirm:()=>{const a=assetByIdV70($('repairAssetV70').value)||{};return {assetId:$('repairAssetV70').value,assetCode:a.assetCode||'',assetName:a.assetName||'',requesterName:u.fullName||u.name||'',requesterPhone:u.phone||'',requesterDepartment:u.department||'',location:a.location||'',problemCategory:$('repairCatV70').value,priority:$('repairPriorityV70').value,impact:$('repairImpactV70').value.trim(),problemTitle:$('repairTitleV70').value.trim(),problemDetail:$('repairDetailV70').value.trim()};}});
+    if(!r.isConfirmed)return;
+    try{const res=await gasV70('saveITRepairTicketV70',[r.value,actorV70()]); if(!res||!res.success)throw new Error(res?.message||'บันทึกไม่สำเร็จ'); Swal.fire({icon:'success',title:'ส่งแจ้งซ่อมแล้ว',text:res.ticketNo||'',timer:1500,showConfirmButton:false}); togglePanelV70('itRepairPanelV70',true); loadITAssetModuleV70();}catch(err){Swal.fire('ผิดพลาด',err.message||String(err),'error');}
+  };
+  window.openITRepairDetailV70=function(id){
+    const t=state.tickets.find(x=>x.ticketId===id); if(!t)return;
+    Swal.fire({title:esc(t.ticketNo||id),html:'<div class="text-start"><div class="haos-v70-asset-mini mb-2"><b>ทรัพย์สิน:</b> '+esc(t.assetName||'-')+'<br><b>ผู้แจ้ง:</b> '+esc(t.requesterName||'-')+'<br><b>สถานที่:</b> '+esc(t.location||'-')+'</div><h6 class="fw-bold">'+esc(t.problemTitle||'-')+'</h6><div style="white-space:pre-wrap">'+esc(t.problemDetail||'-')+'</div><hr><b>สถานะ:</b> '+statusBadgeV70(t.status)+' <b class="ms-2">Priority:</b> '+esc(t.priority||'')+'</div>',width:720});
+  };
+  window.updateITRepairStatusUiV70=async function(id){
+    const r=await Swal.fire({title:'อัปเดตใบแจ้งซ่อม',html:'<div class="text-start"><label class="small fw-bold">สถานะ</label><select id="repairStatusSetV70" class="form-select mb-2"><option>Assigned</option><option>In Progress</option><option>Waiting Parts</option><option>Waiting Vendor</option><option>Resolved</option><option>Closed</option><option>Cancelled</option></select><label class="small fw-bold">บันทึกผล/หมายเหตุ</label><textarea id="repairNoteSetV70" class="form-control" rows="3"></textarea></div>',showCancelButton:true,confirmButtonText:'อัปเดต',preConfirm:()=>({status:$('repairStatusSetV70').value,note:$('repairNoteSetV70').value.trim()})});
+    if(!r.isConfirmed)return;
+    try{const res=await gasV70('updateITRepairTicketStatusV70',[id,r.value.status,r.value.note,actorV70()]); if(!res||!res.success)throw new Error(res?.message||'อัปเดตไม่สำเร็จ'); Swal.fire({icon:'success',title:'อัปเดตแล้ว',timer:1000,showConfirmButton:false}); loadITAssetModuleV70();}catch(err){Swal.fire('ผิดพลาด',err.message||String(err),'error');}
+  };
+  window.runITLicenseExpiryAlertV70Ui=async function(){
+    try{const res=await gasV70('runITLicenseExpiryAlertV70',[currentUserV70().phone||'']); if(!res||!res.success)throw new Error(res?.message||'ตรวจไม่สำเร็จ'); Swal.fire('ตรวจแล้ว','พบรายการในช่วงแจ้งเตือน '+(res.count||0)+' รายการ','success'); loadITAssetModuleV70();}catch(err){Swal.fire('ผิดพลาด',err.message||String(err),'error');}
+  };
+
+  const oldInit=window.initItServicesHub;
+  window.initItServicesHub=function(){const r=oldInit?oldInit.apply(this,arguments):true; setTimeout(ensureITHubV70,120); return r;};
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(ensureITHubV70,500),{once:true}); else setTimeout(ensureITHubV70,500);
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
+
 </body>
 </html>
