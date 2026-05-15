@@ -688,5 +688,84 @@ body{background:radial-gradient(circle at 12% 10%,rgba(14,165,233,.20),transpare
 })();
 </script>
 
+<style id="haos-v70-3-public-it-style">
+  .haos-v703-public-it-shell{padding:28px 16px;min-height:100vh}
+  .haos-v703-public-it{max-width:1180px;margin:0 auto}
+  .haos-v703-public-hero{border-radius:28px;padding:24px;color:#fff;background:linear-gradient(135deg,#0f766e,#0284c7 58%,#2563eb);box-shadow:0 26px 70px rgba(2,132,199,.20)}
+  .haos-v703-public-actions{display:flex;gap:10px;flex-wrap:wrap}
+  .haos-v703-public-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+  .haos-v703-public-kpi{border:1px solid rgba(148,163,184,.22);border-radius:20px;background:#fff;padding:16px;box-shadow:0 12px 30px rgba(15,23,42,.07)}
+  .haos-v703-public-kpi small{display:block;color:#64748b;font-weight:800}
+  .haos-v703-public-kpi b{display:block;font-size:2rem;color:#0f172a;margin-top:4px}
+  .haos-v703-public-panel{border:1px solid rgba(148,163,184,.22);border-radius:22px;background:rgba(255,255,255,.94);box-shadow:0 16px 42px rgba(15,23,42,.08);overflow:hidden}
+  .haos-v703-public-panel h6{font-weight:900;margin:0;padding:14px 16px;background:linear-gradient(90deg,#eff6ff,#ecfeff);border-bottom:1px solid rgba(148,163,184,.18)}
+  .haos-v703-public-panel-body{padding:16px}
+  .haos-v703-public-row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;border-bottom:1px solid rgba(226,232,240,.75);padding:10px 0}
+  .haos-v703-public-row:last-child{border-bottom:0}
+  .haos-v703-public-pill{display:inline-flex;align-items:center;border-radius:999px;padding:5px 10px;background:#e0f2fe;color:#075985;font-weight:800;font-size:.78rem;white-space:nowrap}
+  .haos-v703-public-bar{height:11px;border-radius:999px;background:#e2e8f0;overflow:hidden}
+  .haos-v703-public-bar span{display:block;height:100%;background:linear-gradient(90deg,#0ea5e9,#22c55e);border-radius:999px}
+  .haos-v703-public-muted{color:#64748b}
+  @media(max-width:768px){.haos-v703-public-hero{border-radius:22px}.haos-v703-public-actions .btn{width:100%}}
+</style>
+<script id="haos-v70-3-public-it-script">
+(function(){
+  const PATCH='v70.3-public-it-dashboard';
+  const moduleName=new URLSearchParams(location.search).get('module')||'';
+  const isIT=['itservices','itasset-dashboard','itrepair-dashboard'].includes(moduleName);
+  if(!isIT)return;
+  let started=false;
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  function gas(fn,args){return new Promise((resolve,reject)=>{try{google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run,args||[]);}catch(e){reject(e);}});}
+  function loginUrl(){return location.origin+'/';}
+  function kpi(icon,label,value,note){return '<div class="haos-v703-public-kpi"><small><i class="bi '+icon+' me-1"></i>'+esc(label)+'</small><b>'+esc(value??0)+'</b>'+(note?'<div class="haos-v703-public-muted small">'+esc(note)+'</div>':'')+'</div>';}
+  function bars(title,obj){
+    obj=obj||{};
+    const entries=Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    const max=Math.max(1,...entries.map(x=>Number(x[1])||0));
+    return '<div class="haos-v703-public-panel"><h6>'+title+'</h6><div class="haos-v703-public-panel-body">'+(entries.length?entries.map(([name,count])=>'<div class="mb-3"><div class="d-flex justify-content-between small fw-bold mb-1"><span>'+esc(name)+'</span><span>'+esc(count)+'</span></div><div class="haos-v703-public-bar"><span style="width:'+Math.round((Number(count)||0)*100/max)+'%"></span></div></div>').join(''):'<div class="text-muted small">ยังไม่มีข้อมูล</div>')+'</div></div>';
+  }
+  function renderList(title,items,mapper){
+    return '<div class="haos-v703-public-panel"><h6>'+title+'</h6><div class="haos-v703-public-panel-body">'+(items&&items.length?items.map(mapper).join(''):'<div class="text-muted small">ยังไม่มีข้อมูล</div>')+'</div></div>';
+  }
+  function renderShell(content){
+    document.body.innerHTML='<main class="haos-v703-public-it-shell"><section class="haos-v703-public-it">'+content+'</section></main>';
+  }
+  function renderLoading(){
+    renderShell('<div class="haos-v703-public-hero mb-3"><div class="d-flex justify-content-between align-items-center gap-3 flex-wrap"><div><h3 class="fw-bold mb-1"><i class="bi bi-pc-display-horizontal me-2"></i>IT Services Public Dashboard</h3><div class="opacity-75">ภาพรวมทะเบียนทรัพย์สิน IT, Software License และ Helpdesk</div></div><a class="btn btn-light fw-bold" href="'+esc(loginUrl())+'"><i class="bi bi-box-arrow-in-right"></i> เข้าสู่ระบบ</a></div></div><div class="haos-v703-public-panel"><div class="haos-v703-public-panel-body text-center py-5"><span class="spinner-border text-primary"></span><div class="fw-bold mt-3">กำลังโหลดข้อมูลสาธารณะ...</div></div></div>');
+  }
+  function renderDashboard(data){
+    const d=data.dashboard||{};
+    const focus=moduleName==='itrepair-dashboard'?'Helpdesk':(moduleName==='itasset-dashboard'?'ทะเบียนทรัพย์สินและ License':'IT Services Hub');
+    const hero='<div class="haos-v703-public-hero mb-3"><div class="d-flex justify-content-between align-items-center gap-3 flex-wrap"><div><div class="small opacity-75">Health Assistant OS</div><h3 class="fw-bold mb-1">'+esc(focus)+'</h3><div class="opacity-75">'+esc(data.publicNotice||'แสดงเฉพาะข้อมูลภาพรวมสำหรับสาธารณะ')+'</div></div><div class="haos-v703-public-actions"><a class="btn btn-light fw-bold" href="'+esc(loginUrl())+'"><i class="bi bi-box-arrow-in-right"></i> เข้าสู่ระบบเพื่อใช้งานเต็มระบบ</a><button class="btn btn-outline-light fw-bold" onclick="location.reload()"><i class="bi bi-arrow-clockwise"></i> โหลดใหม่</button></div></div><div class="small opacity-75 mt-3">อัปเดตล่าสุด '+esc(data.generatedAt||'-')+'</div></div>';
+    const kpis='<div class="haos-v703-public-grid mb-3">'+
+      kpi('bi-hdd-network','ทรัพย์สิน IT',d.assetTotal||0,'แสดงเฉพาะภาพรวม')+
+      kpi('bi-key','Software / License',d.licenseTotal||0,'แจ้งเตือนล่วงหน้าอย่างน้อย 60 วัน')+
+      kpi('bi-exclamation-triangle','License ใกล้หมดอายุ',d.licenseExpiringSoon||0,'รายการที่ควรติดตาม')+
+      kpi('bi-tools','ใบแจ้งซ่อมที่เปิดอยู่',d.repairOpen||0,'รอดำเนินการหรือกำลังดำเนินการ')+
+      '</div>';
+    const assetList=renderList('ตัวอย่างทรัพย์สิน IT ที่เปิดเผยได้',data.assets||[],a=>'<div class="haos-v703-public-row"><div><b>'+esc(a.assetName||'-')+'</b><div class="small haos-v703-public-muted">'+esc(a.category||'-')+' • '+esc(a.ownerDepartment||'-')+' • '+esc(a.location||'-')+'</div></div><span class="haos-v703-public-pill">'+esc(a.status||'-')+'</span></div>');
+    const alertList=renderList('License ใกล้หมดอายุ',data.alerts||[],a=>'<div class="haos-v703-public-row"><div><b>'+esc(a.softwareName||a.licenseName||'-')+'</b><div class="small haos-v703-public-muted">หมดอายุ '+esc(a.expiryDate||'-')+'</div></div><span class="haos-v703-public-pill">'+esc(a.daysLeft??'-')+' วัน</span></div>');
+    const ticketList=renderList('สถานะ Helpdesk ล่าสุด',data.tickets||[],t=>'<div class="haos-v703-public-row"><div><b>'+esc(t.ticketNo||'-')+' • '+esc(t.problemCategory||'-')+'</b><div class="small haos-v703-public-muted">'+esc(t.assetName||'-')+' • '+esc(t.requesterDepartment||'-')+'</div></div><span class="haos-v703-public-pill">'+esc(t.status||'-')+'</span></div>');
+    const charts='<div class="row g-3 mb-3"><div class="col-lg-6">'+bars('ทรัพย์สินตามสถานะ',data.counts&&data.counts.assetStatus)+'</div><div class="col-lg-6">'+bars('ใบแจ้งซ่อมตามสถานะ',data.counts&&data.counts.ticketStatus)+'</div></div>';
+    const lower='<div class="row g-3"><div class="col-lg-4">'+assetList+'</div><div class="col-lg-4">'+alertList+'</div><div class="col-lg-4">'+ticketList+'</div></div>';
+    renderShell(hero+kpis+charts+lower+'<div class="text-center small text-muted mt-4">all rights reserved - พัฒนาและดูแลระบบโดย กลุ่มงานสุขภาพดิจิทัล สสจ.นครนายก</div>');
+  }
+  async function start(){
+    if(started)return; started=true;
+    renderLoading();
+    try{
+      const res=await gas('getPublicITServicesDashboardV703',[moduleName]);
+      if(!res||!res.success)throw new Error(res&&res.message?res.message:'โหลดข้อมูลไม่สำเร็จ');
+      renderDashboard(res);
+    }catch(e){
+      renderShell('<div class="haos-v703-public-panel"><div class="haos-v703-public-panel-body text-center py-5"><div class="display-5 text-danger"><i class="bi bi-exclamation-triangle"></i></div><h4 class="fw-bold mt-3">โหลด Dashboard ไม่สำเร็จ</h4><div class="text-muted">'+esc(e.message||String(e))+'</div><a class="btn btn-primary mt-3" href="'+esc(loginUrl())+'">กลับหน้าเข้าสู่ระบบ</a></div></div>');
+    }
+  }
+  window.onload=start;
+  if(document.readyState!=='loading')setTimeout(start,0);
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
