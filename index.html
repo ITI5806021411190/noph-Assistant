@@ -11205,5 +11205,381 @@ HAOS v68.6 FINISHING FIX
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<style id="haos-v70-13-support-chat-telegram-style">
+  #helpSupportAdminCardV713 .card{
+    border:1px solid rgba(14,165,233,.22)!important;
+    border-radius:18px!important;
+    background:linear-gradient(135deg,#f0f9ff,#ffffff)!important;
+    box-shadow:0 14px 34px rgba(15,23,42,.08)!important;
+  }
+  .haos-v713-support-table{max-height:520px;overflow:auto;border:1px solid rgba(148,163,184,.22);border-radius:16px}
+  .haos-v713-support-table table{margin:0}
+  .haos-v713-support-table th{position:sticky;top:0;background:#f8fafc!important;z-index:2;color:#334155!important;font-weight:950!important}
+  .haos-v713-chat-shell{display:grid;grid-template-columns:minmax(220px,320px) 1fr;gap:14px;min-height:540px;text-align:left}
+  .haos-v713-chat-list,.haos-v713-chat-main{border:1px solid rgba(148,163,184,.22);border-radius:20px;background:#fff;overflow:hidden}
+  .haos-v713-chat-list{max-height:540px;overflow:auto}
+  .haos-v713-chat-session{display:block;width:100%;border:0;border-bottom:1px solid rgba(148,163,184,.16);background:#fff;text-align:left;padding:12px 14px;color:#0f172a}
+  .haos-v713-chat-session:hover,.haos-v713-chat-session.active{background:linear-gradient(135deg,#e0f2fe,#ecfdf5)}
+  .haos-v713-chat-session b{display:block;font-weight:950}
+  .haos-v713-chat-session small{display:block;color:#64748b;font-weight:700}
+  .haos-v713-chat-messages{height:380px;overflow:auto;padding:14px;background:linear-gradient(180deg,#f8fafc,#eef8ff)}
+  .haos-v713-chat-bubble{max-width:76%;margin:8px 0;padding:10px 12px;border-radius:16px;background:#fff;border:1px solid rgba(148,163,184,.22);box-shadow:0 8px 20px rgba(15,23,42,.05);white-space:pre-wrap;line-height:1.45}
+  .haos-v713-chat-bubble.admin{margin-left:auto;background:linear-gradient(135deg,#2563eb,#0891b2);color:#fff;border-color:transparent}
+  .haos-v713-chat-bubble .meta{font-size:.74rem;font-weight:850;opacity:.78;margin-bottom:3px}
+  .haos-v713-chat-compose{border-top:1px solid rgba(148,163,184,.18);padding:12px;background:#fff}
+  .haos-v713-help-hero{border-radius:24px;background:linear-gradient(135deg,#0f766e,#2563eb);color:#fff;padding:20px 22px;text-align:left;box-shadow:0 18px 46px rgba(37,99,235,.20)}
+  .haos-v713-help-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:14px;text-align:left}
+  .haos-v713-help-card{border:1px solid rgba(148,163,184,.22);border-radius:18px;background:linear-gradient(180deg,#fff,#f8fbff);padding:14px;box-shadow:0 10px 28px rgba(15,23,42,.06)}
+  .haos-v713-help-card i{width:38px;height:38px;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;background:#e0f2fe;color:#0369a1;font-size:1.15rem;margin-bottom:8px}
+  .haos-v713-help-card b{display:block;color:#0f172a;margin-bottom:4px}
+  .haos-v713-help-card small{display:block;color:#475569;font-weight:700;line-height:1.45}
+  .haos-v713-contact-panel{border:1px solid rgba(37,99,235,.18);border-radius:20px;background:#fff;padding:14px;margin-top:14px;box-shadow:0 10px 30px rgba(15,23,42,.06);text-align:left}
+  .haos-v713-contact-card{border:1px solid rgba(148,163,184,.22);border-radius:16px;padding:12px;background:#f8fafc;height:100%}
+  #profileTelegramGuideV713{border:1px solid rgba(37,99,235,.20);border-left:5px solid #2563eb;border-radius:18px;background:linear-gradient(135deg,#eff6ff,#ffffff);padding:12px 14px;margin-top:12px;color:#0f172a}
+  #profileTelegramGuideV713 ol{margin:.45rem 0 .2rem 1.1rem;padding:0}
+  #profileTelegramGuideV713 li{margin:.18rem 0;color:#334155;font-weight:700}
+  .haos-v713-telegram-guide{text-align:left;color:#0f172a}
+  .haos-v713-telegram-guide .step{border:1px solid rgba(148,163,184,.22);border-radius:16px;background:#fff;padding:12px;margin:10px 0}
+  .haos-v713-telegram-guide code{background:#eef2ff;color:#3730a3;border-radius:8px;padding:2px 6px}
+  #unifiedScheduleListV702 .haos-v713-table{width:100%!important;min-width:930px!important;border-collapse:separate!important;border-spacing:0 12px!important;margin:0!important}
+  #unifiedScheduleListV702 .haos-v713-table thead th{background:transparent!important;color:#475569!important;border:0!important;padding:0 14px 5px!important;font-size:.8rem;font-weight:950!important;white-space:nowrap}
+  #unifiedScheduleListV702 .haos-v713-table tbody tr{--haos-v713-bg:#fff;--haos-v713-edge:#2563eb;filter:drop-shadow(0 10px 20px rgba(15,23,42,.06))}
+  #unifiedScheduleListV702 .haos-v713-table tbody tr.haos-v713-row-my{--haos-v713-bg:linear-gradient(90deg,#f8fbff 0%,#ffffff 45%,#eff6ff 100%);--haos-v713-edge:#2563eb}
+  #unifiedScheduleListV702 .haos-v713-table tbody tr.haos-v713-row-dept{--haos-v713-bg:linear-gradient(90deg,#f0fdfa 0%,#ffffff 42%,#ecfeff 100%);--haos-v713-edge:#0891b2}
+  #unifiedScheduleListV702 .haos-v713-table tbody td{background:var(--haos-v713-bg)!important;border-top:1px solid rgba(148,163,184,.18)!important;border-bottom:1px solid rgba(148,163,184,.18)!important;padding:14px!important;vertical-align:middle!important}
+  #unifiedScheduleListV702 .haos-v713-table tbody td:first-child{border-left:5px solid var(--haos-v713-edge)!important;border-radius:18px 0 0 18px!important}
+  #unifiedScheduleListV702 .haos-v713-table tbody td:last-child{border-right:1px solid rgba(148,163,184,.18)!important;border-radius:0 18px 18px 0!important}
+  .haos-v713-title-wrap{display:flex;align-items:flex-start;gap:12px;min-width:260px}
+  .haos-v713-scope-icon{width:38px;height:38px;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;background:#dbeafe;color:#1d4ed8}
+  .haos-v713-scope-icon.dept{background:#ccfbf1;color:#0f766e}
+  .haos-v713-title-main{font-weight:950;color:#1d4ed8!important;line-height:1.35}
+  .haos-v713-title-sub{display:flex;align-items:center;gap:6px;flex-wrap:wrap;color:#64748b;font-size:.82rem;margin-top:4px}
+  .haos-v713-time{font-weight:950;color:#0f172a;white-space:nowrap}
+  .haos-v713-owner{font-weight:900;color:#334155}
+  .haos-v713-owner small{display:block;color:#64748b;font-weight:700;margin-top:3px}
+  #unifiedScheduleListV702 .haos-v713-table .action-menu{white-space:nowrap;min-width:142px;width:142px;position:sticky;right:0;z-index:3}
+  #unifiedScheduleListV702 .haos-v713-table .action-menu .btn{border-radius:13px!important;min-width:40px;min-height:38px;margin-right:4px}
+  #unifiedScheduleListV702 .haos-v713-table .action-menu .btn:last-child{margin-right:0}
+  @media (max-width: 768px){
+    .haos-v713-chat-shell{grid-template-columns:1fr}
+    .haos-v713-chat-messages{height:340px}
+    .haos-v713-chat-bubble{max-width:92%}
+  }
+</style>
+<script id="haos-v70-13-support-chat-telegram-script">
+(function(){
+  const PATCH='v70.13-support-chat-telegram';
+  if(window.__HAOS_V713_SUPPORT_CHAT_TELEGRAM__)return;
+  window.__HAOS_V713_SUPPORT_CHAT_TELEGRAM__=true;
+  const $=id=>document.getElementById(id);
+  const qa=(s,r=document)=>Array.from((r||document).querySelectorAll(s));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const clean=v=>String(v??'').replace(/'/g,'').replace(/\s+/g,' ').trim();
+  function currentUserV713(){try{if(typeof getUser==='function')return getUser()||{};}catch(e){} try{return window.user||user||{};}catch(e){return window.user||{};}}
+  function actorV713(){const u=currentUserV713();return {phone:u.phone||u.userPhone||u.mobile||u.tel||'',name:u.fullName||u.name||u.displayName||'',fullName:u.fullName||u.name||'',role:u.role||'User',department:u.department||u.group||''};}
+  function gasV713(fn,args){
+    if(typeof window.gasRunPromise_==='function')return window.gasRunPromise_(fn,args||[]);
+    return new Promise((resolve,reject)=>{
+      try{google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run,args||[]);}
+      catch(e){reject(e);}
+    });
+  }
+  function dtV713(v){const d=v instanceof Date?v:new Date(v);if(isNaN(d))return '-';return d.toLocaleString('th-TH',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}
+  function splitTokensV713(v){return String(v||'').split(/\n|,/).map(clean).filter(Boolean);}
+  function dateObjV713(v){
+    if(!v)return null;
+    if(v instanceof Date&&!isNaN(v))return v;
+    let d=new Date(v); if(!isNaN(d))return d;
+    let s=String(v||''),m=s.match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+    if(m){let y=+m[1];if(y>2400)y-=543;d=new Date(y,+m[2]-1,+m[3]);if(!isNaN(d))return d;}
+    m=s.match(/(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
+    if(m){let y=+m[3];if(y>2400)y-=543;d=new Date(y,+m[2]-1,+m[1]);if(!isNaN(d))return d;}
+    return null;
+  }
+  function badgeClsV713(status){try{return window.getScheduleBadgeClass?window.getScheduleBadgeClass(status):'bg-info text-dark';}catch(e){return 'bg-info text-dark';}}
+  function allSchedulesV713(){
+    const my=(window.mySchedulesGlobal||[]).map(x=>Object.assign({},x,{__scope:'my'}));
+    const dept=(window.departmentSchedulesGlobal||[]).map(x=>Object.assign({},x,{__scope:'dept'}));
+    const seen=new Set(),out=[];
+    my.concat(dept).forEach((x,i)=>{const key=String(x.id||x.publicId||x.eventId||i);if(seen.has(key))return;seen.add(key);out.push(x);});
+    return out;
+  }
+  function tagsOfV713(item){return splitTokensV713(item&&item.tags);}
+  function priorityOfV713(item){return clean(item&&item.priority)||'ปกติ';}
+  function priorityClsV713(p){p=String(p||'');if(p.includes('มาก')||/critical/i.test(p))return'priority-critical';if(p.includes('ด่วน')||/urgent|high/i.test(p))return'priority-urgent';if(p.includes('ต่ำ')||/low/i.test(p))return'priority-low';return'priority-normal';}
+  function tagHtmlV713(item){const tags=tagsOfV713(item);return tags.length?tags.map(t=>'<span class="haos-v706-chip tag"><i class="bi bi-bookmark"></i>'+esc(t)+'</span>').join(''):'<span class="text-muted small">-</span>';}
+  function priorityHtmlV713(item){const p=priorityOfV713(item);return '<span class="haos-v706-chip '+priorityClsV713(p)+'"><i class="bi bi-flag"></i>'+esc(p)+'</span>';}
+  function passPeriodV713(item,period){
+    if(!period)return true;
+    const d=dateObjV713(item.rawStartTime||item.startTime||item.start||item.date);
+    if(!d)return true;
+    const now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate()),day=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+    const diff=Math.floor((day-today)/86400000);
+    if(period==='today')return diff===0;
+    if(period==='week')return diff>=0&&diff<=7;
+    if(period==='month')return diff>=0&&diff<=30;
+    return true;
+  }
+  function populateSelectV713(id,values,allText){
+    const el=$(id);if(!el)return;
+    const old=el.value;
+    const html=['<option value="">'+esc(allText||'ทั้งหมด')+'</option>'].concat(values.map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>')).join('');
+    if(el.innerHTML!==html)el.innerHTML=html;
+    if(values.includes(old))el.value=old;
+  }
+  function ensureUnifiedFiltersV713(){
+    const row=document.querySelector('#haosUnifiedScheduleViewV702 .haos-v702-filter .row');
+    if(row&&!$('unifiedSchedulePriorityV706')){
+      const reset=row.querySelector('.d-grid');
+      const html='<div class="col-md-2"><label class="small fw-bold text-muted">ความสำคัญ</label><select id="unifiedSchedulePriorityV706" class="form-select" onchange="renderUnifiedScheduleV702()"><option value="">ทั้งหมด</option></select></div><div class="col-md-2"><label class="small fw-bold text-muted">ประเภทงาน / Tags</label><select id="unifiedScheduleTagV706" class="form-select" onchange="renderUnifiedScheduleV702()"><option value="">ทั้งหมด</option></select></div>';
+      if(reset)reset.insertAdjacentHTML('beforebegin',html);else row.insertAdjacentHTML('beforeend',html);
+    }
+    const rows=allSchedulesV713();
+    const priorities=Array.from(new Set(['ปกติ','ต่ำ','ด่วน','ด่วนมาก'].concat(rows.map(priorityOfV713)))).filter(Boolean);
+    const tags=Array.from(new Set([].concat(...rows.map(tagsOfV713),(window.workTagOptionsGlobal||[]).map(t=>t.name||t)))).map(clean).filter(Boolean).sort((a,b)=>a.localeCompare(b,'th'));
+    populateSelectV713('unifiedSchedulePriorityV706',priorities,'ทั้งหมด');
+    populateSelectV713('unifiedScheduleTagV706',tags,'ทั้งหมด');
+  }
+  function filteredUnifiedV713(){
+    ensureUnifiedFiltersV713();
+    const q=clean($('unifiedScheduleSearchV702')?.value).toLowerCase();
+    const scope=$('unifiedScheduleScopeV702')?.value||'';
+    const status=$('unifiedScheduleStatusV702')?.value||'';
+    const period=$('unifiedSchedulePeriodV702')?.value||'';
+    const sort=$('unifiedScheduleSortV702')?.value||'newest';
+    const priority=$('unifiedSchedulePriorityV706')?.value||'';
+    const tag=$('unifiedScheduleTagV706')?.value||'';
+    let list=allSchedulesV713().filter(item=>{
+      const hay=[item.eventName,item.title,item.details,item.location,item.ownerName,item.createdBy,item.workStatus,item.priority,item.tags,item.startTime].map(clean).join(' ').toLowerCase();
+      if(scope&&item.__scope!==scope)return false;
+      if(status&&String(item.workStatus||item.status||'')!==status)return false;
+      if(priority&&priorityOfV713(item)!==priority)return false;
+      if(tag&&!tagsOfV713(item).includes(tag))return false;
+      if(q&&!hay.includes(q))return false;
+      return passPeriodV713(item,period);
+    });
+    list.sort((a,b)=>{
+      if(sort==='name')return clean(a.eventName||a.title).localeCompare(clean(b.eventName||b.title),'th');
+      const da=dateObjV713(a.rawStartTime||a.startTime||a.start||a.date)?.getTime()||0;
+      const db=dateObjV713(b.rawStartTime||b.startTime||b.start||b.date)?.getTime()||0;
+      return sort==='oldest'?da-db:db-da;
+    });
+    return list;
+  }
+  function actionHtmlV713(item){
+    const id=esc(item.id||item.publicId||item.eventId||'');
+    const u=currentUserV713();
+    const me=clean(u.phone||u.userPhone||u.mobile||u.tel);
+    const myName=clean(u.fullName||u.name||u.displayName);
+    const ownerPhones=[item.ownerPhone,item.createdByPhone,item.creatorPhone,item.userPhone,item.phone,item.createdByUserPhone].map(clean).filter(Boolean);
+    const ownerNames=[item.ownerName,item.createdBy,item.creatorName,item.userName].map(clean).filter(Boolean);
+    const can=item.__scope==='my'||ownerPhones.includes(me)||ownerNames.includes(myName)||/admin|super/i.test(String(u.role||''));
+    let html='<button type="button" class="btn btn-outline-info btn-sm text-dark" onclick="viewScheduleDetail(\''+id+'\')" title="ดูรายละเอียด"><i class="bi bi-eye"></i></button>';
+    if(can)html+='<button type="button" class="btn btn-outline-warning btn-sm text-dark" onclick="editSchedule(\''+id+'\')" title="แก้ไข"><i class="bi bi-pencil"></i></button><button type="button" class="btn btn-outline-danger btn-sm" onclick="handleDelete(\''+id+'\')" title="ลบ"><i class="bi bi-trash"></i></button>';
+    return html;
+  }
+  function scheduleRowV713(item){
+    const scope=item.__scope==='dept'?'dept':'my';
+    const title=item.eventName||item.title||'-',loc=item.location||item.eventLocation||'-',owner=item.ownerName||item.createdBy||'-',status=item.workStatus||item.status||'-';
+    const files=item.fileUrl?'<i class="bi bi-paperclip text-primary ms-1" title="มีไฟล์แนบ"></i>':'';
+    const icon=scope==='dept'?'bi-people-fill':'bi-person-check';
+    const scopeTitle=scope==='dept'?'งานกลุ่มงาน':'งานส่วนตัว';
+    return '<tr class="haos-v713-row-'+scope+'"><td class="haos-v713-title-cell"><div class="haos-v713-title-wrap"><span class="haos-v713-scope-icon '+(scope==='dept'?'dept':'')+'" title="'+esc(scopeTitle)+'" aria-label="'+esc(scopeTitle)+'"><i class="bi '+icon+'"></i></span><div><div class="haos-v713-title-main">'+esc(title)+files+'</div><div class="haos-v713-title-sub"><span><i class="bi bi-geo-alt"></i> '+esc(loc||'-')+'</span></div></div></div></td><td>'+tagHtmlV713(item)+'</td><td>'+priorityHtmlV713(item)+'</td><td><div class="haos-v713-time"><i class="bi bi-clock"></i> '+esc(item.startTime||item.start||'-')+'</div></td><td><div class="haos-v713-owner">'+esc(owner||'-')+'<small>'+esc(item.ownerDepartment||item.department||'')+'</small></div></td><td><span class="badge '+badgeClsV713(status)+'">'+esc(status)+'</span></td><td class="text-end action-menu">'+actionHtmlV713(item)+'</td></tr>';
+  }
+  const baseUnifiedRenderV713=window.renderUnifiedScheduleV702;
+  window.renderUnifiedScheduleV702=function(){
+    const mode=window.haosUnifiedScheduleModeV702||'list';
+    if(mode!=='list'&&typeof baseUnifiedRenderV713==='function')return baseUnifiedRenderV713.apply(this,arguments);
+    const listBox=$('unifiedScheduleListV702'),cardBox=$('unifiedScheduleCardV702'),calBox=$('unifiedScheduleCalendarV702');
+    if(!listBox){
+      if(typeof baseUnifiedRenderV713==='function')baseUnifiedRenderV713.apply(this,arguments);
+      return;
+    }
+    const list=filteredUnifiedV713();
+    qa('#unifiedScheduleViewToolsV702 .btn').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));
+    const cur=$('unifiedScheduleCurrentViewV702');if(cur)cur.textContent='กำลังดู: รายการ';
+    listBox.classList.remove('d-none');listBox.style.display='';
+    if(cardBox){cardBox.classList.add('d-none');cardBox.style.display='none';}
+    if(calBox){calBox.classList.add('d-none');calBox.style.display='none';}
+    listBox.innerHTML='<table class="table haos-v713-table align-middle small"><thead><tr><th>ชื่องาน</th><th>ประเภทงาน / Tags</th><th>ความสำคัญ / Priority</th><th>เวลาเริ่ม</th><th>ผู้สร้าง/เจ้าของ</th><th>สถานะ</th><th class="text-end">จัดการ</th></tr></thead><tbody>'+(list.length?list.map(scheduleRowV713).join(''):'<tr><td colspan="7" class="text-center text-muted py-4">ไม่พบรายการตามเงื่อนไข</td></tr>')+'</tbody></table>';
+  };
+  const baseUnifiedSetV713=window.setUnifiedScheduleViewV702;
+  window.setUnifiedScheduleViewV702=function(mode){
+    window.haosUnifiedScheduleModeV702=mode||'list';
+    if(window.haosUnifiedScheduleModeV702==='list')return window.renderUnifiedScheduleV702();
+    if(typeof baseUnifiedSetV713==='function')return baseUnifiedSetV713.apply(this,arguments);
+    if(typeof baseUnifiedRenderV713==='function')return baseUnifiedRenderV713.apply(this,arguments);
+  };
+  const baseUnifiedResetV713=window.resetUnifiedScheduleFiltersV702;
+  window.resetUnifiedScheduleFiltersV702=function(){
+    ['unifiedScheduleSearchV702','unifiedScheduleScopeV702','unifiedScheduleStatusV702','unifiedSchedulePeriodV702','unifiedSchedulePriorityV706','unifiedScheduleTagV706'].forEach(id=>{const el=$(id);if(el)el.value='';});
+    if($('unifiedScheduleSortV702'))$('unifiedScheduleSortV702').value='newest';
+    window.renderUnifiedScheduleV702();
+    if(typeof baseUnifiedResetV713==='function'&&window.haosUnifiedScheduleModeV702!=='list')return baseUnifiedResetV713.apply(this,arguments);
+  };
+
+  function supportFeatureCardsV713(){
+    return [
+      ['bi-journal-check','รายงานการปฏิบัติงาน','บันทึกรายงานประจำวัน ดูรายการ การ์ด และปฏิทิน พร้อมสรุปภาพรวมตามบทบาท'],
+      ['bi-calendar2-week','ตารางงาน & นัดหมาย','สร้างตารางงานส่วนตัวและกลุ่มงาน แนบไฟล์ กรองตาม Tags/Priority และเปิดลิงก์สาธารณะได้'],
+      ['bi-camera-video','จองห้องประชุม / Zoom','ส่งคำขอจอง จัดการสถานะ ออก Digital View และเปิดแบบฟอร์มจองสาธารณะ'],
+      ['bi-hdd-network','ทะเบียนทรัพย์สิน IT','เพิ่มทรัพย์สิน IT จับคู่ Software License แนบรูป และดู Dashboard สาธารณะบางส่วน'],
+      ['bi-tools','แจ้งซ่อม IT / Helpdesk','แจ้งซ่อมพร้อมรูปประกอบ ติดตามสถานะ และให้ทีมสุขภาพดิจิทัลจัดการงานซ่อม'],
+      ['bi-chat-dots','Help Center / Live Chat','ติดต่อ Admin กลาง โทร อีเมล หรือแชทสดกับผู้ดูแลจากในระบบ']
+    ];
+  }
+  function buildSupportMessageV713(u){
+    return ['ขอความช่วยเหลือ Health Assistant OS','ผู้ใช้: '+(u.fullName||u.name||'-'),'กลุ่มงาน: '+(u.department||'-'),'บทบาท: '+(u.role||'User'),'เบอร์: '+(u.phone||'-'),'หน้าที่พบปัญหา: ','รายละเอียดปัญหา: '].join('\n');
+  }
+  window.copySupportRequestV713=function(){
+    const text=buildSupportMessageV713(currentUserV713());
+    navigator.clipboard?.writeText(text).catch(()=>{});
+    const st=$('haosSupportCopyStatusV713');if(st){st.classList.remove('d-none');setTimeout(()=>st.classList.add('d-none'),2400);}
+  };
+  window.openHelpCenterV60=async function(){
+    const u=currentUserV713();
+    let contacts=[];
+    try{const res=await gasV713('getCentralSupportContactsV712',[u.phone||'',u.role||'',u.department||'']);if(res&&res.success)contacts=res.contacts||[];}catch(e){}
+    if(!contacts.length)contacts=[{fullName:'ผู้ดูแลระบบ Health Assistant OS',role:'Admin / Super Admin',department:'กลุ่มงานสุขภาพดิจิทัล',phone:'',email:'',chatEnabled:true}];
+    const cards=supportFeatureCardsV713().map(([icon,title,desc])=>'<div class="haos-v713-help-card"><i class="bi '+icon+'"></i><b>'+esc(title)+'</b><small>'+esc(desc)+'</small></div>').join('');
+    const contactCards=contacts.map((c,i)=>{
+      const phone=clean(c.phone),email=String(c.email||'');
+      return '<div class="col-md-6 col-xl-4"><div class="haos-v713-contact-card"><b>'+esc(c.fullName||c.name||('Admin '+(i+1)))+'</b><small>'+esc(c.role||'Admin')+' · '+esc(c.department||'')+'</small><small>'+esc(c.position||'')+'</small><div class="d-flex flex-wrap gap-2 mt-2">'+(phone?'<a class="btn btn-sm btn-outline-primary fw-bold" href="tel:'+esc(phone)+'"><i class="bi bi-telephone"></i> โทร</a>':'')+(email?'<a class="btn btn-sm btn-outline-success fw-bold" href="mailto:'+esc(email)+'?subject='+encodeURIComponent('ขอความช่วยเหลือ Health Assistant OS')+'"><i class="bi bi-envelope"></i> อีเมล</a>':'')+(c.chatEnabled!==false?'<button type="button" class="btn btn-sm btn-outline-info fw-bold" onclick="openHelpLiveChatV713()"><i class="bi bi-chat-dots"></i> แชทสด</button>':'')+(!phone&&!email&&c.chatEnabled===false?'<span class="small text-muted">ยังไม่มีช่องทางติดต่อในระบบ</span>':'')+'</div></div></div>';
+    }).join('');
+    Swal.fire({title:'ศูนย์ช่วยเหลือ Health Assistant OS',width:1120,showConfirmButton:false,showCloseButton:true,html:'<div class="haos-v713-help-hero"><h4 class="fw-bold mb-1"><i class="bi bi-headset me-2"></i>คู่มือและช่องทางขอความช่วยเหลือ</h4><div>อัปเดตความสามารถล่าสุดของโปรแกรม พร้อมช่องทางติดต่อ Admin / Super Admin กลางตามที่ผู้ดูแลกำหนด</div></div><div class="haos-v713-help-grid">'+cards+'</div><div class="haos-v713-contact-panel"><div id="haosSupportCopyStatusV713" class="alert alert-success py-2 mb-2 small fw-bold d-none"><i class="bi bi-check-circle me-1"></i>คัดลอกข้อความขอความช่วยเหลือแล้ว</div><div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2"><div><h5 class="fw-bold mb-1"><i class="bi bi-headset text-primary me-1"></i>ติดต่อ Admin / Super Admin กลาง</h5><div class="small text-muted">โทร อีเมล หรือเริ่มแชทสดกับผู้ดูแลระบบได้จากส่วนนี้</div></div><div class="d-flex flex-wrap gap-2"><button class="btn btn-primary fw-bold" onclick="openHelpLiveChatV713()"><i class="bi bi-chat-dots"></i> แชทสด</button><button class="btn btn-outline-primary fw-bold" onclick="copySupportRequestV713()"><i class="bi bi-clipboard"></i> คัดลอกข้อความ</button></div></div><div class="alert alert-info py-2 small fw-bold text-start">'+esc(buildSupportMessageV713(u))+'</div><div class="row g-2">'+contactCards+'</div></div>'});
+  };
+
+  window.openHelpLiveChatV713=async function(){
+    const actor=actorV713();
+    if(!clean(actor.phone)){Swal.fire('ไม่พบเบอร์ผู้ใช้','กรุณาเข้าสู่ระบบด้วยบัญชีที่มีเบอร์โทรศัพท์ก่อนเริ่มแชทสด','warning');return;}
+    Swal.fire({title:'กำลังเปิดแชทสด...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+    try{
+      const res=await gasV713('createHelpChatSessionV713',[actor]);
+      if(!res||!res.success)throw new Error((res&&res.message)||'เปิดห้องแชทไม่สำเร็จ');
+      window.haosHelpChatSessionV713=res.sessionId;
+      Swal.fire({title:'แชทสดกับผู้ดูแลระบบ',width:760,showConfirmButton:false,showCloseButton:true,html:'<div class="text-start"><div class="alert alert-info py-2 small fw-bold"><i class="bi bi-info-circle me-1"></i>พิมพ์รายละเอียดปัญหาไว้ได้เลย ผู้ดูแลที่ถูกกำหนดในระบบจะเห็นข้อความนี้</div><div id="haosLiveChatMessagesV713" class="haos-v713-chat-messages"></div><div class="haos-v713-chat-compose"><textarea id="haosLiveChatInputV713" class="form-control" rows="3" placeholder="พิมพ์ข้อความถึง Admin / Super Admin กลาง..."></textarea><div class="d-flex justify-content-end gap-2 mt-2"><button type="button" class="btn btn-outline-secondary" onclick="loadHelpLiveChatMessagesV713()"><i class="bi bi-arrow-clockwise"></i> โหลดใหม่</button><button type="button" class="btn btn-primary fw-bold" onclick="sendHelpLiveChatMessageV713()"><i class="bi bi-send"></i> ส่งข้อความ</button></div></div></div>',didOpen:()=>{loadHelpLiveChatMessagesV713();window.haosLiveChatTimerV713=setInterval(loadHelpLiveChatMessagesV713,5000);},willClose:()=>{clearInterval(window.haosLiveChatTimerV713);}});
+    }catch(e){Swal.fire('เปิดแชทสดไม่สำเร็จ',e.message||String(e),'error');}
+  };
+  window.loadHelpLiveChatMessagesV713=async function(){
+    const box=$('haosLiveChatMessagesV713'),sid=window.haosHelpChatSessionV713;if(!box||!sid)return;
+    try{
+      const res=await gasV713('getHelpChatMessagesV713',[sid,actorV713()]);
+      if(!res||!res.success)throw new Error((res&&res.message)||'โหลดข้อความไม่สำเร็จ');
+      box.innerHTML=(res.messages||[]).length?(res.messages||[]).map(m=>'<div class="haos-v713-chat-bubble '+(m.isAdmin?'admin':'user')+'"><div class="meta">'+esc(m.senderName||'-')+' · '+dtV713(m.timestamp)+'</div>'+esc(m.message||'')+'</div>').join(''):'<div class="text-center text-muted py-5">เริ่มพิมพ์ข้อความแรกเพื่อขอความช่วยเหลือ</div>';
+      box.scrollTop=box.scrollHeight;
+    }catch(e){box.innerHTML='<div class="alert alert-danger small">'+esc(e.message||String(e))+'</div>';}
+  };
+  window.sendHelpLiveChatMessageV713=async function(){
+    const input=$('haosLiveChatInputV713'),sid=window.haosHelpChatSessionV713,msg=clean(input&&input.value);if(!msg)return;
+    input.disabled=true;
+    try{const res=await gasV713('sendHelpChatMessageV713',[sid,actorV713(),msg]);if(!res||!res.success)throw new Error((res&&res.message)||'ส่งข้อความไม่สำเร็จ');input.value='';await loadHelpLiveChatMessagesV713();}
+    catch(e){Swal.fire('ส่งข้อความไม่สำเร็จ',e.message||String(e),'error');}
+    finally{input.disabled=false;input.focus();}
+  };
+
+  function supportSettingsHtmlV713(users,hasCustom){
+    const rows=(users||[]).map((u,i)=>'<tr data-phone="'+esc(u.phone||'')+'" data-role="'+esc(u.role||'')+'" data-dept="'+esc(u.department||'')+'" data-search="'+esc([u.fullName,u.phone,u.role,u.department,u.email].join(' ').toLowerCase())+'"><td class="text-center"><input class="form-check-input" type="checkbox" data-support-select '+(u.selected?'checked':'')+'></td><td><b>'+esc(u.fullName||'-')+'</b><small class="d-block text-muted fw-bold">'+esc(u.phone||'-')+'</small></td><td>'+esc(u.role||'-')+'</td><td>'+esc(u.department||'-')+'</td><td>'+esc(u.email||'-')+'</td><td style="width:90px"><input class="form-control form-control-sm" type="number" min="1" data-support-sort value="'+esc(u.sortOrder||i+1)+'"></td><td class="text-center"><input class="form-check-input" type="checkbox" data-support-chat '+(u.chatEnabled!==false?'checked':'')+'></td></tr>').join('');
+    return '<div class="text-start"><div class="alert '+(hasCustom?'alert-success':'alert-info')+' py-2 small fw-bold"><i class="bi bi-info-circle me-1"></i>'+(hasCustom?'ระบบใช้รายชื่อผู้ติดต่อที่ Super Admin กำหนดแล้ว':'ยังไม่เคยกำหนดรายชื่อ ระบบจะแนะนำ Admin / Super Admin / กลุ่มงานสุขภาพดิจิทัลเป็นค่าเริ่มต้น')+'</div><div class="d-flex flex-wrap gap-2 mb-2"><input id="helpSupportSearchV713" class="form-control" style="max-width:360px" placeholder="ค้นหาชื่อ เบอร์ บทบาท กลุ่มงาน..." oninput="filterHelpSupportUsersV713()"><button type="button" class="btn btn-outline-info fw-bold" onclick="selectDefaultSupportV713()"><i class="bi bi-stars"></i> เลือกกลุ่มแนะนำ</button><button type="button" class="btn btn-primary fw-bold ms-auto" onclick="saveHelpSupportSettingsV713()"><i class="bi bi-save"></i> บันทึกผู้ติดต่อ</button></div><div id="helpSupportSaveStatusV713" class="small fw-bold mb-2"></div><div class="haos-v713-support-table"><table id="helpSupportSettingsTableV713" class="table table-hover align-middle small"><thead><tr><th class="text-center">แสดง</th><th>ผู้ติดต่อ</th><th>บทบาท</th><th>กลุ่มงาน</th><th>Email</th><th>ลำดับ</th><th class="text-center">Live Chat</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+  }
+  window.openHelpSupportSettingsV713=async function(){
+    const u=currentUserV713();
+    Swal.fire({title:'กำลังโหลดรายชื่อผู้ติดต่อ...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+    try{
+      const res=await gasV713('getHelpSupportContactSettingsV713',[u.phone||'']);
+      if(!res||!res.success)throw new Error((res&&res.message)||'โหลดข้อมูลไม่สำเร็จ');
+      Swal.fire({title:'ตั้งค่าผู้ติดต่อ Help Center / Live Chat',width:1120,showConfirmButton:false,showCloseButton:true,html:supportSettingsHtmlV713(res.users||[],res.hasCustomSettings)});
+    }catch(e){Swal.fire('เปิดการตั้งค่าไม่สำเร็จ',e.message||String(e),'error');}
+  };
+  window.filterHelpSupportUsersV713=function(){const q=clean($('helpSupportSearchV713')?.value).toLowerCase();qa('#helpSupportSettingsTableV713 tbody tr').forEach(tr=>{tr.style.display=(!q||tr.dataset.search.includes(q))?'':'none';});};
+  window.selectDefaultSupportV713=function(){
+    qa('#helpSupportSettingsTableV713 tbody tr').forEach(tr=>{
+      const hay=(tr.dataset.role+' '+tr.dataset.dept).toLowerCase();
+      const pick=hay.includes('super')||hay.includes('admin')||hay.includes('สุขภาพดิจิทัล')||hay.includes('digital');
+      const cb=tr.querySelector('[data-support-select]'),chat=tr.querySelector('[data-support-chat]');
+      if(cb)cb.checked=pick;if(chat)chat.checked=pick;
+    });
+  };
+  window.saveHelpSupportSettingsV713=async function(){
+    const u=currentUserV713(),status=$('helpSupportSaveStatusV713');
+    const contacts=qa('#helpSupportSettingsTableV713 tbody tr').filter(tr=>tr.querySelector('[data-support-select]')?.checked).map((tr,i)=>({phone:tr.dataset.phone,chatEnabled:tr.querySelector('[data-support-chat]')?.checked!==false,sortOrder:Number(tr.querySelector('[data-support-sort]')?.value||i+1)}));
+    if(status)status.innerHTML='<span class="text-primary"><span class="spinner-border spinner-border-sm"></span> กำลังบันทึก...</span>';
+    try{const res=await gasV713('saveHelpSupportContactSettingsV713',[u.phone||'',contacts]);if(!res||!res.success)throw new Error((res&&res.message)||'บันทึกไม่สำเร็จ');if(status)status.innerHTML='<span class="text-success"><i class="bi bi-check-circle"></i> บันทึกแล้ว '+contacts.length+' รายชื่อ</span>';}
+    catch(e){if(status)status.innerHTML='<span class="text-danger"><i class="bi bi-exclamation-triangle"></i> '+esc(e.message||String(e))+'</span>';}
+  };
+
+  let inboxCurrentV713='';
+  window.openHelpChatInboxV713=function(){
+    Swal.fire({title:'กล่องแชทช่วยเหลือ',width:1180,showConfirmButton:false,showCloseButton:true,html:'<div class="haos-v713-chat-shell"><div class="haos-v713-chat-list"><div class="p-3 border-bottom fw-bold"><i class="bi bi-inboxes"></i> ห้องแชท</div><div id="haosChatInboxSessionsV713" class="text-muted p-3">กำลังโหลด...</div></div><div class="haos-v713-chat-main"><div id="haosChatInboxHeaderV713" class="p-3 border-bottom fw-bold text-muted">เลือกห้องแชทเพื่อดูรายละเอียด</div><div id="haosChatInboxMessagesV713" class="haos-v713-chat-messages"></div><div class="haos-v713-chat-compose"><textarea id="haosChatInboxReplyV713" class="form-control" rows="3" placeholder="ตอบกลับผู้ใช้งาน..."></textarea><div class="d-flex justify-content-between gap-2 mt-2"><button type="button" class="btn btn-outline-danger" onclick="closeHelpChatSessionV713Ui()"><i class="bi bi-check2-circle"></i> ปิดงานแชท</button><div><button type="button" class="btn btn-outline-secondary me-2" onclick="loadHelpChatInboxV713()"><i class="bi bi-arrow-clockwise"></i> โหลดใหม่</button><button type="button" class="btn btn-primary fw-bold" onclick="sendHelpChatAdminReplyV713()"><i class="bi bi-send"></i> ส่งตอบกลับ</button></div></div></div></div></div>',didOpen:()=>{loadHelpChatInboxV713();window.haosChatInboxTimerV713=setInterval(loadHelpChatInboxV713,6000);},willClose:()=>{clearInterval(window.haosChatInboxTimerV713);}});
+  };
+  window.loadHelpChatInboxV713=async function(){
+    const listBox=$('haosChatInboxSessionsV713');if(!listBox)return;
+    try{
+      const res=await gasV713('getHelpChatInboxV713',[actorV713().phone||'']);
+      if(!res||!res.success)throw new Error((res&&res.message)||'โหลดกล่องแชทไม่สำเร็จ');
+      const sessions=res.sessions||[];
+      listBox.innerHTML=sessions.length?sessions.map(s=>'<button type="button" class="haos-v713-chat-session '+(s.id===inboxCurrentV713?'active':'')+'" onclick="selectHelpChatSessionV713(\''+esc(s.id)+'\')"><b>'+esc(s.userName||s.userPhone||'-')+'</b><small>'+esc(s.department||'-')+'</small><small>'+esc(s.status||'Open')+' · '+dtV713(s.lastMessageAt||s.createdAt)+'</small></button>').join(''):'<div class="text-center text-muted p-4">ยังไม่มีห้องแชท</div>';
+      if(!inboxCurrentV713&&sessions[0])inboxCurrentV713=sessions[0].id;
+      if(inboxCurrentV713)selectHelpChatSessionV713(inboxCurrentV713,true);
+    }catch(e){listBox.innerHTML='<div class="alert alert-danger small m-2">'+esc(e.message||String(e))+'</div>';}
+  };
+  window.selectHelpChatSessionV713=async function(id,quiet){
+    inboxCurrentV713=id;
+    qa('.haos-v713-chat-session').forEach(b=>b.classList.toggle('active',b.getAttribute('onclick')?.includes(id)));
+    const box=$('haosChatInboxMessagesV713'),head=$('haosChatInboxHeaderV713');if(!box)return;
+    if(!quiet)box.innerHTML='<div class="text-center text-muted py-4">กำลังโหลดข้อความ...</div>';
+    try{
+      const res=await gasV713('getHelpChatMessagesV713',[id,actorV713()]);
+      if(!res||!res.success)throw new Error((res&&res.message)||'โหลดข้อความไม่สำเร็จ');
+      if(head)head.innerHTML='<i class="bi bi-chat-dots text-primary me-1"></i>'+esc(res.session?.userName||res.session?.userPhone||'-')+' <span class="badge bg-info text-dark ms-2">'+esc(res.session?.status||'Open')+'</span>';
+      box.innerHTML=(res.messages||[]).length?(res.messages||[]).map(m=>'<div class="haos-v713-chat-bubble '+(m.isAdmin?'admin':'user')+'"><div class="meta">'+esc(m.senderName||'-')+' · '+dtV713(m.timestamp)+'</div>'+esc(m.message||'')+'</div>').join(''):'<div class="text-center text-muted py-5">ยังไม่มีข้อความในห้องนี้</div>';
+      box.scrollTop=box.scrollHeight;
+    }catch(e){box.innerHTML='<div class="alert alert-danger small">'+esc(e.message||String(e))+'</div>';}
+  };
+  window.sendHelpChatAdminReplyV713=async function(){
+    const input=$('haosChatInboxReplyV713'),msg=clean(input&&input.value);if(!inboxCurrentV713||!msg)return;
+    input.disabled=true;
+    try{const res=await gasV713('sendHelpChatMessageV713',[inboxCurrentV713,actorV713(),msg]);if(!res||!res.success)throw new Error((res&&res.message)||'ส่งข้อความไม่สำเร็จ');input.value='';await selectHelpChatSessionV713(inboxCurrentV713,true);}
+    catch(e){Swal.fire('ส่งข้อความไม่สำเร็จ',e.message||String(e),'error');}
+    finally{input.disabled=false;input.focus();}
+  };
+  window.closeHelpChatSessionV713Ui=async function(){
+    if(!inboxCurrentV713)return;
+    try{const res=await gasV713('closeHelpChatSessionV713',[inboxCurrentV713,actorV713().phone||'']);if(!res||!res.success)throw new Error((res&&res.message)||'ปิดห้องแชทไม่สำเร็จ');await loadHelpChatInboxV713();}
+    catch(e){Swal.fire('ปิดห้องแชทไม่สำเร็จ',e.message||String(e),'error');}
+  };
+
+  function injectAdminSupportToolsV713(){
+    const u=currentUserV713();if(!/super\s*admin/i.test(String(u.role||'')))return;
+    const row=document.querySelector('#adminPanelBody .row.g-3.text-start')||document.querySelector('#adminPanelBody .row');
+    if(!row||$('helpSupportAdminCardV713'))return;
+    row.insertAdjacentHTML('beforeend','<div class="col-md-4" id="helpSupportAdminCardV713"><div class="card h-100"><div class="card-body"><h6 class="fw-bold mb-1"><i class="bi bi-headset text-primary me-1"></i>Help Center / Live Chat</h6><p class="small text-muted mb-3">กำหนดผู้ติดต่อกลางที่จะแสดงในปุ่ม Help และเปิดกล่องแชทสดสำหรับรับเรื่องจากผู้ใช้งาน</p><div class="d-grid gap-2"><button type="button" class="btn btn-outline-primary fw-bold" onclick="openHelpSupportSettingsV713()"><i class="bi bi-person-lines-fill"></i> ตั้งค่าผู้ติดต่อ Help</button><button type="button" class="btn btn-primary fw-bold" onclick="openHelpChatInboxV713()"><i class="bi bi-chat-dots"></i> กล่องแชทช่วยเหลือ</button></div></div></div></div>');
+  }
+
+  function enhanceTelegramGuideV713(){
+    const card=$('profileTelegramV686');if(!card||$('profileTelegramGuideV713'))return;
+    card.insertAdjacentHTML('beforeend','<div id="profileTelegramGuideV713"><div class="d-flex justify-content-between align-items-start gap-2 flex-wrap"><div><b><i class="bi bi-map me-1"></i>คู่มือตั้งค่า Telegram ส่วนตัว</b><div class="small text-muted">ทำตามลำดับนี้เพื่อรับแจ้งเตือนส่วนตัวจากระบบ</div></div><button type="button" class="btn btn-sm btn-outline-primary fw-bold" onclick="openTelegramPersonalGuideV713()"><i class="bi bi-question-circle"></i> ดูคู่มือละเอียด</button></div><ol class="small"><li>เปิด Telegram แล้วค้นหาบอทแจ้งเตือนของสำนักงาน</li><li>กด Start หรือส่งคำสั่ง <code>/start</code></li><li>นำ Chat ID ที่ได้รับมาใส่ในช่องด้านบน แล้วกดบันทึก</li><li>กดทดสอบเพื่อยืนยันว่ารับแจ้งเตือนได้จริง</li></ol></div>');
+  }
+  window.openTelegramPersonalGuideV713=function(){
+    Swal.fire({title:'คู่มือตั้งค่า Telegram ส่วนตัว',width:900,showCloseButton:true,confirmButtonText:'เข้าใจแล้ว',html:'<div class="haos-v713-telegram-guide"><div class="step"><b><i class="bi bi-person-check text-primary me-1"></i>สำหรับผู้ใช้งานทั่วไป</b><ol><li>ติดตั้งและเข้าสู่ระบบแอป Telegram บนมือถือหรือคอมพิวเตอร์</li><li>ค้นหาบอทแจ้งเตือนของสำนักงานตามชื่อที่ Admin แจ้งไว้ หรือขอชื่อบอทผ่านปุ่ม Help / Live Chat</li><li>เปิดห้องสนทนากับบอท แล้วกด <code>Start</code> หรือพิมพ์ <code>/start</code></li><li>เมื่อได้รับ Chat ID ให้นำเลขนั้นมาวางในช่อง Telegram Chat ID ส่วนตัว</li><li>กด <b>บันทึก</b> แล้วกด <b>ทดสอบ</b> หากได้รับข้อความทดสอบ แปลว่าพร้อมใช้งาน</li></ol></div><div class="step"><b><i class="bi bi-shield-lock text-success me-1"></i>สำหรับ Super Admin ที่ต้องตั้งค่าบอทกลาง</b><ol><li>เปิด Telegram แล้วค้นหา <code>BotFather</code></li><li>พิมพ์ <code>/newbot</code> แล้วตั้งชื่อบอทและ username ที่ลงท้ายด้วย <code>_bot</code></li><li>คัดลอก Token ที่ BotFather ให้มา และนำไปตั้งค่าใน Script Properties ตามค่าที่ระบบใช้สำหรับ Telegram Bot Token</li><li>ทดสอบด้วยบัญชีผู้ใช้จริงโดยกด Start ที่บอท แล้วบันทึก Chat ID ในโปรไฟล์</li><li>แจ้งชื่อบอทให้ผู้ใช้งานในหน่วยงานทราบ หรือแปะไว้ในคู่มือ/ประกาศภายใน</li></ol></div><div class="alert alert-warning small fw-bold mb-0"><i class="bi bi-exclamation-triangle me-1"></i>เก็บ Bot Token เป็นความลับ ห้ามส่งต่อในแชททั่วไป เพราะ Token ใช้ควบคุมบอทได้</div></div>'});
+  };
+
+  function refreshHelpButtonV713(){const btn=$('haosHelpFloating');if(btn){btn.setAttribute('onclick','openHelpCenterV60()');btn.innerHTML='<i class="bi bi-headset"></i> Help';}}
+  const oldOpenProfileV713=window.openProfileModal;
+  if(typeof oldOpenProfileV713==='function'&&!oldOpenProfileV713.__haosV713Wrapped){
+    const wrapped=function(){const r=oldOpenProfileV713.apply(this,arguments);setTimeout(enhanceTelegramGuideV713,160);setTimeout(enhanceTelegramGuideV713,700);return r;};
+    wrapped.__haosV713Wrapped=true;window.openProfileModal=wrapped;
+  }
+  function installV713(){
+    injectAdminSupportToolsV713();
+    enhanceTelegramGuideV713();
+    refreshHelpButtonV713();
+    if($('haosUnifiedScheduleViewV702')&&(window.haosUnifiedScheduleModeV702||'list')==='list')window.renderUnifiedScheduleV702();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installV713,{once:true});else installV713();
+  setTimeout(installV713,600);setTimeout(installV713,1600);setTimeout(installV713,3200);
+  let queued=false;new MutationObserver(()=>{if(queued)return;queued=true;setTimeout(()=>{queued=false;injectAdminSupportToolsV713();enhanceTelegramGuideV713();refreshHelpButtonV713();},180);}).observe(document.documentElement,{childList:true,subtree:true});
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
