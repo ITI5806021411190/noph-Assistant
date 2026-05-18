@@ -10997,5 +10997,213 @@ HAOS v68.6 FINISHING FIX
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<style id="haos-v70-12-help-info-schedule-style">
+  .haos-v712-field-info{
+    border:1px solid rgba(14,165,233,.28);
+    border-left:5px solid #0ea5e9;
+    border-radius:18px;
+    background:linear-gradient(135deg,#f0f9ff,#ffffff);
+    box-shadow:0 18px 42px rgba(15,23,42,.12);
+    color:#0f172a;
+    margin:0 0 14px;
+    padding:14px 16px;
+    position:sticky;
+    top:0;
+    z-index:25;
+    text-align:left;
+  }
+  .haos-v712-field-info .title{display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:950;color:#075985;margin-bottom:4px}
+  .haos-v712-field-info .body{color:#334155;font-weight:650;line-height:1.55;white-space:pre-wrap}
+  .haos-v712-field-info .close{border:0;background:#e0f2fe;color:#0369a1;border-radius:999px;width:30px;height:30px;display:inline-grid;place-items:center}
+  #unifiedScheduleListV702{overflow-x:auto!important;overscroll-behavior-x:contain}
+  #unifiedScheduleListV702 .haos-v706-table{width:100%!important;min-width:980px!important;table-layout:auto!important}
+  #unifiedScheduleListV702 .haos-v706-title-cell{min-width:300px;max-width:440px}
+  #unifiedScheduleListV702 .haos-v706-title-wrap{min-width:0!important}
+  #unifiedScheduleListV702 .haos-v706-title-main{color:#1d4ed8!important}
+  #unifiedScheduleListV702 .haos-v706-title-icon{width:34px!important;height:34px!important;border-radius:12px!important}
+  #unifiedScheduleListV702 .haos-v706-table .action-menu{min-width:148px!important;width:148px!important;position:sticky;right:0;z-index:3}
+  #unifiedScheduleListV702 .haos-v706-table .action-menu .btn{min-width:38px!important;min-height:38px!important;margin-right:4px!important}
+  #unifiedScheduleListV702 .haos-v706-table .action-menu .btn:last-child{margin-right:0!important}
+  #unifiedScheduleListV702 .haos-v706-table tbody tr>td:first-child{border-left:5px solid var(--haos-v706-edge)!important;border-radius:18px 0 0 18px!important}
+  .haos-v712-help-wrap{text-align:left;color:#0f172a}
+  .haos-v712-help-hero{border-radius:24px;background:linear-gradient(135deg,#0f766e,#2563eb);color:white;padding:20px 22px;margin-bottom:16px;box-shadow:0 18px 46px rgba(37,99,235,.20)}
+  .haos-v712-help-hero h4{font-weight:950;margin:0 0 4px}
+  .haos-v712-help-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+  .haos-v712-help-card{border:1px solid rgba(148,163,184,.22);border-radius:18px;background:linear-gradient(180deg,#fff,#f8fbff);padding:14px;min-height:150px;box-shadow:0 10px 28px rgba(15,23,42,.06)}
+  .haos-v712-help-card .icon{width:40px;height:40px;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;background:#e0f2fe;color:#0369a1;font-size:1.2rem;margin-bottom:8px}
+  .haos-v712-help-card h6{font-weight:950;margin:0 0 5px;color:#0f172a}
+  .haos-v712-help-card p{font-size:.86rem;color:#475569;margin:0;line-height:1.5}
+  .haos-v712-role-box{border:1px solid rgba(16,185,129,.24);border-radius:18px;background:linear-gradient(135deg,#ecfdf5,#f8fafc);padding:14px;margin:14px 0}
+  .haos-v712-contact-panel{border:1px solid rgba(37,99,235,.18);border-radius:20px;background:#fff;padding:14px;margin-top:14px;box-shadow:0 10px 30px rgba(15,23,42,.06)}
+  .haos-v712-contact-card{border:1px solid rgba(148,163,184,.22);border-radius:16px;padding:12px;background:#f8fafc;height:100%}
+  .haos-v712-contact-card b{display:block;color:#0f172a}
+  .haos-v712-contact-card small{display:block;color:#64748b;font-weight:700}
+  .haos-v712-support-text{border:1px dashed rgba(14,165,233,.38);border-radius:16px;background:#f0f9ff;padding:10px;color:#075985;font-size:.88rem;line-height:1.5}
+</style>
+<script id="haos-v70-12-help-info-schedule-script">
+(function(){
+  const PATCH='v70.12-help-info-schedule';
+  if(window.__HAOS_V712_HELP_INFO_SCHEDULE__)return;
+  window.__HAOS_V712_HELP_INFO_SCHEDULE__=true;
+  const $=id=>document.getElementById(id);
+  const qa=(s,r=document)=>Array.from((r||document).querySelectorAll(s));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  function currentUserV712(){try{return window.user||user||{};}catch(e){return window.user||{};}}
+  function gasV712(fn,args){
+    if(typeof window.gasRunPromise_==='function')return window.gasRunPromise_(fn,args||[]);
+    return new Promise((resolve,reject)=>{
+      try{google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run,args||[]);}
+      catch(e){reject(e);}
+    });
+  }
+  function showFieldInfoV712(btn){
+    const form=btn.closest('.haos-v703-form')||btn.closest('.swal2-popup')||document.body;
+    qa('#haosFieldInfoV712',form).forEach(x=>x.remove());
+    const box=document.createElement('div');
+    box.id='haosFieldInfoV712';
+    box.className='haos-v712-field-info';
+    box.innerHTML='<div class="title"><span><i class="bi bi-info-circle me-1"></i>'+esc(btn.dataset.title||'คำอธิบาย')+'</span><button type="button" class="close" aria-label="ปิดคำอธิบาย"><i class="bi bi-x-lg"></i></button></div><div class="body">'+esc(btn.dataset.info||'ไม่มีรายละเอียดเพิ่มเติม')+'</div>';
+    box.querySelector('.close').addEventListener('click',ev=>{ev.preventDefault();ev.stopPropagation();box.remove();});
+    form.insertBefore(box,form.firstChild);
+    try{box.scrollIntoView({block:'nearest',behavior:'smooth'});}catch(e){}
+  }
+  document.addEventListener('click',function(ev){
+    const btn=ev.target.closest&&ev.target.closest('.haos-v703-info-btn');
+    if(!btn||!btn.closest('.haos-v703-form'))return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    if(ev.stopImmediatePropagation)ev.stopImmediatePropagation();
+    showFieldInfoV712(btn);
+  },true);
+
+  function compactUnifiedScheduleTableV712(){
+    const table=document.querySelector('#unifiedScheduleListV702 table.haos-v706-table');
+    if(!table||table.dataset.v712Compacted)return;
+    const head=table.tHead&&table.tHead.rows&&table.tHead.rows[0];
+    if(head&&head.cells.length>=8)head.deleteCell(0);
+    qa('tbody tr',table).forEach(tr=>{
+      if(tr.cells.length===1){tr.cells[0].colSpan=7;return;}
+      if(tr.cells.length>=8)tr.deleteCell(0);
+    });
+    table.dataset.v712Compacted='1';
+  }
+  const prevUnifiedRenderV712=window.renderUnifiedScheduleV702;
+  if(typeof prevUnifiedRenderV712==='function'){
+    window.renderUnifiedScheduleV702=function(){
+      const r=prevUnifiedRenderV712.apply(this,arguments);
+      setTimeout(compactUnifiedScheduleTableV712,0);
+      return r;
+    };
+  }
+  const prevUnifiedSetV712=window.setUnifiedScheduleViewV702;
+  if(typeof prevUnifiedSetV712==='function'){
+    window.setUnifiedScheduleViewV702=function(mode){
+      const r=prevUnifiedSetV712.apply(this,arguments);
+      setTimeout(compactUnifiedScheduleTableV712,0);
+      return r;
+    };
+  }
+
+  const baseFallbackContactsV712=[
+    {fullName:'ผู้ดูแลระบบ Health Assistant OS',role:'Admin / Super Admin',department:'กลุ่มงานสุขภาพดิจิทัล',phone:'',email:''}
+  ];
+  function roleTipsV712(u){
+    const role=String(u.role||'User');
+    const dept=String(u.department||'');
+    const isAdmin=/admin|super/i.test(role);
+    const isHead=/หัวหน้า|head/i.test(role)||/head|chief|manager/i.test(role);
+    const tips=[
+      'ผู้ใช้งานทั่วไป: บันทึกรายงานประจำวัน สร้างตารางงาน/นัดหมาย ส่งคำขอจองห้องประชุมหรือ Zoom เพิ่มทรัพย์สิน IT และแจ้งซ่อม IT ได้',
+      'สมาชิกในกลุ่มงาน: ดูงานกลุ่มงาน ใช้พื้นที่ทำงานร่วมกัน สำรวจความคิดเห็นสด และติดตามสถานะงานร่วมกันได้'
+    ];
+    if(isHead)tips.push('หัวหน้ากลุ่มงาน: ดูรายละเอียดรายงานของทีม ติดตามการส่งรายงาน และใช้สรุปภาพรวมรายงานประจำวันได้');
+    if(isAdmin||dept.includes('สุขภาพดิจิทัล'))tips.push('Admin / กลุ่มงานสุขภาพดิจิทัล: จัดการห้องประชุม/Zoom ทรัพย์สิน IT Software License Helpdesk ผู้ใช้งาน ทรัพยากร และ System Health ได้');
+    if(!isAdmin)tips.push('ถ้าต้องการแก้ไขรายการ IT หลังบันทึกแล้ว ให้ติดต่อ Admin หรือ Super Admin กลางจากส่วนติดต่อด้านล่าง');
+    return tips;
+  }
+  function featureCardsV712(){
+    return [
+      ['bi-speedometer2','Dashboard','ดูภาพรวมงาน รายงาน สถานะสำคัญ การแจ้งเตือน และทางลัดที่เกี่ยวข้องกับบทบาทของผู้ใช้'],
+      ['bi-journal-check','รายงานการปฏิบัติงาน','บันทึกรายงานประจำวัน แนบไฟล์ ใช้ AI ช่วยเรียบเรียง ดูแบบรายการ การ์ด และปฏิทิน พร้อมสรุปภาพรวมสำหรับหัวหน้า'],
+      ['bi-calendar2-week','ตารางงาน & นัดหมาย','จัดการตารางงานรวม แยกส่วนตัว/กลุ่มงานด้วยสี ดูรายการ การ์ด ปฏิทิน กรอง Priority/Tags และสร้างลิงก์สาธารณะได้'],
+      ['bi-camera-video','จองห้องประชุม / Zoom','สร้างคำขอจอง จัดการสถานะ ออก Digital View ใช้ลิงก์แบบไม่ต้องล็อกอิน และดูปฏิทินการจอง'],
+      ['bi-hdd-network','ทะเบียนทรัพย์สิน IT','เพิ่มทรัพย์สิน IT แนบรูป จับคู่ Software License ดู Dashboard สาธารณะบางส่วน และให้ทีม IT จัดการข้อมูลหลัก'],
+      ['bi-key','Software License','เก็บข้อมูล License จับคู่กับ Hardware กำหนดวันหมดอายุ และแจ้งเตือนล่วงหน้าอย่างน้อย 60 วัน'],
+      ['bi-tools','แจ้งซ่อม IT / Helpdesk','ผู้ใช้แจ้งซ่อมพร้อมรูปประกอบ ทีม IT รับงาน เปลี่ยนสถานะ ติดตาม SLA และใช้ Dashboard แยกสำหรับ Helpdesk'],
+      ['bi-people','พื้นที่ทำงานร่วมกัน','สร้างตารางหรือฟอร์มร่วมกัน แชร์ลิงก์ให้ทีมบันทึกข้อมูล และกำหนดสิทธิ์การใช้งานได้'],
+      ['bi-clouds','สำรวจความคิดเห็นสด / Word Cloud','สร้างแบบสำรวจสด เก็บคำตอบจากผู้เข้าร่วม และดูผลเพื่อใช้ในประชุมหรืออบรม'],
+      ['bi-shield-check','Admin Tools','จัดการผู้ใช้ สิทธิ์ กลุ่มงาน ทรัพยากร System Health Audit Log Backup และ Export ทางการ']
+    ];
+  }
+  function buildSupportMessageV712(u){
+    return [
+      'ขอความช่วยเหลือ Health Assistant OS',
+      'ผู้ใช้: '+(u.fullName||u.name||'-'),
+      'กลุ่มงาน: '+(u.department||'-'),
+      'บทบาท: '+(u.role||'User'),
+      'เบอร์: '+(u.phone||'-'),
+      'หน้าที่พบปัญหา: ',
+      'รายละเอียดปัญหา: '
+    ].join('\n');
+  }
+  window.copySupportRequestV712=function(){
+    const text=buildSupportMessageV712(currentUserV712());
+    if(navigator.clipboard)navigator.clipboard.writeText(text).catch(()=>{});
+    const panel=document.querySelector('.haos-v712-contact-panel');
+    if(panel){
+      let status=$('haosSupportCopyStatusV712');
+      if(!status){
+        panel.insertAdjacentHTML('afterbegin','<div id="haosSupportCopyStatusV712" class="alert alert-success py-2 mb-2 small fw-bold"><i class="bi bi-check-circle me-1"></i>คัดลอกข้อความขอความช่วยเหลือแล้ว</div>');
+      }else{
+        status.innerHTML='<i class="bi bi-check-circle me-1"></i>คัดลอกข้อความขอความช่วยเหลือแล้ว';
+        status.classList.remove('d-none');
+      }
+    }
+  };
+  window.openHelpCenterV60=async function(){
+    const u=currentUserV712();
+    let contacts=baseFallbackContactsV712;
+    try{
+      const res=await gasV712('getCentralSupportContactsV712',[u.phone||'',u.role||'',u.department||'']);
+      if(res&&res.success&&Array.isArray(res.contacts)&&res.contacts.length)contacts=res.contacts;
+    }catch(e){}
+    const cards=featureCardsV712().map(([icon,title,desc])=>'<div class="haos-v712-help-card"><div class="icon"><i class="bi '+icon+'"></i></div><h6>'+esc(title)+'</h6><p>'+esc(desc)+'</p></div>').join('');
+    const tips=roleTipsV712(u).map(t=>'<div class="mb-1"><i class="bi bi-check2-circle text-success me-1"></i>'+esc(t)+'</div>').join('');
+    const contactCards=contacts.map((c,i)=>{
+      const phone=String(c.phone||'').replace(/'/g,'');
+      const email=String(c.email||'');
+      return '<div class="col-md-6 col-xl-4"><div class="haos-v712-contact-card"><b>'+esc(c.fullName||c.name||('Admin '+(i+1)))+'</b><small>'+esc(c.role||'Admin')+' · '+esc(c.department||'')+'</small><small>'+esc(c.position||'')+'</small><div class="d-flex flex-wrap gap-2 mt-2">'+
+        (phone?'<a class="btn btn-sm btn-outline-primary fw-bold" href="tel:'+esc(phone)+'"><i class="bi bi-telephone"></i> โทร</a>':'')+
+        (email?'<a class="btn btn-sm btn-outline-success fw-bold" href="mailto:'+esc(email)+'?subject='+encodeURIComponent('ขอความช่วยเหลือ Health Assistant OS')+'"><i class="bi bi-envelope"></i> อีเมล</a>':'')+
+        (!phone&&!email?'<span class="small text-muted">ยังไม่มีช่องทางติดต่อในระบบ</span>':'')+
+      '</div></div></div>';
+    }).join('');
+    Swal.fire({
+      title:'ศูนย์ช่วยเหลือ Health Assistant OS',
+      width:1120,
+      showConfirmButton:false,
+      showCloseButton:true,
+      html:'<div class="haos-v712-help-wrap">'+
+        '<div class="haos-v712-help-hero"><h4><i class="bi bi-life-preserver me-2"></i>คู่มือใช้งานและติดต่อผู้ดูแลระบบ</h4><div>อัปเดตความสามารถล่าสุดของโปรแกรม พร้อมคำแนะนำตามบทบาทและช่องทางขอความช่วยเหลือกลาง</div></div>'+
+        '<div class="haos-v712-role-box"><b><i class="bi bi-person-badge me-1"></i>บทบาทปัจจุบัน: '+esc(u.role||'User')+'</b><div class="small text-muted mb-2">'+esc(u.fullName||u.name||'-')+' · '+esc(u.department||'-')+'</div>'+tips+'</div>'+
+        '<div class="haos-v712-help-grid">'+cards+'</div>'+
+        '<div class="haos-v712-contact-panel"><div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2"><div><h5 class="fw-bold mb-1"><i class="bi bi-headset text-primary me-1"></i>ติดต่อ Admin / Super Admin กลาง</h5><div class="small text-muted">ใช้เมื่อพบปัญหา ต้องการปลดสิทธิ์ แก้ไขข้อมูล IT หรือให้ผู้ดูแลช่วยตรวจสอบ</div></div><button class="btn btn-primary fw-bold" onclick="copySupportRequestV712()"><i class="bi bi-clipboard"></i> คัดลอกข้อความขอความช่วยเหลือ</button></div><div class="haos-v712-support-text mb-3">'+esc(buildSupportMessageV712(u))+'</div><div class="row g-2">'+contactCards+'</div></div>'+
+      '</div>'
+    });
+  };
+  function refreshHelpButtonV712(){
+    const btn=$('haosHelpFloating');
+    if(btn){
+      btn.setAttribute('onclick','openHelpCenterV60()');
+      btn.innerHTML='<i class="bi bi-headset"></i> Help';
+      btn.classList.add('fw-bold');
+    }
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refreshHelpButtonV712,{once:true}); else refreshHelpButtonV712();
+  setTimeout(()=>{refreshHelpButtonV712();compactUnifiedScheduleTableV712();},600);
+  setTimeout(()=>{refreshHelpButtonV712();compactUnifiedScheduleTableV712();},1800);
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
