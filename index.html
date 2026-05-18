@@ -10885,5 +10885,117 @@ HAOS v68.6 FINISHING FIX
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<style id="haos-v70-11-it-permissions-style">
+  .haos-v711-it-note{border:1px solid rgba(14,165,233,.24);border-radius:16px;background:linear-gradient(135deg,#eff6ff,#f8fafc);padding:12px 14px;margin-bottom:14px;color:#0f172a}
+  .haos-v711-it-note.manager{border-color:rgba(16,185,129,.28);background:linear-gradient(135deg,#ecfdf5,#f8fafc)}
+  .haos-v711-it-note b{display:block;font-weight:950;margin-bottom:3px}
+  .haos-v711-it-note small{display:block;color:#64748b;font-weight:750;line-height:1.45}
+  .haos-v711-perm-pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 10px;font-size:.78rem;font-weight:950;background:#e0f2fe;color:#075985;margin-top:8px}
+  .haos-v711-it-note.manager .haos-v711-perm-pill{background:#dcfce7;color:#166534}
+</style>
+<script id="haos-v70-11-it-permissions-script">
+(function(){
+  const PATCH='v70.11-it-services-permissions';
+  if(window.__HAOS_V711_IT_PERMISSIONS__)return;
+  window.__HAOS_V711_IT_PERMISSIONS__=true;
+  const $=id=>document.getElementById(id);
+  const qa=(s,r=document)=>Array.from((r||document).querySelectorAll(s));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  function getCurrentUserV711(){try{return window.user||{};}catch(e){return {};}}
+  function dataPermission(){
+    const d=window.haosITV702Data||window.haosITV703Data||{};
+    return !!(d.permissions&&d.permissions.canManageIT);
+  }
+  function canManageIT(){
+    const u=getCurrentUserV711(), role=String(u.role||''), dept=String(u.department||'');
+    return dataPermission() || /super\s*admin|admin/i.test(role) || role==='Super Admin' || role==='Admin' || dept.includes('สุขภาพดิจิทัล') || /digital\s*health/i.test(dept);
+  }
+  function deny(){
+    return Swal.fire({
+      icon:'warning',
+      title:'ไม่มีสิทธิ์จัดการรายการนี้',
+      text:'สมาชิกทุกกลุ่มงานสามารถเพิ่มทะเบียนทรัพย์สิน IT และแจ้งซ่อมได้ แต่การแก้ไข/จัดการรายการเป็นสิทธิ์ของกลุ่มงานสุขภาพดิจิทัลหรือผู้ดูแลระบบ'
+    });
+  }
+  function wrap(name, allow){
+    const fn=window[name];
+    if(typeof fn!=='function'||fn.__haosV711Wrapped)return;
+    const wrapped=function(){
+      const args=Array.from(arguments);
+      if(!allow(args))return deny();
+      return fn.apply(this,args);
+    };
+    wrapped.__haosV711Wrapped=true;
+    window[name]=wrapped;
+  }
+  function wrapGuards(){
+    wrap('openITAssetFormV70',args=>!args[0]||canManageIT());
+    wrap('openITLicenseFormV70',()=>canManageIT());
+    wrap('updateITRepairStatusUiV70',()=>canManageIT());
+    wrap('runITLicenseExpiryAlertV70Ui',()=>canManageIT());
+  }
+  function ensureNote(panelId,type){
+    const panel=$(panelId), body=panel&&panel.querySelector('.card-body');
+    if(!body)return;
+    const id=panelId+'PermNoteV711';
+    let note=$(id);
+    if(!note){
+      note=document.createElement('div');
+      note.id=id;
+      body.insertBefore(note,body.firstChild);
+    }
+    const manager=canManageIT();
+    note.className='haos-v711-it-note'+(manager?' manager':'');
+    const noun=type==='repair'?'ใบแจ้งซ่อม IT':'ทะเบียนทรัพย์สิน IT';
+    note.innerHTML=manager
+      ? '<b><i class="bi bi-shield-check me-1"></i>สิทธิ์จัดการ '+esc(noun)+'</b><small>คุณสามารถเพิ่ม แก้ไข จัดการสถานะ และดูแลข้อมูลในโมดูลนี้ได้</small><span class="haos-v711-perm-pill"><i class="bi bi-unlock"></i> Manager mode</span>'
+      : '<b><i class="bi bi-person-plus me-1"></i>สิทธิ์ผู้ใช้งานทั่วไป</b><small>คุณสามารถเพิ่มทะเบียนทรัพย์สิน IT และแจ้งซ่อมได้ แต่ปุ่มแก้ไข เพิ่ม License ตรวจแจ้งเตือน และจัดการสถานะ จะเปิดให้เฉพาะกลุ่มงานสุขภาพดิจิทัลหรือผู้ดูแลระบบ</small><span class="haos-v711-perm-pill"><i class="bi bi-lock"></i> Submit only</span>';
+  }
+  function setManagerOnly(el,manager){
+    el.classList.add('haos-v711-manager-only');
+    el.style.display=manager?'':'none';
+    if(!manager)el.setAttribute('aria-hidden','true');
+    else el.removeAttribute('aria-hidden');
+  }
+  function applyButtons(){
+    const manager=canManageIT();
+    document.body.classList.toggle('haos-v711-it-manager',manager);
+    document.body.classList.toggle('haos-v711-it-general',!manager);
+    const pane=$('itservices-pane')||document;
+    qa('button[onclick],a[onclick]',pane).forEach(el=>{
+      const oc=el.getAttribute('onclick')||'';
+      const isLicense=/openITLicenseFormV70/.test(oc);
+      const isAlert=/runITLicenseExpiryAlertV70Ui/.test(oc);
+      const isRepairManage=/updateITRepairStatusUiV70/.test(oc);
+      const isAssetEdit=/openITAssetFormV70\(\s*['"]/.test(oc);
+      if(isLicense||isAlert||isRepairManage||isAssetEdit)setManagerOnly(el,manager);
+    });
+    ensureNote('itAssetPanelV70','asset');
+    ensureNote('itRepairPanelV70','repair');
+  }
+  function wrapRender(name){
+    const fn=window[name];
+    if(typeof fn!=='function'||fn.__haosV711RenderWrapped)return;
+    const wrapped=function(){
+      const r=fn.apply(this,arguments);
+      setTimeout(applyPermissions,0);
+      return r;
+    };
+    wrapped.__haosV711RenderWrapped=true;
+    window[name]=wrapped;
+  }
+  function applyPermissions(){
+    wrapGuards();
+    ['renderITAssetsV70','renderITRepairTicketsV70','loadITAssetModuleV70','openITAssetModuleV70','openITRepairModuleV70','initItServicesHub'].forEach(wrapRender);
+    applyButtons();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',applyPermissions,{once:true}); else applyPermissions();
+  setTimeout(applyPermissions,500);
+  setTimeout(applyPermissions,1500);
+  let queued=false;
+  new MutationObserver(()=>{if(queued)return;queued=true;setTimeout(()=>{queued=false;applyPermissions();},160);}).observe(document.documentElement,{childList:true,subtree:true});
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
