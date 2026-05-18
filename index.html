@@ -10568,8 +10568,15 @@ HAOS v68.6 FINISHING FIX
   .haos-v706-meta-box small{display:block;color:#64748b;font-weight:900;margin-bottom:4px}
   .haos-v706-table thead th{white-space:nowrap;background:linear-gradient(180deg,#eef6ff,#e0f2fe)!important;color:#0f172a!important}
   .haos-v706-table tbody tr:hover{background:linear-gradient(90deg,#f8fbff,#ecfeff)!important}
+  .haos-v706-table tbody tr.haos-v706-row-my{background:linear-gradient(90deg,rgba(239,246,255,.92),rgba(255,255,255,.98))!important;box-shadow:inset 4px 0 0 #2563eb}
+  .haos-v706-table tbody tr.haos-v706-row-dept{background:linear-gradient(90deg,rgba(236,254,255,.95),rgba(240,253,244,.72))!important;box-shadow:inset 4px 0 0 #0891b2}
+  .haos-v706-table tbody tr.haos-v706-row-my:hover{background:linear-gradient(90deg,#dbeafe,#fff)!important}
+  .haos-v706-table tbody tr.haos-v706-row-dept:hover{background:linear-gradient(90deg,#cffafe,#ecfdf5)!important}
   .haos-v706-card-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:auto}
+  .haos-v702-card.haos-v706-card-my{background:linear-gradient(180deg,#ffffff,#eff6ff)!important;box-shadow:inset 0 4px 0 #2563eb,0 14px 34px rgba(37,99,235,.10)!important}
+  .haos-v702-card.haos-v706-card-dept{background:linear-gradient(180deg,#ffffff,#ecfeff)!important;box-shadow:inset 0 4px 0 #0891b2,0 14px 34px rgba(8,145,178,.10)!important}
   #eventTags.haos-v706-tags-multi{min-height:112px}
+  .haos-v706-tags-help{display:block;margin-top:5px;color:#64748b;font-size:.82rem;font-weight:700}
 </style>
 <script id="haos-v70-6-schedule-tags-files-script">
 (function(){
@@ -10601,7 +10608,7 @@ HAOS v68.6 FINISHING FIX
     return null;
   }
   function badgeCls(status){try{return window.getScheduleBadgeClass?window.getScheduleBadgeClass(status):'bg-info text-dark';}catch(e){return 'bg-info text-dark';}}
-  function user(){try{return window.user||user||{};}catch(e){return window.user||{};}}
+  function currentUserV706(){try{return window.user||user||{};}catch(e){return window.user||{};}}
   function allSchedules(){
     const my=(window.mySchedulesGlobal||[]).map(x=>Object.assign({},x,{__scope:'my'}));
     const dept=(window.departmentSchedulesGlobal||[]).map(x=>Object.assign({},x,{__scope:'dept'}));
@@ -10628,6 +10635,55 @@ HAOS v68.6 FINISHING FIX
     };
     wrapped.__haosV706Wrapped=true;
     window.submitScheduleData=wrapped;
+  }
+  function readFileBase64V706(file){
+    return new Promise((resolve,reject)=>{
+      const reader=new FileReader();
+      reader.onload=()=>resolve(String(reader.result||'').split(',')[1]||'');
+      reader.onerror=()=>reject(reader.error||new Error('อ่านไฟล์แนบไม่สำเร็จ'));
+      reader.readAsDataURL(file);
+    });
+  }
+  async function uploadAttachmentV706(file){
+    const b64=await readFileBase64V706(file);
+    return new Promise((resolve,reject)=>{
+      try{
+        google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).uploadFileToDrive(b64,file.name,file.type||'application/octet-stream');
+      }catch(e){reject(e);}
+    });
+  }
+  const baseHandleSaveEventV706=window.handleSaveEvent;
+  if(typeof baseHandleSaveEventV706==='function'&&!baseHandleSaveEventV706.__haosV706AttachmentWrapped){
+    const wrappedHandle=async function(){
+      const attachInputs=qa('.schedule-attachment-input-v49').filter(input=>input.files&&input.files.length);
+      if(!attachInputs.length)return baseHandleSaveEventV706.apply(this,arguments);
+      const btn=$('btnSaveEvent');
+      if(btn){btn.disabled=true;btn.innerHTML='<span class="spinner-border spinner-border-sm"></span> กำลังอัปโหลดไฟล์แนบ...';}
+      try{
+        const urls=[];
+        for(const input of attachInputs){
+          const file=input.files[0];
+          if(!file)continue;
+          const up=await uploadAttachmentV706(file);
+          if(!up||!up.success)throw new Error((up&&up.message)||'อัปโหลดไฟล์แนบไม่สำเร็จ');
+          urls.push(up.url);
+        }
+        const submitNow=window.submitScheduleData;
+        window.submitScheduleData=function(data,btn2){
+          data=data||{};
+          data.fileUrl=mergeUrls(data.fileUrl,urls.join('\n'));
+          window.submitScheduleData=submitNow;
+          return submitNow.call(this,data,btn2);
+        };
+        return baseHandleSaveEventV706.apply(this,arguments);
+      }catch(err){
+        if(btn){btn.disabled=false;btn.innerHTML='<i class="bi bi-save"></i> บันทึกกำหนดการ';}
+        if(window.Swal)Swal.fire('อัปโหลดไฟล์แนบไม่สำเร็จ',err.message||String(err),'error');
+        return false;
+      }
+    };
+    wrappedHandle.__haosV706AttachmentWrapped=true;
+    window.handleSaveEvent=wrappedHandle;
   }
 
   const baseDetail=window.viewScheduleDetail;
@@ -10675,7 +10731,7 @@ HAOS v68.6 FINISHING FIX
     if(!$('haosUnifiedScheduleViewV702')&&typeof window.__haosV706BaseUnifiedRender==='function'){
       try{window.__haosV706BaseUnifiedRender();}catch(e){}
     }
-    const row=$('#haosUnifiedScheduleViewV702 .haos-v702-filter .row');
+    const row=document.querySelector('#haosUnifiedScheduleViewV702 .haos-v702-filter .row');
     if(row&&!$('unifiedSchedulePriorityV706')){
       const reset=row.querySelector('.d-grid');
       const html='<div class="col-md-2"><label class="small fw-bold text-muted">ความสำคัญ</label><select id="unifiedSchedulePriorityV706" class="form-select" onchange="renderUnifiedScheduleV702()"><option value="">ทั้งหมด</option></select></div><div class="col-md-2"><label class="small fw-bold text-muted">ประเภทงาน / Tags</label><select id="unifiedScheduleTagV706" class="form-select" onchange="renderUnifiedScheduleV702()"><option value="">ทั้งหมด</option></select></div>';
@@ -10698,7 +10754,22 @@ HAOS v68.6 FINISHING FIX
     populateSelect('unifiedSchedulePriorityV706',priorities,'ทั้งหมด');
     populateSelect('unifiedScheduleTagV706',tags,'ทั้งหมด');
     const tagSel=$('eventTags');
-    if(tagSel){tagSel.multiple=true;tagSel.size=Math.max(Number(tagSel.getAttribute('size')||0),5);tagSel.classList.add('haos-v706-tags-multi');}
+    if(tagSel){tagSel.multiple=true;tagSel.size=Math.max(Number(tagSel.getAttribute('size')||0),5);tagSel.classList.add('haos-v706-tags-multi');ensureTagMultiSelectV706(tagSel);}
+  }
+  function ensureTagMultiSelectV706(tagSel){
+    if(!tagSel||tagSel.dataset.v706MultiClick)return;
+    tagSel.dataset.v706MultiClick='1';
+    tagSel.addEventListener('mousedown',ev=>{
+      if(ev.target&&ev.target.tagName==='OPTION'){
+        ev.preventDefault();
+        ev.target.selected=!ev.target.selected;
+        tagSel.focus();
+        tagSel.dispatchEvent(new Event('change',{bubbles:true}));
+      }
+    });
+    if(!tagSel.parentElement.querySelector('.haos-v706-tags-help')){
+      tagSel.insertAdjacentHTML('afterend','<small class="haos-v706-tags-help"><i class="bi bi-check2-square"></i> คลิกเลือก/ยกเลิกได้หลายประเภท ไม่ต้องกด Ctrl</small>');
+    }
   }
   function filteredUnified(){
     const q=clean($('unifiedScheduleSearchV702')?.value).toLowerCase();
@@ -10727,8 +10798,10 @@ HAOS v68.6 FINISHING FIX
   }
   function actions(item){
     const id=esc(item.id||item.publicId||item.eventId||'');
-    const u=user();
-    const can=item.__scope==='my'||phoneKey(item.ownerPhone||item.createdByPhone)===phoneKey(u.phone);
+    const u=currentUserV706();
+    const me=phoneKey(u.phone||u.userPhone||u.mobile||u.tel);
+    const ownerPhones=[item.ownerPhone,item.createdByPhone,item.creatorPhone,item.userPhone,item.phone,item.createdByUserPhone].map(phoneKey).filter(Boolean);
+    const can=item.__scope==='my'||ownerPhones.includes(me)||/admin|super/i.test(String(u.role||''));
     let html='<button type="button" class="btn btn-outline-info btn-sm text-dark me-1" onclick="viewScheduleDetail(\''+id+'\')"><i class="bi bi-eye"></i></button>';
     if(can)html+='<button type="button" class="btn btn-outline-warning btn-sm text-dark me-1" onclick="editSchedule(\''+id+'\')"><i class="bi bi-pencil"></i></button><button type="button" class="btn btn-outline-danger btn-sm" onclick="handleDelete(\''+id+'\')"><i class="bi bi-trash"></i></button>';
     return html;
@@ -10737,10 +10810,10 @@ HAOS v68.6 FINISHING FIX
   function row(item){
     const title=item.eventName||item.title||'-', loc=item.location||item.eventLocation||'-', owner=item.ownerName||item.createdBy||'-', status=item.workStatus||item.status||'-';
     const files=item.fileUrl?'<i class="bi bi-paperclip text-primary ms-1" title="มีไฟล์แนบ"></i>':'';
-    return '<tr><td>'+scopeChip(item)+'</td><td><div class="fw-bold text-primary">'+esc(title)+files+'</div><small class="text-muted">'+esc(loc)+'</small></td><td>'+tagHtml(item)+'</td><td>'+priorityHtml(item)+'</td><td class="small text-muted">'+esc(item.startTime||item.start||'-')+'</td><td>'+esc(owner)+'</td><td><span class="badge '+badgeCls(status)+'">'+esc(status)+'</span></td><td class="text-end action-menu">'+actions(item)+'</td></tr>';
+    return '<tr class="haos-v706-row-'+(item.__scope==='dept'?'dept':'my')+'"><td>'+scopeChip(item)+'</td><td><div class="fw-bold text-primary">'+esc(title)+files+'</div><small class="text-muted">'+esc(loc)+'</small></td><td>'+tagHtml(item)+'</td><td>'+priorityHtml(item)+'</td><td class="small text-muted">'+esc(item.startTime||item.start||'-')+'</td><td>'+esc(owner)+'</td><td><span class="badge '+badgeCls(status)+'">'+esc(status)+'</span></td><td class="text-end action-menu">'+actions(item)+'</td></tr>';
   }
   function renderCards(list,box){
-    box.innerHTML=list.length?list.map(item=>'<article class="haos-v702-card"><div class="d-flex justify-content-between gap-2 mb-2">'+scopeChip(item)+'<span class="badge '+badgeCls(item.workStatus||item.status)+'">'+esc(item.workStatus||item.status||'-')+'</span></div><div class="title">'+esc(item.eventName||item.title||'-')+(item.fileUrl?' <i class="bi bi-paperclip text-primary"></i>':'')+'</div><div class="meta"><span><i class="bi bi-clock"></i> '+esc(item.startTime||item.start||'-')+'</span><span><i class="bi bi-geo-alt"></i> '+esc(item.location||item.eventLocation||'-')+'</span></div><div class="haos-v706-card-tags">'+priorityHtml(item)+tagHtml(item)+'</div><div class="text-end">'+actions(item)+'</div></article>').join(''):'<div class="text-muted small p-3">ไม่พบรายการตามเงื่อนไข</div>';
+    box.innerHTML=list.length?list.map(item=>'<article class="haos-v702-card haos-v706-card-'+(item.__scope==='dept'?'dept':'my')+'"><div class="d-flex justify-content-between gap-2 mb-2">'+scopeChip(item)+'<span class="badge '+badgeCls(item.workStatus||item.status)+'">'+esc(item.workStatus||item.status||'-')+'</span></div><div class="title">'+esc(item.eventName||item.title||'-')+(item.fileUrl?' <i class="bi bi-paperclip text-primary"></i>':'')+'</div><div class="meta"><span><i class="bi bi-clock"></i> '+esc(item.startTime||item.start||'-')+'</span><span><i class="bi bi-geo-alt"></i> '+esc(item.location||item.eventLocation||'-')+'</span></div><div class="haos-v706-card-tags">'+priorityHtml(item)+tagHtml(item)+'</div><div class="text-end">'+actions(item)+'</div></article>').join(''):'<div class="text-muted small p-3">ไม่พบรายการตามเงื่อนไข</div>';
   }
   function renderCalendar(list,box){
     box.innerHTML='<div id="unifiedScheduleCalendarInnerV702"></div>';
