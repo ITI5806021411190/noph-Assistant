@@ -10550,5 +10550,249 @@ HAOS v68.6 FINISHING FIX
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<style id="haos-v70-6-schedule-tags-files-style">
+  #itBookingPanel #itPublicLinksV703,
+  #itBookingPanel .haos-v703-public-linkbar{display:none!important}
+  .haos-v706-file-links{display:flex;flex-wrap:wrap;gap:8px}
+  .haos-v706-file-links .btn{border-radius:14px!important;font-weight:900!important}
+  .haos-v706-chip{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 10px;font-size:.78rem;font-weight:900;border:1px solid rgba(148,163,184,.30);background:#f8fafc;color:#334155;margin:2px}
+  .haos-v706-chip.scope-my{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
+  .haos-v706-chip.scope-dept{background:#ecfeff;color:#0e7490;border-color:#a5f3fc}
+  .haos-v706-chip.priority-low{background:#f8fafc;color:#475569}
+  .haos-v706-chip.priority-normal{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+  .haos-v706-chip.priority-urgent{background:#fef3c7;color:#92400e;border-color:#fde68a}
+  .haos-v706-chip.priority-critical{background:#fee2e2;color:#b91c1c;border-color:#fecaca}
+  .haos-v706-chip.tag{background:#eef2ff;color:#4338ca;border-color:#c7d2fe}
+  .haos-v706-meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+  .haos-v706-meta-box{border:1px solid rgba(148,163,184,.25);border-radius:16px;background:#fff;padding:10px 12px}
+  .haos-v706-meta-box small{display:block;color:#64748b;font-weight:900;margin-bottom:4px}
+  .haos-v706-table thead th{white-space:nowrap;background:linear-gradient(180deg,#eef6ff,#e0f2fe)!important;color:#0f172a!important}
+  .haos-v706-table tbody tr:hover{background:linear-gradient(90deg,#f8fbff,#ecfeff)!important}
+  .haos-v706-card-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:auto}
+  #eventTags.haos-v706-tags-multi{min-height:112px}
+</style>
+<script id="haos-v70-6-schedule-tags-files-script">
+(function(){
+  const PATCH='v70.6-schedule-tags-files-public-dashboard-cleanup';
+  if(window.__HAOS_V706_SCHEDULE_TAGS_FILES__)return;
+  window.__HAOS_V706_SCHEDULE_TAGS_FILES__=true;
+  const $=id=>document.getElementById(id);
+  const qa=(s,r=document)=>Array.from(r.querySelectorAll(s));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const clean=v=>String(v??'').replace(/\s+/g,' ').trim();
+  const phoneKey=v=>String(v||'').replace(/'/g,'').trim();
+  function splitTokens(v){return String(v||'').split(/\n|,/).map(x=>clean(x)).filter(Boolean);}
+  function splitUrls(v){const seen=new Set();return splitTokens(v).filter(u=>{if(seen.has(u))return false;seen.add(u);return true;});}
+  function mergeUrls(){return Array.from(arguments).flatMap(splitUrls).filter((u,i,a)=>a.indexOf(u)===i).join('\n');}
+  function renderFiles(v){
+    const urls=splitUrls(v);
+    if(!urls.length)return '';
+    return '<div class="haos-v706-file-links">'+urls.map((u,i)=>'<a class="btn btn-sm btn-outline-primary" target="_blank" rel="noopener" href="'+esc(u)+'"><i class="bi bi-paperclip"></i> เปิดไฟล์แนบ '+(i+1)+'</a>').join('')+'</div>';
+  }
+  function dateObj(v){
+    if(!v)return null;
+    if(v instanceof Date&&!isNaN(v))return v;
+    let d=new Date(v); if(!isNaN(d))return d;
+    const s=String(v||'');
+    let m=s.match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+    if(m){let y=+m[1];if(y>2400)y-=543;d=new Date(y,+m[2]-1,+m[3]);if(!isNaN(d))return d;}
+    m=s.match(/(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
+    if(m){let y=+m[3];if(y>2400)y-=543;d=new Date(y,+m[2]-1,+m[1]);if(!isNaN(d))return d;}
+    return null;
+  }
+  function badgeCls(status){try{return window.getScheduleBadgeClass?window.getScheduleBadgeClass(status):'bg-info text-dark';}catch(e){return 'bg-info text-dark';}}
+  function user(){try{return window.user||user||{};}catch(e){return window.user||{};}}
+  function allSchedules(){
+    const my=(window.mySchedulesGlobal||[]).map(x=>Object.assign({},x,{__scope:'my'}));
+    const dept=(window.departmentSchedulesGlobal||[]).map(x=>Object.assign({},x,{__scope:'dept'}));
+    const seen=new Set(), out=[];
+    my.concat(dept).forEach((x,i)=>{const key=String(x.id||x.publicId||x.eventId||i); if(seen.has(key))return; seen.add(key); out.push(x);});
+    return out;
+  }
+  function findSchedule(id){return allSchedules().find(x=>String(x.id||x.publicId||x.eventId||'')===String(id||''));}
+  function tagsOf(item){return splitTokens(item&&item.tags);}
+  function priorityOf(item){return clean(item&&item.priority)||'ปกติ';}
+  function priorityCls(p){p=String(p||'');if(p.includes('มาก')||p.toLowerCase().includes('critical'))return'priority-critical';if(p.includes('ด่วน')||p.toLowerCase().includes('urgent')||p.toLowerCase().includes('high'))return'priority-urgent';if(p.includes('ต่ำ')||p.toLowerCase().includes('low'))return'priority-low';return'priority-normal';}
+  function tagHtml(item){const tags=tagsOf(item);return tags.length?tags.map(t=>'<span class="haos-v706-chip tag"><i class="bi bi-bookmark"></i>'+esc(t)+'</span>').join(''):'<span class="text-muted small">-</span>';}
+  function priorityHtml(item){const p=priorityOf(item);return '<span class="haos-v706-chip '+priorityCls(p)+'"><i class="bi bi-flag"></i>'+esc(p)+'</span>';}
+
+  const baseSubmit=window.submitScheduleData;
+  if(typeof baseSubmit==='function'&&!baseSubmit.__haosV706Wrapped){
+    const wrapped=function(data,btn){
+      if(data&&data.eventEditId){
+        const current=findSchedule(data.eventEditId);
+        const merged=mergeUrls(current&&current.fileUrl,data.fileUrl);
+        if(merged)data.fileUrl=merged;
+      }
+      return baseSubmit.call(this,data,btn);
+    };
+    wrapped.__haosV706Wrapped=true;
+    window.submitScheduleData=wrapped;
+  }
+
+  const baseDetail=window.viewScheduleDetail;
+  window.viewScheduleDetail=function(id){
+    const item=findSchedule(id);
+    if(!item&&typeof baseDetail==='function')return baseDetail.apply(this,arguments);
+    if(!item){if(window.Swal)Swal.fire('ไม่พบข้อมูล','กรุณาโหลดรายการใหม่อีกครั้ง','warning');return;}
+    try{
+      if($('sdTitle'))$('sdTitle').innerText=item.eventName||item.title||'-';
+      if($('sdCaptureTitle'))$('sdCaptureTitle').innerText=item.eventName||item.title||'-';
+      if($('sdWorkStatus'))$('sdWorkStatus').innerText=item.workStatus||item.status||'อยู่ระหว่างการดำเนินการ';
+      if($('sdTime'))$('sdTime').innerText=item.startTime||item.start||'-';
+      if($('sdLocation'))$('sdLocation').innerText=item.location||item.eventLocation||'-';
+      if($('sdDetails'))$('sdDetails').innerText=item.details||item.detail||'-';
+      if($('sdLink'))$('sdLink').innerHTML=item.meetingLink?'<a href="'+esc(item.meetingLink)+'" target="_blank" rel="noopener" class="text-break">'+esc(item.meetingLink)+'</a>':'-';
+      if($('sdFile'))$('sdFile').innerHTML=renderFiles(item.fileUrl)||'ไม่มีไฟล์แนบ';
+      if($('sdPublicId'))$('sdPublicId').value=item.publicId||item.id||id;
+      const statusBlock=$('sdWorkStatus')?.closest('.mb-3');
+      if(statusBlock&&!$('sdMetaV706')){
+        statusBlock.insertAdjacentHTML('afterend','<div id="sdMetaV706" class="mb-3 border-bottom pb-2"><div class="haos-v706-meta-grid"><div class="haos-v706-meta-box"><small>ประเภทงาน / Tags</small><div id="sdTagsV706"></div></div><div class="haos-v706-meta-box"><small>ความสำคัญ / Priority</small><div id="sdPriorityV706"></div></div></div></div>');
+      }
+      if($('sdTagsV706'))$('sdTagsV706').innerHTML=tagHtml(item);
+      if($('sdPriorityV706'))$('sdPriorityV706').innerHTML=priorityHtml(item);
+      const modalEl=$('scheduleDetailModal');
+      if(modalEl&&window.bootstrap)bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    }catch(e){
+      console.warn('HAOS '+PATCH+' detail fallback',e);
+      if(typeof baseDetail==='function')return baseDetail.apply(this,arguments);
+    }
+  };
+
+  function passPeriod(item,period){
+    if(!period)return true;
+    const d=dateObj(item.rawStartTime||item.startTime||item.start||item.date);
+    if(!d)return true;
+    const now=new Date(), today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    const day=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+    const diff=Math.floor((day-today)/86400000);
+    if(period==='today')return diff===0;
+    if(period==='week')return diff>=0&&diff<=7;
+    if(period==='month')return diff>=0&&diff<=30;
+    return true;
+  }
+  function ensureUnifiedShell(){
+    if(!$('haosUnifiedScheduleViewV702')&&typeof window.__haosV706BaseUnifiedRender==='function'){
+      try{window.__haosV706BaseUnifiedRender();}catch(e){}
+    }
+    const row=$('#haosUnifiedScheduleViewV702 .haos-v702-filter .row');
+    if(row&&!$('unifiedSchedulePriorityV706')){
+      const reset=row.querySelector('.d-grid');
+      const html='<div class="col-md-2"><label class="small fw-bold text-muted">ความสำคัญ</label><select id="unifiedSchedulePriorityV706" class="form-select" onchange="renderUnifiedScheduleV702()"><option value="">ทั้งหมด</option></select></div><div class="col-md-2"><label class="small fw-bold text-muted">ประเภทงาน / Tags</label><select id="unifiedScheduleTagV706" class="form-select" onchange="renderUnifiedScheduleV702()"><option value="">ทั้งหมด</option></select></div>';
+      if(reset)reset.insertAdjacentHTML('beforebegin',html); else row.insertAdjacentHTML('beforeend',html);
+    }
+    populateUnifiedMetaFilters();
+  }
+  function populateSelect(id,values,allText){
+    const el=$(id); if(!el)return;
+    const old=el.value;
+    const opts=['<option value="">'+esc(allText||'ทั้งหมด')+'</option>'].concat(values.map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>'));
+    const next=opts.join('');
+    if(el.innerHTML!==next)el.innerHTML=next;
+    if(values.includes(old))el.value=old;
+  }
+  function populateUnifiedMetaFilters(){
+    const rows=allSchedules();
+    const priorities=Array.from(new Set(['ปกติ','ต่ำ','ด่วน','ด่วนมาก'].concat(rows.map(priorityOf)))).filter(Boolean);
+    const tags=Array.from(new Set([].concat(...rows.map(tagsOf),(window.workTagOptionsGlobal||[]).map(t=>t.name||t)))).map(clean).filter(Boolean).sort((a,b)=>a.localeCompare(b,'th'));
+    populateSelect('unifiedSchedulePriorityV706',priorities,'ทั้งหมด');
+    populateSelect('unifiedScheduleTagV706',tags,'ทั้งหมด');
+    const tagSel=$('eventTags');
+    if(tagSel){tagSel.multiple=true;tagSel.size=Math.max(Number(tagSel.getAttribute('size')||0),5);tagSel.classList.add('haos-v706-tags-multi');}
+  }
+  function filteredUnified(){
+    const q=clean($('unifiedScheduleSearchV702')?.value).toLowerCase();
+    const scope=$('unifiedScheduleScopeV702')?.value||'';
+    const status=$('unifiedScheduleStatusV702')?.value||'';
+    const period=$('unifiedSchedulePeriodV702')?.value||'';
+    const sort=$('unifiedScheduleSortV702')?.value||'newest';
+    const priority=$('unifiedSchedulePriorityV706')?.value||'';
+    const tag=$('unifiedScheduleTagV706')?.value||'';
+    let list=allSchedules().filter(item=>{
+      const hay=[item.eventName,item.title,item.details,item.location,item.ownerName,item.workStatus,item.priority,item.tags,item.startTime].map(clean).join(' ').toLowerCase();
+      if(scope&&item.__scope!==scope)return false;
+      if(status&&String(item.workStatus||item.status||'')!==status)return false;
+      if(priority&&priorityOf(item)!==priority)return false;
+      if(tag&&!tagsOf(item).includes(tag))return false;
+      if(q&&!hay.includes(q))return false;
+      return passPeriod(item,period);
+    });
+    list.sort((a,b)=>{
+      if(sort==='name')return clean(a.eventName||a.title).localeCompare(clean(b.eventName||b.title),'th');
+      const da=dateObj(a.rawStartTime||a.startTime||a.start||a.date)?.getTime()||0;
+      const db=dateObj(b.rawStartTime||b.startTime||b.start||b.date)?.getTime()||0;
+      return sort==='oldest'?da-db:db-da;
+    });
+    return list;
+  }
+  function actions(item){
+    const id=esc(item.id||item.publicId||item.eventId||'');
+    const u=user();
+    const can=item.__scope==='my'||phoneKey(item.ownerPhone||item.createdByPhone)===phoneKey(u.phone);
+    let html='<button type="button" class="btn btn-outline-info btn-sm text-dark me-1" onclick="viewScheduleDetail(\''+id+'\')"><i class="bi bi-eye"></i></button>';
+    if(can)html+='<button type="button" class="btn btn-outline-warning btn-sm text-dark me-1" onclick="editSchedule(\''+id+'\')"><i class="bi bi-pencil"></i></button><button type="button" class="btn btn-outline-danger btn-sm" onclick="handleDelete(\''+id+'\')"><i class="bi bi-trash"></i></button>';
+    return html;
+  }
+  function scopeChip(item){const dept=item.__scope==='dept';return '<span class="haos-v706-chip '+(dept?'scope-dept':'scope-my')+'"><i class="bi '+(dept?'bi-people-fill':'bi-person-check')+'"></i>'+(dept?'กลุ่มงาน':'ส่วนตัว')+'</span>';}
+  function row(item){
+    const title=item.eventName||item.title||'-', loc=item.location||item.eventLocation||'-', owner=item.ownerName||item.createdBy||'-', status=item.workStatus||item.status||'-';
+    const files=item.fileUrl?'<i class="bi bi-paperclip text-primary ms-1" title="มีไฟล์แนบ"></i>':'';
+    return '<tr><td>'+scopeChip(item)+'</td><td><div class="fw-bold text-primary">'+esc(title)+files+'</div><small class="text-muted">'+esc(loc)+'</small></td><td>'+tagHtml(item)+'</td><td>'+priorityHtml(item)+'</td><td class="small text-muted">'+esc(item.startTime||item.start||'-')+'</td><td>'+esc(owner)+'</td><td><span class="badge '+badgeCls(status)+'">'+esc(status)+'</span></td><td class="text-end action-menu">'+actions(item)+'</td></tr>';
+  }
+  function renderCards(list,box){
+    box.innerHTML=list.length?list.map(item=>'<article class="haos-v702-card"><div class="d-flex justify-content-between gap-2 mb-2">'+scopeChip(item)+'<span class="badge '+badgeCls(item.workStatus||item.status)+'">'+esc(item.workStatus||item.status||'-')+'</span></div><div class="title">'+esc(item.eventName||item.title||'-')+(item.fileUrl?' <i class="bi bi-paperclip text-primary"></i>':'')+'</div><div class="meta"><span><i class="bi bi-clock"></i> '+esc(item.startTime||item.start||'-')+'</span><span><i class="bi bi-geo-alt"></i> '+esc(item.location||item.eventLocation||'-')+'</span></div><div class="haos-v706-card-tags">'+priorityHtml(item)+tagHtml(item)+'</div><div class="text-end">'+actions(item)+'</div></article>').join(''):'<div class="text-muted small p-3">ไม่พบรายการตามเงื่อนไข</div>';
+  }
+  function renderCalendar(list,box){
+    box.innerHTML='<div id="unifiedScheduleCalendarInnerV702"></div>';
+    if(window.haosUnifiedScheduleCalendarV702){try{window.haosUnifiedScheduleCalendarV702.destroy();}catch(e){}}
+    if(!window.FullCalendar){box.innerHTML='<div class="text-muted p-3">ไม่พบ FullCalendar</div>';return;}
+    const events=list.map(item=>{const d=dateObj(item.rawStartTime||item.startTime||item.start||item.date);if(!d)return null;const p=priorityOf(item);const color=priorityCls(p)==='priority-critical'?'#dc2626':priorityCls(p)==='priority-urgent'?'#f59e0b':(item.__scope==='dept'?'#0891b2':'#2563eb');return{title:(item.__scope==='dept'?'[กลุ่มงาน] ':'[ส่วนตัว] ')+(item.eventName||item.title||'-'),start:d,end:dateObj(item.rawEndTime||item.endTime||item.end)||undefined,allDay:false,backgroundColor:color,borderColor:color,extendedProps:{id:item.id||item.publicId||'',priority:p,tags:tagsOf(item).join(', ')}};}).filter(Boolean);
+    const cal=new FullCalendar.Calendar($('unifiedScheduleCalendarInnerV702'),{initialView:'dayGridMonth',locale:'th',height:'auto',headerToolbar:{left:'prev,next today',center:'title',right:'dayGridMonth,timeGridWeek,timeGridDay'},events,eventDidMount:info=>{info.el.title=[info.event.title,info.event.extendedProps.priority,info.event.extendedProps.tags].filter(Boolean).join(' | ');},eventClick:info=>{const id=info.event.extendedProps.id;if(id)window.viewScheduleDetail(id);}});
+    cal.render(); window.haosUnifiedScheduleCalendarV702=cal;
+  }
+  window.__haosV706BaseUnifiedRender=window.renderUnifiedScheduleV702;
+  window.renderUnifiedScheduleV702=function(){
+    ensureUnifiedShell();
+    const mode=window.haosUnifiedScheduleModeV702||'list';
+    const list=filteredUnified();
+    qa('#unifiedScheduleViewToolsV702 .btn').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));
+    const cur=$('unifiedScheduleCurrentViewV702'); if(cur)cur.textContent='กำลังดู: '+({list:'รายการ',card:'การ์ด',calendar:'ปฏิทิน'}[mode]||'รายการ');
+    const listBox=$('unifiedScheduleListV702'), cardBox=$('unifiedScheduleCardV702'), calBox=$('unifiedScheduleCalendarV702');
+    if(listBox)listBox.classList.toggle('d-none',mode!=='list');
+    if(cardBox)cardBox.classList.toggle('d-none',mode!=='card');
+    if(calBox)calBox.classList.toggle('d-none',mode!=='calendar');
+    if(mode==='card'&&cardBox)renderCards(list,cardBox);
+    if(mode==='calendar'&&calBox)renderCalendar(list,calBox);
+    if(mode==='list'&&listBox)listBox.innerHTML='<table class="table haos-v702-table haos-v706-table align-middle small"><thead><tr><th>ประเภท</th><th>ชื่องาน</th><th>ประเภทงาน / Tags</th><th>ความสำคัญ / Priority</th><th>เวลาเริ่ม</th><th>ผู้สร้าง/เจ้าของ</th><th>สถานะ</th><th class="text-end">จัดการ</th></tr></thead><tbody>'+(list.length?list.map(row).join(''):'<tr><td colspan="8" class="text-center text-muted py-4">ไม่พบรายการตามเงื่อนไข</td></tr>')+'</tbody></table>';
+  };
+  window.setUnifiedScheduleViewV702=function(mode){window.haosUnifiedScheduleModeV702=mode||'list';window.renderUnifiedScheduleV702();};
+  window.resetUnifiedScheduleFiltersV702=function(){
+    ['unifiedScheduleSearchV702','unifiedScheduleScopeV702','unifiedScheduleStatusV702','unifiedSchedulePeriodV702','unifiedSchedulePriorityV706','unifiedScheduleTagV706'].forEach(id=>{const el=$(id);if(el)el.value='';});
+    if($('unifiedScheduleSortV702'))$('unifiedScheduleSortV702').value='newest';
+    window.renderUnifiedScheduleV702();
+  };
+
+  function blockLegacyITPublicLinkbar(){
+    qa('#itBookingPanel #itPublicLinksV703,#itBookingPanel .haos-v703-public-linkbar,.haos-v703-public-linkbar').forEach(el=>el.remove());
+    const pane=$('itservices-pane')||document.body;
+    if(!$('itPublicLinksV703')){
+      const marker=document.createElement('div');
+      marker.id='itPublicLinksV703';
+      marker.dataset.v706Blocker='1';
+      marker.style.display='none';
+      pane.appendChild(marker);
+    }
+  }
+  function install(){
+    populateUnifiedMetaFilters();
+    blockLegacyITPublicLinkbar();
+    if($('haosUnifiedScheduleViewV702'))window.renderUnifiedScheduleV702();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true}); else install();
+  setTimeout(install,500);setTimeout(install,1500);setTimeout(install,3000);
+  let queued=false;new MutationObserver(()=>{if(queued)return;queued=true;setTimeout(()=>{queued=false;blockLegacyITPublicLinkbar();populateUnifiedMetaFilters();},120);}).observe(document.documentElement,{childList:true,subtree:true});
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
