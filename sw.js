@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-5-report-view-buttons-fix';
+const CACHE_NAME = 'haos-v70-6-schedule-tags-files-public-dashboard';
 const CORE = ['/', '/index.html', '/public.html', '/manifest.json', '/icon-192.png', '/icon-512.png', '/logo-moph.png'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(CORE)).catch(() => {}));
