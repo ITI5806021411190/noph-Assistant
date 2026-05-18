@@ -10566,12 +10566,27 @@ HAOS v68.6 FINISHING FIX
   .haos-v706-meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
   .haos-v706-meta-box{border:1px solid rgba(148,163,184,.25);border-radius:16px;background:#fff;padding:10px 12px}
   .haos-v706-meta-box small{display:block;color:#64748b;font-weight:900;margin-bottom:4px}
-  .haos-v706-table thead th{white-space:nowrap;background:linear-gradient(180deg,#eef6ff,#e0f2fe)!important;color:#0f172a!important}
-  .haos-v706-table tbody tr:hover{background:linear-gradient(90deg,#f8fbff,#ecfeff)!important}
-  .haos-v706-table tbody tr.haos-v706-row-my{background:linear-gradient(90deg,rgba(239,246,255,.92),rgba(255,255,255,.98))!important;box-shadow:inset 4px 0 0 #2563eb}
-  .haos-v706-table tbody tr.haos-v706-row-dept{background:linear-gradient(90deg,rgba(236,254,255,.95),rgba(240,253,244,.72))!important;box-shadow:inset 4px 0 0 #0891b2}
-  .haos-v706-table tbody tr.haos-v706-row-my:hover{background:linear-gradient(90deg,#dbeafe,#fff)!important}
-  .haos-v706-table tbody tr.haos-v706-row-dept:hover{background:linear-gradient(90deg,#cffafe,#ecfdf5)!important}
+  #unifiedScheduleListV702{padding:18px!important;background:linear-gradient(180deg,#f8fbff,#eef8fb);border-top:1px solid rgba(148,163,184,.16)}
+  .haos-v706-table{border-collapse:separate!important;border-spacing:0 11px!important;margin:0!important}
+  .haos-v706-table thead th{white-space:nowrap;background:transparent!important;color:#475569!important;border:0!important;padding:0 12px 4px!important;font-size:.78rem;text-transform:none;letter-spacing:0;font-weight:950!important}
+  .haos-v706-table tbody tr{--haos-v706-row-bg:#fff;--haos-v706-row-hover:#f8fafc;--haos-v706-edge:#2563eb;filter:drop-shadow(0 8px 18px rgba(15,23,42,.06))}
+  .haos-v706-table tbody tr.haos-v706-row-my{--haos-v706-row-bg:linear-gradient(90deg,#eff6ff 0%,#ffffff 58%,#f8fbff 100%);--haos-v706-row-hover:linear-gradient(90deg,#dbeafe 0%,#ffffff 62%,#eff6ff 100%);--haos-v706-edge:#2563eb}
+  .haos-v706-table tbody tr.haos-v706-row-dept{--haos-v706-row-bg:linear-gradient(90deg,#ecfeff 0%,#ffffff 56%,#f0fdf4 100%);--haos-v706-row-hover:linear-gradient(90deg,#cffafe 0%,#ffffff 60%,#dcfce7 100%);--haos-v706-edge:#0891b2}
+  .haos-v706-table tbody tr>td{background:var(--haos-v706-row-bg)!important;border-top:1px solid rgba(148,163,184,.18)!important;border-bottom:1px solid rgba(148,163,184,.18)!important;padding:14px 12px!important;vertical-align:middle!important}
+  .haos-v706-table tbody tr:hover>td{background:var(--haos-v706-row-hover)!important}
+  .haos-v706-table tbody tr>td:first-child{border-left:5px solid var(--haos-v706-edge)!important;border-radius:18px 0 0 18px!important}
+  .haos-v706-table tbody tr>td:last-child{border-right:1px solid rgba(148,163,184,.18)!important;border-radius:0 18px 18px 0!important}
+  .haos-v706-title-wrap{display:flex;align-items:flex-start;gap:10px;min-width:260px}
+  .haos-v706-title-icon{width:38px;height:38px;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;background:#dbeafe;color:#1d4ed8;flex:0 0 auto}
+  .haos-v706-row-dept .haos-v706-title-icon{background:#ccfbf1;color:#0f766e}
+  .haos-v706-title-main{font-weight:950;color:#0f172a;line-height:1.35}
+  .haos-v706-title-sub{display:flex;align-items:center;gap:6px;flex-wrap:wrap;color:#64748b;font-size:.82rem;margin-top:4px}
+  .haos-v706-owner{font-weight:900;color:#334155}
+  .haos-v706-owner small{display:block;color:#64748b;font-weight:700;margin-top:3px}
+  .haos-v706-time{font-weight:900;color:#0f172a;white-space:nowrap}
+  .haos-v706-time small{display:block;color:#64748b;font-weight:700;margin-top:3px}
+  .haos-v706-table .action-menu{white-space:nowrap}
+  .haos-v706-table .action-menu .btn{border-radius:13px!important;min-width:40px;min-height:38px;box-shadow:0 8px 18px rgba(15,23,42,.05)}
   .haos-v706-card-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:auto}
   .haos-v702-card.haos-v706-card-my{background:linear-gradient(180deg,#ffffff,#eff6ff)!important;box-shadow:inset 0 4px 0 #2563eb,0 14px 34px rgba(37,99,235,.10)!important}
   .haos-v702-card.haos-v706-card-dept{background:linear-gradient(180deg,#ffffff,#ecfeff)!important;box-shadow:inset 0 4px 0 #0891b2,0 14px 34px rgba(8,145,178,.10)!important}
@@ -10810,7 +10825,10 @@ HAOS v68.6 FINISHING FIX
   function row(item){
     const title=item.eventName||item.title||'-', loc=item.location||item.eventLocation||'-', owner=item.ownerName||item.createdBy||'-', status=item.workStatus||item.status||'-';
     const files=item.fileUrl?'<i class="bi bi-paperclip text-primary ms-1" title="มีไฟล์แนบ"></i>':'';
-    return '<tr class="haos-v706-row-'+(item.__scope==='dept'?'dept':'my')+'"><td>'+scopeChip(item)+'</td><td><div class="fw-bold text-primary">'+esc(title)+files+'</div><small class="text-muted">'+esc(loc)+'</small></td><td>'+tagHtml(item)+'</td><td>'+priorityHtml(item)+'</td><td class="small text-muted">'+esc(item.startTime||item.start||'-')+'</td><td>'+esc(owner)+'</td><td><span class="badge '+badgeCls(status)+'">'+esc(status)+'</span></td><td class="text-end action-menu">'+actions(item)+'</td></tr>';
+    const scope=item.__scope==='dept'?'dept':'my';
+    const icon=scope==='dept'?'bi-people-fill':'bi-person-check';
+    const time=esc(item.startTime||item.start||'-');
+    return '<tr class="haos-v706-row-'+scope+'"><td>'+scopeChip(item)+'</td><td class="haos-v706-title-cell"><div class="haos-v706-title-wrap"><span class="haos-v706-title-icon"><i class="bi '+icon+'"></i></span><div><div class="haos-v706-title-main">'+esc(title)+files+'</div><div class="haos-v706-title-sub"><span><i class="bi bi-geo-alt"></i> '+esc(loc||'-')+'</span></div></div></div></td><td>'+tagHtml(item)+'</td><td>'+priorityHtml(item)+'</td><td><div class="haos-v706-time"><i class="bi bi-clock"></i> '+time+'</div><small class="text-muted">'+(scope==='dept'?'งานกลุ่มงาน':'งานส่วนตัว')+'</small></td><td><div class="haos-v706-owner">'+esc(owner||'-')+'<small>'+esc(item.ownerDepartment||item.department||'')+'</small></div></td><td><span class="badge '+badgeCls(status)+'">'+esc(status)+'</span></td><td class="text-end action-menu">'+actions(item)+'</td></tr>';
   }
   function renderCards(list,box){
     box.innerHTML=list.length?list.map(item=>'<article class="haos-v702-card haos-v706-card-'+(item.__scope==='dept'?'dept':'my')+'"><div class="d-flex justify-content-between gap-2 mb-2">'+scopeChip(item)+'<span class="badge '+badgeCls(item.workStatus||item.status)+'">'+esc(item.workStatus||item.status||'-')+'</span></div><div class="title">'+esc(item.eventName||item.title||'-')+(item.fileUrl?' <i class="bi bi-paperclip text-primary"></i>':'')+'</div><div class="meta"><span><i class="bi bi-clock"></i> '+esc(item.startTime||item.start||'-')+'</span><span><i class="bi bi-geo-alt"></i> '+esc(item.location||item.eventLocation||'-')+'</span></div><div class="haos-v706-card-tags">'+priorityHtml(item)+tagHtml(item)+'</div><div class="text-end">'+actions(item)+'</div></article>').join(''):'<div class="text-muted small p-3">ไม่พบรายการตามเงื่อนไข</div>';
