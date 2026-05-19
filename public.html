@@ -1255,7 +1255,90 @@ body{background:radial-gradient(circle at 12% 10%,rgba(14,165,233,.20),transpare
   window.haosPublicEMeetingV714={start};
   window.onload=start;
   if(document.readyState!=='loading')setTimeout(start,120);
-  if(moduleName==='emeeting-live')setInterval(()=>{try{start();}catch(e){}},8000);
+  if(moduleName==='emeeting-live')window.haosPublicEMeetingRefreshTimerV714=setInterval(()=>{try{start();}catch(e){}},15000);
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
+<style id="haos-v70-15-public-emeeting-style">
+  .haos-v715p-shell{min-height:100vh;padding:28px 14px;background:radial-gradient(circle at 8% 6%,#dbeafe,transparent 32%),radial-gradient(circle at 92% 0,#ccfbf1,transparent 28%),linear-gradient(135deg,#f8fafc,#eef6ff)}
+  .haos-v715p-wrap{max-width:1180px;margin:0 auto}
+  .haos-v715p-hero{border-radius:30px;background:linear-gradient(135deg,#0f766e,#2563eb 52%,#7c3aed);color:#fff;padding:26px;box-shadow:0 28px 80px rgba(37,99,235,.22)}
+  .haos-v715p-hero h1{font-weight:950;margin:0 0 6px;font-size:clamp(1.6rem,3vw,2.6rem)}
+  .haos-v715p-card{border:1px solid rgba(148,163,184,.22);border-radius:24px;background:rgba(255,255,255,.97);box-shadow:0 16px 44px rgba(15,23,42,.08);padding:18px;margin-top:16px}
+  .haos-v715p-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  .haos-v715p-info{border:1px solid rgba(148,163,184,.22);border-radius:18px;background:#f8fafc;padding:14px}
+  .haos-v715p-info small{display:block;color:#64748b;font-weight:850}
+  .haos-v715p-info b{display:block;color:#0f172a;font-size:1.05rem;margin-top:3px}
+  .haos-v715p-agenda{border:1px solid rgba(148,163,184,.22);border-radius:18px;background:linear-gradient(180deg,#fff,#f8fbff);padding:14px;margin-bottom:10px}
+  .haos-v715p-agenda.active{border-color:#2563eb;background:linear-gradient(135deg,#eff6ff,#fff)}
+  .haos-v715p-agenda h6{font-weight:950;color:#0f172a;margin:0 0 4px}
+  .haos-v715p-pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 10px;background:#e0f2fe;color:#075985;font-weight:950;font-size:.78rem}
+  .haos-v715p-doc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+  .haos-v715p-doc{border:1px solid rgba(148,163,184,.22);border-radius:16px;background:#f8fafc;padding:12px}
+  .haos-v715p-doc b{display:block;color:#0f172a;font-weight:900;word-break:break-word}
+  .haos-v715p-layout{display:grid;grid-template-columns:minmax(260px,340px) 1fr;gap:16px;align-items:start}
+  .haos-v715p-doc-frame{height:64vh;min-height:430px;width:100%;border:1px solid rgba(148,163,184,.25);border-radius:20px;background:#fff}
+  .haos-v715p-footer{text-align:center;color:#64748b;font-size:.82rem;font-weight:800;margin:18px 0 0}
+  @media(max-width:860px){.haos-v715p-layout{grid-template-columns:1fr}.haos-v715p-doc-frame{height:52vh;min-height:320px}.haos-v715p-shell{padding:18px 10px}.haos-v715p-hero{border-radius:22px}}
+</style>
+<script id="haos-v70-15-public-emeeting-script">
+(function(){
+  const PATCH='v70.15-public-emeeting';
+  const params=new URLSearchParams(location.search);
+  const moduleName=params.get('module')||'';
+  if(!['emeeting-rsvp','emeeting-live'].includes(moduleName))return;
+  if(window.haosPublicEMeetingRefreshTimerV714)clearInterval(window.haosPublicEMeetingRefreshTimerV714);
+  const meetingId=params.get('meetingId')||'';
+  const token=params.get('token')||'';
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const el=id=>document.getElementById(id);
+  function gas(fn,args){return new Promise((resolve,reject)=>{try{google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run,args||[]);}catch(e){reject(e);}});}
+  function loginUrl(){return location.origin&&location.origin!=='null'?location.origin+'/':'/';}
+  function shell(html){document.body.innerHTML='<main class="haos-v715p-shell"><section class="haos-v715p-wrap">'+html+'<footer class="haos-v715p-footer">all rights reserved - พัฒนาและดูแลระบบโดย กลุ่มงานสุขภาพดิจิทัล สสจ.นครนายก</footer></section></main>';}
+  function loading(text){shell('<div class="haos-v715p-card text-center py-5"><span class="spinner-border text-primary"></span><h3 class="fw-bold mt-3">'+esc(text||'กำลังโหลดข้อมูลประชุม...')+'</h3></div>');}
+  function hero(m,sub){return '<div class="haos-v715p-hero"><div class="d-flex justify-content-between align-items-start gap-3 flex-wrap"><div><div class="small fw-bold opacity-75"><i class="bi bi-easel2"></i> e-Meeting Manage</div><h1>'+esc(m.title||'การประชุม')+'</h1><div class="opacity-75">'+esc(sub||'ระบบบริหารการประชุม Health Assistant OS')+'</div></div><a class="btn btn-light fw-bold" href="'+esc(loginUrl())+'"><i class="bi bi-box-arrow-in-right"></i> เข้าสู่ระบบ</a></div></div>';}
+  function infoGrid(m){return '<div class="haos-v715p-grid"><div class="haos-v715p-info"><small>วันเวลา</small><b>'+esc(m.startTime||'-')+'</b></div><div class="haos-v715p-info"><small>สถานที่/ช่องทาง</small><b>'+esc(m.location||m.meetingLink||'-')+'</b></div><div class="haos-v715p-info"><small>กลุ่มงาน/คณะ</small><b>'+esc([m.department,m.committee].filter(Boolean).join(' / ')||'-')+'</b></div><div class="haos-v715p-info"><small>ประธาน</small><b>'+esc(m.chair||'-')+'</b></div></div>';}
+  function docsHtml(docs){docs=docs||[];return docs.length?'<div class="haos-v715p-doc-grid mt-2">'+docs.map(d=>'<div class="haos-v715p-doc"><b><i class="bi bi-file-earmark-text text-primary"></i> '+esc(d.documentName||'เอกสารประชุม')+'</b><small class="text-muted">'+esc(d.documentType||'')+'</small><div class="mt-2"><a class="btn btn-sm btn-outline-primary fw-bold" target="_blank" rel="noopener" href="'+esc(d.documentUrl)+'"><i class="bi bi-box-arrow-up-right"></i> เปิดเอกสาร</a></div></div>').join('')+'</div>':'';
+  }
+  function agendaList(agendas,currentId){return agendas.length?agendas.map(a=>'<div class="haos-v715p-agenda '+(a.agendaId===currentId?'active':'')+'"><div class="d-flex justify-content-between gap-2 flex-wrap"><h6>'+esc(a.no||'')+'. '+esc(a.title||'-')+'</h6><span class="haos-v715p-pill">'+esc(a.agendaType||'-')+'</span></div><div class="small text-muted fw-bold">ผู้นำเสนอ: '+esc(a.presenter||'-')+'</div>'+(a.details?'<div class="small mt-2">'+esc(a.details)+'</div>':'')+docsHtml(a.documents||[])+'</div>').join(''):'<div class="text-muted small">ยังไม่มีวาระ</div>';}
+  function renderRsvp(data){
+    const m=data.meeting||{}, people=data.participants||[], agendas=data.agendas||[];
+    const answered=people.filter(p=>p.rsvpStatus&&p.rsvpStatus!=='ยังไม่ตอบรับ').length;
+    const options=people.map(p=>'<option value="'+esc(p.participantId)+'" data-name="'+esc(p.name)+'">'+esc(p.name)+' - '+esc(p.position||p.department||'')+' ('+esc(p.rsvpStatus||'ยังไม่ตอบรับ')+')</option>').join('');
+    shell(hero(m,'ตอบรับการเข้าร่วมประชุมแบบไม่ต้องล็อกอิน พร้อมดูวาระและเอกสารประกอบ')+'<div class="haos-v715p-card">'+infoGrid(m)+'</div><div class="haos-v715p-card"><div class="d-flex justify-content-between align-items-center gap-2 flex-wrap"><h4 class="fw-bold mb-0"><i class="bi bi-person-check text-success"></i> ตอบรับการเข้าร่วมประชุม</h4><span class="haos-v715p-pill">'+answered+'/'+people.length+' ตอบรับแล้ว</span></div><div class="row g-3 mt-1"><div class="col-md-12"><label class="small fw-bold">เลือกชื่อของคุณ</label><select id="emRsvpPersonV715" class="form-select"><option value="">เลือกชื่อ...</option>'+options+'</select></div><div class="col-md-6"><label class="small fw-bold">สถานะ</label><select id="emRsvpStatusV715" class="form-select" onchange="haosPublicToggleDelegateV715()"><option>เข้าร่วมประชุม</option><option>ไม่สามารถเข้าร่วมประชุม</option><option>มอบหมายผู้แทนเข้าประชุมแทน</option></select></div><div class="col-md-6"><label class="small fw-bold">หมายเหตุ</label><input id="emRsvpNoteV715" class="form-control" placeholder="ระบุหมายเหตุเพิ่มเติมได้"></div><div id="emDelegateBoxV715" class="col-12 d-none"><div class="row g-2"><div class="col-md-6"><label class="small fw-bold">ชื่อผู้แทน</label><input id="emDelegateNameV715" class="form-control"></div><div class="col-md-6"><label class="small fw-bold">ตำแหน่งผู้แทน</label><input id="emDelegatePositionV715" class="form-control"></div></div></div></div><button class="btn btn-success btn-lg fw-bold w-100 mt-3" onclick="submitPublicEMeetingRsvpV715()"><i class="bi bi-send"></i> ส่งคำตอบรับ</button></div><div class="haos-v715p-card"><h5 class="fw-bold"><i class="bi bi-list-check"></i> วาระและเอกสารประกอบ</h5>'+agendaList(agendas,'')+'</div>');
+  }
+  window.haosPublicToggleDelegateV715=function(){const on=el('emRsvpStatusV715')?.value==='มอบหมายผู้แทนเข้าประชุมแทน';el('emDelegateBoxV715')?.classList.toggle('d-none',!on);};
+  window.submitPublicEMeetingRsvpV715=async function(){
+    const sel=el('emRsvpPersonV715');if(!sel||!sel.value)return Swal.fire('กรุณาเลือกชื่อ','เลือกชื่อของคุณก่อนส่งคำตอบรับ','warning');
+    const opt=sel.options[sel.selectedIndex];
+    const payload={participantId:sel.value,name:opt.dataset.name||'',rsvpStatus:el('emRsvpStatusV715').value,delegateName:el('emDelegateNameV715')?.value||'',delegatePosition:el('emDelegatePositionV715')?.value||'',rsvpNote:el('emRsvpNoteV715').value||''};
+    Swal.fire({title:'กำลังบันทึกคำตอบรับ...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+    try{const res=await gas('submitEMeetingRsvpV714',[meetingId,token,payload]);if(!res||!res.success)throw new Error(res&&res.message?res.message:'บันทึกไม่สำเร็จ');Swal.fire('บันทึกคำตอบรับแล้ว','ขอบคุณสำหรับการตอบรับเข้าร่วมประชุม','success').then(()=>startV715());}
+    catch(e){Swal.fire('บันทึกไม่สำเร็จ',e.message||String(e),'error');}
+  };
+  function renderLive(data){
+    const m=data.meeting||{}, live=data.liveState||{}, agendas=data.agendas||[];
+    const current=agendas.find(a=>a.agendaId===live.currentAgendaId)||agendas[0]||{};
+    const docUrl=live.currentDocumentUrl||current.documentUrl||((current.documents||[])[0]&&current.documents[0].documentUrl)||'';
+    const docName=live.currentDocumentName||current.documentName||((current.documents||[])[0]&&current.documents[0].documentName)||current.title||'เอกสารประชุม';
+    shell(hero(m,'Live View สำหรับอ่านเอกสารประชุมพร้อมกัน')+'<div class="haos-v715p-card">'+infoGrid(m)+'</div><div class="haos-v715p-layout"><aside class="haos-v715p-card"><h5 class="fw-bold"><i class="bi bi-list-check"></i> วาระทั้งหมด</h5>'+agendaList(agendas,current.agendaId)+'</aside><section class="haos-v715p-card"><div class="d-flex justify-content-between gap-3 flex-wrap align-items-start"><div><h4 class="fw-bold mb-1"><i class="bi bi-display text-primary"></i> '+esc(docName)+'</h4><div class="text-muted fw-bold">'+esc(live.syncMessage||current.title||'รอผู้จัดประชุมเลือกเอกสาร')+'</div><div class="small text-muted">อัปเดตล่าสุด '+esc(live.updatedAt||data.generatedAt||'-')+'</div></div><button class="btn btn-outline-primary fw-bold" onclick="startV715(true)"><i class="bi bi-arrow-clockwise"></i> โหลดใหม่</button></div>'+(docUrl?'<div class="mt-3"><a class="btn btn-primary fw-bold mb-2" target="_blank" rel="noopener" href="'+esc(docUrl)+'"><i class="bi bi-box-arrow-up-right"></i> เปิดเอกสารในแท็บใหม่</a><iframe class="haos-v715p-doc-frame" src="'+esc(docUrl)+'"></iframe></div>':'<div class="alert alert-info mt-3">ยังไม่มีเอกสารที่เปิดร่วมกันในขณะนี้</div>')+'</section></div>');
+  }
+  async function startV715(quiet){
+    if(!quiet)loading(moduleName==='emeeting-rsvp'?'กำลังโหลดแบบตอบรับ...':'กำลังโหลด Live View...');
+    try{
+      const mode=moduleName==='emeeting-rsvp'?'rsvp':'live';
+      const res=await gas('getPublicEMeetingV715',[meetingId,token,mode]);
+      if(!res||!res.success)throw new Error(res&&res.message?res.message:'โหลดข้อมูลไม่สำเร็จ');
+      if(mode==='rsvp')renderRsvp(res);else renderLive(res);
+    }catch(e){
+      shell('<div class="haos-v715p-card text-center py-5"><div class="display-5 text-danger"><i class="bi bi-exclamation-triangle"></i></div><h3 class="fw-bold mt-3">เปิดลิงก์ประชุมไม่สำเร็จ</h3><div class="text-muted fw-bold">'+esc(e.message||String(e))+'</div><a class="btn btn-primary fw-bold mt-3" href="'+esc(loginUrl())+'"><i class="bi bi-box-arrow-in-right"></i> เข้าสู่ระบบ</a></div>');
+    }
+  }
+  window.startV715=startV715;
+  window.haosPublicEMeetingV715={start:startV715};
+  window.onload=startV715;
+  if(document.readyState!=='loading')setTimeout(startV715,260);
+  if(moduleName==='emeeting-live')setInterval(()=>{try{startV715(true);}catch(e){}},8000);
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
