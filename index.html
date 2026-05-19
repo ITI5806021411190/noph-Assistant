@@ -11581,5 +11581,158 @@ HAOS v68.6 FINISHING FIX
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<style id="haos-v70-14-emeeting-style">
+  .haos-v714-panel{border-radius:24px!important;overflow:hidden;box-shadow:0 20px 52px rgba(15,23,42,.10)!important}
+  .haos-v714-hero{background:linear-gradient(135deg,#4f46e5,#0ea5e9 56%,#10b981);color:#fff;padding:20px 22px;display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}
+  .haos-v714-hero h5{font-weight:950;margin:0 0 4px}
+  .haos-v714-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+  .haos-v714-kpi{border:1px solid rgba(148,163,184,.22);border-radius:18px;background:linear-gradient(180deg,#fff,#f8fbff);padding:14px}
+  .haos-v714-kpi small{display:block;color:#64748b;font-weight:850}
+  .haos-v714-kpi b{display:block;font-size:1.75rem;color:#0f172a;line-height:1.05;margin-top:5px}
+  .haos-v714-filter{border:1px solid rgba(14,165,233,.22);border-radius:18px;background:linear-gradient(135deg,#eff6ff,#f8fafc);padding:14px;margin:14px 0}
+  .haos-v714-table{border-collapse:separate!important;border-spacing:0 10px!important;margin:0!important}
+  .haos-v714-table thead th{background:transparent!important;color:#475569!important;border:0!important;font-weight:950!important;white-space:nowrap;padding:0 12px 4px!important}
+  .haos-v714-table tbody tr{filter:drop-shadow(0 8px 18px rgba(15,23,42,.06))}
+  .haos-v714-table tbody td{background:#fff!important;border-top:1px solid rgba(148,163,184,.18)!important;border-bottom:1px solid rgba(148,163,184,.18)!important;padding:13px!important;vertical-align:middle!important}
+  .haos-v714-table tbody td:first-child{border-left:5px solid #4f46e5!important;border-radius:16px 0 0 16px!important}
+  .haos-v714-table tbody td:last-child{border-right:1px solid rgba(148,163,184,.18)!important;border-radius:0 16px 16px 0!important}
+  .haos-v714-title{font-weight:950;color:#1d4ed8!important;line-height:1.35}
+  .haos-v714-sub{color:#64748b;font-weight:700;font-size:.82rem;margin-top:3px}
+  .haos-v714-pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 10px;font-size:.78rem;font-weight:950;border:1px solid rgba(148,163,184,.25);background:#f8fafc;color:#334155;margin:2px}
+  .haos-v714-pill.ok{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+  .haos-v714-pill.warn{background:#fef3c7;color:#92400e;border-color:#fde68a}
+  .haos-v714-pill.info{background:#dbeafe;color:#1d4ed8;border-color:#bfdbfe}
+  .haos-v714-pill.bad{background:#fee2e2;color:#991b1b;border-color:#fecaca}
+  .haos-v714-agenda{border:1px solid rgba(148,163,184,.22);border-radius:18px;background:linear-gradient(180deg,#fff,#f8fafc);padding:14px;margin-bottom:10px;text-align:left}
+  .haos-v714-agenda h6{font-weight:950;color:#0f172a;margin:0 0 5px}
+  .haos-v714-livebox{border:1px solid rgba(14,165,233,.24);border-radius:18px;background:linear-gradient(135deg,#ecfeff,#fff);padding:14px;text-align:left}
+  .haos-v714-linkbox{border:1px dashed rgba(37,99,235,.35);border-radius:14px;background:#eff6ff;padding:10px;font-size:.82rem;word-break:break-all;color:#1e3a8a;font-weight:750}
+  .haos-v714-form{text-align:left}
+  .haos-v714-form .section{border:1px solid rgba(148,163,184,.22);border-radius:18px;background:#fff;padding:14px;margin-bottom:12px}
+  .haos-v714-form .section-title{font-weight:950;color:#0f172a;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  @media(max-width:768px){.haos-v714-hero .btn{width:100%}.haos-v714-table{min-width:900px}}
+</style>
+<script id="haos-v70-14-emeeting-script">
+(function(){
+  const PATCH='v70.14-emeeting-manage';
+  if(window.__HAOS_V714_EMEETING__)return;
+  window.__HAOS_V714_EMEETING__=true;
+  const $=id=>document.getElementById(id);
+  const qa=(s,r=document)=>Array.from((r||document).querySelectorAll(s));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const clean=v=>String(v??'').replace(/\s+/g,' ').trim();
+  const state={meetings:[],dashboard:{}};
+  function userV714(){try{if(typeof getUser==='function')return getUser()||{};}catch(e){}try{return window.user||user||{};}catch(e){return window.user||{};}}
+  function actorV714(){const u=userV714();return {phone:u.phone||'',name:u.fullName||u.name||'',fullName:u.fullName||u.name||'',department:u.department||'',role:u.role||''};}
+  function gasV714(fn,args){if(typeof window.gasRunPromise_==='function')return window.gasRunPromise_(fn,args||[]);return new Promise((resolve,reject)=>{try{google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run,args||[]);}catch(e){reject(e);}});}
+  function statusToneV714(s){s=String(s||'');if(/ปิด|สรุป|เสร็จ|สำเร็จ/.test(s))return'ok';if(/ยกเลิก|เลื่อน/.test(s))return'bad';if(/ตอบรับ|เตรียม|ร่าง/.test(s))return'warn';return'info';}
+  function publicUrlV714(module,meetingId,token){return location.origin+'/public?module='+encodeURIComponent(module)+'&meetingId='+encodeURIComponent(meetingId||'')+'&token='+encodeURIComponent(token||'');}
+  function copyTextV714(text,title){navigator.clipboard?.writeText(text).catch(()=>{});Swal.fire({icon:'success',title:title||'คัดลอกแล้ว',html:'<div class="haos-v714-linkbox">'+esc(text)+'</div>',timer:1800,showConfirmButton:false});}
+  function meetingByIdV714(id){return state.meetings.find(m=>String(m.meetingId)===String(id));}
+  function ensureEMeetingHubV714(){
+    const pane=$('itservices-pane');if(!pane)return;
+    const row=pane.querySelector('.row.g-3.mb-4')||pane.querySelector('.row.g-3');
+    if(row&&!$('eMeetingCardV714')){
+      row.insertAdjacentHTML('beforeend','<div class="col-md-4" id="eMeetingCardV714"><div class="card h-100 border-primary it-service-card"><div class="card-body p-4 d-flex flex-column"><div class="display-6 text-primary mb-3"><i class="bi bi-easel2"></i></div><h6 class="fw-bold">e-Meeting Manage</h6><p class="text-muted small flex-grow-1">บริหารการประชุม วาระ เอกสารประกอบ RSVP อ่านเอกสารพร้อมกัน และสรุปมติที่เชื่อมกับรายงานการประชุม</p><button class="btn btn-primary btn-sm fw-bold" onclick="openEMeetingModuleV714()"><i class="bi bi-box-arrow-in-right"></i> เปิด e-Meeting</button></div></div></div>');
+    }
+    if(row&&!$('eMeetingPanelV714')){
+      row.insertAdjacentHTML('afterend','<section id="eMeetingPanelV714" class="card haos-v714-panel border-primary d-none mb-4"><div class="haos-v714-hero"><div><h5><i class="bi bi-easel2 me-2"></i>e-Meeting Manage</h5><div class="opacity-75">จัดเตรียมวาระ เอกสาร RSVP ห้องอ่านเอกสารร่วมกัน และสรุปมติการประชุม</div></div><div class="d-flex flex-wrap gap-2"><button class="btn btn-light btn-sm fw-bold" onclick="openEMeetingFormV714()"><i class="bi bi-plus-circle"></i> สร้างประชุม</button><button class="btn btn-outline-light btn-sm fw-bold" onclick="openEMeetingArchiveV714()"><i class="bi bi-search"></i> ค้นย้อนหลัง</button><button class="btn btn-outline-light btn-sm fw-bold" onclick="loadEMeetingsV714(true)"><i class="bi bi-arrow-clockwise"></i> โหลดใหม่</button><button class="btn btn-outline-light btn-sm" onclick="togglePanelV70&&togglePanelV70(\'eMeetingPanelV714\',false)"><i class="bi bi-x-lg"></i> ปิด</button></div></div><div class="card-body"><div id="eMeetingKpiV714" class="haos-v714-kpis mb-3"></div><div class="haos-v714-filter"><div class="row g-2 align-items-end"><div class="col-md-5"><label class="small fw-bold text-muted">ค้นหาการประชุม</label><input id="eMeetingSearchV714" class="form-control" placeholder="ชื่อประชุม คณะกรรมการ กลุ่มงาน สถานที่..." oninput="renderEMeetingsV714()"></div><div class="col-md-3"><label class="small fw-bold text-muted">สถานะ</label><select id="eMeetingStatusV714" class="form-select" onchange="renderEMeetingsV714()"><option value="">ทั้งหมด</option><option>ร่าง</option><option>เตรียมประชุม</option><option>เปิดตอบรับ</option><option>กำลังประชุม</option><option>สรุปมติแล้ว</option><option>ปิดประชุม</option></select></div><div class="col-md-3"><label class="small fw-bold text-muted">มุมมอง</label><select id="eMeetingScopeV714" class="form-select" onchange="renderEMeetingsV714()"><option value="">ทั้งหมด</option><option value="mine">ฉันเป็นผู้จัด</option><option value="dept">กลุ่มงานของฉัน</option></select></div><div class="col-md-1 d-grid"><button class="btn btn-outline-secondary" onclick="resetEMeetingFiltersV714()"><i class="bi bi-arrow-counterclockwise"></i></button></div></div></div><div class="table-responsive"><table class="table haos-v714-table align-middle small"><thead><tr><th>การประชุม</th><th>เวลา/สถานที่</th><th>วาระ</th><th>RSVP</th><th>สถานะ</th><th class="text-end">จัดการ</th></tr></thead><tbody id="eMeetingTableV714"><tr><td colspan="6" class="text-center py-4 text-muted">ยังไม่ได้โหลดข้อมูล</td></tr></tbody></table></div></div></section>');
+    }
+  }
+  window.openEMeetingModuleV714=function(){ensureEMeetingHubV714();if(window.togglePanelV70)togglePanelV70('eMeetingPanelV714',true);else $('eMeetingPanelV714')?.classList.remove('d-none');loadEMeetingsV714();};
+  window.loadEMeetingsV714=async function(force){
+    ensureEMeetingHubV714();
+    const tbody=$('eMeetingTableV714');if(tbody)tbody.innerHTML='<tr><td colspan="6" class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm"></span> กำลังโหลด e-Meeting...</td></tr>';
+    const u=userV714();
+    try{const res=await gasV714('getEMeetingModuleDataV714',[u.phone||'',u.role||'',u.department||'']);if(!res||!res.success)throw new Error(res?.message||'โหลดข้อมูลไม่สำเร็จ');state.meetings=res.meetings||[];state.dashboard=res.dashboard||{};renderEMeetingsV714();}
+    catch(e){if(tbody)tbody.innerHTML='<tr><td colspan="6" class="text-center py-4 text-danger">'+esc(e.message||String(e))+'</td></tr>';}
+  };
+  function renderKpiV714(){
+    const d=state.dashboard||{},box=$('eMeetingKpiV714');if(!box)return;
+    box.innerHTML=[['ประชุมทั้งหมด',d.totalMeetings||0,'bi-calendar2-week text-primary'],['ร่าง',d.draft||0,'bi-pencil-square text-warning'],['เตรียม/เปิดตอบรับ',d.planned||0,'bi-person-check text-info'],['สรุปแล้ว',d.completed||0,'bi-check-circle text-success']].map(x=>'<div class="haos-v714-kpi"><small><i class="bi '+x[2]+'"></i> '+x[0]+'</small><b>'+x[1]+'</b></div>').join('');
+  }
+  window.renderEMeetingsV714=function(){
+    renderKpiV714();
+    const tbody=$('eMeetingTableV714');if(!tbody)return;
+    const u=userV714(),q=clean($('eMeetingSearchV714')?.value).toLowerCase(),st=$('eMeetingStatusV714')?.value||'',scope=$('eMeetingScopeV714')?.value||'';
+    const list=state.meetings.filter(m=>{
+      if(st&&m.status!==st)return false;
+      if(scope==='mine'&&String(m.organizerPhone||'')!==String(u.phone||''))return false;
+      if(scope==='dept'&&String(m.department||'')!==String(u.department||''))return false;
+      if(q&&!clean([m.title,m.department,m.committee,m.location,m.organizerName,m.notes].join(' ')).toLowerCase().includes(q))return false;
+      return true;
+    });
+    if(!list.length){tbody.innerHTML='<tr><td colspan="6" class="text-center py-4 text-muted">ไม่พบการประชุมตามเงื่อนไข</td></tr>';return;}
+    tbody.innerHTML=list.map(m=>{
+      const rsvpUrl=publicUrlV714('emeeting-rsvp',m.meetingId,m.rsvpToken),liveUrl=publicUrlV714('emeeting-live',m.meetingId,m.liveToken);
+      return '<tr><td><div class="haos-v714-title">'+esc(m.title||'-')+'</div><div class="haos-v714-sub"><i class="bi bi-diagram-3"></i> '+esc(m.committee||m.meetingType||'-')+' · '+esc(m.department||'-')+'</div></td><td><b><i class="bi bi-clock"></i> '+esc(m.startTime||'-')+'</b><div class="haos-v714-sub"><i class="bi bi-geo-alt"></i> '+esc(m.location||m.meetingLink||'-')+'</div></td><td><span class="haos-v714-pill info"><i class="bi bi-list-check"></i>'+esc(m.agendaCount||0)+' วาระ</span></td><td><span class="haos-v714-pill ok"><i class="bi bi-person-check"></i>'+esc(m.acceptedCount||0)+'/'+esc(m.participantCount||0)+'</span></td><td><span class="haos-v714-pill '+statusToneV714(m.status)+'">'+esc(m.status||'-')+'</span></td><td class="text-end text-nowrap"><button class="btn btn-sm btn-outline-primary" onclick="openEMeetingDetailV714(\''+esc(m.meetingId)+'\')" title="จัดการ"><i class="bi bi-eye"></i></button> <button class="btn btn-sm btn-outline-success" onclick="copyTextV714(\''+esc(rsvpUrl)+'\',\'คัดลอกลิงก์ RSVP แล้ว\')" title="ลิงก์ตอบรับ"><i class="bi bi-person-check"></i></button> <button class="btn btn-sm btn-outline-info" onclick="copyTextV714(\''+esc(liveUrl)+'\',\'คัดลอกลิงก์ห้องอ่านเอกสารแล้ว\')" title="ลิงก์ Live"><i class="bi bi-display"></i></button></td></tr>';
+    }).join('');
+  };
+  window.resetEMeetingFiltersV714=function(){['eMeetingSearchV714','eMeetingStatusV714','eMeetingScopeV714'].forEach(id=>{const el=$(id);if(el)el.value='';});renderEMeetingsV714();};
+  window.copyTextV714=copyTextV714;
+  function textareaHintV714(type){
+    if(type==='people')return 'รูปแบบ: ชื่อ | ตำแหน่ง | กลุ่มงาน | เบอร์โทร | อีเมล\\nเช่น นายสมชาย ใจดี | นักวิชาการสาธารณสุข | กลุ่มงานสุขภาพดิจิทัล | 089xxxxxxx | a@b.go.th';
+    return 'รูปแบบ: ประเภทวาระ | ชื่อวาระ | ผู้นำเสนอ | ลิงก์เอกสาร | ชื่อเอกสาร | รายละเอียด\\nเช่น เรื่องเพื่อพิจารณา | แผนพัฒนาระบบ | นายสมชาย | https://... | เอกสารแผนงาน | ขอความเห็นที่ประชุม';
+  }
+  window.openEMeetingFormV714=async function(id){
+    const m=id?meetingByIdV714(id)||{}:{};
+    const u=userV714();
+    const html='<div class="haos-v714-form"><div class="section"><div class="section-title"><i class="bi bi-info-circle text-primary"></i>ข้อมูลการประชุม</div><div class="row g-2"><div class="col-md-8"><label class="small fw-bold">ชื่อการประชุม *</label><input id="emTitleV714" class="form-control" value="'+esc(m.title||'')+'"></div><div class="col-md-4"><label class="small fw-bold">ประเภท</label><select id="emTypeV714" class="form-select"><option>ประชุมทั่วไป</option><option>ประชุมคณะกรรมการ</option><option>ประชุมกลุ่มงาน</option><option>ประชุมติดตามงาน</option><option>อบรม/ชี้แจง</option></select></div><div class="col-md-4"><label class="small fw-bold">กลุ่มงานเจ้าภาพ</label><input id="emDeptV714" class="form-control" value="'+esc(m.department||u.department||'')+'"></div><div class="col-md-4"><label class="small fw-bold">คณะกรรมการ/ชุดประชุม</label><input id="emCommitteeV714" class="form-control" value="'+esc(m.committee||'')+'"></div><div class="col-md-4"><label class="small fw-bold">ประธาน</label><input id="emChairV714" class="form-control" value="'+esc(m.chair||'')+'"></div><div class="col-md-4"><label class="small fw-bold">เริ่ม</label><input id="emStartV714" type="datetime-local" class="form-control" value="'+esc(m.rawStartTime||'')+'"></div><div class="col-md-4"><label class="small fw-bold">สิ้นสุด</label><input id="emEndV714" type="datetime-local" class="form-control" value="'+esc(m.rawEndTime||'')+'"></div><div class="col-md-4"><label class="small fw-bold">สถานที่</label><input id="emLocationV714" class="form-control" value="'+esc(m.location||'')+'"></div><div class="col-md-6"><label class="small fw-bold">ลิงก์ประชุมออนไลน์</label><input id="emLinkV714" class="form-control" value="'+esc(m.meetingLink||'')+'"></div><div class="col-md-3"><label class="small fw-bold">Meeting ID</label><input id="emExtIdV714" class="form-control" value="'+esc(m.externalMeetingId||'')+'"></div><div class="col-md-3"><label class="small fw-bold">Passcode</label><input id="emPassV714" class="form-control" value="'+esc(m.passcode||'')+'"></div><div class="col-md-4"><label class="small fw-bold">สถานะ</label><select id="emStatusV714" class="form-select"><option>ร่าง</option><option>เตรียมประชุม</option><option>เปิดตอบรับ</option><option>กำลังประชุม</option><option>สรุปมติแล้ว</option><option>ปิดประชุม</option></select></div><div class="col-md-4"><label class="small fw-bold">การมองเห็น</label><select id="emVisibilityV714" class="form-select"><option>ทั้งระบบ</option><option>เฉพาะกลุ่มงาน</option></select></div><div class="col-md-12"><label class="small fw-bold">หมายเหตุ</label><textarea id="emNotesV714" class="form-control" rows="2">'+esc(m.notes||'')+'</textarea></div></div></div><div class="section"><div class="section-title"><i class="bi bi-list-check text-success"></i>วาระเริ่มต้น</div><textarea id="emAgendaTextV714" class="form-control" rows="5" placeholder="'+esc(textareaHintV714('agenda'))+'"></textarea><small class="text-muted">ถ้าแก้ไขการประชุมเดิมและกรอกช่องนี้ ระบบจะแทนที่วาระเดิมทั้งหมด</small></div><div class="section"><div class="section-title"><i class="bi bi-people text-info"></i>รายชื่อผู้เข้าประชุมล่วงหน้า</div><textarea id="emPeopleTextV714" class="form-control" rows="5" placeholder="'+esc(textareaHintV714('people'))+'"></textarea><small class="text-muted">ถ้าแก้ไขการประชุมเดิมและกรอกช่องนี้ ระบบจะแทนที่รายชื่อเดิมทั้งหมด</small></div></div>';
+    const r=await Swal.fire({title:id?'แก้ไข e-Meeting':'สร้าง e-Meeting',html,width:1040,showCancelButton:true,confirmButtonText:'บันทึก',didOpen:()=>{if($('emTypeV714'))$('emTypeV714').value=m.meetingType||'ประชุมทั่วไป';if($('emStatusV714'))$('emStatusV714').value=m.status||'ร่าง';if($('emVisibilityV714'))$('emVisibilityV714').value=m.visibility||'ทั้งระบบ';},preConfirm:()=>({meetingId:m.meetingId||'',title:$('emTitleV714').value.trim(),meetingType:$('emTypeV714').value,department:$('emDeptV714').value.trim(),committee:$('emCommitteeV714').value.trim(),chair:$('emChairV714').value.trim(),startTime:$('emStartV714').value,endTime:$('emEndV714').value,location:$('emLocationV714').value.trim(),meetingLink:$('emLinkV714').value.trim(),externalMeetingId:$('emExtIdV714').value.trim(),passcode:$('emPassV714').value.trim(),status:$('emStatusV714').value,visibility:$('emVisibilityV714').value,notes:$('emNotesV714').value.trim(),agendaText:$('emAgendaTextV714').value.trim(),participantsText:$('emPeopleTextV714').value.trim()})});
+    if(!r.isConfirmed)return;
+    try{const res=await gasV714('saveEMeetingV714',[r.value,actorV714()]);if(!res||!res.success)throw new Error(res?.message||'บันทึกไม่สำเร็จ');Swal.fire({icon:'success',title:'บันทึก e-Meeting แล้ว',timer:1200,showConfirmButton:false});loadEMeetingsV714(true);}
+    catch(e){Swal.fire('บันทึกไม่สำเร็จ',e.message||String(e),'error');}
+  };
+  function agendaHtmlV714(a,canEdit){
+    return '<div class="haos-v714-agenda"><div class="d-flex justify-content-between gap-2 flex-wrap"><div><h6>'+esc(a.no||'')+'. '+esc(a.title||'-')+'</h6><div class="text-muted small fw-bold">'+esc(a.agendaType||'-')+' · ผู้นำเสนอ: '+esc(a.presenter||'-')+'</div></div><span class="haos-v714-pill '+statusToneV714(a.status)+'">'+esc(a.status||'-')+'</span></div>'+(a.details?'<div class="small mt-2" style="white-space:pre-wrap">'+esc(a.details)+'</div>':'')+(a.documentUrl?'<div class="mt-2"><a class="btn btn-sm btn-outline-primary fw-bold" target="_blank" rel="noopener" href="'+esc(a.documentUrl)+'"><i class="bi bi-file-earmark-text"></i> เปิดเอกสาร</a></div>':'')+'<div class="mt-2 border-top pt-2"><b>มติ:</b><div style="white-space:pre-wrap">'+esc(a.decision||'-')+'</div>'+(a.actionOwner?'<div class="small text-muted fw-bold">ผู้รับผิดชอบ: '+esc(a.actionOwner)+' · กำหนด: '+esc(a.dueDate||'-')+'</div>':'')+'</div>'+(canEdit?'<div class="text-end mt-2"><button class="btn btn-sm btn-outline-success" onclick="openEMeetingDecisionV714(\''+esc(a.meetingId)+'\',\''+esc(a.agendaId)+'\')"><i class="bi bi-check2-square"></i> บันทึกมติ</button> <button class="btn btn-sm btn-outline-info" onclick="openEMeetingLiveControlV714(\''+esc(a.meetingId)+'\',\''+esc(a.agendaId)+'\')"><i class="bi bi-display"></i> เปิดอ่านร่วมกัน</button></div>':'')+'</div>';
+  }
+  window.openEMeetingDetailV714=async function(id){
+    Swal.fire({title:'กำลังโหลด e-Meeting...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+    try{
+      const res=await gasV714('getEMeetingDetailV714',[id,actorV714()]);if(!res||!res.success)throw new Error(res?.message||'โหลดไม่สำเร็จ');
+      const m=res.meeting,ag=res.agendas||[],pt=res.participants||[],can=!!m.canEdit;
+      const rsvpUrl=publicUrlV714('emeeting-rsvp',m.meetingId,m.rsvpToken),liveUrl=publicUrlV714('emeeting-live',m.meetingId,m.liveToken);
+      const people=pt.length?pt.map(p=>'<tr><td>'+esc(p.name)+'</td><td>'+esc(p.position||'-')+'</td><td>'+esc(p.department||'-')+'</td><td><span class="haos-v714-pill '+(p.rsvpStatus==='เข้าร่วมประชุม'?'ok':p.rsvpStatus==='ยังไม่ตอบรับ'?'warn':'info')+'">'+esc(p.rsvpStatus||'-')+'</span></td><td>'+esc(p.delegateName||'-')+'</td></tr>').join(''):'<tr><td colspan="5" class="text-center text-muted">ยังไม่มีรายชื่อ</td></tr>';
+      const html='<div class="text-start"><div class="haos-v714-livebox mb-3"><div class="d-flex justify-content-between flex-wrap gap-2"><div><h5 class="fw-bold mb-1">'+esc(m.title)+'</h5><div class="text-muted small fw-bold">'+esc(m.startTime||'-')+' · '+esc(m.location||m.meetingLink||'-')+'</div></div><span class="haos-v714-pill '+statusToneV714(m.status)+'">'+esc(m.status||'-')+'</span></div><div class="row g-2 mt-2"><div class="col-md-6"><div class="haos-v714-linkbox">'+esc(rsvpUrl)+'</div></div><div class="col-md-6"><div class="haos-v714-linkbox">'+esc(liveUrl)+'</div></div></div><div class="d-flex flex-wrap gap-2 mt-2"><button class="btn btn-sm btn-outline-success fw-bold" onclick="copyTextV714(\''+esc(rsvpUrl)+'\',\'คัดลอกลิงก์ RSVP แล้ว\')"><i class="bi bi-person-check"></i> คัดลอก RSVP</button><button class="btn btn-sm btn-outline-info fw-bold" onclick="copyTextV714(\''+esc(liveUrl)+'\',\'คัดลอกลิงก์อ่านเอกสารแล้ว\')"><i class="bi bi-display"></i> คัดลอก Live View</button>'+(m.meetingLink?'<button class="btn btn-sm btn-outline-primary fw-bold" onclick="copyTextV714(\''+esc(m.meetingLink)+'\',\'คัดลอกลิงก์ประชุมออนไลน์แล้ว\')"><i class="bi bi-camera-video"></i> ลิงก์ประชุมออนไลน์</button>':'')+(can?'<button class="btn btn-sm btn-primary fw-bold" onclick="openEMeetingFormV714(\''+esc(m.meetingId)+'\')"><i class="bi bi-pencil"></i> แก้ไข</button><button class="btn btn-sm btn-success fw-bold" onclick="createEMeetingMinutesV714(\''+esc(m.meetingId)+'\')"><i class="bi bi-file-earmark-word"></i> สร้างรายงานการประชุม</button>':'')+'</div></div><h6 class="fw-bold"><i class="bi bi-list-check"></i> วาระการประชุม</h6>'+(ag.length?ag.map(a=>agendaHtmlV714(a,can)).join(''):'<div class="text-muted small mb-3">ยังไม่มีวาระ</div>')+'<h6 class="fw-bold mt-3"><i class="bi bi-people"></i> รายชื่อและ RSVP</h6><div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>ชื่อ</th><th>ตำแหน่ง</th><th>กลุ่มงาน</th><th>สถานะ</th><th>ผู้แทน</th></tr></thead><tbody>'+people+'</tbody></table></div></div>';
+      Swal.fire({title:'รายละเอียด e-Meeting',html,width:1120,showConfirmButton:false,showCloseButton:true});
+    }catch(e){Swal.fire('โหลดรายละเอียดไม่สำเร็จ',e.message||String(e),'error');}
+  };
+  window.openEMeetingDecisionV714=async function(meetingId,agendaId){
+    const r=await Swal.fire({title:'บันทึกสรุปมติวาระ',html:'<div class="text-start"><label class="small fw-bold">มติ/ข้อสรุป</label><textarea id="emDecisionV714" class="form-control mb-2" rows="5"></textarea><label class="small fw-bold">ข้อสั่งการ/งานติดตาม</label><input id="emActionTitleV714" class="form-control mb-2"><div class="row g-2"><div class="col-md-8"><label class="small fw-bold">ผู้รับผิดชอบ</label><input id="emActionOwnerV714" class="form-control"></div><div class="col-md-4"><label class="small fw-bold">กำหนดส่ง</label><input id="emDueV714" type="date" class="form-control"></div></div></div>',showCancelButton:true,confirmButtonText:'บันทึกมติ',preConfirm:()=>({decision:$('emDecisionV714').value.trim(),actionTitle:$('emActionTitleV714').value.trim(),actionOwner:$('emActionOwnerV714').value.trim(),dueDate:$('emDueV714').value,status:'สรุปมติแล้ว'})});
+    if(!r.isConfirmed)return;
+    try{const res=await gasV714('saveEMeetingMinuteDecisionV714',[meetingId,agendaId,r.value,actorV714()]);if(!res||!res.success)throw new Error(res?.message||'บันทึกไม่สำเร็จ');Swal.fire({icon:'success',title:'บันทึกมติแล้ว',timer:1000,showConfirmButton:false});}
+    catch(e){Swal.fire('บันทึกมติไม่สำเร็จ',e.message||String(e),'error');}
+  };
+  window.openEMeetingLiveControlV714=async function(meetingId,agendaId){
+    try{
+      const res=await gasV714('getEMeetingDetailV714',[meetingId,actorV714()]);if(!res||!res.success)throw new Error(res?.message||'โหลดข้อมูลไม่สำเร็จ');
+      const ag=res.agendas||[],m=res.meeting;
+      const opts=ag.map(a=>'<option value="'+esc(a.agendaId)+'" data-url="'+esc(a.documentUrl||'')+'" data-name="'+esc(a.documentName||a.title||'')+'" '+(a.agendaId===agendaId?'selected':'')+'>'+esc((a.no||'')+'. '+a.title)+'</option>').join('');
+      const liveUrl=publicUrlV714('emeeting-live',m.meetingId,m.liveToken);
+      const r=await Swal.fire({title:'ควบคุมเอกสารที่เปิดร่วมกัน',html:'<div class="text-start"><div class="alert alert-info py-2 small fw-bold">ผู้เข้าร่วมที่เปิด Live View จะเห็นวาระ/เอกสารล่าสุดตามที่ผู้จัดประชุมเลือก</div><label class="small fw-bold">วาระปัจจุบัน</label><select id="emLiveAgendaV714" class="form-select mb-2" onchange="const o=this.options[this.selectedIndex];document.getElementById(\'emLiveUrlV714\').value=o.dataset.url||\'\';document.getElementById(\'emLiveNameV714\').value=o.dataset.name||\'\';">'+opts+'</select><label class="small fw-bold">ชื่อเอกสาร</label><input id="emLiveNameV714" class="form-control mb-2"><label class="small fw-bold">ลิงก์เอกสาร</label><input id="emLiveUrlV714" class="form-control mb-2"><label class="small fw-bold">ข้อความถึงผู้เข้าร่วม</label><input id="emLiveMsgV714" class="form-control mb-2" placeholder="เช่น เปิดอ่านเอกสารวาระที่ 2 พร้อมกัน"><div class="haos-v714-linkbox">'+esc(liveUrl)+'</div></div>',showCancelButton:true,confirmButtonText:'อัปเดต Live View',didOpen:()=>{const sel=$('emLiveAgendaV714');if(sel){sel.dispatchEvent(new Event('change'));}},preConfirm:()=>({agendaId:$('emLiveAgendaV714').value,documentUrl:$('emLiveUrlV714').value.trim(),documentName:$('emLiveNameV714').value.trim(),message:$('emLiveMsgV714').value.trim()})});
+      if(!r.isConfirmed)return;
+      const save=await gasV714('setEMeetingLiveStateV714',[meetingId,r.value.agendaId,r.value.documentUrl,r.value.documentName,r.value.message,actorV714()]);
+      if(!save||!save.success)throw new Error(save?.message||'อัปเดตไม่สำเร็จ');
+      copyTextV714(liveUrl,'อัปเดต Live View และคัดลอกลิงก์แล้ว');
+    }catch(e){Swal.fire('อัปเดต Live View ไม่สำเร็จ',e.message||String(e),'error');}
+  };
+  window.createEMeetingMinutesV714=async function(meetingId){
+    Swal.fire({title:'กำลังสร้างรายงานการประชุม...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+    try{const res=await gasV714('createEMeetingMinutesV714',[meetingId,actorV714()]);if(!res||!res.success)throw new Error(res?.message||'สร้างรายงานไม่สำเร็จ');Swal.fire({icon:'success',title:'สร้างรายงานการประชุมแล้ว',html:'<div class="d-flex justify-content-center gap-2 flex-wrap">'+(res.docUrl?'<a class="btn btn-outline-primary fw-bold" target="_blank" href="'+esc(res.docUrl)+'"><i class="bi bi-file-earmark-word"></i> เปิด Google Doc</a>':'')+(res.pdfUrl?'<a class="btn btn-outline-danger fw-bold" target="_blank" href="'+esc(res.pdfUrl)+'"><i class="bi bi-file-earmark-pdf"></i> เปิด PDF</a>':'')+'</div>'});loadEMeetingsV714(true);}
+    catch(e){Swal.fire('สร้างรายงานไม่สำเร็จ',e.message||String(e),'error');}
+  };
+  window.openEMeetingArchiveV714=async function(){
+    const r=await Swal.fire({title:'ค้นเอกสารประชุมย้อนหลัง',input:'text',inputPlaceholder:'ค้นจากชื่อประชุม วาระ มติ เอกสาร...',showCancelButton:true,confirmButtonText:'ค้นหา'});
+    if(!r.isConfirmed)return;
+    Swal.fire({title:'กำลังค้นหา...',didOpen:()=>Swal.showLoading(),allowOutsideClick:false});
+    try{const res=await gasV714('searchEMeetingArchiveV714',[r.value||'',actorV714()]);if(!res||!res.success)throw new Error(res?.message||'ค้นหาไม่สำเร็จ');const html=(res.results||[]).length?(res.results||[]).map(x=>'<div class="haos-v714-agenda"><h6>'+esc(x.meeting.title||'-')+'</h6><div class="text-muted small fw-bold">'+esc(x.meeting.startTime||'-')+' · '+esc(x.meeting.department||'-')+'</div>'+(x.agendas||[]).map(a=>'<div class="border-top mt-2 pt-2"><b>'+esc(a.no)+'. '+esc(a.title)+'</b>'+(a.documentUrl?' <a target="_blank" href="'+esc(a.documentUrl)+'"><i class="bi bi-box-arrow-up-right"></i> เอกสาร</a>':'')+'<div class="small">มติ: '+esc(a.decision||'-')+'</div></div>').join('')+'</div>').join(''):'<div class="text-muted py-4">ไม่พบข้อมูล</div>';Swal.fire({title:'ผลการค้นหาเอกสารประชุม',html:'<div class="text-start">'+html+'</div>',width:980,showCloseButton:true,showConfirmButton:false});}
+    catch(e){Swal.fire('ค้นหาไม่สำเร็จ',e.message||String(e),'error');}
+  };
+  const oldInitV714=window.initItServicesHub;
+  window.initItServicesHub=function(){const r=oldInitV714?oldInitV714.apply(this,arguments):true;setTimeout(ensureEMeetingHubV714,220);return r;};
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(ensureEMeetingHubV714,700),{once:true});else setTimeout(ensureEMeetingHubV714,700);
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
