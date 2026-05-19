@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-13-support-chat-telegram';
+const CACHE_NAME = 'haos-v70-14-emeeting-manage';
 const CORE = ['/', '/index.html', '/public.html', '/manifest.json', '/icon-192.png', '/icon-512.png', '/logo-moph.png'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(CORE)).catch(() => {}));
