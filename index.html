@@ -12261,5 +12261,226 @@ HAOS v68.6 FINISHING FIX
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<style id="haos-v70-18-account-email-style">
+  .haos-v718-admin-card{border:1px solid rgba(37,99,235,.18);border-radius:18px;background:linear-gradient(135deg,#eff6ff,#f8fafc 56%,#ecfdf5);padding:14px;margin-bottom:14px}
+  .haos-v718-admin-card h6{font-weight:950;color:#0f172a}
+  .haos-v718-invite-box{border:1px dashed rgba(37,99,235,.32);border-radius:14px;background:#fff;padding:10px;word-break:break-all;color:#1d4ed8;font-weight:800}
+  .haos-v718-pending-row{background:linear-gradient(90deg,#fffbeb,#fff)!important}
+  .haos-v718-email-pref{border:1px solid rgba(14,165,233,.20);border-radius:18px;background:#fff;padding:14px;margin-bottom:16px}
+  .haos-v718-email-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
+  .haos-v718-email-grid label{border:1px solid rgba(148,163,184,.24);border-radius:12px;padding:8px 10px;background:#f8fafc;font-weight:800;color:#334155}
+  .haos-v718-invite-banner{border:1px solid rgba(16,185,129,.28);background:linear-gradient(135deg,#ecfdf5,#eff6ff);border-radius:18px;padding:12px;color:#065f46;font-weight:850;margin-bottom:14px}
+</style>
+<script id="haos-v70-18-account-email-script">
+(function(){
+  const PATCH='v70.18-account-approval-invite-email-ui';
+  if(window.__HAOS_V718_ACCOUNT_EMAIL__)return;
+  window.__HAOS_V718_ACCOUNT_EMAIL__=true;
+  const $=id=>document.getElementById(id);
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const clean=v=>String(v??'').replace(/\s+/g,' ').trim();
+  const isAdminRole=()=>['Admin','Super Admin'].includes(String(window.user?.role||user?.role||''));
+  const gas=(fn,args)=>new Promise((resolve,reject)=>{try{google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run,args||[]);}catch(e){reject(e);}});
+  const emailCats=[
+    ['schedule','ตารางงาน/นัดหมาย'],['approval','การอนุมัติงาน'],['dailyReport','รายงานการปฏิบัติงาน'],
+    ['itBooking','จองห้อง/Zoom'],['itAsset','ทรัพย์สิน/License'],['itRepair','แจ้งซ่อม IT'],
+    ['eMeeting','e-Meeting'],['helpChat','Help / Live Chat'],['system','ระบบและผู้ใช้งาน']
+  ];
+  function inviteTokenV718(){try{return new URLSearchParams(location.search).get('invite')||sessionStorage.getItem('haosInviteTokenV718')||'';}catch(e){return '';}}
+  function parsePrefs(raw,emailNotify){
+    if(!raw)return emailNotify==='Off'?{mode:'none',categories:[]}:{mode:'all',categories:emailCats.map(x=>x[0])};
+    try{const p=typeof raw==='string'?JSON.parse(raw):raw;return {mode:p.mode||((emailNotify==='Off')?'none':'all'),categories:Array.isArray(p.categories)?p.categories:[]};}catch(e){return emailNotify==='Off'?{mode:'none',categories:[]}:{mode:'all',categories:emailCats.map(x=>x[0])};}
+  }
+  function installInviteBannerV718(){
+    const token=inviteTokenV718();if(!token)return;
+    try{sessionStorage.setItem('haosInviteTokenV718',token);}catch(e){}
+    const sec=$('registerSection');if(!sec||$('haosInviteBannerV718'))return;
+    const card=sec.querySelector('.card');
+    if(card)card.insertAdjacentHTML('afterbegin','<div id="haosInviteBannerV718" class="haos-v718-invite-banner"><i class="bi bi-person-check me-1"></i> คุณกำลังสมัครผ่านลิงก์เชิญจาก Admin สมัครเสร็จแล้วใช้งานได้ทันทีโดยไม่ต้องรออนุมัติ</div>');
+    setTimeout(()=>{try{showSection('registerSection');}catch(e){}},120);
+  }
+  const oldHandleLoginV718=window.handleLogin;
+  window.handleLogin=function(){
+    const p=$('loginPhone')?.value||'', pin=$('loginPin')?.value||'';
+    const btn=$('btnLogin'), spinner=$('loginSpinner');
+    if(btn)btn.disabled=true;if(spinner)spinner.classList.remove('d-none');
+    google.script.run.withSuccessHandler(res=>{
+      if(btn)btn.disabled=false;if(spinner)spinner.classList.add('d-none');
+      if(res.success){
+        window.user=res.userData;try{user=res.userData;}catch(e){}
+        if($('userName'))$('userName').innerText=user.fullName;
+        if($('userDeptDisplay'))$('userDeptDisplay').innerText=user.department+(user.role!=='User'?' ('+user.role+')':'');
+        if(['Admin','Super Admin'].includes(user.role)){
+          $('adminPanel')?.classList.remove('d-none');
+          setTimeout(()=>{try{restoreAdminPanelState_&&restoreAdminPanelState_();}catch(e){}},50);
+        }
+        initDashboard();showSection('appSection');updateDashboardHeader();setTimeout(()=>{try{openProgramGuide(false);}catch(e){}},650);updateDashboardHeader();syncOverviewCards();
+      }else Swal.fire({icon:'error',title:'เกิดข้อผิดพลาด',text:res.message});
+    }).loginAccount(p,pin);
+  };
+  window.handleRegister=function(){
+    if(!$('regPDPA')?.checked)return Swal.fire({icon:'warning',title:'แจ้งเตือน',text:'กรุณายินยอมเงื่อนไข PDPA ก่อนลงทะเบียนครับ'});
+    const btn=$('btnRegister'),spinner=$('regSpinner');if(btn)btn.disabled=true;if(spinner)spinner.classList.remove('d-none');
+    const token=inviteTokenV718();
+    const data={fullName:$('regFullName')?.value||'',position:$('regPosition')?.value||'',department:$('regDepartment')?.value||'',phone:$('regPhone')?.value||'',email:$('regEmail')?.value||'',inviteToken:token};
+    google.script.run.withSuccessHandler(res=>{
+      if(btn)btn.disabled=false;if(spinner)spinner.classList.add('d-none');
+      if(res.success){
+        const icon=res.pending?'info':'success';
+        Swal.fire({icon,title:res.pending?'ลงทะเบียนแล้ว รออนุมัติ':'สำเร็จ',text:res.message}).then(()=>{$('loginPhone').value=data.phone;showSection('loginSection');});
+        try{sessionStorage.removeItem('haosInviteTokenV718');}catch(e){}
+      }else Swal.fire({icon:'warning',title:'ไม่สามารถลงทะเบียนได้',text:res.message});
+    }).registerAccount(data);
+  };
+  function ensureAdminRoleOptionV718(){
+    const sel=$('addURole');if(sel&&!Array.from(sel.options).some(o=>o.value==='Admin')){
+      const opt=document.createElement('option');opt.value='Admin';opt.textContent='ผู้ดูแลระบบ (Admin)';sel.insertBefore(opt,sel.querySelector('option[value="Super Admin"]'));
+      const superOpt=sel.querySelector('option[value="Super Admin"]');if(superOpt)superOpt.textContent='ผู้ดูแลสูงสุด (Super Admin)';
+    }
+  }
+  function statusBadgeV718(status){
+    status=status||'Active';
+    if(status==='Pending')return '<span class="badge bg-warning text-dark">รออนุมัติ</span>';
+    if(status==='Rejected')return '<span class="badge bg-secondary">ไม่อนุมัติ</span>';
+    if(status==='Inactive')return '<span class="badge bg-danger">ปิดใช้งาน</span>';
+    return '<span class="badge bg-success">ใช้งาน</span>';
+  }
+  function roleSelectV718(u){
+    if(u.phone==='0868246621')return '<span class="badge bg-danger">Master Admin</span>';
+    return `<select class="form-select form-select-sm border-primary" onchange="changeUserRole('${esc(u.phone)}', this.value)">
+      <option value="User" ${u.role==='User'?'selected':''}>User</option>
+      <option value="Head" ${u.role==='Head'?'selected':''}>Head</option>
+      <option value="Admin" ${u.role==='Admin'?'selected':''}>Admin</option>
+      <option value="Super Admin" ${u.role==='Super Admin'?'selected':''}>Super Admin</option>
+    </select>`;
+  }
+  function pinDisplayV718(u){
+    return `<div class="input-group input-group-sm" style="width:100px"><input type="password" class="form-control bg-white text-center px-1" value="${esc(u.pin)}" id="pin-${esc(u.phone)}" readonly><button class="btn btn-outline-secondary px-2" type="button" onmousedown="document.getElementById('pin-${esc(u.phone)}').type='text'" onmouseup="document.getElementById('pin-${esc(u.phone)}').type='password'" onmouseleave="document.getElementById('pin-${esc(u.phone)}').type='password'"><i class="bi bi-eye"></i></button></div>`;
+  }
+  function actionButtonsV718(u){
+    if(u.phone==='0868246621')return '<span class="badge bg-danger">Master</span>';
+    const pending=u.accountStatus==='Pending';
+    return `<div class="btn-group btn-group-sm">
+      ${pending?`<button class="btn btn-success" onclick="approveUserV718('${esc(u.phone)}')" title="อนุมัติ"><i class="bi bi-check2"></i></button><button class="btn btn-outline-danger" onclick="rejectUserV718('${esc(u.phone)}')" title="ปฏิเสธ"><i class="bi bi-x-lg"></i></button>`:''}
+      <button class="btn btn-outline-secondary" onclick="resetPin('${esc(u.phone)}')" title="รีเซ็ต PIN"><i class="bi bi-key"></i></button>
+      <button class="btn btn-outline-warning" onclick="toggleUserActive('${esc(u.phone)}','${(u.accountStatus||'Active')==='Inactive'?'Active':'Inactive'}')" title="เปิด/ปิดบัญชี"><i class="bi bi-power"></i></button>
+      <button class="btn btn-outline-danger" onclick="removeUser('${esc(u.phone)}')" title="ลบบัญชี"><i class="bi bi-trash"></i></button>
+    </div>`;
+  }
+  window.loadAdminUsersList=function(){
+    const tbody=$('userManageTable');if(!tbody)return;
+    tbody.innerHTML='<tr><td colspan="9" class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm"></span> กำลังโหลดรายชื่อ...</td></tr>';
+    google.script.run.withSuccessHandler(res=>{
+      if(!res.success){tbody.innerHTML=`<tr><td colspan="9" class="text-center py-4 text-danger">${esc(res.message)}</td></tr>`;return;}
+      tbody.innerHTML=(res.data||[]).map(u=>`<tr class="${u.accountStatus==='Pending'?'haos-v718-pending-row':''}">
+        <td class="ps-3 fw-bold text-dark">${esc(u.name)}${u.accountStatus==='Pending'?'<div class="small text-warning fw-bold"><i class="bi bi-hourglass-split"></i> รอ Admin / Super Admin อนุมัติ</div>':''}</td>
+        <td>${esc(u.phone)}</td><td>${pinDisplayV718(u)}</td><td><small>${esc(u.position)}</small></td><td><small>${esc(u.department)}</small></td>
+        <td>${roleSelectV718(u)}</td><td>${statusBadgeV718(u.accountStatus)}</td><td><small class="text-muted">${esc(u.lastLogin||'-')}</small></td><td class="pe-3 text-center">${actionButtonsV718(u)}</td>
+      </tr>`).join('');
+    }).getAdminUsersData();
+  };
+  window.approveUserV718=function(phone){
+    Swal.fire({title:'อนุมัติสมาชิกนี้?',icon:'question',showCancelButton:true,confirmButtonText:'อนุมัติ'}).then(r=>{
+      if(!r.isConfirmed)return;
+      google.script.run.withSuccessHandler(res=>{if(res.success){Swal.fire({icon:'success',title:'อนุมัติแล้ว',timer:1300,showConfirmButton:false});loadAdminUsersList();}else Swal.fire('ไม่สำเร็จ',res.message,'error');}).approveUserRegistrationV718(phone,user.phone);
+    });
+  };
+  window.rejectUserV718=function(phone){
+    Swal.fire({title:'ปฏิเสธคำขอสมัคร?',input:'text',inputPlaceholder:'เหตุผล (ถ้ามี)',icon:'warning',showCancelButton:true,confirmButtonText:'ปฏิเสธ'}).then(r=>{
+      if(!r.isConfirmed)return;
+      google.script.run.withSuccessHandler(res=>{if(res.success){Swal.fire({icon:'success',title:'บันทึกแล้ว',timer:1300,showConfirmButton:false});loadAdminUsersList();}else Swal.fire('ไม่สำเร็จ',res.message,'error');}).rejectUserRegistrationV718(phone,user.phone,r.value||'');
+    });
+  };
+  function injectInviteAdminV718(){
+    if(!isAdminRole())return;
+    ensureAdminRoleOptionV718();
+    const body=document.querySelector('#userManageModal .modal-body');if(!body||$('haosInviteAdminV718'))return;
+    const first=body.querySelector('.card.mb-4');
+    const html=`<div id="haosInviteAdminV718" class="haos-v718-admin-card">
+      <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+        <div><h6><i class="bi bi-link-45deg text-primary me-1"></i> Invite Link สมัครสมาชิกทันที</h6><div class="small text-muted fw-bold">Admin / Super Admin สร้างลิงก์เชิญได้ ผู้สมัครผ่านลิงก์นี้จะ Active ทันที ไม่ต้องรออนุมัติ</div></div>
+        <div class="d-flex gap-2 flex-wrap"><button class="btn btn-primary btn-sm fw-bold" onclick="openInviteCreatorV718()"><i class="bi bi-plus-circle"></i> สร้างลิงก์เชิญ</button><button class="btn btn-outline-primary btn-sm fw-bold" onclick="openInviteListV718()"><i class="bi bi-list-ul"></i> รายการลิงก์</button><button class="btn btn-outline-success btn-sm fw-bold" onclick="setupEmailDigestV718()"><i class="bi bi-envelope-check"></i> ตั้งส่งอีเมลทุก 15 นาที</button></div>
+      </div>
+    </div>`;
+    if(first)first.insertAdjacentHTML('afterend',html);else body.insertAdjacentHTML('afterbegin',html);
+  }
+  window.openInviteCreatorV718=async function(){
+    const r=await Swal.fire({title:'สร้าง Invite Link',html:'<div class="text-start"><label class="small fw-bold">อายุลิงก์ (วัน)</label><input id="inviteDaysV718" type="number" min="1" max="365" class="form-control mb-2" value="30"><label class="small fw-bold">จำนวนครั้งที่ใช้ได้</label><input id="inviteUsesV718" type="number" min="0" class="form-control mb-2" value="1"><small class="text-muted">ใส่ 0 หากต้องการไม่จำกัดจำนวนครั้ง</small><label class="small fw-bold mt-2">หมายเหตุ</label><input id="inviteNoteV718" class="form-control" placeholder="เช่น รับเจ้าหน้าที่ใหม่ประจำเดือนนี้"></div>',showCancelButton:true,confirmButtonText:'สร้างลิงก์',preConfirm:()=>({days:Number($('inviteDaysV718').value||30),maxUses:Number($('inviteUsesV718').value||1),note:$('inviteNoteV718').value||''})});
+    if(!r.isConfirmed)return;
+    const res=await gas('createUserInviteLinkV718',[user.phone,r.value]);
+    if(!res.success)return Swal.fire('สร้างลิงก์ไม่สำเร็จ',res.message,'error');
+    Swal.fire({icon:'success',title:'สร้างลิงก์แล้ว',width:760,html:`<div class="haos-v718-invite-box mb-3">${esc(res.url)}</div><button class="btn btn-primary fw-bold" onclick="navigator.clipboard&&navigator.clipboard.writeText('${esc(res.url)}')"><i class="bi bi-clipboard"></i> คัดลอกลิงก์</button><div class="small text-muted mt-2">หมดอายุ: ${esc(res.expiresAt)} | ใช้ได้: ${res.maxUses||'ไม่จำกัด'} ครั้ง</div>`});
+  };
+  window.openInviteListV718=async function(){
+    const res=await gas('getUserInviteLinksV718',[user.phone]);if(!res.success)return Swal.fire('โหลดลิงก์ไม่สำเร็จ',res.message,'error');
+    const rows=(res.data||[]).map(x=>`<tr><td><div class="fw-bold text-primary">${esc(x.token)}</div><small class="text-muted">${esc(x.note||'')}</small></td><td>${esc(x.expiresAt||'-')}${x.expired?'<div class="text-danger small fw-bold">หมดอายุ</div>':''}</td><td>${esc(x.usedCount)} / ${x.maxUses||'ไม่จำกัด'}</td><td>${x.active?'<span class="badge bg-success">ใช้งาน</span>':'<span class="badge bg-secondary">ปิดแล้ว</span>'}</td><td class="text-end"><button class="btn btn-sm btn-outline-primary" onclick="navigator.clipboard&&navigator.clipboard.writeText('${esc(x.url)}')"><i class="bi bi-clipboard"></i></button> ${x.active?`<button class="btn btn-sm btn-outline-danger" onclick="revokeInviteV718('${esc(x.token)}')"><i class="bi bi-x-circle"></i></button>`:''}</td></tr>`).join('')||'<tr><td colspan="5" class="text-center text-muted py-4">ยังไม่มีลิงก์เชิญ</td></tr>';
+    Swal.fire({title:'Invite Links',width:980,showCloseButton:true,showConfirmButton:false,html:`<div class="table-responsive"><table class="table table-hover align-middle small"><thead><tr><th>Token</th><th>หมดอายุ</th><th>ใช้แล้ว</th><th>สถานะ</th><th class="text-end">จัดการ</th></tr></thead><tbody>${rows}</tbody></table></div>`});
+  };
+  window.revokeInviteV718=async function(token){
+    const res=await gas('revokeUserInviteLinkV718',[token,user.phone]);if(!res.success)return Swal.fire('ปิดลิงก์ไม่สำเร็จ',res.message,'error');
+    Swal.fire({icon:'success',title:'ปิดลิงก์แล้ว',timer:1000,showConfirmButton:false});setTimeout(openInviteListV718,400);
+  };
+  window.setupEmailDigestV718=async function(){
+    const ok=await Swal.fire({title:'ตั้งส่งอีเมลแจ้งเตือนทุก 15 นาที?',text:'ระบบจะส่งอีเมลตาม preference ของผู้ใช้แต่ละคนจากการแจ้งเตือนที่ยังไม่ได้อ่าน',icon:'question',showCancelButton:true,confirmButtonText:'ตั้งค่า'});
+    if(!ok.isConfirmed)return;
+    const res=await gas('setupEmailNotificationDigestTriggerV718',[user.phone]);
+    Swal.fire(res.success?'สำเร็จ':'ไม่สำเร็จ',res.message,res.success?'success':'error');
+  };
+  function injectEmailPrefsV718(){
+    if($('haosEmailPrefV718'))return;
+    const anchor=$('profEmailNotif')?.closest('.form-check');if(!anchor)return;
+    const html=`<div id="haosEmailPrefV718" class="haos-v718-email-pref">
+      <div class="fw-bold mb-2"><i class="bi bi-envelope-heart text-primary me-1"></i> การแจ้งเตือนทางอีเมล</div>
+      <div class="d-flex flex-wrap gap-3 mb-3">
+        <label class="fw-bold"><input type="radio" name="emailModeV718" value="all"> รับทั้งหมด</label>
+        <label class="fw-bold"><input type="radio" name="emailModeV718" value="selected"> เลือกเฉพาะฟังก์ชัน</label>
+        <label class="fw-bold"><input type="radio" name="emailModeV718" value="none"> ไม่รับอีเมล</label>
+      </div>
+      <div class="haos-v718-email-grid">${emailCats.map(c=>`<label><input type="checkbox" class="emailCatV718 me-1" value="${c[0]}"> ${c[1]}</label>`).join('')}</div>
+      <div class="small text-muted mt-2">การแจ้งเตือนใน Notification Center ยังทำงานตามปกติ แม้ปิดรับอีเมล</div>
+    </div>`;
+    anchor.insertAdjacentHTML('afterend',html);
+    document.querySelectorAll('input[name="emailModeV718"]').forEach(r=>r.addEventListener('change',syncEmailPrefUiV718));
+  }
+  function setEmailPrefsUiV718(prefs,emailNotify){
+    injectEmailPrefsV718();prefs=parsePrefs(prefs,emailNotify);
+    const mode=prefs.mode||'all';const radio=document.querySelector(`input[name="emailModeV718"][value="${mode}"]`);if(radio)radio.checked=true;
+    document.querySelectorAll('.emailCatV718').forEach(cb=>{cb.checked=(mode==='all')||prefs.categories.includes(cb.value);});
+    if($('profEmailNotif'))$('profEmailNotif').checked=mode!=='none';
+    syncEmailPrefUiV718();
+  }
+  window.syncEmailPrefUiV718=function(){
+    const mode=document.querySelector('input[name="emailModeV718"]:checked')?.value||'all';
+    document.querySelectorAll('.emailCatV718').forEach(cb=>{cb.disabled=mode!=='selected';if(mode==='all')cb.checked=true;if(mode==='none')cb.checked=false;});
+    if($('profEmailNotif'))$('profEmailNotif').checked=mode!=='none';
+  };
+  function collectEmailPrefsV718(){
+    const mode=document.querySelector('input[name="emailModeV718"]:checked')?.value||($('profEmailNotif')?.checked?'all':'none');
+    return {mode,categories:mode==='all'?emailCats.map(x=>x[0]):(mode==='none'?[]:Array.from(document.querySelectorAll('.emailCatV718:checked')).map(x=>x.value))};
+  }
+  const oldOpenProfileV718=window.openProfileModal;
+  window.openProfileModal=function(){const r=oldOpenProfileV718?oldOpenProfileV718.apply(this,arguments):undefined;setTimeout(()=>setEmailPrefsUiV718(user?.emailNotifyPreferences,user?.emailNotify),220);return r;};
+  window.handleUpdateProfile=function(){
+    const btn=$('btnSaveProfile');if(btn){btn.disabled=true;btn.innerText='กำลังบันทึก...';}
+    const prefs=collectEmailPrefsV718();
+    const data={phone:user.phone,position:$('profPosition')?.value||'',department:$('profDept')?.value||'',email:$('profEmail')?.value||'',emailNotify:prefs.mode==='none'?'Off':'On',emailNotifyPreferences:prefs};
+    google.script.run.withSuccessHandler(res=>{
+      if(btn){btn.disabled=false;btn.innerText='บันทึกข้อมูล';}
+      if(res.success){
+        user.position=data.position;user.department=data.department;user.email=data.email;user.emailNotify=data.emailNotify;user.emailNotifyPreferences=JSON.stringify(prefs);
+        if($('userDeptDisplay'))$('userDeptDisplay').innerText=user.department+(user.role!=='User'?' ('+user.role+')':'');
+        updateDashboardHeader();try{profileModalObj.hide();}catch(e){}
+        Swal.fire('สำเร็จ',res.message,'success');
+      }else Swal.fire('ข้อผิดพลาด',res.message,'error');
+    }).updateUserProfile(data);
+  };
+  const oldOpenUserManagementV718=window.openUserManagement;
+  window.openUserManagement=function(){const r=oldOpenUserManagementV718?oldOpenUserManagementV718.apply(this,arguments):undefined;setTimeout(()=>{ensureAdminRoleOptionV718();injectInviteAdminV718();},180);return r;};
+  function installV718(){installInviteBannerV718();ensureAdminRoleOptionV718();injectInviteAdminV718();injectEmailPrefsV718();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installV718,{once:true});else installV718();
+  setTimeout(installV718,800);setTimeout(installV718,1800);
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
