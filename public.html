@@ -1404,5 +1404,120 @@ body{background:radial-gradient(circle at 12% 10%,rgba(14,165,233,.20),transpare
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<style id="haos-v70-21-public-emeeting-style">
+  html,body{width:100%;max-width:100%;overflow-x:hidden}
+  .haos-v721p-shell{min-height:100vh;padding:28px 16px;background:radial-gradient(circle at 9% 5%,rgba(14,165,233,.26),transparent 30%),radial-gradient(circle at 96% 4%,rgba(20,184,166,.22),transparent 28%),linear-gradient(180deg,#f8fbff 0%,#eef7fb 100%);color:#0f172a}
+  .haos-v721p-wrap{max-width:1240px;margin:0 auto}
+  .haos-v721p-hero{position:relative;overflow:hidden;border-radius:30px;padding:28px;background:linear-gradient(135deg,#0f766e 0%,#0ea5e9 52%,#2563eb 100%);color:#fff;box-shadow:0 28px 80px rgba(14,116,144,.22)}
+  .haos-v721p-hero:after{content:"";position:absolute;inset:auto -120px -180px auto;width:360px;height:360px;border-radius:50%;background:rgba(255,255,255,.14)}
+  .haos-v721p-hero-top{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap}
+  .haos-v721p-brand{display:inline-flex;align-items:center;gap:8px;padding:6px 11px;border-radius:999px;background:rgba(255,255,255,.16);font-size:.88rem;font-weight:900}
+  .haos-v721p-title{font-size:clamp(2rem,4.6vw,4.25rem);line-height:1.08;margin:12px 0 8px;font-weight:950;letter-spacing:0;overflow-wrap:anywhere}
+  .haos-v721p-sub{max-width:820px;color:rgba(255,255,255,.88);font-weight:750}
+  .haos-v721p-login{border:0!important;border-radius:16px!important;box-shadow:0 12px 32px rgba(15,23,42,.14)}
+  .haos-v721p-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  .haos-v721p-card{border:1px solid rgba(148,163,184,.20);border-radius:24px;background:rgba(255,255,255,.96);box-shadow:0 16px 48px rgba(15,23,42,.08);padding:18px;margin-top:16px}
+  .haos-v721p-info{min-height:94px;border:1px solid rgba(14,165,233,.13);border-radius:18px;background:linear-gradient(180deg,#fff,#f8fbff);padding:14px}
+  .haos-v721p-info small{display:block;color:#64748b;font-weight:900}
+  .haos-v721p-info b{display:block;color:#0f172a;margin-top:4px;font-size:1.05rem;word-break:break-word}
+  .haos-v721p-form-card{background:linear-gradient(135deg,#ffffff,#f8fbff 60%,#ecfeff)}
+  .haos-v721p-section-title{display:flex;align-items:center;gap:9px;margin:0;color:#0f172a;font-weight:950}
+  .haos-v721p-pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:7px 12px;background:#e0f2fe;color:#075985;font-weight:950;font-size:.82rem;white-space:nowrap}
+  .haos-v721p-agenda{border:1px solid rgba(148,163,184,.22);border-radius:18px;background:linear-gradient(180deg,#fff,#f8fafc);padding:14px;margin-bottom:10px}
+  .haos-v721p-agenda.active{border-color:#0ea5e9;background:linear-gradient(135deg,#eff6ff,#fff 64%,#ecfeff)}
+  .haos-v721p-agenda h6{font-weight:950;margin:0;color:#0f172a}
+  .haos-v721p-doc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:10px}
+  .haos-v721p-doc{border:1px solid rgba(148,163,184,.20);border-radius:16px;background:#fff;padding:12px}
+  .haos-v721p-doc b{display:block;font-weight:950;word-break:break-word}
+  .haos-v721p-layout{display:grid;grid-template-columns:minmax(280px,360px) minmax(0,1fr);gap:16px;align-items:start}
+  .haos-v721p-doc-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+  .haos-v721p-doc-frame{width:100%;height:min(72vh,760px);min-height:520px;border:1px solid rgba(148,163,184,.25);border-radius:20px;background:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.6)}
+  .haos-v721p-footer{text-align:center;color:#64748b;font-size:.84rem;font-weight:850;margin:22px 0 4px}
+  .haos-v721p-muted{color:#64748b;font-weight:750}
+  .haos-v721p-sticky-actions{position:sticky;bottom:10px;z-index:3}
+  .haos-v721p-sticky-actions .btn{min-height:54px;border-radius:18px!important;font-size:1.02rem}
+  @media(max-width:900px){.haos-v721p-shell{padding:18px 10px}.haos-v721p-hero{border-radius:22px;padding:22px}.haos-v721p-layout{grid-template-columns:1fr}.haos-v721p-doc-frame{height:58vh;min-height:360px}.haos-v721p-title{font-size:clamp(1.8rem,8vw,3rem)}}
+</style>
+<script id="haos-v70-21-public-emeeting-script">
+(function(){
+  const PATCH='v70.21-public-emeeting-polish';
+  const params=new URLSearchParams(location.search);
+  const moduleName=params.get('module')||'';
+  if(!['emeeting-rsvp','emeeting-live'].includes(moduleName))return;
+  if(window.haosPublicEMeetingRefreshTimerV714)clearInterval(window.haosPublicEMeetingRefreshTimerV714);
+  if(window.haosPublicEMeetingRefreshTimerV715)clearInterval(window.haosPublicEMeetingRefreshTimerV715);
+  const meetingId=params.get('meetingId')||'';
+  const token=params.get('token')||'';
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const el=id=>document.getElementById(id);
+  function gas(fn,args){return new Promise((resolve,reject)=>{try{google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run,args||[]);}catch(e){reject(e);}});}
+  function loginUrl(){return location.origin&&location.origin!=='null'?location.origin+'/':'/';}
+  function shell(html){document.body.innerHTML='<main class="haos-v721p-shell"><section class="haos-v721p-wrap">'+html+'<footer class="haos-v721p-footer">all rights reserved - พัฒนาและดูแลระบบโดย กลุ่มงานสุขภาพดิจิทัล สสจ.นครนายก</footer></section></main>';}
+  function loading(text){shell('<div class="haos-v721p-card text-center py-5"><span class="spinner-border text-primary"></span><h3 class="fw-bold mt-3">'+esc(text||'กำลังโหลดข้อมูลประชุม...')+'</h3><div class="haos-v721p-muted">กรุณารอสักครู่ ระบบกำลังเตรียมข้อมูลล่าสุด</div></div>');}
+  function hero(m,sub,icon){
+    return '<div class="haos-v721p-hero"><div class="haos-v721p-hero-top"><div><span class="haos-v721p-brand"><i class="bi '+esc(icon||'bi-easel2')+'"></i> e-Meeting Manage</span><h1 class="haos-v721p-title">'+esc(m.title||'การประชุม')+'</h1><div class="haos-v721p-sub">'+esc(sub||'ระบบบริหารการประชุม Health Assistant OS')+'</div></div><a class="btn btn-light fw-bold haos-v721p-login" href="'+esc(loginUrl())+'"><i class="bi bi-box-arrow-in-right"></i> เข้าสู่ระบบ</a></div></div>';
+  }
+  function infoGrid(m){
+    return '<div class="haos-v721p-grid">'+[
+      ['bi-calendar-event','วันเวลา',m.startTime||'-'],
+      ['bi-geo-alt','สถานที่/ช่องทาง',m.location||m.meetingLink||'-'],
+      ['bi-diagram-3','กลุ่มงาน/คณะ',[m.department,m.committee].filter(Boolean).join(' / ')||'-'],
+      ['bi-person-badge','ประธาน',m.chair||'-']
+    ].map(x=>'<div class="haos-v721p-info"><small><i class="bi '+x[0]+'"></i> '+x[1]+'</small><b>'+esc(x[2])+'</b></div>').join('')+'</div>';
+  }
+  function docsHtml(docs){
+    docs=docs||[];
+    return docs.length?'<div class="haos-v721p-doc-grid">'+docs.map(d=>'<div class="haos-v721p-doc"><b><i class="bi bi-file-earmark-text text-primary"></i> '+esc(d.documentName||'เอกสารประชุม')+'</b><div class="small text-muted">'+esc(d.documentType||'เอกสาร')+'</div><a class="btn btn-sm btn-outline-primary fw-bold mt-2" target="_blank" rel="noopener" href="'+esc(d.documentUrl||'#')+'"><i class="bi bi-box-arrow-up-right"></i> เปิดเอกสาร</a></div>').join('')+'</div>':'';
+  }
+  function agendaList(agendas,currentId){
+    agendas=agendas||[];
+    return agendas.length?agendas.map(a=>'<div class="haos-v721p-agenda '+(a.agendaId===currentId?'active':'')+'"><div class="d-flex justify-content-between gap-2 flex-wrap"><h6>'+esc(a.no||'')+'. '+esc(a.title||'-')+'</h6><span class="haos-v721p-pill">'+esc(a.agendaType||'-')+'</span></div><div class="small text-muted fw-bold mt-1">ผู้นำเสนอ: '+esc(a.presenter||'-')+'</div>'+(a.details?'<div class="small mt-2" style="white-space:pre-wrap">'+esc(a.details)+'</div>':'')+docsHtml(a.documents||[])+'</div>').join(''):'<div class="text-muted small">ยังไม่มีวาระ</div>';
+  }
+  function renderRsvp(data){
+    const m=data.meeting||{}, people=data.participants||[], agendas=data.agendas||[];
+    const answered=people.filter(p=>p.rsvpStatus&&p.rsvpStatus!=='ยังไม่ตอบรับ').length;
+    const options=people.map(p=>'<option value="'+esc(p.participantId)+'" data-name="'+esc(p.name)+'">'+esc(p.name)+' - '+esc(p.position||p.department||'')+' ('+esc(p.rsvpStatus||'ยังไม่ตอบรับ')+')</option>').join('');
+    shell(hero(m,'ตอบรับการเข้าร่วมประชุมแบบไม่ต้องล็อกอิน พร้อมดูวาระและเอกสารประกอบ','bi-person-check')+
+      '<div class="haos-v721p-card">'+infoGrid(m)+'</div>'+
+      '<div class="haos-v721p-card haos-v721p-form-card"><div class="d-flex justify-content-between align-items-center gap-2 flex-wrap"><h3 class="haos-v721p-section-title"><i class="bi bi-person-check text-success"></i> ตอบรับการเข้าร่วมประชุม</h3><span class="haos-v721p-pill">'+answered+'/'+people.length+' ตอบรับแล้ว</span></div><div class="row g-3 mt-1"><div class="col-12"><label class="small fw-bold">เลือกชื่อของคุณ</label><select id="emRsvpPersonV721" class="form-select"><option value="">เลือกชื่อ...</option>'+options+'</select></div><div class="col-md-6"><label class="small fw-bold">สถานะ</label><select id="emRsvpStatusV721" class="form-select" onchange="haosPublicToggleDelegateV721()"><option>เข้าร่วมประชุม</option><option>ไม่สามารถเข้าร่วมประชุม</option><option>มอบหมายผู้แทนเข้าประชุมแทน</option></select></div><div class="col-md-6"><label class="small fw-bold">หมายเหตุ</label><input id="emRsvpNoteV721" class="form-control" placeholder="ระบุหมายเหตุเพิ่มเติมได้"></div><div id="emDelegateBoxV721" class="col-12 d-none"><div class="p-3 rounded-4 bg-white border"><div class="fw-bold mb-2"><i class="bi bi-person-vcard text-primary"></i> ข้อมูลผู้แทน</div><div class="row g-2"><div class="col-md-4"><label class="small fw-bold">ชื่อผู้แทน</label><input id="emDelegateNameV721" class="form-control" placeholder="ชื่อ-สกุลผู้แทน"></div><div class="col-md-4"><label class="small fw-bold">ตำแหน่งผู้แทน</label><input id="emDelegatePositionV721" class="form-control" placeholder="ตำแหน่ง"></div><div class="col-md-4"><label class="small fw-bold">หน่วยงานผู้แทน</label><input id="emDelegateDepartmentV721" class="form-control" placeholder="เช่น หน่วยงานภายนอก / บริษัท / กลุ่มงาน"></div></div></div></div></div><div class="haos-v721p-sticky-actions"><button class="btn btn-success btn-lg fw-bold w-100 mt-3" onclick="submitPublicEMeetingRsvpV721()"><i class="bi bi-send"></i> ส่งคำตอบรับ</button></div></div>'+
+      '<div class="haos-v721p-card"><h4 class="haos-v721p-section-title"><i class="bi bi-list-check text-primary"></i> วาระและเอกสารประกอบ</h4><div class="mt-3">'+agendaList(agendas,'')+'</div></div>');
+  }
+  window.haosPublicToggleDelegateV721=function(){const on=el('emRsvpStatusV721')?.value==='มอบหมายผู้แทนเข้าประชุมแทน';el('emDelegateBoxV721')?.classList.toggle('d-none',!on);};
+  window.submitPublicEMeetingRsvpV721=async function(){
+    const sel=el('emRsvpPersonV721');
+    if(!sel||!sel.value)return Swal.fire('กรุณาเลือกชื่อ','เลือกชื่อของคุณก่อนส่งคำตอบรับ','warning');
+    const opt=sel.options[sel.selectedIndex];
+    const payload={participantId:sel.value,name:opt.dataset.name||'',rsvpStatus:el('emRsvpStatusV721').value,delegateName:el('emDelegateNameV721')?.value||'',delegatePosition:el('emDelegatePositionV721')?.value||'',delegateDepartment:el('emDelegateDepartmentV721')?.value||'',rsvpNote:el('emRsvpNoteV721').value||''};
+    Swal.fire({title:'กำลังบันทึกคำตอบรับ...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+    try{const res=await gas('submitEMeetingRsvpV714',[meetingId,token,payload]);if(!res||!res.success)throw new Error(res&&res.message?res.message:'บันทึกไม่สำเร็จ');Swal.fire('บันทึกคำตอบรับแล้ว','ขอบคุณสำหรับการตอบรับเข้าร่วมประชุม','success').then(()=>start(true));}
+    catch(e){Swal.fire('บันทึกไม่สำเร็จ',e.message||String(e),'error');}
+  };
+  function renderLive(data){
+    const m=data.meeting||{}, live=data.liveState||{}, agendas=data.agendas||[];
+    const current=agendas.find(a=>a.agendaId===live.currentAgendaId)||agendas[0]||{};
+    const docs=(current.documents||[]).filter(Boolean);
+    const docUrl=live.currentDocumentUrl||current.documentUrl||(docs[0]&&docs[0].documentUrl)||'';
+    const docName=live.currentDocumentName||current.documentName||(docs[0]&&docs[0].documentName)||current.title||'เอกสารประชุม';
+    shell(hero(m,'อ่านเอกสารประชุมพร้อมกันแบบสาธารณะ สำหรับผู้เข้าร่วมประชุม','bi-display')+
+      '<div class="haos-v721p-card">'+infoGrid(m)+'</div>'+
+      '<div class="haos-v721p-layout"><aside class="haos-v721p-card"><h4 class="haos-v721p-section-title"><i class="bi bi-list-check text-primary"></i> วาระทั้งหมด</h4><div class="mt-3">'+agendaList(agendas,current.agendaId)+'</div></aside><section class="haos-v721p-card"><div class="haos-v721p-doc-head"><div><h3 class="haos-v721p-section-title"><i class="bi bi-display text-primary"></i> '+esc(docName)+'</h3><div class="haos-v721p-muted mt-1">'+esc(live.syncMessage||current.title||'รอผู้จัดประชุมเลือกเอกสาร')+'</div><div class="small text-muted">อัปเดตล่าสุด '+esc(live.updatedAt||data.generatedAt||'-')+'</div></div><button class="btn btn-outline-primary fw-bold" onclick="startPublicEMeetingV721(true)"><i class="bi bi-arrow-clockwise"></i> โหลดใหม่</button></div><div class="mt-3">'+(docUrl?'<a class="btn btn-primary fw-bold mb-2" target="_blank" rel="noopener" href="'+esc(docUrl)+'"><i class="bi bi-box-arrow-up-right"></i> เปิดเอกสารในแท็บใหม่</a><iframe class="haos-v721p-doc-frame" src="'+esc(docUrl)+'"></iframe>':'<div class="alert alert-info mt-3">ยังไม่มีเอกสารที่เปิดร่วมกันในขณะนี้</div>')+'</div></section></div>');
+  }
+  async function start(quiet){
+    if(!quiet)loading(moduleName==='emeeting-rsvp'?'กำลังโหลดแบบตอบรับ...':'กำลังโหลดหน้าอ่านเอกสารประชุม...');
+    try{
+      const mode=moduleName==='emeeting-rsvp'?'rsvp':'live';
+      const res=await gas('getPublicEMeetingV715',[meetingId,token,mode]);
+      if(!res||!res.success)throw new Error(res&&res.message?res.message:'โหลดข้อมูลไม่สำเร็จ');
+      if(mode==='rsvp')renderRsvp(res);else renderLive(res);
+    }catch(e){
+      shell('<div class="haos-v721p-card text-center py-5"><div class="display-5 text-danger"><i class="bi bi-exclamation-triangle"></i></div><h3 class="fw-bold mt-3">เปิดลิงก์ประชุมไม่สำเร็จ</h3><div class="haos-v721p-muted">'+esc(e.message||String(e))+'</div><a class="btn btn-primary fw-bold mt-3" href="'+esc(loginUrl())+'"><i class="bi bi-box-arrow-in-right"></i> เข้าสู่ระบบ</a></div>');
+    }
+  }
+  window.startPublicEMeetingV721=start;
+  function boot(){setTimeout(()=>start(false),760);if(moduleName==='emeeting-live'){if(window.haosPublicEMeetingRefreshTimerV721)clearInterval(window.haosPublicEMeetingRefreshTimerV721);window.haosPublicEMeetingRefreshTimerV721=setInterval(()=>start(true),15000);}}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
