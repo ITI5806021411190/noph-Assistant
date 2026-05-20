@@ -12556,7 +12556,16 @@ HAOS v68.6 FINISHING FIX
         <div class="col-md-6"><label class="small fw-bold">สถานะบัญชี</label><select id="editUserStatusV719" class="form-select" ${lockedMaster?'disabled':''}><option value="Active" ${u.accountStatus==='Active'?'selected':''}>Active / ใช้งาน</option><option value="Pending" ${u.accountStatus==='Pending'?'selected':''}>Pending / รออนุมัติ</option><option value="Inactive" ${u.accountStatus==='Inactive'?'selected':''}>Inactive / ปิดใช้งาน</option><option value="Rejected" ${u.accountStatus==='Rejected'?'selected':''}>Rejected / ไม่อนุมัติ</option></select></div>
       </div>
     </div>`;
-    const r=await Swal.fire({title:'แก้ไขข้อมูลผู้ใช้งาน',width:760,html,showCancelButton:true,confirmButtonText:'บันทึก',cancelButtonText:'ยกเลิก',preConfirm:()=>({
+    const userModalEl=document.getElementById('userManageModal');
+    const userModalInst=window.bootstrap&&window.bootstrap.Modal?window.bootstrap.Modal.getInstance(userModalEl):null;
+    const pauseUserModalFocus=()=>{try{if(userModalInst&&userModalInst._focustrap)userModalInst._focustrap.deactivate();}catch(e){}};
+    const resumeUserModalFocus=()=>{try{if(userModalEl&&userModalEl.classList.contains('show')&&userModalInst&&userModalInst._focustrap)userModalInst._focustrap.activate();}catch(e){}};
+    pauseUserModalFocus();
+    const r=await Swal.fire({title:'แก้ไขข้อมูลผู้ใช้งาน',width:760,html,showCancelButton:true,confirmButtonText:'บันทึก',cancelButtonText:'ยกเลิก',returnFocus:false,stopKeydownPropagation:false,didOpen:()=>{
+      pauseUserModalFocus();
+      ['editUserNameV719','editUserPositionV719','editUserEmailV719'].forEach(id=>{const el=$(id);if(el){el.readOnly=false;el.disabled=false;el.style.pointerEvents='auto';}});
+      setTimeout(()=>{$('editUserNameV719')?.focus();},80);
+    },willClose:()=>{setTimeout(resumeUserModalFocus,120);},preConfirm:()=>({
       fullName:$('editUserNameV719').value.trim(),position:$('editUserPositionV719').value.trim(),department:$('editUserDeptV719').value,
       email:$('editUserEmailV719').value.trim(),role:lockedMaster?'Super Admin':$('editUserRoleV719').value,accountStatus:lockedMaster?'Active':$('editUserStatusV719').value
     })});
