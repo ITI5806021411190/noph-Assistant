@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-19-super-admin-user-edit';
+const CACHE_NAME = 'haos-v70-20-super-user-edit-focus-fix';
 const CORE = ['/', '/index.html', '/public.html', '/manifest.json', '/icon-192.png', '/icon-512.png', '/logo-moph.png'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(CORE)).catch(() => {}));
