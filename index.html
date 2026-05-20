@@ -11633,10 +11633,10 @@ HAOS v68.6 FINISHING FIX
     const pane=$('itservices-pane');if(!pane)return;
     const row=pane.querySelector('.row.g-3.mb-4')||pane.querySelector('.row.g-3');
     if(row&&!$('eMeetingCardV714')){
-      row.insertAdjacentHTML('beforeend','<div class="col-md-4" id="eMeetingCardV714"><div class="card h-100 border-primary it-service-card"><div class="card-body p-4 d-flex flex-column"><div class="display-6 text-primary mb-3"><i class="bi bi-easel2"></i></div><h6 class="fw-bold">e-Meeting Manage</h6><p class="text-muted small flex-grow-1">บริหารการประชุม วาระ เอกสารประกอบ RSVP อ่านเอกสารพร้อมกัน และสรุปมติที่เชื่อมกับรายงานการประชุม</p><button class="btn btn-primary btn-sm fw-bold" onclick="openEMeetingModuleV714()"><i class="bi bi-box-arrow-in-right"></i> เปิด e-Meeting</button></div></div></div>');
+      row.insertAdjacentHTML('beforeend','<div class="col-md-4" id="eMeetingCardV714"><div class="card h-100 border-primary it-service-card"><div class="card-body p-4 d-flex flex-column"><div class="display-6 text-primary mb-3"><i class="bi bi-easel2"></i></div><h6 class="fw-bold">e-Meeting Manage</h6><p class="text-muted small flex-grow-1">บริหารการประชุม วาระ เอกสารประกอบ การตอบรับประชุม อ่านเอกสารพร้อมกัน และสรุปมติที่เชื่อมกับรายงานการประชุม</p><button class="btn btn-primary btn-sm fw-bold" onclick="openEMeetingModuleV714()"><i class="bi bi-box-arrow-in-right"></i> เปิด e-Meeting</button></div></div></div>');
     }
     if(row&&!$('eMeetingPanelV714')){
-      row.insertAdjacentHTML('afterend','<section id="eMeetingPanelV714" class="card haos-v714-panel border-primary d-none mb-4"><div class="haos-v714-hero"><div><h5><i class="bi bi-easel2 me-2"></i>e-Meeting Manage</h5><div class="opacity-75">จัดเตรียมวาระ เอกสาร RSVP ห้องอ่านเอกสารร่วมกัน และสรุปมติการประชุม</div></div><div class="d-flex flex-wrap gap-2"><button class="btn btn-light btn-sm fw-bold" onclick="openEMeetingFormV714()"><i class="bi bi-plus-circle"></i> สร้างประชุม</button><button class="btn btn-outline-light btn-sm fw-bold" onclick="openEMeetingArchiveV714()"><i class="bi bi-search"></i> ค้นย้อนหลัง</button><button class="btn btn-outline-light btn-sm fw-bold" onclick="loadEMeetingsV714(true)"><i class="bi bi-arrow-clockwise"></i> โหลดใหม่</button><button class="btn btn-outline-light btn-sm" onclick="togglePanelV70&&togglePanelV70(\'eMeetingPanelV714\',false)"><i class="bi bi-x-lg"></i> ปิด</button></div></div><div class="card-body"><div id="eMeetingKpiV714" class="haos-v714-kpis mb-3"></div><div class="haos-v714-filter"><div class="row g-2 align-items-end"><div class="col-md-5"><label class="small fw-bold text-muted">ค้นหาการประชุม</label><input id="eMeetingSearchV714" class="form-control" placeholder="ชื่อประชุม คณะกรรมการ กลุ่มงาน สถานที่..." oninput="renderEMeetingsV714()"></div><div class="col-md-3"><label class="small fw-bold text-muted">สถานะ</label><select id="eMeetingStatusV714" class="form-select" onchange="renderEMeetingsV714()"><option value="">ทั้งหมด</option><option>ร่าง</option><option>เตรียมประชุม</option><option>เปิดตอบรับ</option><option>กำลังประชุม</option><option>สรุปมติแล้ว</option><option>ปิดประชุม</option></select></div><div class="col-md-3"><label class="small fw-bold text-muted">มุมมอง</label><select id="eMeetingScopeV714" class="form-select" onchange="renderEMeetingsV714()"><option value="">ทั้งหมด</option><option value="mine">ฉันเป็นผู้จัด</option><option value="dept">กลุ่มงานของฉัน</option></select></div><div class="col-md-1 d-grid"><button class="btn btn-outline-secondary" onclick="resetEMeetingFiltersV714()"><i class="bi bi-arrow-counterclockwise"></i></button></div></div></div><div class="table-responsive"><table class="table haos-v714-table align-middle small"><thead><tr><th>การประชุม</th><th>เวลา/สถานที่</th><th>วาระ</th><th>RSVP</th><th>สถานะ</th><th class="text-end">จัดการ</th></tr></thead><tbody id="eMeetingTableV714"><tr><td colspan="6" class="text-center py-4 text-muted">ยังไม่ได้โหลดข้อมูล</td></tr></tbody></table></div></div></section>');
+      row.insertAdjacentHTML('afterend','<section id="eMeetingPanelV714" class="card haos-v714-panel border-primary d-none mb-4"><div class="haos-v714-hero"><div><h5><i class="bi bi-easel2 me-2"></i>e-Meeting Manage</h5><div class="opacity-75">จัดเตรียมวาระ เอกสาร ตอบรับการประชุม ห้องอ่านเอกสารร่วมกัน และสรุปมติการประชุม</div></div><div class="d-flex flex-wrap gap-2"><button class="btn btn-light btn-sm fw-bold" onclick="openEMeetingFormV714()"><i class="bi bi-plus-circle"></i> สร้างประชุม</button><button class="btn btn-outline-light btn-sm fw-bold" onclick="openEMeetingArchiveV714()"><i class="bi bi-search"></i> ค้นย้อนหลัง</button><button class="btn btn-outline-light btn-sm fw-bold" onclick="loadEMeetingsV714(true)"><i class="bi bi-arrow-clockwise"></i> โหลดใหม่</button><button class="btn btn-outline-light btn-sm" onclick="togglePanelV70&&togglePanelV70(\'eMeetingPanelV714\',false)"><i class="bi bi-x-lg"></i> ปิด</button></div></div><div class="card-body"><div id="eMeetingKpiV714" class="haos-v714-kpis mb-3"></div><div class="haos-v714-filter"><div class="row g-2 align-items-end"><div class="col-md-5"><label class="small fw-bold text-muted">ค้นหาการประชุม</label><input id="eMeetingSearchV714" class="form-control" placeholder="ชื่อประชุม คณะกรรมการ กลุ่มงาน สถานที่..." oninput="renderEMeetingsV714()"></div><div class="col-md-3"><label class="small fw-bold text-muted">สถานะ</label><select id="eMeetingStatusV714" class="form-select" onchange="renderEMeetingsV714()"><option value="">ทั้งหมด</option><option>ร่าง</option><option>เตรียมประชุม</option><option>เปิดตอบรับ</option><option>กำลังประชุม</option><option>สรุปมติแล้ว</option><option>ปิดประชุม</option></select></div><div class="col-md-3"><label class="small fw-bold text-muted">มุมมอง</label><select id="eMeetingScopeV714" class="form-select" onchange="renderEMeetingsV714()"><option value="">ทั้งหมด</option><option value="mine">ฉันเป็นผู้จัด</option><option value="dept">กลุ่มงานของฉัน</option></select></div><div class="col-md-1 d-grid"><button class="btn btn-outline-secondary" onclick="resetEMeetingFiltersV714()"><i class="bi bi-arrow-counterclockwise"></i></button></div></div></div><div class="table-responsive"><table class="table haos-v714-table align-middle small"><thead><tr><th>การประชุม</th><th>เวลา/สถานที่</th><th>วาระ</th><th>ตอบรับ</th><th>สถานะ</th><th class="text-end">จัดการ</th></tr></thead><tbody id="eMeetingTableV714"><tr><td colspan="6" class="text-center py-4 text-muted">ยังไม่ได้โหลดข้อมูล</td></tr></tbody></table></div></div></section>');
     }
   }
   window.openEMeetingModuleV714=function(){ensureEMeetingHubV714();if(window.togglePanelV70)togglePanelV70('eMeetingPanelV714',true);else $('eMeetingPanelV714')?.classList.remove('d-none');loadEMeetingsV714();};
@@ -11665,7 +11665,7 @@ HAOS v68.6 FINISHING FIX
     if(!list.length){tbody.innerHTML='<tr><td colspan="6" class="text-center py-4 text-muted">ไม่พบการประชุมตามเงื่อนไข</td></tr>';return;}
     tbody.innerHTML=list.map(m=>{
       const rsvpUrl=publicUrlV714('emeeting-rsvp',m.meetingId,m.rsvpToken),liveUrl=publicUrlV714('emeeting-live',m.meetingId,m.liveToken);
-      return '<tr><td><div class="haos-v714-title">'+esc(m.title||'-')+'</div><div class="haos-v714-sub"><i class="bi bi-diagram-3"></i> '+esc(m.committee||m.meetingType||'-')+' · '+esc(m.department||'-')+'</div></td><td><b><i class="bi bi-clock"></i> '+esc(m.startTime||'-')+'</b><div class="haos-v714-sub"><i class="bi bi-geo-alt"></i> '+esc(m.location||m.meetingLink||'-')+'</div></td><td><span class="haos-v714-pill info"><i class="bi bi-list-check"></i>'+esc(m.agendaCount||0)+' วาระ</span></td><td><span class="haos-v714-pill ok"><i class="bi bi-person-check"></i>'+esc(m.acceptedCount||0)+'/'+esc(m.participantCount||0)+'</span></td><td><span class="haos-v714-pill '+statusToneV714(m.status)+'">'+esc(m.status||'-')+'</span></td><td class="text-end text-nowrap"><button class="btn btn-sm btn-outline-primary" onclick="openEMeetingDetailV714(\''+esc(m.meetingId)+'\')" title="จัดการ"><i class="bi bi-eye"></i></button> <button class="btn btn-sm btn-outline-success" onclick="copyTextV714(\''+esc(rsvpUrl)+'\',\'คัดลอกลิงก์ RSVP แล้ว\')" title="ลิงก์ตอบรับ"><i class="bi bi-person-check"></i></button> <button class="btn btn-sm btn-outline-info" onclick="copyTextV714(\''+esc(liveUrl)+'\',\'คัดลอกลิงก์ห้องอ่านเอกสารแล้ว\')" title="ลิงก์ Live"><i class="bi bi-display"></i></button></td></tr>';
+      return '<tr><td><div class="haos-v714-title">'+esc(m.title||'-')+'</div><div class="haos-v714-sub"><i class="bi bi-diagram-3"></i> '+esc(m.committee||m.meetingType||'-')+' · '+esc(m.department||'-')+'</div></td><td><b><i class="bi bi-clock"></i> '+esc(m.startTime||'-')+'</b><div class="haos-v714-sub"><i class="bi bi-geo-alt"></i> '+esc(m.location||m.meetingLink||'-')+'</div></td><td><span class="haos-v714-pill info"><i class="bi bi-list-check"></i>'+esc(m.agendaCount||0)+' วาระ</span></td><td><span class="haos-v714-pill ok"><i class="bi bi-person-check"></i>'+esc(m.acceptedCount||0)+'/'+esc(m.participantCount||0)+'</span></td><td><span class="haos-v714-pill '+statusToneV714(m.status)+'">'+esc(m.status||'-')+'</span></td><td class="text-end text-nowrap"><button class="btn btn-sm btn-outline-primary" onclick="openEMeetingDetailV714(\''+esc(m.meetingId)+'\')" title="จัดการ"><i class="bi bi-eye"></i></button> <button class="btn btn-sm btn-outline-success" onclick="copyTextV714(\''+esc(rsvpUrl)+'\',\'คัดลอกลิงก์ตอบรับแล้ว\')" title="ลิงก์ตอบรับ"><i class="bi bi-person-check"></i></button> <button class="btn btn-sm btn-outline-info" onclick="copyTextV714(\''+esc(liveUrl)+'\',\'คัดลอกลิงก์ห้องอ่านเอกสารแล้ว\')" title="ลิงก์อ่านเอกสาร"><i class="bi bi-display"></i></button></td></tr>';
     }).join('');
   };
   window.resetEMeetingFiltersV714=function(){['eMeetingSearchV714','eMeetingStatusV714','eMeetingScopeV714'].forEach(id=>{const el=$(id);if(el)el.value='';});renderEMeetingsV714();};
@@ -12040,11 +12040,13 @@ HAOS v68.6 FINISHING FIX
     opts.push('<option value="__other__">ระบุเอง</option>');
     return opts.join('');
   }
-  function normalizeUser(u){return {phone:clean(u.phone||u.userPhone||''),name:clean(u.name||u.fullName||u.displayName||''),position:clean(u.position||''),department:clean(u.department||''),email:clean(u.email||''),role:clean(u.role||'ผู้เข้าร่วม')};}
+  function normalizeUser(u){return {phone:clean(u.phone||u.userPhone||''),name:clean(u.name||u.fullName||u.displayName||''),position:clean(u.position||''),department:clean(u.department||''),email:clean(u.email||''),role:clean(u.role||'ผู้เข้าร่วม'),accountStatus:clean(u.accountStatus||'Active')};}
   function normalizeResource(r){return {id:clean(r.id||r.resourceId||r.name||''),name:clean(r.name||r.resourceName||r.roomName||''),type:clean(r.type||r.resourceType||'')};}
   async function loadLookupsV717(){
-    const [uRes,rRes]=await Promise.allSettled([gasV717('getAllUsers',[]),gasV717('getAvailableResources',[])]);
-    const users=(uRes.status==='fulfilled'?arr(uRes.value):[]).map(normalizeUser).filter(u=>u.name);
+    const userPromise=gasV717('getUserDirectoryForPickerV721',[]).catch(()=>gasV717('getAllUsers',[]));
+    const [uRes,rRes]=await Promise.allSettled([userPromise,gasV717('getAvailableResources',[])]);
+    const inactive=/^(inactive|pending|rejected)$/i;
+    const users=(uRes.status==='fulfilled'?arr(uRes.value):[]).map(normalizeUser).filter(u=>u.name&&!inactive.test(u.accountStatus||'Active'));
     const resources=(rRes.status==='fulfilled'?arr(rRes.value):[]).map(normalizeResource).filter(r=>r.name);
     const actor=actorV717();
     const departments=users.map(u=>u.department).filter(Boolean);
@@ -12073,7 +12075,7 @@ HAOS v68.6 FINISHING FIX
     return opts.join('');
   }
   function userOptions(users){
-    return '<option value="">-- เลือกสมาชิกในระบบ --</option>'+(users||[]).map((u,i)=>'<option value="'+i+'">'+esc(u.name)+' · '+esc(u.department||'-')+'</option>').join('');
+    return '<option value="">-- เลือกสมาชิกในระบบ --</option>'+(users||[]).map((u,i)=>'<option value="'+i+'">'+esc(u.name)+' · '+esc(u.department||'-')+(u.email?' · '+esc(u.email):'')+'</option>').join('');
   }
   function agendaRowHtmlV717(a){
     a=a||{};
@@ -12109,10 +12111,10 @@ HAOS v68.6 FINISHING FIX
   }
   function participantRowHtmlV717(p){
     p=p||{};
-    return `<tr data-participant-id="${esc(p.participantId||'')}" data-rsvp-status="${esc(p.rsvpStatus||'ยังไม่ตอบรับ')}" data-delegate-name="${esc(p.delegateName||'')}" data-delegate-position="${esc(p.delegatePosition||'')}" data-rsvp-note="${esc(p.rsvpNote||'')}" data-responded-at="${esc(p.respondedAt||'')}">
+    return `<tr data-participant-id="${esc(p.participantId||'')}" data-rsvp-status="${esc(p.rsvpStatus||'ยังไม่ตอบรับ')}" data-delegate-name="${esc(p.delegateName||'')}" data-delegate-position="${esc(p.delegatePosition||'')}" data-delegate-department="${esc(p.delegateDepartment||'')}" data-rsvp-note="${esc(p.rsvpNote||'')}" data-responded-at="${esc(p.respondedAt||'')}">
       <td><input class="form-control form-control-sm emPtNameV717" value="${esc(p.name||'')}" placeholder="ชื่อ-สกุล"></td>
       <td><input class="form-control form-control-sm emPtPositionV717" value="${esc(p.position||'')}" placeholder="ตำแหน่ง"></td>
-      <td><input class="form-control form-control-sm emPtDeptV717" value="${esc(p.department||'')}" placeholder="กลุ่มงาน"></td>
+      <td><input class="form-control form-control-sm emPtDeptV717" value="${esc(p.department||'')}" placeholder="กลุ่มงาน/หน่วยงาน"></td>
       <td><input class="form-control form-control-sm emPtPhoneV717" value="${esc(p.phone||'')}" placeholder="โทรศัพท์"></td>
       <td><input class="form-control form-control-sm emPtEmailV717" value="${esc(p.email||'')}" placeholder="อีเมล"></td>
       <td><select class="form-select form-select-sm emPtRoleV717">${roleOptions(p.role||'ผู้เข้าร่วม')}</select></td>
@@ -12127,13 +12129,13 @@ HAOS v68.6 FINISHING FIX
     sel.value='';
   };
   window.addEMeetingManualParticipantV717=function(){
-    window.addEMeetingParticipantRowV717({name:'',position:'',department:actorV717().department||'',role:'ผู้เข้าร่วม',rsvpStatus:'ยังไม่ตอบรับ'});
+    window.addEMeetingParticipantRowV717({name:'',position:'',department:'',role:'ผู้เข้าร่วม',rsvpStatus:'ยังไม่ตอบรับ'});
   };
   function collectParticipantsV717(){
     return Array.from(document.querySelectorAll('#emParticipantsV717 tr')).map(row=>({
       participantId:row.dataset.participantId||'',name:clean(row.querySelector('.emPtNameV717')?.value),position:clean(row.querySelector('.emPtPositionV717')?.value),
       department:clean(row.querySelector('.emPtDeptV717')?.value),phone:clean(row.querySelector('.emPtPhoneV717')?.value),email:clean(row.querySelector('.emPtEmailV717')?.value),
-      role:row.querySelector('.emPtRoleV717')?.value||'ผู้เข้าร่วม',rsvpStatus:row.dataset.rsvpStatus||'ยังไม่ตอบรับ',delegateName:row.dataset.delegateName||'',delegatePosition:row.dataset.delegatePosition||'',rsvpNote:row.dataset.rsvpNote||'',respondedAt:row.dataset.respondedAt||''
+      role:row.querySelector('.emPtRoleV717')?.value||'ผู้เข้าร่วม',rsvpStatus:row.dataset.rsvpStatus||'ยังไม่ตอบรับ',delegateName:row.dataset.delegateName||'',delegatePosition:row.dataset.delegatePosition||'',delegateDepartment:row.dataset.delegateDepartment||'',rsvpNote:row.dataset.rsvpNote||'',respondedAt:row.dataset.respondedAt||''
     })).filter(p=>p.name);
   }
   function toggleDeptV717(){const custom=$('emDeptOtherV717'),sel=$('emDeptV717');if(custom&&sel)custom.classList.toggle('d-none',sel.value!=='__other__');}
@@ -12199,11 +12201,11 @@ HAOS v68.6 FINISHING FIX
         </div>
         <div class="table-responsive">
           <table class="table haos-v717-participant-table align-middle small">
-            <thead><tr><th style="min-width:180px">ชื่อ</th><th style="min-width:150px">ตำแหน่ง</th><th style="min-width:160px">กลุ่มงาน</th><th style="min-width:120px">โทรศัพท์</th><th style="min-width:180px">อีเมล</th><th style="min-width:130px">บทบาท</th><th class="text-end">ลบ</th></tr></thead>
+            <thead><tr><th style="min-width:180px">ชื่อ</th><th style="min-width:150px">ตำแหน่ง</th><th style="min-width:180px">กลุ่มงาน/หน่วยงาน</th><th style="min-width:120px">โทรศัพท์</th><th style="min-width:180px">อีเมล</th><th style="min-width:130px">บทบาท</th><th class="text-end">ลบ</th></tr></thead>
             <tbody id="emParticipantsV717"></tbody>
           </table>
         </div>
-        <div class="small haos-v717-muted"><span class="haos-v717-chip"><i class="bi bi-info-circle"></i> เลือกจากสมาชิกได้ และยังเพิ่มชื่อบุคคลภายนอกหรือผู้แทนเองได้</span></div>
+        <div class="small haos-v717-muted"><span class="haos-v717-chip"><i class="bi bi-info-circle"></i> เลือกจากสมาชิกได้ อีเมลจะดึงจากโปรไฟล์อัตโนมัติ และยังเพิ่มชื่อบุคคลภายนอกพร้อมหน่วยงานเองได้</span></div>
       </div>
     </div>`;
     const result=await Swal.fire({
@@ -12575,6 +12577,41 @@ HAOS v68.6 FINISHING FIX
     if(res.success){Swal.fire({icon:'success',title:'บันทึกแล้ว',text:res.message,timer:1400,showConfirmButton:false});loadAdminUsersList();}
     else Swal.fire('บันทึกไม่สำเร็จ',res.message,'error');
   };
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
+<script id="haos-v70-21-emeeting-thai-label-script">
+(function(){
+  const PATCH='v70.21-emeeting-thai-labels';
+  if(window.__HAOS_V721_EMEETING_THAI_LABELS__)return;
+  window.__HAOS_V721_EMEETING_THAI_LABELS__=true;
+  const textMap=[
+    [/\bRSVP\b/g,'ตอบรับ'],
+    [/คัดลอกลิงก์ตอบรับ แล้ว/g,'คัดลอกลิงก์ตอบรับแล้ว'],
+    [/แจ้งเตือนผู้ยังไม่ตอบ ตอบรับ\?/g,'แจ้งเตือนผู้ยังไม่ตอบรับ?']
+  ];
+  function cleanText(value){
+    let out=String(value||'');
+    textMap.forEach(([re,to])=>{out=out.replace(re,to);});
+    return out;
+  }
+  function scrub(root){
+    if(!root)return;
+    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode(node){
+      const p=node.parentElement;
+      if(!p||['SCRIPT','STYLE','TEXTAREA','INPUT'].includes(p.tagName))return NodeFilter.FILTER_REJECT;
+      return /\bRSVP\b/.test(node.nodeValue||'')?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_SKIP;
+    }});
+    const nodes=[];
+    while(walker.nextNode())nodes.push(walker.currentNode);
+    nodes.forEach(n=>{n.nodeValue=cleanText(n.nodeValue);});
+    root.querySelectorAll&&root.querySelectorAll('[title],[aria-label]').forEach(el=>{
+      ['title','aria-label'].forEach(a=>{if(/\bRSVP\b/.test(el.getAttribute(a)||''))el.setAttribute(a,cleanText(el.getAttribute(a)));});
+    });
+  }
+  const observer=new MutationObserver(list=>list.forEach(m=>m.addedNodes&&m.addedNodes.forEach(n=>{if(n.nodeType===1)scrub(n);else if(n.nodeType===3&&/\bRSVP\b/.test(n.nodeValue||''))n.nodeValue=cleanText(n.nodeValue);})));
+  if(document.body){scrub(document.body);observer.observe(document.body,{childList:true,subtree:true});}
+  document.addEventListener('DOMContentLoaded',()=>{scrub(document.body);try{observer.observe(document.body,{childList:true,subtree:true});}catch(e){}});
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
