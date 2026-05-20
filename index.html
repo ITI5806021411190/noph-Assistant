@@ -12482,5 +12482,92 @@ HAOS v68.6 FINISHING FIX
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<script id="haos-v70-19-super-admin-user-edit-script">
+(function(){
+  const PATCH='v70.19-super-admin-user-edit-ui';
+  if(window.__HAOS_V719_SUPER_USER_EDIT__)return;
+  window.__HAOS_V719_SUPER_USER_EDIT__=true;
+  const $=id=>document.getElementById(id);
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const isSuper=()=>String(window.user?.role||user?.role||'')==='Super Admin';
+  const gas=(fn,args)=>new Promise((resolve,reject)=>{try{google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run,args||[]);}catch(e){reject(e);}});
+  function statusBadge(status){
+    status=status||'Active';
+    if(status==='Pending')return '<span class="badge bg-warning text-dark">รออนุมัติ</span>';
+    if(status==='Rejected')return '<span class="badge bg-secondary">ไม่อนุมัติ</span>';
+    if(status==='Inactive')return '<span class="badge bg-danger">ปิดใช้งาน</span>';
+    return '<span class="badge bg-success">ใช้งาน</span>';
+  }
+  function roleSelect(u){
+    if(u.phone==='0868246621')return '<span class="badge bg-danger">Master Admin</span>';
+    return `<select class="form-select form-select-sm border-primary" onchange="changeUserRole('${esc(u.phone)}', this.value)">
+      <option value="User" ${u.role==='User'?'selected':''}>User</option>
+      <option value="Head" ${u.role==='Head'?'selected':''}>Head</option>
+      <option value="Admin" ${u.role==='Admin'?'selected':''}>Admin</option>
+      <option value="Super Admin" ${u.role==='Super Admin'?'selected':''}>Super Admin</option>
+    </select>`;
+  }
+  function pinDisplay(u){
+    return `<div class="input-group input-group-sm" style="width:100px"><input type="password" class="form-control bg-white text-center px-1" value="${esc(u.pin)}" id="pin-v719-${esc(u.phone)}" readonly><button class="btn btn-outline-secondary px-2" type="button" onmousedown="document.getElementById('pin-v719-${esc(u.phone)}').type='text'" onmouseup="document.getElementById('pin-v719-${esc(u.phone)}').type='password'" onmouseleave="document.getElementById('pin-v719-${esc(u.phone)}').type='password'"><i class="bi bi-eye"></i></button></div>`;
+  }
+  function actionButtons(u){
+    if(u.phone==='0868246621')return isSuper()?`<button class="btn btn-sm btn-outline-primary" onclick="openSuperAdminEditUserV719('${esc(u.phone)}')" title="แก้ไขข้อมูล"><i class="bi bi-pencil-square"></i></button> <span class="badge bg-danger">Master</span>`:'<span class="badge bg-danger">Master</span>';
+    const pending=u.accountStatus==='Pending';
+    return `<div class="btn-group btn-group-sm">
+      ${isSuper()?`<button class="btn btn-outline-primary" onclick="openSuperAdminEditUserV719('${esc(u.phone)}')" title="แก้ไขข้อมูลผู้ใช้"><i class="bi bi-pencil-square"></i></button>`:''}
+      ${pending?`<button class="btn btn-success" onclick="approveUserV718('${esc(u.phone)}')" title="อนุมัติ"><i class="bi bi-check2"></i></button><button class="btn btn-outline-danger" onclick="rejectUserV718('${esc(u.phone)}')" title="ปฏิเสธ"><i class="bi bi-x-lg"></i></button>`:''}
+      <button class="btn btn-outline-secondary" onclick="resetPin('${esc(u.phone)}')" title="รีเซ็ต PIN"><i class="bi bi-key"></i></button>
+      <button class="btn btn-outline-warning" onclick="toggleUserActive('${esc(u.phone)}','${(u.accountStatus||'Active')==='Inactive'?'Active':'Inactive'}')" title="เปิด/ปิดบัญชี"><i class="bi bi-power"></i></button>
+      <button class="btn btn-outline-danger" onclick="removeUser('${esc(u.phone)}')" title="ลบบัญชี"><i class="bi bi-trash"></i></button>
+    </div>`;
+  }
+  function deptOptions(current){
+    const opts=Array.from(document.querySelectorAll('#regDepartment option')).map(o=>({value:o.value,text:o.textContent}));
+    if(current&&!opts.some(o=>o.value===current))opts.push({value:current,text:current});
+    return opts.map(o=>`<option value="${esc(o.value)}" ${o.value===current?'selected':''}>${esc(o.text)}</option>`).join('');
+  }
+  window.loadAdminUsersList=function(){
+    const tbody=$('userManageTable');if(!tbody)return;
+    tbody.innerHTML='<tr><td colspan="9" class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm"></span> กำลังโหลดรายชื่อ...</td></tr>';
+    google.script.run.withSuccessHandler(res=>{
+      if(!res.success){tbody.innerHTML=`<tr><td colspan="9" class="text-center py-4 text-danger">${esc(res.message)}</td></tr>`;return;}
+      window.haosAdminUsersCacheV719=res.data||[];
+      tbody.innerHTML=window.haosAdminUsersCacheV719.map(u=>`<tr class="${u.accountStatus==='Pending'?'haos-v718-pending-row':''}">
+        <td class="ps-3 fw-bold text-dark">${esc(u.name)}${u.accountStatus==='Pending'?'<div class="small text-warning fw-bold"><i class="bi bi-hourglass-split"></i> รอ Admin / Super Admin อนุมัติ</div>':''}</td>
+        <td>${esc(u.phone)}</td><td>${pinDisplay(u)}</td><td><small>${esc(u.position)}</small></td><td><small>${esc(u.department)}</small></td>
+        <td>${roleSelect(u)}</td><td>${statusBadge(u.accountStatus)}</td><td><small class="text-muted">${esc(u.lastLogin||'-')}</small></td><td class="pe-3 text-center">${actionButtons(u)}</td>
+      </tr>`).join('');
+    }).getAdminUsersData();
+  };
+  window.openSuperAdminEditUserV719=async function(phone){
+    if(!isSuper())return Swal.fire('ไม่มีสิทธิ์','เมนูนี้สำหรับ Super Admin เท่านั้น','warning');
+    const u=(window.haosAdminUsersCacheV719||[]).find(x=>String(x.phone)===String(phone));
+    if(!u)return Swal.fire('ไม่พบข้อมูล','กรุณาโหลดรายชื่อผู้ใช้งานใหม่','warning');
+    const lockedMaster=u.phone==='0868246621';
+    const html=`<div class="text-start">
+      <div class="alert alert-info py-2 small fw-bold"><i class="bi bi-shield-lock me-1"></i> Super Admin สามารถแก้ไขข้อมูลผู้ใช้งานได้โดยตรง เบอร์โทรศัพท์ใช้เป็น Username จึงไม่เปิดให้แก้จากหน้าต่างนี้</div>
+      <label class="small fw-bold">เบอร์โทรศัพท์ / Username</label><input class="form-control mb-2 bg-light" value="${esc(u.phone)}" readonly>
+      <label class="small fw-bold">ชื่อ-นามสกุล</label><input id="editUserNameV719" class="form-control mb-2" value="${esc(u.name||'')}">
+      <label class="small fw-bold">ตำแหน่ง</label><input id="editUserPositionV719" class="form-control mb-2" value="${esc(u.position||'')}">
+      <label class="small fw-bold">กลุ่มงาน</label><select id="editUserDeptV719" class="form-select mb-2">${deptOptions(u.department||'')}</select>
+      <label class="small fw-bold">อีเมล</label><input id="editUserEmailV719" type="email" class="form-control mb-2" value="${esc(u.email||'')}">
+      <div class="row g-2">
+        <div class="col-md-6"><label class="small fw-bold">ระดับสิทธิ์</label><select id="editUserRoleV719" class="form-select" ${lockedMaster?'disabled':''}><option value="User" ${u.role==='User'?'selected':''}>User</option><option value="Head" ${u.role==='Head'?'selected':''}>Head</option><option value="Admin" ${u.role==='Admin'?'selected':''}>Admin</option><option value="Super Admin" ${u.role==='Super Admin'?'selected':''}>Super Admin</option></select></div>
+        <div class="col-md-6"><label class="small fw-bold">สถานะบัญชี</label><select id="editUserStatusV719" class="form-select" ${lockedMaster?'disabled':''}><option value="Active" ${u.accountStatus==='Active'?'selected':''}>Active / ใช้งาน</option><option value="Pending" ${u.accountStatus==='Pending'?'selected':''}>Pending / รออนุมัติ</option><option value="Inactive" ${u.accountStatus==='Inactive'?'selected':''}>Inactive / ปิดใช้งาน</option><option value="Rejected" ${u.accountStatus==='Rejected'?'selected':''}>Rejected / ไม่อนุมัติ</option></select></div>
+      </div>
+    </div>`;
+    const r=await Swal.fire({title:'แก้ไขข้อมูลผู้ใช้งาน',width:760,html,showCancelButton:true,confirmButtonText:'บันทึก',cancelButtonText:'ยกเลิก',preConfirm:()=>({
+      fullName:$('editUserNameV719').value.trim(),position:$('editUserPositionV719').value.trim(),department:$('editUserDeptV719').value,
+      email:$('editUserEmailV719').value.trim(),role:lockedMaster?'Super Admin':$('editUserRoleV719').value,accountStatus:lockedMaster?'Active':$('editUserStatusV719').value
+    })});
+    if(!r.isConfirmed)return;
+    if(!r.value.fullName)return Swal.fire('ข้อมูลไม่ครบ','กรุณาระบุชื่อ-นามสกุล','warning');
+    const res=await gas('superAdminUpdateUserProfileV719',[phone,r.value,user.phone]);
+    if(res.success){Swal.fire({icon:'success',title:'บันทึกแล้ว',text:res.message,timer:1400,showConfirmButton:false});loadAdminUsersList();}
+    else Swal.fire('บันทึกไม่สำเร็จ',res.message,'error');
+  };
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
