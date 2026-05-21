@@ -12615,5 +12615,233 @@ HAOS v68.6 FINISHING FIX
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<style id="haos-v70-22-itrepair-emeeting-style">
+  .haos-v722-memo-paper{max-width:860px;margin:0 auto;background:#fff;color:#111827;border:1px solid #e5e7eb;border-radius:10px;padding:34px;box-shadow:0 18px 48px rgba(15,23,42,.10);font-family:'Prompt',sans-serif;line-height:1.72}
+  .haos-v722-memo-title{text-align:center;font-weight:950;font-size:1.65rem;margin-bottom:18px;color:#0f172a}
+  .haos-v722-memo-row{display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px;padding:5px 0;border-bottom:1px solid #eef2f7}
+  .haos-v722-memo-row b{color:#0f172a}
+  .haos-v722-memo-body{font-size:1.02rem;margin:20px 0 14px;white-space:pre-wrap}
+  .haos-v722-memo-indent{text-indent:3.6rem}
+  .haos-v722-memo-sign{text-align:center;margin:26px 0 18px}
+  .haos-v722-memo-sign b{display:block;font-size:1.02rem}
+  .haos-v722-memo-detail{border:1px solid #dbeafe;border-radius:16px;background:linear-gradient(180deg,#f8fbff,#fff);padding:16px;margin-top:18px}
+  .haos-v722-memo-detail h6{font-weight:950;color:#1d4ed8;margin-bottom:10px}
+  .haos-v722-memo-table{width:100%;border-collapse:collapse;font-size:.94rem}
+  .haos-v722-memo-table th{width:190px;color:#475569;background:#f8fafc}
+  .haos-v722-memo-table th,.haos-v722-memo-table td{border:1px solid #e5e7eb;padding:8px 10px;vertical-align:top}
+  .haos-v722-memo-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+  .haos-v722-status-thai{font-weight:900}
+  @media print{body *{visibility:hidden!important}.haos-v722-print-area,.haos-v722-print-area *{visibility:visible!important}.haos-v722-print-area{position:absolute!important;left:0!important;top:0!important;width:100%!important}.haos-v722-memo-actions{display:none!important}.haos-v722-memo-paper{box-shadow:none!important;border:0!important;border-radius:0!important}}
+</style>
+<script id="haos-v70-22-active-users-emeeting-delete-itrepair-memo-script">
+(function(){
+  const PATCH='v70.22-active-users-emeeting-delete-itrepair-memo';
+  if(window.__HAOS_V722_ACTIVE_EMEETING_REPAIR__)return;
+  window.__HAOS_V722_ACTIVE_EMEETING_REPAIR__=true;
+  const $=id=>document.getElementById(id);
+  const qa=(s,r=document)=>Array.from((r||document).querySelectorAll(s));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const clean=v=>String(v??'').replace(/\s+/g,' ').trim();
+  const phoneKey=v=>String(v||'').replace(/'/g,'').replace(/\D/g,'');
+  function getUserV722(){try{if(typeof getUser==='function')return getUser()||{};}catch(e){}try{return window.user||user||{};}catch(e){return window.user||{};}}
+  function actorV722(){const u=getUserV722();return {phone:u.phone||'',name:u.fullName||u.name||'',fullName:u.fullName||u.name||'',department:u.department||'',role:u.role||''};}
+  function gasV722(fn,args){if(typeof window.gasRunPromise_==='function')return window.gasRunPromise_(fn,args||[]);return new Promise((resolve,reject)=>{try{google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run,args||[]);}catch(e){reject(e);}});}
+  function canManageITV722(){
+    const u=getUserV722(), data=window.haosITV702Data||{};
+    if(data.permissions&&data.permissions.canManageIT)return true;
+    return /admin|super/i.test(String(u.role||'')) || String(u.department||'').includes('สุขภาพดิจิทัล');
+  }
+  const repairStatusTH={
+    'New':'ใหม่','Assigned':'รับงานแล้ว','In Progress':'กำลังดำเนินการ','Waiting Parts':'รออะไหล่','Waiting Vendor':'รอช่าง/ผู้จำหน่าย','Resolved':'แก้ไขแล้ว','Closed':'ปิดงาน','Cancelled':'ยกเลิก'
+  };
+  const repairPriorityTH={'Low':'ต่ำ','Normal':'ปกติ','High':'สูง','Critical':'วิกฤต'};
+  function thStatus(v){return repairStatusTH[String(v||'').trim()]||v||'ใหม่';}
+  function thPriority(v){return repairPriorityTH[String(v||'').trim()]||v||'ปกติ';}
+  function repairTicketFromCache(id){
+    const data=window.haosITV702Data||window.haosITV703Data||{};
+    return (data.tickets||[]).find(t=>String(t.ticketId)===String(id))||null;
+  }
+  function splitUrls(v){const seen=new Set();return String(v||'').split(/[\n,]+/).map(x=>x.trim()).filter(x=>x&&!seen.has(x)&&seen.add(x));}
+  function localizeRepairDom(root=document){
+    qa('#itRepairTableV70 .haos-v70-status,#itRepairDashboardV70 .haos-v70-status,.swal2-popup .haos-v70-status',root).forEach(el=>{
+      const text=clean(el.textContent);
+      if(repairStatusTH[text]){el.textContent=repairStatusTH[text];el.classList.add('haos-v722-status-thai');}
+    });
+  }
+  function statusOptions(current){
+    return [
+      ['Assigned','รับงานแล้ว'],['In Progress','กำลังดำเนินการ'],['Waiting Parts','รออะไหล่'],['Waiting Vendor','รอช่าง/ผู้จำหน่าย'],['Resolved','แก้ไขแล้ว'],['Closed','ปิดงาน'],['Cancelled','ยกเลิก']
+    ].map(x=>'<option value="'+x[0]+'" '+(String(current||'')===x[0]?'selected':'')+'>'+x[1]+'</option>').join('');
+  }
+  window.updateITRepairStatusUiV70=async function(id){
+    if(!canManageITV722())return Swal.fire('ไม่มีสิทธิ์','เฉพาะสมาชิกกลุ่มงานสุขภาพดิจิทัลหรือผู้ดูแลระบบเท่านั้นที่จัดการใบแจ้งซ่อมได้','warning');
+    const t=repairTicketFromCache(id)||{};
+    const r=await Swal.fire({
+      title:'อัปเดตใบแจ้งซ่อม',
+      html:'<div class="text-start"><label class="small fw-bold">สถานะ</label><select id="repairStatusSetV722" class="form-select mb-2">'+statusOptions(t.status)+'</select><label class="small fw-bold">บันทึกผล / หมายเหตุ</label><textarea id="repairNoteSetV722" class="form-control" rows="4" placeholder="เช่น รับเรื่องแล้ว / รออะไหล่ / ดำเนินการแก้ไขแล้ว"></textarea></div>',
+      showCancelButton:true,confirmButtonText:'อัปเดต',cancelButtonText:'ยกเลิก',
+      preConfirm:()=>({status:$('repairStatusSetV722').value,note:$('repairNoteSetV722').value.trim()})
+    });
+    if(!r.isConfirmed)return;
+    Swal.fire({title:'กำลังอัปเดต...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+    try{
+      const res=await gasV722('updateITRepairTicketStatusV70',[id,r.value.status,r.value.note,actorV722()]);
+      if(!res||!res.success)throw new Error(res?.message||'อัปเดตไม่สำเร็จ');
+      window.haosITV702Data=null; window.haosITV703Data=null;
+      Swal.fire({icon:'success',title:'อัปเดตแล้ว',timer:1100,showConfirmButton:false});
+      if(typeof loadITAssetModuleV70==='function')loadITAssetModuleV70();
+    }catch(e){Swal.fire('อัปเดตไม่สำเร็จ',e.message||String(e),'error');}
+  };
+  function memoText(m){
+    const t=m.ticket||{};
+    return [
+      'บันทึกข้อความ',
+      'ส่วนราชการ  '+(m.agency||''),
+      'ที่  '+(m.memoNo||'')+'        วันที่  '+(m.dateText||''),
+      'เรื่อง  '+(m.subject||''),
+      'เรียน  '+(m.to||''),
+      '',
+      '        '+(m.body||''),
+      '',
+      '        '+(m.consideration||''),
+      '',
+      '('+(m.signerName||'')+')',
+      m.signerPosition||'',
+      m.signerRole||'',
+      '',
+      'รายละเอียดแนบท้าย',
+      'เลขที่ใบแจ้งซ่อม: '+(t.ticketNo||'-'),
+      'ทรัพย์สิน/อุปกรณ์: '+(t.assetName||'-'),
+      'รหัสทรัพย์สิน/ครุภัณฑ์: '+(t.assetCode||'-'),
+      'สถานที่: '+(t.location||'-'),
+      'ผู้แจ้ง: '+(t.requesterName||'-')+' / '+(t.requesterDepartment||'-'),
+      'หมวดปัญหา: '+(t.problemCategory||'-')+' | ความเร่งด่วน: '+(m.priorityLabel||thPriority(t.priority)),
+      'สถานะล่าสุด: '+(m.statusLabel||thStatus(t.status)),
+      'รายละเอียดปัญหา: '+(t.problemDetail||t.problemTitle||'-')
+    ].join('\n');
+  }
+  function attachmentButtons(m){
+    const urls=m.attachments&&m.attachments.length?m.attachments:splitUrls((m.ticket||{}).attachmentUrl);
+    if(!urls.length)return '<span class="text-muted">ไม่มีไฟล์แนบ</span>';
+    return urls.map((u,i)=>'<a class="btn btn-sm btn-outline-primary me-1 mb-1" target="_blank" rel="noopener" href="'+esc(u)+'"><i class="bi bi-paperclip"></i> ไฟล์แนบ '+(i+1)+'</a>').join('');
+  }
+  function renderMemoPaper(m){
+    const t=m.ticket||{};
+    return '<div class="haos-v722-print-area"><article id="itRepairMemoPaperV722" class="haos-v722-memo-paper">'+
+      '<div class="haos-v722-memo-title">บันทึกข้อความ</div>'+
+      '<div class="haos-v722-memo-row"><b>ส่วนราชการ</b><div>'+esc(m.agency||'-')+'</div></div>'+
+      '<div class="haos-v722-memo-row"><b>ที่</b><div>'+esc(m.memoNo||'-')+' <b class="ms-4">วันที่</b> '+esc(m.dateText||'-')+'</div></div>'+
+      '<div class="haos-v722-memo-row"><b>เรื่อง</b><div>'+esc(m.subject||'-')+'</div></div>'+
+      '<div class="haos-v722-memo-row"><b>เรียน</b><div>'+esc(m.to||'-')+'</div></div>'+
+      '<div class="haos-v722-memo-body haos-v722-memo-indent">'+esc(m.body||'-')+'</div>'+
+      '<div class="haos-v722-memo-body haos-v722-memo-indent">'+esc(m.consideration||'จึงเรียนมาเพื่อโปรดพิจารณา')+'</div>'+
+      '<div class="haos-v722-memo-sign"><b>('+esc(m.signerName||'-')+')</b><div>'+esc(m.signerPosition||'')+'</div><div>'+esc(m.signerRole||'')+'</div></div>'+
+      '<section class="haos-v722-memo-detail"><h6><i class="bi bi-clipboard2-pulse"></i> รายละเอียดแนบท้ายบันทึกข้อความ</h6><table class="haos-v722-memo-table"><tbody>'+
+      '<tr><th>เลขที่ใบแจ้งซ่อม</th><td>'+esc(t.ticketNo||t.ticketId||'-')+'</td></tr>'+
+      '<tr><th>ทรัพย์สิน/อุปกรณ์</th><td>'+esc(t.assetName||'-')+'</td></tr>'+
+      '<tr><th>รหัสทรัพย์สิน/ครุภัณฑ์</th><td>'+esc(t.assetCode||'-')+'</td></tr>'+
+      '<tr><th>สถานที่</th><td>'+esc(t.location||'-')+'</td></tr>'+
+      '<tr><th>ผู้แจ้ง</th><td>'+esc(t.requesterName||'-')+' / '+esc(t.requesterDepartment||'-')+'</td></tr>'+
+      '<tr><th>หมวด / ความเร่งด่วน</th><td>'+esc(t.problemCategory||'-')+' / '+esc(m.priorityLabel||thPriority(t.priority))+'</td></tr>'+
+      '<tr><th>สถานะล่าสุด</th><td>'+esc(m.statusLabel||thStatus(t.status))+'</td></tr>'+
+      '<tr><th>รายละเอียดปัญหา</th><td style="white-space:pre-wrap">'+esc(t.problemDetail||t.problemTitle||'-')+'</td></tr>'+
+      '<tr><th>ไฟล์แนบ</th><td>'+attachmentButtons(m)+'</td></tr>'+
+      '</tbody></table></section></article></div>'+
+      '<div class="haos-v722-memo-actions"><button class="btn btn-outline-dark fw-bold" onclick="window.print()"><i class="bi bi-printer"></i> พิมพ์</button><button class="btn btn-outline-success fw-bold" onclick="copyITRepairMemoTextV722()"><i class="bi bi-clipboard"></i> คัดลอกข้อความ</button><button class="btn btn-primary fw-bold" onclick="createITRepairMemoDocumentV722Ui()"><i class="bi bi-file-earmark-word"></i> สร้าง Google Doc / PDF</button></div>';
+  }
+  window.copyITRepairMemoTextV722=function(){
+    const m=window.__HAOS_V722_REPAIR_MEMO__;
+    if(!m)return;
+    navigator.clipboard?.writeText(memoText(m)).catch(()=>{});
+    Swal.fire({icon:'success',title:'คัดลอกข้อความเอกสารแล้ว',timer:1200,showConfirmButton:false});
+  };
+  window.createITRepairMemoDocumentV722Ui=async function(){
+    const m=window.__HAOS_V722_REPAIR_MEMO__;
+    if(!m||!m.ticket)return;
+    Swal.fire({title:'กำลังสร้างเอกสาร...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+    try{
+      const res=await gasV722('createITRepairMemoDocumentV722',[m.ticket.ticketId,actorV722()]);
+      if(!res||!res.success)throw new Error(res?.message||'สร้างเอกสารไม่สำเร็จ');
+      Swal.fire({icon:'success',title:'สร้างเอกสารแล้ว',html:'<div class="d-flex justify-content-center gap-2 flex-wrap">'+(res.docUrl?'<a class="btn btn-outline-primary fw-bold" target="_blank" href="'+esc(res.docUrl)+'"><i class="bi bi-file-earmark-word"></i> เปิด Google Doc</a>':'')+(res.pdfUrl?'<a class="btn btn-outline-danger fw-bold" target="_blank" href="'+esc(res.pdfUrl)+'"><i class="bi bi-file-earmark-pdf"></i> เปิด PDF</a>':'')+'</div>'});
+    }catch(e){Swal.fire('สร้างเอกสารไม่สำเร็จ',e.message||String(e),'error');}
+  };
+  window.openITRepairDigitalMemoV722=async function(id){
+    if(!canManageITV722())return Swal.fire('ไม่มีสิทธิ์','เอกสารบันทึกข้อความแจ้งซ่อมจัดการได้เฉพาะสมาชิกกลุ่มงานสุขภาพดิจิทัลหรือผู้ดูแลระบบ','warning');
+    Swal.fire({title:'กำลังเตรียม Digital View...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+    try{
+      const res=await gasV722('getITRepairDigitalMemoV722',[id,actorV722()]);
+      if(!res||!res.success)throw new Error(res?.message||'โหลดเอกสารไม่สำเร็จ');
+      window.__HAOS_V722_REPAIR_MEMO__=res.memo;
+      Swal.fire({title:'Digital View ใบแจ้งซ่อม',html:renderMemoPaper(res.memo),width:980,showConfirmButton:false,showCloseButton:true,customClass:{popup:'haos-v722-memo-modal'}});
+    }catch(e){Swal.fire('เปิด Digital View ไม่สำเร็จ',e.message||String(e),'error');}
+  };
+  function enhanceRepairRows(){
+    localizeRepairDom(document);
+    if(!canManageITV722())return;
+    qa('#itRepairTableV70 tr').forEach(tr=>{
+      if(tr.dataset.v722Memo)return;
+      const detail=tr.querySelector('[onclick*="openITRepairDetailV70"]');
+      const action=tr.querySelector('td.text-end')||tr.lastElementChild;
+      const m=(detail?.getAttribute('onclick')||'').match(/openITRepairDetailV70\('([^']+)'\)/);
+      if(!m||!action)return;
+      tr.dataset.v722Memo='1';
+      action.insertAdjacentHTML('beforeend',' <button class="btn btn-sm btn-outline-dark" onclick="openITRepairDigitalMemoV722(\''+esc(m[1])+'\')" title="Digital View บันทึกข้อความแจ้งซ่อม"><i class="bi bi-file-earmark-text"></i></button>');
+    });
+  }
+  function meetingByIdV722(id){
+    const state=window.__HAOS_V715_STATE__||{};
+    return (state.meetings||window.haosEMeetingV716Meetings||[]).find(m=>String(m.meetingId)===String(id))||null;
+  }
+  function canDeleteMeetingV722(m){return !!m && phoneKey(m.organizerPhone) && phoneKey(m.organizerPhone)===phoneKey(getUserV722().phone);}
+  function enhanceEMeetingRows(){
+    qa('#eMeetingTableV715 tr').forEach(tr=>{
+      if(tr.dataset.v722Delete)return;
+      const detail=tr.querySelector('[onclick*="openEMeetingDetailV715"]');
+      const bar=tr.querySelector('.haos-v715-actionbar')||tr.querySelector('td:last-child');
+      const mId=(detail?.getAttribute('onclick')||'').match(/openEMeetingDetailV715\('([^']+)'\)/);
+      if(!mId||!bar)return;
+      const meeting=meetingByIdV722(mId[1]);
+      if(!canDeleteMeetingV722(meeting))return;
+      tr.dataset.v722Delete='1';
+      bar.insertAdjacentHTML('beforeend',' <button class="btn btn-sm btn-outline-danger" onclick="deleteEMeetingV722(\''+esc(mId[1])+'\')" title="ลบ e-Meeting"><i class="bi bi-trash"></i></button>');
+    });
+  }
+  window.deleteEMeetingV722=async function(id){
+    const meeting=meetingByIdV722(id)||{};
+    const ok=await Swal.fire({title:'ลบ e-Meeting นี้?',html:'<div class="text-start">รายการ: <b>'+esc(meeting.title||id)+'</b><br><span class="text-danger fw-bold">การลบจะลบวาระ รายชื่อผู้เข้าประชุม เอกสาร และข้อมูล Live View ที่เกี่ยวข้องด้วย</span></div>',icon:'warning',showCancelButton:true,confirmButtonText:'ลบรายการ',cancelButtonText:'ยกเลิก',confirmButtonColor:'#dc3545'});
+    if(!ok.isConfirmed)return;
+    Swal.fire({title:'กำลังลบ...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+    try{
+      const res=await gasV722('deleteEMeetingV722',[id,actorV722()]);
+      if(!res||!res.success)throw new Error(res?.message||'ลบไม่สำเร็จ');
+      Swal.fire({icon:'success',title:'ลบแล้ว',timer:1200,showConfirmButton:false});
+      if(typeof loadEMeetingsV715==='function')loadEMeetingsV715(true);
+    }catch(e){Swal.fire('ลบไม่สำเร็จ',e.message||String(e),'error');}
+  };
+  function injectDeleteIntoDetail(id){
+    const meeting=meetingByIdV722(id);
+    if(!canDeleteMeetingV722(meeting))return;
+    const box=document.querySelector('.swal2-html-container .haos-v714-livebox .d-flex.flex-wrap.gap-2.mt-2');
+    if(box&&!box.querySelector('[data-v722-delete-detail]')){
+      box.insertAdjacentHTML('beforeend','<button data-v722-delete-detail class="btn btn-sm btn-outline-danger fw-bold" onclick="deleteEMeetingV722(\''+esc(id)+'\')"><i class="bi bi-trash"></i> ลบ e-Meeting</button>');
+    }
+  }
+  const prevRenderEM=window.renderEMeetingsV715;
+  if(typeof prevRenderEM==='function')window.renderEMeetingsV715=function(){const r=prevRenderEM.apply(this,arguments);setTimeout(enhanceEMeetingRows,0);return r;};
+  const prevLoadEM=window.loadEMeetingsV715;
+  if(typeof prevLoadEM==='function')window.loadEMeetingsV715=async function(){const r=await prevLoadEM.apply(this,arguments);setTimeout(enhanceEMeetingRows,120);return r;};
+  const prevOpenEM=window.openEMeetingDetailV715;
+  if(typeof prevOpenEM==='function')window.openEMeetingDetailV715=async function(id){const r=await prevOpenEM.apply(this,arguments);setTimeout(()=>injectDeleteIntoDetail(id),250);return r;};
+  const prevLoadIT=window.loadITAssetModuleV70;
+  if(typeof prevLoadIT==='function')window.loadITAssetModuleV70=function(){const r=prevLoadIT.apply(this,arguments);setTimeout(enhanceRepairRows,650);return r;};
+  const prevOpenRepairDetail=window.openITRepairDetailV70;
+  if(typeof prevOpenRepairDetail==='function')window.openITRepairDetailV70=function(id){const r=prevOpenRepairDetail.apply(this,arguments);setTimeout(()=>localizeRepairDom(document),80);return r;};
+  function installV722(){enhanceRepairRows();enhanceEMeetingRows();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installV722,{once:true});else installV722();
+  setTimeout(installV722,800);setTimeout(installV722,1800);
+  let queued=false;new MutationObserver(()=>{if(queued)return;queued=true;setTimeout(()=>{queued=false;installV722();},180);}).observe(document.documentElement,{childList:true,subtree:true});
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
