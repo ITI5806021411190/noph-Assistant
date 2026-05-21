@@ -12761,7 +12761,17 @@ HAOS v68.6 FINISHING FIX
     Swal.fire({title:'กำลังสร้างเอกสาร...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
     try{
       const res=await gasV722('createITRepairMemoDocumentV722',[m.ticket.ticketId,actorV722()]);
-      if(!res||!res.success)throw new Error(res?.message||'สร้างเอกสารไม่สำเร็จ');
+      if(!res||!res.success){
+        if(res&&res.code==='DOCUMENT_SCOPE_REQUIRED'){
+          Swal.fire({
+            icon:'warning',
+            title:'ต้องอนุญาตสิทธิ์สร้างเอกสาร',
+            html:'<div class="text-start small lh-lg"><b>วิธีแก้:</b><br>1. อัปเดตไฟล์ <code>appsscript.json</code> ใน Apps Script ให้มี scope <code>https://www.googleapis.com/auth/documents</code><br>2. Save แล้ว Run ฟังก์ชัน <code>authorizeDocumentExportsV722</code> จาก Apps Script editor หนึ่งครั้ง<br>3. กด Review permissions / Allow<br>4. Deploy เวอร์ชันใหม่ แล้วกลับมาสร้างเอกสารอีกครั้ง</div>'
+          });
+          return;
+        }
+        throw new Error(res?.message||'สร้างเอกสารไม่สำเร็จ');
+      }
       Swal.fire({icon:'success',title:'สร้างเอกสารแล้ว',html:'<div class="d-flex justify-content-center gap-2 flex-wrap">'+(res.docUrl?'<a class="btn btn-outline-primary fw-bold" target="_blank" href="'+esc(res.docUrl)+'"><i class="bi bi-file-earmark-word"></i> เปิด Google Doc</a>':'')+(res.pdfUrl?'<a class="btn btn-outline-danger fw-bold" target="_blank" href="'+esc(res.pdfUrl)+'"><i class="bi bi-file-earmark-pdf"></i> เปิด PDF</a>':'')+'</div>'});
     }catch(e){Swal.fire('สร้างเอกสารไม่สำเร็จ',e.message||String(e),'error');}
   };
