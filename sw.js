@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-21-emeeting-public-ux-delegate-directory';
+const CACHE_NAME = 'haos-v70-22-active-users-emeeting-delete-itrepair-memo';
 const CORE = ['/', '/index.html', '/public.html', '/manifest.json', '/icon-192.png', '/icon-512.png', '/logo-moph.png'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(CORE)).catch(() => {}));
