@@ -12878,7 +12878,7 @@ HAOS v68.6 FINISHING FIX
 </style>
 <script id="haos-v70-23-itrepair-document-workflow-script">
 (function(){
-  const PATCH='v70.23-itrepair-document-workflow';
+  const PATCH='v70.24-itrepair-requester-head-fallback';
   if(window.__HAOS_V723_ITREPAIR_WORKFLOW__)return;
   window.__HAOS_V723_ITREPAIR_WORKFLOW__=true;
   const $=id=>document.getElementById(id);
@@ -12989,7 +12989,7 @@ HAOS v68.6 FINISHING FIX
   }
   function stepForm(stepKey){
     const a=actorV723(), m=window.__HAOS_V722_REPAIR_MEMO__||{}, d=m.document||{}, data=currentStepData(stepKey);
-    if(stepKey==='requesterHead')return {title:'เสนอหัวหน้ากลุ่มงานของผู้แจ้ง',html:fieldHtml('select','status','ผลการพิจารณา',data.status,{options:['เห็นชอบ','ส่งกลับแก้ไข','ไม่เห็นชอบ']})+fieldHtml('text','by','ผู้พิจารณา',data.by||'')+fieldHtml('datetime-local','at','วันที่/เวลา',inputDate(data.at))+fieldHtml('textarea','note','หมายเหตุ',data.note,{full:true,rows:4})};
+    if(stepKey==='requesterHead')return {title:'เสนอหัวหน้ากลุ่มงานของผู้แจ้ง',html:'<div class="full alert alert-info small mb-0"><i class="bi bi-person-check"></i> ระบบจะดึงหัวหน้ากลุ่มงานของผู้แจ้งให้อัตโนมัติ หากไม่พบจะใช้ Admin / ผู้ดูแลระบบแทนเพื่อป้องกันช่องลงนามว่าง</div>'+fieldHtml('select','status','ผลการพิจารณา',data.status,{options:['เห็นชอบ','เห็นชอบอัตโนมัติ','ส่งกลับแก้ไข','ไม่เห็นชอบ']})+fieldHtml('text','by','ผู้พิจารณา',data.by||'')+fieldHtml('datetime-local','at','วันที่/เวลา',inputDate(data.at))+fieldHtml('textarea','note','หมายเหตุ',data.note,{full:true,rows:4})};
     if(stepKey==='centralRegistry')return {title:'สารบัญกลางสำนักงานรับเรื่อง',html:fieldHtml('text','no','เลขรับกลาง',data.no||'')+fieldHtml('datetime-local','receivedAt','วันที่/เวลารับ',inputDate(data.receivedAt))+fieldHtml('text','receiver','ผู้รับเรื่อง',data.receiver||a.name)+fieldHtml('select','status','สถานะ',data.status,{options:['รับเรื่องแล้ว','ส่งต่อกลุ่มงานสุขภาพดิจิทัล','ขอข้อมูลเพิ่ม']})+fieldHtml('textarea','note','หมายเหตุ',data.note,{full:true,rows:3})};
     if(stepKey==='digitalRegistry')return {title:'ธุรการกลุ่มงานสุขภาพดิจิทัลรับเรื่อง',html:fieldHtml('text','no','เลขรับกลุ่มงานสุขภาพดิจิทัล',data.no||'')+fieldHtml('datetime-local','receivedAt','วันที่/เวลารับ',inputDate(data.receivedAt))+fieldHtml('text','receiver','ผู้รับเรื่อง',data.receiver||a.name)+fieldHtml('select','status','สถานะ',data.status,{options:['รับเรื่องแล้ว','ส่งต่อเจ้าหน้าที่ IT','ขอข้อมูลเพิ่ม']})+fieldHtml('textarea','note','หมายเหตุ',data.note,{full:true,rows:3})};
     if(stepKey==='itInspection')return {title:'ตรวจสอบโดย IT',html:fieldHtml('select','status','ผลตรวจสอบ',data.status,{options:['ตรวจสอบแล้ว','เสนอซ่อม/เปลี่ยนอะไหล่','ซ่อมเองได้','ส่งซ่อมภายนอก','รอข้อมูลเพิ่ม']})+fieldHtml('text','inspector','เจ้าหน้าที่ IT ผู้ตรวจสอบ',data.inspector||a.name)+fieldHtml('datetime-local','inspectedAt','วันที่/เวลาตรวจสอบ',inputDate(data.inspectedAt))+fieldHtml('text','estimatedCost','ราคาประเมิน',data.estimatedCost||'')+fieldHtml('textarea','cause','สาเหตุ/อาการที่พบ',data.cause,{full:true,rows:3})+fieldHtml('textarea','repairPlan','แนวทางซ่อม',data.repairPlan,{full:true,rows:3})+fieldHtml('textarea','parts','อะไหล่/อุปกรณ์ที่ต้องใช้',data.parts,{full:true,rows:3})+fieldHtml('textarea','recommendation','ข้อเสนอแนะเพื่อเสนอหัวหน้า',data.recommendation,{full:true,rows:4})};
