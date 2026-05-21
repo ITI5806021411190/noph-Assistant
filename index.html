@@ -12853,5 +12853,169 @@ HAOS v68.6 FINISHING FIX
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<style id="haos-v70-23-itrepair-document-workflow-style">
+  .haos-v723-workflow-board{max-width:1080px;margin:0 auto 14px;padding:16px;border:1px solid #bfdbfe;border-radius:18px;background:linear-gradient(135deg,#eff6ff,#f8fafc 52%,#ecfdf5);box-shadow:0 14px 34px rgba(15,23,42,.08)}
+  .haos-v723-workflow-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+  .haos-v723-workflow-head h5{font-weight:950;color:#0f172a;margin:0}
+  .haos-v723-status-pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:7px 12px;background:#dbeafe;color:#1d4ed8;font-weight:900;border:1px solid #93c5fd}
+  .haos-v723-step-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+  .haos-v723-step{border:1px solid #dbeafe;border-radius:14px;background:#fff;padding:12px;min-height:132px;display:flex;flex-direction:column;gap:6px;position:relative;overflow:hidden}
+  .haos-v723-step:before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:#cbd5e1}
+  .haos-v723-step.done:before{background:#10b981}.haos-v723-step.active:before{background:#2563eb}.haos-v723-step.blocked:before{background:#ef4444}
+  .haos-v723-step-no{width:28px;height:28px;border-radius:999px;background:#eff6ff;color:#1d4ed8;display:inline-flex;align-items:center;justify-content:center;font-weight:950;font-size:.86rem}
+  .haos-v723-step-title{font-weight:950;color:#0f172a;line-height:1.35}.haos-v723-step-meta{font-size:.78rem;color:#64748b;line-height:1.45}
+  .haos-v723-step-status{font-size:.78rem;font-weight:900;border-radius:999px;padding:4px 8px;width:max-content;max-width:100%;background:#f1f5f9;color:#475569}
+  .haos-v723-step.done .haos-v723-step-status{background:#dcfce7;color:#15803d}.haos-v723-step.active .haos-v723-step-status{background:#dbeafe;color:#1d4ed8}.haos-v723-step.blocked .haos-v723-step-status{background:#fee2e2;color:#b91c1c}
+  .haos-v723-step-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .haos-v723-stamp-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0}
+  .haos-v723-stamp{border:1px dashed #60a5fa;border-radius:12px;padding:10px;background:#f8fbff;min-height:96px}
+  .haos-v723-stamp-title{font-weight:950;color:#1d4ed8;font-size:.9rem}.haos-v723-stamp-value{font-weight:950;color:#0f172a;margin-top:5px}.haos-v723-stamp-small{font-size:.8rem;color:#64748b;line-height:1.55}
+  .haos-v723-doc-links{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:10px 0}
+  .haos-v723-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;text-align:left}
+  .haos-v723-form-grid .full{grid-column:1/-1}
+  @media(max-width:768px){.haos-v723-stamp-grid,.haos-v723-form-grid{grid-template-columns:1fr}.haos-v722-memo-paper{padding:20px}}
+  @media print{.haos-v723-workflow-board,.haos-v722-memo-actions,.swal2-close{display:none!important}.haos-v723-stamp{break-inside:avoid}.haos-v722-memo-paper{max-width:100%!important;padding:18mm!important}}
+</style>
+<script id="haos-v70-23-itrepair-document-workflow-script">
+(function(){
+  const PATCH='v70.23-itrepair-document-workflow';
+  if(window.__HAOS_V723_ITREPAIR_WORKFLOW__)return;
+  window.__HAOS_V723_ITREPAIR_WORKFLOW__=true;
+  const $=id=>document.getElementById(id);
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  function getUserV723(){try{if(typeof getUser==='function')return getUser()||{};}catch(e){}try{return window.user||user||{};}catch(e){return window.user||{};}}
+  function actorV723(){const u=getUserV723();return {phone:u.phone||'',name:u.fullName||u.name||'',fullName:u.fullName||u.name||'',department:u.department||'',role:u.role||''};}
+  function gasV723(fn,args){if(typeof window.gasRunPromise_==='function')return window.gasRunPromise_(fn,args||[]);return new Promise((resolve,reject)=>{try{google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run,args||[]);}catch(e){reject(e);}});}
+  function canManageITV723(){const u=getUserV723(), data=window.haosITV702Data||{};return !!(data.permissions&&data.permissions.canManageIT) || /admin|super/i.test(String(u.role||'')) || String(u.department||'').includes('สุขภาพดิจิทัล');}
+  function clean(v){return String(v??'').replace(/\s+/g,' ').trim();}
+  function splitUrls(v){const seen=new Set();return String(v||'').split(/[\n,]+/).map(x=>x.trim()).filter(x=>x&&!seen.has(x)&&seen.add(x));}
+  function thStatus(v){const map={'New':'ใหม่','Assigned':'รับงานแล้ว','In Progress':'กำลังดำเนินการ','Waiting Parts':'รออะไหล่','Waiting Vendor':'รอช่าง/ผู้จำหน่าย','Resolved':'แก้ไขแล้ว','Closed':'ปิดงาน','Cancelled':'ยกเลิก'};return map[String(v||'').trim()]||v||'ใหม่';}
+  function thPriority(v){const map={'Low':'ต่ำ','Normal':'ปกติ','High':'สูง','Critical':'วิกฤต'};return map[String(v||'').trim()]||v||'ปกติ';}
+  function nowLocal(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16);}
+  function inputDate(v){if(!v)return nowLocal();const d=new Date(v);if(Number.isNaN(d.getTime()))return nowLocal();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16);}
+  function stepClass(s){return s&&s.state?s.state:'pending';}
+  function attachmentButtonsV723(m){
+    const urls=(m.attachments&&m.attachments.length?m.attachments:splitUrls((m.ticket||{}).attachmentUrl));
+    if(!urls.length)return '<span class="text-muted">ไม่มีไฟล์แนบ</span>';
+    return urls.map((u,i)=>'<a class="btn btn-sm btn-outline-primary me-1 mb-1" target="_blank" rel="noopener" href="'+esc(u)+'"><i class="bi bi-paperclip"></i> ไฟล์แนบ '+(i+1)+'</a>').join('');
+  }
+  function workflowBoard(m){
+    const steps=((m.workflow||{}).steps||[]);
+    const actionable=new Set(['requesterHead','centralRegistry','digitalRegistry','itInspection','digitalHead','procurement','closeout']);
+    const cards=steps.map(s=>'<div class="haos-v723-step '+stepClass(s)+'"><div class="d-flex align-items-center gap-2"><span class="haos-v723-step-no">'+esc(s.no||'')+'</span><span class="haos-v723-step-status">'+esc(s.status||'รอดำเนินการ')+'</span></div><div class="haos-v723-step-title">'+esc(s.title||'')+'</div><div class="haos-v723-step-meta"><b>'+esc(s.owner||'')+'</b><br>'+esc(s.by||'')+(s.at?' • '+esc(s.at):'')+'</div>'+(s.note?'<div class="haos-v723-step-meta">'+esc(s.note)+'</div>':'')+(actionable.has(s.key)?'<button class="btn btn-sm btn-outline-primary mt-auto fw-bold" onclick="openITRepairWorkflowStepV723(\''+esc(s.key)+'\')"><i class="bi bi-pencil-square"></i> อัปเดต</button>':'')+'</div>').join('');
+    return '<section class="haos-v723-workflow-board"><div class="haos-v723-workflow-head"><div><h5><i class="bi bi-diagram-3"></i> เส้นทางดำเนินเอกสารแจ้งซ่อม</h5><div class="text-muted small">จัดการครบตั้งแต่หัวหน้ากลุ่มงานผู้แจ้ง สารบัญกลาง ธุรการกลุ่มงานสุขภาพดิจิทัล IT งานพัสดุ จนปิดงาน</div></div><span class="haos-v723-status-pill"><i class="bi bi-file-earmark-check"></i> '+esc(m.documentStatus||'ร่างเอกสาร')+'</span></div><div class="haos-v723-step-grid">'+cards+'</div></section>';
+  }
+  function stampGrid(m){
+    const stamps=m.registryStamps||[];
+    return '<div class="haos-v723-stamp-grid">'+stamps.map(s=>'<div class="haos-v723-stamp"><div class="haos-v723-stamp-title">'+esc(s.title||'')+'</div><div class="haos-v723-stamp-value">'+esc(s.value||'รอดำเนินการ')+'</div><div class="haos-v723-stamp-small">'+(s.by?'ผู้ดำเนินการ: '+esc(s.by)+'<br>':'')+(s.at?'วันที่/เวลา: '+esc(s.at)+'<br>':'')+(s.note?'หมายเหตุ: '+esc(s.note):'')+'</div></div>').join('')+'</div>';
+  }
+  function detailRows(m){
+    const t=m.ticket||{}, d=m.document||{}, it=d.itInspection||{}, pr=d.procurement||{}, cl=d.closeout||{};
+    const rows=[
+      ['เลขที่ใบแจ้งซ่อม',t.ticketNo||t.ticketId||'-'],
+      ['ทรัพย์สิน/อุปกรณ์',t.assetName||'-'],
+      ['รหัสทรัพย์สิน/ครุภัณฑ์',t.assetCode||'-'],
+      ['สถานที่',t.location||'-'],
+      ['ผู้แจ้ง',clean((t.requesterName||'-')+' / '+(t.requesterDepartment||'-'))],
+      ['หมวด / ความเร่งด่วน',(t.problemCategory||'-')+' / '+(m.priorityLabel||thPriority(t.priority))],
+      ['สถานะใบงานล่าสุด',m.statusLabel||thStatus(t.status)],
+      ['รายละเอียดปัญหา',t.problemDetail||t.problemTitle||'-']
+    ];
+    if(it.inspector||it.repairPlan||it.recommendation){
+      rows.push(['ผลตรวจ IT','ผู้ตรวจ: '+(it.inspector||'-')+'\nสาเหตุ: '+(it.cause||'-')+'\nแนวทางซ่อม: '+(it.repairPlan||'-')+'\nอะไหล่/อุปกรณ์: '+(it.parts||'-')+'\nราคาประเมิน: '+(it.estimatedCost||'-')+'\nข้อเสนอแนะ: '+(it.recommendation||'-')]);
+    }
+    if(pr.no||pr.status||cl.approvalStatus||cl.repairResult){
+      rows.push(['พัสดุ/อนุมัติ','เลขรับพัสดุ: '+(pr.no||'-')+'\nสถานะพัสดุ: '+(pr.status||'-')+'\nผลอนุมัติ: '+(cl.approvalStatus||'-')+'\nวงเงิน/ร้าน: '+(cl.approvedBudget||'-')+' / '+(cl.vendor||'-')+'\nผลซ่อม: '+(cl.repairResult||'-')]);
+    }
+    rows.push(['ไฟล์แนบ',attachmentButtonsV723(m)]);
+    return rows.map(r=>'<tr><th>'+esc(r[0])+'</th><td style="white-space:pre-wrap">'+(r[0]==='ไฟล์แนบ'?r[1]:esc(r[1]))+'</td></tr>').join('');
+  }
+  function docLinks(m){
+    const d=m.document||{};
+    if(!d.docUrl&&!d.pdfUrl)return '';
+    return '<div class="haos-v723-doc-links">'+(d.docUrl?'<a class="btn btn-sm btn-outline-primary fw-bold" target="_blank" href="'+esc(d.docUrl)+'"><i class="bi bi-file-earmark-word"></i> Google Doc ล่าสุด</a>':'')+(d.pdfUrl?'<a class="btn btn-sm btn-outline-danger fw-bold" target="_blank" href="'+esc(d.pdfUrl)+'"><i class="bi bi-file-earmark-pdf"></i> PDF ล่าสุด</a>':'')+'</div>';
+  }
+  function renderMemoPaperV723(m){
+    const t=m.ticket||{};
+    return workflowBoard(m)+docLinks(m)+'<div class="haos-v722-print-area"><article id="itRepairMemoPaperV722" class="haos-v722-memo-paper">'+
+      '<div class="d-flex justify-content-between align-items-start gap-2 mb-2"><div class="small text-muted">Digital View เอกสารแจ้งซ่อม IT/Helpdesk</div><div class="small fw-bold text-primary">'+esc(m.documentStatus||'ร่างเอกสาร')+'</div></div>'+
+      '<div class="haos-v722-memo-title">บันทึกข้อความ</div>'+
+      '<div class="haos-v722-memo-row"><b>ส่วนราชการ</b><div>'+esc(m.agency||'-')+'</div></div>'+
+      '<div class="haos-v722-memo-row"><b>ที่</b><div>'+esc(m.memoNo||'-')+' <b class="ms-4">วันที่</b> '+esc(m.dateText||'-')+'</div></div>'+
+      '<div class="haos-v722-memo-row"><b>เรื่อง</b><div>'+esc(m.subject||'-')+'</div></div>'+
+      '<div class="haos-v722-memo-row"><b>เรียน</b><div>'+esc(m.to||'-')+'</div></div>'+
+      '<div class="haos-v722-memo-body haos-v722-memo-indent">'+esc(m.body||'-')+'</div>'+
+      '<div class="haos-v722-memo-body haos-v722-memo-indent">'+esc(m.consideration||'จึงเรียนมาเพื่อโปรดพิจารณา')+'</div>'+
+      '<div class="haos-v722-memo-sign"><b>('+esc(m.signerName||'-')+')</b><div>'+esc(m.signerPosition||'')+'</div><div>'+esc(m.signerRole||'')+'</div></div>'+
+      stampGrid(m)+
+      '<section class="haos-v722-memo-detail"><h6><i class="bi bi-clipboard2-pulse"></i> รายละเอียดแนบท้ายบันทึกข้อความ</h6><table class="haos-v722-memo-table"><tbody>'+detailRows(m)+'</tbody></table></section>'+
+      '<div class="text-center text-muted small mt-3">เอกสารอิเล็กทรอนิกส์จาก Health Assistant OS • Ticket '+esc(t.ticketNo||t.ticketId||'-')+'</div>'+
+      '</article></div>'+
+      '<div class="haos-v722-memo-actions"><button class="btn btn-outline-dark fw-bold" onclick="window.print()"><i class="bi bi-printer"></i> พิมพ์สี</button><button class="btn btn-outline-success fw-bold" onclick="copyITRepairMemoTextV722()"><i class="bi bi-clipboard"></i> คัดลอกข้อความ</button><button class="btn btn-primary fw-bold" onclick="createITRepairMemoDocumentV722Ui()"><i class="bi bi-file-earmark-word"></i> สร้าง Google Doc / PDF</button></div>';
+  }
+  function memoTextV723(m){
+    const t=m.ticket||{};
+    const lines=['บันทึกข้อความ','ส่วนราชการ  '+(m.agency||''),'ที่  '+(m.memoNo||'')+'        วันที่  '+(m.dateText||''),'เรื่อง  '+(m.subject||''),'เรียน  '+(m.to||''),'','        '+(m.body||''),'','        '+(m.consideration||''),'','เส้นทางดำเนินเอกสาร'];
+    ((m.workflow||{}).steps||[]).forEach(s=>lines.push((s.no||'')+'. '+(s.title||'')+' - '+(s.status||'')+(s.by?' โดย '+s.by:'')));
+    lines.push('','รายละเอียดแนบท้าย','เลขที่ใบแจ้งซ่อม: '+(t.ticketNo||'-'),'ทรัพย์สิน/อุปกรณ์: '+(t.assetName||'-'),'รายละเอียดปัญหา: '+(t.problemDetail||t.problemTitle||'-'));
+    return lines.join('\n');
+  }
+  window.copyITRepairMemoTextV722=function(){
+    const m=window.__HAOS_V722_REPAIR_MEMO__;
+    if(!m)return;
+    navigator.clipboard?.writeText(memoTextV723(m)).catch(()=>{});
+    Swal.fire({icon:'success',title:'คัดลอกข้อความเอกสารแล้ว',timer:1200,showConfirmButton:false});
+  };
+  window.openITRepairDigitalMemoV722=async function(id){
+    if(!canManageITV723())return Swal.fire('ไม่มีสิทธิ์','เอกสารแจ้งซ่อมจัดการได้เฉพาะสมาชิกกลุ่มงานสุขภาพดิจิทัลหรือผู้ดูแลระบบ','warning');
+    window.__HAOS_V723_LAST_REPAIR_ID__=id;
+    Swal.fire({title:'กำลังเตรียม Digital View...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+    try{
+      const res=await gasV723('getITRepairDigitalMemoV722',[id,actorV723()]);
+      if(!res||!res.success)throw new Error(res?.message||'โหลดเอกสารไม่สำเร็จ');
+      window.__HAOS_V722_REPAIR_MEMO__=res.memo;
+      Swal.fire({title:'Digital View ใบแจ้งซ่อม',html:renderMemoPaperV723(res.memo),width:1120,showConfirmButton:false,showCloseButton:true,customClass:{popup:'haos-v722-memo-modal'}});
+    }catch(e){Swal.fire('เปิด Digital View ไม่สำเร็จ',e.message||String(e),'error');}
+  };
+  function currentStepData(stepKey){
+    const d=(window.__HAOS_V722_REPAIR_MEMO__||{}).document||{};
+    return d[stepKey]||{};
+  }
+  function fieldHtml(type,name,label,value,opts){
+    const full=opts&&opts.full?' full':'';
+    if(type==='select')return '<div class="'+full+'"><label class="small fw-bold">'+esc(label)+'</label><select class="form-select" data-v723-field="'+esc(name)+'">'+(opts.options||[]).map(o=>'<option '+(String(value||'')===String(o)?'selected':'')+'>'+esc(o)+'</option>').join('')+'</select></div>';
+    if(type==='textarea')return '<div class="'+full+'"><label class="small fw-bold">'+esc(label)+'</label><textarea class="form-control" rows="'+(opts.rows||3)+'" data-v723-field="'+esc(name)+'">'+esc(value||'')+'</textarea></div>';
+    return '<div class="'+full+'"><label class="small fw-bold">'+esc(label)+'</label><input type="'+esc(type||'text')+'" class="form-control" value="'+esc(value||'')+'" data-v723-field="'+esc(name)+'"></div>';
+  }
+  function stepForm(stepKey){
+    const a=actorV723(), m=window.__HAOS_V722_REPAIR_MEMO__||{}, d=m.document||{}, data=currentStepData(stepKey);
+    if(stepKey==='requesterHead')return {title:'เสนอหัวหน้ากลุ่มงานของผู้แจ้ง',html:fieldHtml('select','status','ผลการพิจารณา',data.status,{options:['เห็นชอบ','ส่งกลับแก้ไข','ไม่เห็นชอบ']})+fieldHtml('text','by','ผู้พิจารณา',data.by||'')+fieldHtml('datetime-local','at','วันที่/เวลา',inputDate(data.at))+fieldHtml('textarea','note','หมายเหตุ',data.note,{full:true,rows:4})};
+    if(stepKey==='centralRegistry')return {title:'สารบัญกลางสำนักงานรับเรื่อง',html:fieldHtml('text','no','เลขรับกลาง',data.no||'')+fieldHtml('datetime-local','receivedAt','วันที่/เวลารับ',inputDate(data.receivedAt))+fieldHtml('text','receiver','ผู้รับเรื่อง',data.receiver||a.name)+fieldHtml('select','status','สถานะ',data.status,{options:['รับเรื่องแล้ว','ส่งต่อกลุ่มงานสุขภาพดิจิทัล','ขอข้อมูลเพิ่ม']})+fieldHtml('textarea','note','หมายเหตุ',data.note,{full:true,rows:3})};
+    if(stepKey==='digitalRegistry')return {title:'ธุรการกลุ่มงานสุขภาพดิจิทัลรับเรื่อง',html:fieldHtml('text','no','เลขรับกลุ่มงานสุขภาพดิจิทัล',data.no||'')+fieldHtml('datetime-local','receivedAt','วันที่/เวลารับ',inputDate(data.receivedAt))+fieldHtml('text','receiver','ผู้รับเรื่อง',data.receiver||a.name)+fieldHtml('select','status','สถานะ',data.status,{options:['รับเรื่องแล้ว','ส่งต่อเจ้าหน้าที่ IT','ขอข้อมูลเพิ่ม']})+fieldHtml('textarea','note','หมายเหตุ',data.note,{full:true,rows:3})};
+    if(stepKey==='itInspection')return {title:'ตรวจสอบโดย IT',html:fieldHtml('select','status','ผลตรวจสอบ',data.status,{options:['ตรวจสอบแล้ว','เสนอซ่อม/เปลี่ยนอะไหล่','ซ่อมเองได้','ส่งซ่อมภายนอก','รอข้อมูลเพิ่ม']})+fieldHtml('text','inspector','เจ้าหน้าที่ IT ผู้ตรวจสอบ',data.inspector||a.name)+fieldHtml('datetime-local','inspectedAt','วันที่/เวลาตรวจสอบ',inputDate(data.inspectedAt))+fieldHtml('text','estimatedCost','ราคาประเมิน',data.estimatedCost||'')+fieldHtml('textarea','cause','สาเหตุ/อาการที่พบ',data.cause,{full:true,rows:3})+fieldHtml('textarea','repairPlan','แนวทางซ่อม',data.repairPlan,{full:true,rows:3})+fieldHtml('textarea','parts','อะไหล่/อุปกรณ์ที่ต้องใช้',data.parts,{full:true,rows:3})+fieldHtml('textarea','recommendation','ข้อเสนอแนะเพื่อเสนอหัวหน้า',data.recommendation,{full:true,rows:4})};
+    if(stepKey==='digitalHead')return {title:'เสนอหัวหน้ากลุ่มงานสุขภาพดิจิทัล',html:fieldHtml('select','status','ผลการรับรอง',data.status,{options:['รับรอง','ส่งกลับแก้ไข','ไม่เห็นชอบ']})+fieldHtml('text','by','ผู้พิจารณา',data.by||'')+fieldHtml('datetime-local','at','วันที่/เวลา',inputDate(data.at))+fieldHtml('textarea','note','หมายเหตุ',data.note,{full:true,rows:4})};
+    if(stepKey==='procurement')return {title:'งานพัสดุรับเรื่อง',html:fieldHtml('text','no','เลขรับพัสดุ',data.no||'')+fieldHtml('datetime-local','receivedAt','วันที่/เวลารับ',inputDate(data.receivedAt))+fieldHtml('text','receiver','ผู้รับเรื่อง',data.receiver||'')+fieldHtml('select','status','สถานะพัสดุ',data.status,{options:['รับเรื่องแล้ว','ขอข้อมูลเพิ่ม','อยู่ระหว่างจัดซื้อจัดจ้าง','ส่งซ่อม/รอร้าน','ดำเนินการแล้ว']})+fieldHtml('textarea','note','หมายเหตุ',data.note,{full:true,rows:4})};
+    if(stepKey==='closeout'){const c=d.closeout||{};return {title:'อนุมัติ / ดำเนินการซ่อม / ปิดงาน',html:fieldHtml('select','approvalStatus','ผลอนุมัติ/สถานะดำเนินการ',c.approvalStatus,{options:['อนุมัติซ่อม','ไม่อนุมัติ','อยู่ระหว่างดำเนินการ','ดำเนินการแล้ว','ปิดงานแล้ว']})+fieldHtml('text','approver','ผู้อนุมัติ/ผู้บันทึกผล',c.approver||'')+fieldHtml('datetime-local','approvedAt','วันที่อนุมัติ/ดำเนินการ',inputDate(c.approvedAt))+fieldHtml('text','approvedBudget','วงเงิน/งบประมาณ',c.approvedBudget||'')+fieldHtml('text','vendor','ร้าน/ช่าง/ผู้จำหน่าย',c.vendor||'')+fieldHtml('text','procurementRef','เลขอ้างอิงจัดซื้อจัดจ้าง',c.procurementRef||'')+fieldHtml('textarea','repairResult','ผลการซ่อม',c.repairResult,{full:true,rows:3})+fieldHtml('text','actualCost','ค่าใช้จ่ายจริง',c.actualCost||'')+fieldHtml('text','acceptedBy','ผู้ตรวจรับ/ผู้รับคืนเครื่อง',c.acceptedBy||'')+fieldHtml('datetime-local','closedAt','วันที่ปิดงาน ถ้ายังไม่ปิดให้เว้นว่าง',c.closedAt?inputDate(c.closedAt):'')};}
+    return null;
+  }
+  window.openITRepairWorkflowStepV723=async function(stepKey){
+    const m=window.__HAOS_V722_REPAIR_MEMO__||{}, ticket=(m.ticket||{}), form=stepForm(stepKey);
+    if(!ticket.ticketId||!form)return;
+    const r=await Swal.fire({title:form.title,html:'<div class="haos-v723-form-grid">'+form.html+'</div>',width:780,showCancelButton:true,confirmButtonText:'บันทึกขั้นตอน',cancelButtonText:'ยกเลิก',preConfirm:()=>{const out={};document.querySelectorAll('.swal2-popup [data-v723-field]').forEach(el=>out[el.dataset.v723Field]=el.value);return out;}});
+    if(!r.isConfirmed)return;
+    Swal.fire({title:'กำลังบันทึกขั้นตอน...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+    try{
+      const res=await gasV723('updateITRepairDocumentStepV723',[ticket.ticketId,stepKey,r.value,actorV723()]);
+      if(!res||!res.success)throw new Error(res?.message||'บันทึกขั้นตอนไม่สำเร็จ');
+      window.__HAOS_V722_REPAIR_MEMO__=res.memo;
+      window.haosITV702Data=null; window.haosITV703Data=null;
+      Swal.fire({icon:'success',title:'บันทึกขั้นตอนแล้ว',timer:800,showConfirmButton:false});
+      setTimeout(()=>window.openITRepairDigitalMemoV722(ticket.ticketId),850);
+      if(typeof loadITAssetModuleV70==='function')setTimeout(()=>loadITAssetModuleV70(),1200);
+    }catch(e){Swal.fire('บันทึกขั้นตอนไม่สำเร็จ',e.message||String(e),'error');}
+  };
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
