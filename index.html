@@ -13019,5 +13019,202 @@ HAOS v68.6 FINISHING FIX
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<style id="haos-v70-27-pin-reset-style">
+  #eventTags.haos-v727-fast-tags{min-height:190px!important;max-height:240px!important;overflow-y:auto!important;overscroll-behavior:contain;touch-action:pan-y;scroll-behavior:auto!important}
+  #eventTags.haos-v727-fast-tags option{padding:8px 10px;border-radius:8px;margin:2px 0}
+  .haos-v727-pin-card{border:1px solid rgba(37,99,235,.20);border-radius:18px;background:linear-gradient(135deg,#eff6ff,#f8fbff);padding:14px;margin-top:12px}
+  .haos-v727-admin-card{border:1px solid rgba(124,58,237,.22);border-radius:18px;background:linear-gradient(135deg,#faf5ff,#eef2ff);padding:14px;margin:0 0 16px}
+  .haos-v727-pin-table{max-height:360px;overflow:auto;border:1px solid rgba(148,163,184,.24);border-radius:14px;background:#fff}
+  .haos-v727-pin-toggle{min-width:42px;touch-action:manipulation}
+  @media(max-width:768px){.haos-v727-pin-table table{min-width:760px}.haos-v727-admin-card .btn{width:100%}}
+</style>
+<script id="haos-v70-27-pin-reset-script">
+(function(){
+  const PATCH='v70.27-pin-reset-user-pin-approval-ui';
+  if(window.__HAOS_V727_PIN_RESET__)return;
+  window.__HAOS_V727_PIN_RESET__=true;
+  const $=id=>document.getElementById(id);
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const currentUser=()=>window.user||user||{};
+  const isAdmin=()=>/^(Admin|Super Admin)$/i.test(String(currentUser().role||''));
+  const isSuper=()=>String(currentUser().role||'')==='Super Admin';
+  const gas=(fn,args)=>new Promise((resolve,reject)=>{try{google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run,args||[]);}catch(e){reject(e);}});
+  function deptOptions(current){
+    const opts=Array.from(document.querySelectorAll('#regDepartment option')).map(o=>({value:o.value,text:o.textContent}));
+    if(current&&!opts.some(o=>o.value===current))opts.push({value:current,text:current});
+    return opts.map(o=>`<option value="${esc(o.value)}" ${o.value===current?'selected':''}>${esc(o.text)}</option>`).join('');
+  }
+  function installFastTagScrollV727(){
+    const sel=$('eventTags');
+    if(!sel||sel.dataset.v727FastScroll)return;
+    sel.dataset.v727FastScroll='1';
+    sel.classList.add('haos-v727-fast-tags');
+    if(Number(sel.size||0)<6)sel.size=6;
+    sel.addEventListener('wheel',ev=>{
+      if(sel.scrollHeight<=sel.clientHeight)return;
+      sel.scrollTop += ev.deltaY*1.65;
+      ev.preventDefault();
+      ev.stopPropagation();
+    },{passive:false});
+  }
+  function installForgotPinLinkV727(){
+    if($('forgotPinLinkV727'))return;
+    const anchor=document.querySelector('#loginSection .text-center.mt-4');
+    const html='<div class="text-center mt-3"><button type="button" id="forgotPinLinkV727" class="btn btn-link text-decoration-none fw-bold p-0" onclick="openForgotPinResetV727()"><i class="bi bi-key"></i> ลืมรหัสผ่าน / รีเซ็ต PIN ด้วยตนเอง</button></div>';
+    if(anchor)anchor.insertAdjacentHTML('beforebegin',html);
+  }
+  window.openForgotPinResetV727=async function(){
+    const html=`<div class="text-start">
+      <div class="alert alert-info small fw-bold"><i class="bi bi-shield-check me-1"></i> กรอกข้อมูลให้ตรงกับบัญชีในระบบทุกช่อง ระบบจึงจะสร้าง PIN ใหม่ให้</div>
+      <div class="row g-2">
+        <div class="col-md-6"><label class="small fw-bold">ชื่อ-นามสกุล</label><input id="fpNameV727" class="form-control" autocomplete="name"></div>
+        <div class="col-md-6"><label class="small fw-bold">ตำแหน่ง</label><input id="fpPositionV727" class="form-control"></div>
+        <div class="col-md-6"><label class="small fw-bold">กลุ่มงาน</label><select id="fpDeptV727" class="form-select">${deptOptions('')}</select></div>
+        <div class="col-md-6"><label class="small fw-bold">เบอร์โทรศัพท์</label><input id="fpPhoneV727" class="form-control" maxlength="10" inputmode="numeric" value="${esc($('loginPhone')?.value||'')}"></div>
+        <div class="col-12"><label class="small fw-bold">อีเมล</label><input id="fpEmailV727" type="email" class="form-control" autocomplete="email"></div>
+      </div>
+      <div class="small text-muted mt-2">ถ้าบัญชีถูกปิดใช้งาน หรือข้อมูลไม่ตรง ระบบจะไม่เปิดเผย PIN และจะแนะนำให้ติดต่อ Admin</div>
+    </div>`;
+    const r=await Swal.fire({title:'ลืมรหัสผ่าน / รีเซ็ต PIN',width:760,html,showCancelButton:true,confirmButtonText:'ตรวจสอบและรีเซ็ต',cancelButtonText:'ยกเลิก',preConfirm:async()=>{
+      const payload={fullName:$('fpNameV727').value.trim(),position:$('fpPositionV727').value.trim(),department:$('fpDeptV727').value,phone:$('fpPhoneV727').value.replace(/\D/g,''),email:$('fpEmailV727').value.trim()};
+      if(!payload.fullName||!payload.position||!payload.department||payload.phone.length!==10||!payload.email){Swal.showValidationMessage('กรุณากรอกข้อมูลให้ครบถ้วน');return false;}
+      const res=await gas('requestForgotPinResetV727',[payload]);
+      if(!res.success){Swal.showValidationMessage(res.message||'รีเซ็ตไม่สำเร็จ');return false;}
+      return res;
+    }});
+    if(!r.isConfirmed||!r.value)return;
+    if($('loginPhone'))$('loginPhone').value=r.value.phone||$('fpPhoneV727')?.value||'';
+    Swal.fire({icon:'success',title:'รีเซ็ต PIN สำเร็จ',html:`<div class="text-muted mb-2">${esc(r.value.name||'')}</div><div class="fs-2 fw-bold text-primary">${esc(r.value.pin)}</div><div class="small text-muted mt-2">ระบบส่ง PIN ใหม่นี้ไปทางอีเมลที่ลงทะเบียนไว้แล้ว</div>`});
+  };
+  window.togglePinVisibilityV727=function(inputId,btn,force){
+    const input=$(inputId);if(!input)return;
+    const show=typeof force==='boolean'?force:input.type==='password';
+    input.type=show?'text':'password';
+    if(btn){
+      btn.dataset.pinVisible=show?'1':'0';
+      btn.innerHTML=show?'<i class="bi bi-eye-slash"></i>':'<i class="bi bi-eye"></i>';
+      btn.classList.toggle('btn-primary',show);
+      btn.classList.toggle('btn-outline-secondary',!show);
+    }
+  };
+  function pinDisplay(u){
+    const id='pin-v727-'+String(u.phone||'').replace(/\D/g,'');
+    return `<div class="input-group input-group-sm" style="width:112px"><input type="password" class="form-control bg-white text-center px-1" value="${esc(u.pin)}" id="${id}" readonly><button class="btn btn-outline-secondary px-2 haos-v727-pin-toggle" type="button" onclick="togglePinVisibilityV727('${id}',this)" title="แตะเพื่อแสดง/ซ่อน PIN"><i class="bi bi-eye"></i></button></div>`;
+  }
+  function statusBadge(status){
+    status=status||'Active';
+    if(status==='Pending')return '<span class="badge bg-warning text-dark">รออนุมัติ</span>';
+    if(status==='Rejected')return '<span class="badge bg-secondary">ไม่อนุมัติ</span>';
+    if(status==='Inactive')return '<span class="badge bg-danger">ปิดใช้งาน</span>';
+    return '<span class="badge bg-success">ใช้งาน</span>';
+  }
+  function roleSelect(u){
+    if(u.phone==='0868246621')return '<span class="badge bg-danger">Master Admin</span>';
+    return `<select class="form-select form-select-sm border-primary" onchange="changeUserRole('${esc(u.phone)}', this.value)">
+      <option value="User" ${u.role==='User'?'selected':''}>User</option>
+      <option value="Head" ${u.role==='Head'?'selected':''}>Head</option>
+      <option value="Admin" ${u.role==='Admin'?'selected':''}>Admin</option>
+      <option value="Super Admin" ${u.role==='Super Admin'?'selected':''}>Super Admin</option>
+    </select>`;
+  }
+  function actionButtons(u){
+    if(u.phone==='0868246621')return isSuper()?`<button class="btn btn-sm btn-outline-primary" onclick="openSuperAdminEditUserV719('${esc(u.phone)}')" title="แก้ไขข้อมูล"><i class="bi bi-pencil-square"></i></button> <span class="badge bg-danger">Master</span>`:'<span class="badge bg-danger">Master</span>';
+    const pending=u.accountStatus==='Pending';
+    return `<div class="btn-group btn-group-sm">
+      ${isSuper()?`<button class="btn btn-outline-primary" onclick="openSuperAdminEditUserV719('${esc(u.phone)}')" title="แก้ไขข้อมูลผู้ใช้"><i class="bi bi-pencil-square"></i></button>`:''}
+      ${pending?`<button class="btn btn-success" onclick="approveUserV718('${esc(u.phone)}')" title="อนุมัติ"><i class="bi bi-check2"></i></button><button class="btn btn-outline-danger" onclick="rejectUserV718('${esc(u.phone)}')" title="ปฏิเสธ"><i class="bi bi-x-lg"></i></button>`:''}
+      <button class="btn btn-outline-secondary" onclick="resetPin('${esc(u.phone)}')" title="รีเซ็ต PIN"><i class="bi bi-key"></i></button>
+      <button class="btn btn-outline-warning" onclick="toggleUserActive('${esc(u.phone)}','${(u.accountStatus||'Active')==='Inactive'?'Active':'Inactive'}')" title="เปิด/ปิดบัญชี"><i class="bi bi-power"></i></button>
+      <button class="btn btn-outline-danger" onclick="removeUser('${esc(u.phone)}')" title="ลบบัญชี"><i class="bi bi-trash"></i></button>
+    </div>`;
+  }
+  window.loadAdminUsersList=function(){
+    const tbody=$('userManageTable');if(!tbody)return;
+    tbody.innerHTML='<tr><td colspan="9" class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm"></span> กำลังโหลดรายชื่อ...</td></tr>';
+    google.script.run.withSuccessHandler(res=>{
+      if(!res.success){tbody.innerHTML=`<tr><td colspan="9" class="text-center py-4 text-danger">${esc(res.message)}</td></tr>`;return;}
+      window.haosAdminUsersCacheV719=res.data||[];
+      tbody.innerHTML=window.haosAdminUsersCacheV719.map(u=>`<tr class="${u.accountStatus==='Pending'?'haos-v718-pending-row':''}">
+        <td class="ps-3 fw-bold text-dark">${esc(u.name)}${u.accountStatus==='Pending'?'<div class="small text-warning fw-bold"><i class="bi bi-hourglass-split"></i> รอ Admin / Super Admin อนุมัติ</div>':''}</td>
+        <td>${esc(u.phone)}</td><td>${pinDisplay(u)}</td><td><small>${esc(u.position)}</small></td><td><small>${esc(u.department)}</small></td>
+        <td>${roleSelect(u)}</td><td>${statusBadge(u.accountStatus)}</td><td><small class="text-muted">${esc(u.lastLogin||'-')}</small></td><td class="pe-3 text-center">${actionButtons(u)}</td>
+      </tr>`).join('');
+      installPinRequestAdminV727();
+    }).getAdminUsersData();
+  };
+  function installProfilePinRequestV727(){
+    if($('profilePinRequestV727'))return;
+    const modal=$('profileModal');if(!modal)return;
+    const body=modal.querySelector('.modal-body');if(!body)return;
+    const html=`<div id="profilePinRequestV727" class="haos-v727-pin-card">
+      <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+        <div><b><i class="bi bi-shield-lock text-primary"></i> ขอเปลี่ยน PIN ส่วนตัว</b><div class="small text-muted">ระบุ PIN ใหม่ 4-6 หลัก ระบบจะส่งคำขอให้ Admin / Super Admin อนุมัติก่อนจึงใช้งานได้</div></div>
+      </div>
+      <div class="row g-2 mt-2 align-items-end">
+        <div class="col-md-5"><label class="small fw-bold">PIN ใหม่</label><input id="profileNewPinV727" type="password" class="form-control" maxlength="6" inputmode="numeric" placeholder="ตัวเลข 4-6 หลัก"></div>
+        <div class="col-md-5"><label class="small fw-bold">ยืนยัน PIN ใหม่</label><input id="profileNewPinConfirmV727" type="password" class="form-control" maxlength="6" inputmode="numeric"></div>
+        <div class="col-md-2 d-grid"><button type="button" class="btn btn-outline-primary fw-bold" onclick="submitMyPinChangeV727()">ส่งคำขอ</button></div>
+      </div>
+      <div class="small text-muted mt-2"><i class="bi bi-info-circle"></i> ระหว่างรออนุมัติ ให้ใช้ PIN เดิมเข้าสู่ระบบไปก่อน</div>
+    </div>`;
+    body.insertAdjacentHTML('beforeend',html);
+    ['profileNewPinV727','profileNewPinConfirmV727'].forEach(id=>$(id)?.addEventListener('input',e=>e.target.value=e.target.value.replace(/\D/g,'')));
+  }
+  window.submitMyPinChangeV727=async function(){
+    const pin=$('profileNewPinV727')?.value||'', confirm=$('profileNewPinConfirmV727')?.value||'';
+    if(!/^\d{4,6}$/.test(pin))return Swal.fire('ข้อมูลไม่ครบ','PIN ต้องเป็นตัวเลข 4-6 หลัก','warning');
+    if(pin!==confirm)return Swal.fire('PIN ไม่ตรงกัน','กรุณายืนยัน PIN ใหม่ให้ตรงกัน','warning');
+    const ok=await Swal.fire({title:'ส่งคำขอเปลี่ยน PIN?',text:'PIN ใหม่จะยังใช้ไม่ได้จนกว่า Admin / Super Admin จะอนุมัติ',icon:'question',showCancelButton:true,confirmButtonText:'ส่งคำขอ'});
+    if(!ok.isConfirmed)return;
+    const res=await gas('requestMyPinChangeV727',[currentUser().phone,pin]);
+    if(res.success){$('profileNewPinV727').value='';$('profileNewPinConfirmV727').value='';Swal.fire('ส่งคำขอแล้ว',res.message,'success');}
+    else Swal.fire('ส่งคำขอไม่สำเร็จ',res.message,'error');
+  };
+  function installPinRequestAdminV727(){
+    if(!isAdmin()||$('pinRequestAdminV727'))return;
+    const body=document.querySelector('#userManageModal .modal-body');if(!body)return;
+    const first=body.querySelector('#haosInviteAdminV718')||body.querySelector('.card.mb-4');
+    const html=`<div id="pinRequestAdminV727" class="haos-v727-admin-card">
+      <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+        <div><h6 class="fw-bold mb-1"><i class="bi bi-key-fill text-primary"></i> คำขอเปลี่ยน PIN ส่วนตัว</h6><div class="small text-muted fw-bold">ตรวจสอบและอนุมัติ PIN ที่ผู้ใช้ขอตั้งเอง ก่อนนำไปใช้งานจริง</div></div>
+        <button class="btn btn-outline-primary btn-sm fw-bold" onclick="loadPinRequestsV727()"><i class="bi bi-arrow-clockwise"></i> โหลดคำขอ</button>
+      </div>
+      <div id="pinRequestListV727" class="haos-v727-pin-table mt-3"><div class="text-muted small p-3">กดโหลดคำขอเพื่อดูรายการรออนุมัติ</div></div>
+    </div>`;
+    if(first)first.insertAdjacentHTML('afterend',html);else body.insertAdjacentHTML('afterbegin',html);
+    loadPinRequestsV727();
+  }
+  window.loadPinRequestsV727=async function(){
+    const box=$('pinRequestListV727');if(!box)return;
+    box.innerHTML='<div class="text-center text-muted p-3"><span class="spinner-border spinner-border-sm"></span> กำลังโหลดคำขอ...</div>';
+    const res=await gas('getPinChangeRequestsV727',[currentUser().phone,'Pending']);
+    if(!res.success){box.innerHTML='<div class="text-danger small p-3">'+esc(res.message)+'</div>';return;}
+    const rows=(res.data||[]).map(r=>`<tr>
+      <td><b>${esc(r.fullName||'-')}</b><small class="d-block text-muted">${esc(r.phone)} · ${esc(r.department||'-')}</small></td>
+      <td>${esc(r.position||'-')}</td>
+      <td><span class="badge bg-primary fs-6">${esc(r.requestedPin)}</span></td>
+      <td>${esc(r.requestedAt||'-')}</td>
+      <td class="text-end"><button class="btn btn-sm btn-success fw-bold" onclick="reviewPinRequestV727('${esc(r.requestId)}','Approved')"><i class="bi bi-check2"></i> อนุมัติ</button> <button class="btn btn-sm btn-outline-danger fw-bold" onclick="reviewPinRequestV727('${esc(r.requestId)}','Rejected')"><i class="bi bi-x-lg"></i> ไม่อนุมัติ</button></td>
+    </tr>`).join('');
+    box.innerHTML=`<table class="table table-sm table-hover align-middle mb-0"><thead><tr><th>ผู้ขอ</th><th>ตำแหน่ง</th><th>PIN ที่ขอ</th><th>วันที่ขอ</th><th class="text-end">จัดการ</th></tr></thead><tbody>${rows||'<tr><td colspan="5" class="text-center text-muted py-4">ยังไม่มีคำขอเปลี่ยน PIN ที่รออนุมัติ</td></tr>'}</tbody></table>`;
+  };
+  window.reviewPinRequestV727=async function(requestId,decision){
+    const approve=decision==='Approved';
+    const r=await Swal.fire({title:approve?'อนุมัติคำขอเปลี่ยน PIN?':'ไม่อนุมัติคำขอ?',input:approve?undefined:'text',inputPlaceholder:'เหตุผล (ถ้ามี)',icon:approve?'question':'warning',showCancelButton:true,confirmButtonText:approve?'อนุมัติ':'ไม่อนุมัติ'});
+    if(!r.isConfirmed)return;
+    const res=await gas('reviewPinChangeRequestV727',[requestId,decision,currentUser().phone,r.value||'']);
+    if(res.success){Swal.fire({icon:'success',title:'บันทึกแล้ว',text:res.message,timer:1400,showConfirmButton:false});loadPinRequestsV727();loadAdminUsersList();}
+    else Swal.fire('บันทึกไม่สำเร็จ',res.message,'error');
+  };
+  const oldOpenProfile=window.openProfileModal;
+  window.openProfileModal=function(){const r=oldOpenProfile?oldOpenProfile.apply(this,arguments):undefined;setTimeout(installProfilePinRequestV727,260);return r;};
+  const oldOpenUserManagement=window.openUserManagement;
+  window.openUserManagement=function(){const r=oldOpenUserManagement?oldOpenUserManagement.apply(this,arguments):undefined;setTimeout(()=>{installPinRequestAdminV727();},260);return r;};
+  function installV727(){installFastTagScrollV727();installForgotPinLinkV727();installProfilePinRequestV727();installPinRequestAdminV727();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installV727,{once:true});else installV727();
+  setTimeout(installV727,900);setTimeout(installV727,2200);
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
