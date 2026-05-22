@@ -13216,5 +13216,205 @@ HAOS v68.6 FINISHING FIX
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<style id="haos-v70-28-workspace-builder-style">
+  .haos-v728-builder{border:1px solid rgba(14,165,233,.24);border-radius:22px;background:linear-gradient(180deg,#fff,#f8fbff);padding:14px;margin-bottom:14px;box-shadow:0 12px 32px rgba(15,23,42,.06)}
+  .haos-v728-builder-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .haos-v728-builder-head b{color:#075985}
+  .haos-v728-col-row{display:grid;grid-template-columns:minmax(180px,1fr) 170px minmax(180px,1fr) auto;gap:8px;align-items:end;border:1px solid rgba(148,163,184,.22);border-radius:16px;background:#fff;padding:10px;margin-bottom:8px}
+  .haos-v728-col-row .form-control,.haos-v728-col-row .form-select,.haos-v728-sample-grid .form-control{border-radius:12px}
+  .haos-v728-sample{border:1px dashed rgba(37,99,235,.30);border-radius:18px;background:linear-gradient(135deg,#eff6ff,#ecfeff);padding:12px;margin-top:12px}
+  .haos-v728-sample-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+  .haos-v728-field-chip{font-size:.74rem;color:#64748b}
+  @media(max-width:768px){.haos-v728-col-row{grid-template-columns:1fr}.haos-v728-col-row .btn{width:100%}}
+</style>
+<script id="haos-v70-28-workspace-builder-script">
+(function(){
+  const PATCH='v70.28-workspace-row-preserve-builder';
+  if(window.__HAOS_V728_WORKSPACE_BUILDER__)return;
+  window.__HAOS_V728_WORKSPACE_BUILDER__=true;
+  const $=id=>document.getElementById(id);
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const fieldTypes=[
+    ['text','ข้อความ'],
+    ['textarea','ข้อความยาว'],
+    ['dropdown','Dropdown'],
+    ['radio','Radio'],
+    ['checkbox','Checkbox'],
+    ['image','รูปภาพ']
+  ];
+  function parseSpec(spec){
+    const raw=String(spec||'').trim();
+    const dropdown=raw.match(/\[(?:dropdown|ดรอปดาวน์):\s*([^\]]+)\]/i);
+    const radio=raw.match(/\[(?:radio|ตัวเลือก):\s*([^\]]+)\]/i);
+    const checkbox=/\[(?:checkbox|check|ติ๊กถูก)\]/i.test(raw);
+    const image=/\[(?:image|รูปภาพ|แนบรูปภาพ)\]/i.test(raw)||/รูปภาพ|ภาพถ่าย|หลักฐานภาพ/i.test(raw);
+    const label=raw.replace(/\[(?:dropdown|ดรอปดาวน์|radio|ตัวเลือก):[^\]]+\]/ig,'').replace(/\[(?:image|รูปภาพ|แนบรูปภาพ|checkbox|check|ติ๊กถูก)\]/ig,'').trim();
+    if(dropdown)return {label:label||raw,type:'dropdown',options:dropdown[1].split(',').map(x=>x.trim()).filter(Boolean).join(', ')};
+    if(radio)return {label:label||raw,type:'radio',options:radio[1].split(',').map(x=>x.trim()).filter(Boolean).join(', ')};
+    if(checkbox)return {label:label||raw,type:'checkbox',options:''};
+    if(image)return {label:label||raw,type:'image',options:''};
+    return {label:label||raw,type:/รายละเอียด|หมายเหตุ|อธิบาย/i.test(raw)?'textarea':'text',options:''};
+  }
+  function specFrom(row){
+    const label=(row.querySelector('.ws-col-label-v728')?.value||'').trim();
+    const type=row.querySelector('.ws-col-type-v728')?.value||'text';
+    const opts=(row.querySelector('.ws-col-options-v728')?.value||'').split(',').map(x=>x.trim()).filter(Boolean).join(', ');
+    if(!label)return '';
+    if(type==='dropdown')return label+' [dropdown: '+(opts||'ตัวเลือก 1, ตัวเลือก 2')+']';
+    if(type==='radio')return label+' [ตัวเลือก: '+(opts||'ตัวเลือก 1, ตัวเลือก 2')+']';
+    if(type==='checkbox')return label+' [checkbox]';
+    if(type==='image')return label+' [รูปภาพ]';
+    return label;
+  }
+  function splitRowsText(value){
+    const text=String(value||'').trim();
+    if(!text)return [];
+    const lines=text.split(/\n+/).map(x=>x.trim()).filter(Boolean);
+    if(lines.length>1)return lines;
+    if(/\[(?:dropdown|ดรอปดาวน์|radio|ตัวเลือก):[^\]]*,[^\]]*\]/i.test(text))return [text];
+    return text.split(',').map(x=>x.trim()).filter(Boolean);
+  }
+  function parseDefaultRowsText(){
+    return String($('wsDefaultRows')?.value||'').split(/\n+/).map(line=>line.split('|').map(x=>x.trim())).filter(row=>row.some(Boolean));
+  }
+  function optionInputVisibility(row){
+    const type=row.querySelector('.ws-col-type-v728')?.value||'text';
+    const wrap=row.querySelector('.ws-col-options-wrap-v728');
+    if(wrap)wrap.style.display=(type==='dropdown'||type==='radio')?'block':'none';
+  }
+  function rowHtml(item,idx){
+    item=item||{label:'',type:'text',options:''};
+    return `<div class="haos-v728-col-row" data-ws-col-row>
+      <div><label class="small fw-bold text-muted">หัวคอลัมน์ / ช่องข้อมูล ${idx+1}</label><input class="form-control ws-col-label-v728" value="${esc(item.label)}" placeholder="เช่น วันที่, กิจกรรม, ผู้รับผิดชอบ" oninput="syncWorkspaceBuilderV728()"></div>
+      <div><label class="small fw-bold text-muted">ชนิดข้อมูล</label><select class="form-select ws-col-type-v728" onchange="syncWorkspaceBuilderV728();refreshWorkspaceSampleV728();">${fieldTypes.map(x=>`<option value="${x[0]}" ${item.type===x[0]?'selected':''}>${x[1]}</option>`).join('')}</select></div>
+      <div class="ws-col-options-wrap-v728"><label class="small fw-bold text-muted">ตัวเลือก</label><input class="form-control ws-col-options-v728" value="${esc(item.options)}" placeholder="คั่นด้วย , เช่น รอดำเนินการ, เสร็จสิ้น" oninput="syncWorkspaceBuilderV728()"><div class="haos-v728-field-chip mt-1">ใช้กับ Dropdown / Radio</div></div>
+      <div class="d-flex gap-1"><button type="button" class="btn btn-light border" onclick="moveWorkspaceColumnV728(this,-1)" title="ย้ายขึ้น"><i class="bi bi-arrow-up"></i></button><button type="button" class="btn btn-light border" onclick="moveWorkspaceColumnV728(this,1)" title="ย้ายลง"><i class="bi bi-arrow-down"></i></button><button type="button" class="btn btn-outline-danger" onclick="removeWorkspaceColumnV728(this)" title="ลบ"><i class="bi bi-trash"></i></button></div>
+    </div>`;
+  }
+  function valuesFromBuilder(){
+    return Array.from(document.querySelectorAll('[data-ws-col-row]')).map(row=>({
+      label:(row.querySelector('.ws-col-label-v728')?.value||'').trim(),
+      type:row.querySelector('.ws-col-type-v728')?.value||'text',
+      options:row.querySelector('.ws-col-options-v728')?.value||''
+    })).filter(x=>x.label);
+  }
+  function sampleValues(){
+    const existing=Array.from(document.querySelectorAll('.ws-sample-cell-v728')).map(x=>x.value||'');
+    const legacy=parseDefaultRowsText()[0]||[];
+    return existing.length?existing:legacy;
+  }
+  window.refreshWorkspaceSampleV728=function(){
+    const box=$('wsSampleRowV728');if(!box)return;
+    const cols=valuesFromBuilder();
+    const old=sampleValues();
+    box.innerHTML=cols.length?`<div class="haos-v728-sample"><div class="fw-bold text-primary mb-2"><i class="bi bi-layout-three-columns"></i> ค่าตั้งต้น / ตัวอย่างแถวแรก</div><div class="haos-v728-sample-grid">${cols.map((c,i)=>`<div><label class="small fw-bold text-muted">${esc(c.label)}</label><input class="form-control ws-sample-cell-v728" value="${esc(old[i]||'')}" placeholder="${c.type==='checkbox'?'เช่น ✓':(c.type==='image'?'วาง URL รูปภาพ':'ตัวอย่างข้อมูล')}" oninput="syncWorkspaceBuilderV728()"></div>`).join('')}</div><div class="small text-muted mt-2">เว้นว่างได้ หากไม่ต้องการสร้างตัวอย่างแถวแรก</div></div>`:'';
+    syncWorkspaceBuilderV728();
+  };
+  function renderBuilderFromTextareas(){
+    installWorkspaceBuilderV728();
+    const list=$('wsColumnListV728');if(!list)return;
+    const cols=splitRowsText($('wsCreateColumns')?.value||'').map(parseSpec);
+    list.innerHTML=(cols.length?cols:[{label:'หัวข้อ/เรื่อง',type:'text',options:''}]).map(rowHtml).join('');
+    list.querySelectorAll('[data-ws-col-row]').forEach(optionInputVisibility);
+    refreshWorkspaceSampleV728();
+  }
+  window.syncWorkspaceBuilderV728=function(){
+    const ta=$('wsCreateColumns');if(ta)ta.value=Array.from(document.querySelectorAll('[data-ws-col-row]')).map(specFrom).filter(Boolean).join('\n');
+    const def=$('wsDefaultRows');if(def){const vals=Array.from(document.querySelectorAll('.ws-sample-cell-v728')).map(x=>x.value.trim());def.value=vals.some(Boolean)?vals.join(' | '):'';}
+    document.querySelectorAll('[data-ws-col-row]').forEach(optionInputVisibility);
+  };
+  window.addWorkspaceColumnV728=function(kind){
+    const list=$('wsColumnListV728');if(!list)return;
+    const templates={
+      text:{label:'ช่องข้อความใหม่',type:'text',options:''},
+      textarea:{label:'รายละเอียดแบบยาว',type:'textarea',options:''},
+      dropdown:{label:'สถานะ',type:'dropdown',options:'รอดำเนินการ, กำลังดำเนินการ, เสร็จสิ้น'},
+      radio:{label:'ผลการพิจารณา',type:'radio',options:'ผ่าน, ไม่ผ่าน, รอตรวจสอบ'},
+      checkbox:{label:'ดำเนินการแล้ว',type:'checkbox',options:''},
+      image:{label:'แนบรูปภาพ',type:'image',options:''}
+    };
+    list.insertAdjacentHTML('beforeend',rowHtml(templates[kind]||templates.text,list.querySelectorAll('[data-ws-col-row]').length));
+    list.querySelectorAll('[data-ws-col-row]').forEach(optionInputVisibility);
+    refreshWorkspaceSampleV728();
+  };
+  window.removeWorkspaceColumnV728=function(btn){
+    const row=btn.closest('[data-ws-col-row]');if(row)row.remove();
+    refreshWorkspaceSampleV728();
+  };
+  window.moveWorkspaceColumnV728=function(btn,dir){
+    const row=btn.closest('[data-ws-col-row]');if(!row)return;
+    if(dir<0&&row.previousElementSibling)row.parentNode.insertBefore(row,row.previousElementSibling);
+    if(dir>0&&row.nextElementSibling)row.parentNode.insertBefore(row.nextElementSibling,row);
+    refreshWorkspaceSampleV728();
+  };
+  window.installWorkspaceBuilderV728=function(){
+    const ta=$('wsCreateColumns'), def=$('wsDefaultRows');if(!ta||$('wsBuilderV728'))return;
+    const colWrap=ta.closest('.mb-3'), defWrap=def?def.closest('.mb-3'):null;
+    if(colWrap)colWrap.classList.add('d-none');
+    if(defWrap)defWrap.classList.add('d-none');
+    const html=`<div id="wsBuilderV728" class="haos-v728-builder">
+      <div class="haos-v728-builder-head">
+        <div><b><i class="bi bi-columns-gap"></i> ออกแบบหัวคอลัมน์ / ช่องข้อมูล</b><div class="small text-muted">เพิ่มทีละช่อง เลือกชนิดข้อมูล และใส่ตัวอย่างแถวแรกได้เหมือนวาระ e-Meeting</div></div>
+        <div class="d-flex gap-2 flex-wrap">
+          <button type="button" class="btn btn-light btn-sm border" onclick="addWorkspaceColumnV728('text')"><i class="bi bi-fonts"></i> ข้อความ</button>
+          <button type="button" class="btn btn-light btn-sm border" onclick="addWorkspaceColumnV728('textarea')"><i class="bi bi-textarea-t"></i> ยาว</button>
+          <button type="button" class="btn btn-light btn-sm border" onclick="addWorkspaceColumnV728('dropdown')"><i class="bi bi-menu-button-wide"></i> Dropdown</button>
+          <button type="button" class="btn btn-light btn-sm border" onclick="addWorkspaceColumnV728('radio')"><i class="bi bi-record-circle"></i> Radio</button>
+          <button type="button" class="btn btn-light btn-sm border" onclick="addWorkspaceColumnV728('checkbox')"><i class="bi bi-check2-square"></i> Checkbox</button>
+          <button type="button" class="btn btn-light btn-sm border" onclick="addWorkspaceColumnV728('image')"><i class="bi bi-image"></i> รูปภาพ</button>
+        </div>
+      </div>
+      <div id="wsColumnListV728"></div>
+      <div id="wsSampleRowV728"></div>
+    </div>`;
+    if(colWrap)colWrap.insertAdjacentHTML('beforebegin',html);
+  };
+  const oldApply=window.applyWorkspaceTypeTemplate;
+  window.applyWorkspaceTypeTemplate=function(){const r=oldApply?oldApply.apply(this,arguments):undefined;setTimeout(renderBuilderFromTextareas,0);return r;};
+  const oldAi=window.applyWorkspaceAiData_;
+  window.applyWorkspaceAiData_=function(data){const r=oldAi?oldAi.apply(this,arguments):undefined;setTimeout(renderBuilderFromTextareas,0);return r;};
+  window.getWorkspaceCreatePayload=function(){
+    syncWorkspaceBuilderV728();
+    const title=$('wsCreateTitle')?.value.trim()||'';
+    const columns=splitRowsText($('wsCreateColumns')?.value||'');
+    const rows=parseDefaultRowsText();
+    return {
+      title,
+      description:$('wsCreateDescription')?.value.trim()||'',
+      columns,
+      rows,
+      scope:$('wsScope')?.value||'personal',
+      workspaceType:$('wsWorkspaceType')?.value||'table',
+      expiresAt:$('wsExpiresAt')?.value||'',
+      accessMode:$('wsAccessMode')?.value||'view',
+      requireLoginToEdit:$('wsRequireLogin')?.value==='true'
+    };
+  };
+  window.addWorkspaceRowApp=function(){
+    if(!currentWorkspace||!currentWorkspace.canManage)return Swal.fire('แจ้งเตือน','คุณไม่มีสิทธิ์แก้ไขพื้นที่นี้','warning');
+    currentWorkspace.rows=collectWorkspaceRowsApp();
+    currentWorkspace.rows.push(new Array((currentWorkspace.columns||[]).length).fill(''));
+    renderWorkspaceEditorTable();
+  };
+  window.addChecklistItemApp=function(){
+    if(!currentWorkspace||!currentWorkspace.canManage)return Swal.fire('แจ้งเตือน','คุณไม่มีสิทธิ์แก้ไขพื้นที่นี้','warning');
+    currentWorkspace.rows=collectWorkspaceRowsApp();
+    const cols=currentWorkspace.columns||[];
+    const row=new Array(cols.length).fill('');
+    const idxCheck=cols.findIndex(c=>String(c).includes('เสร็จ')||String(c).includes('ดำเนินการแล้ว'));
+    const idxNo=cols.findIndex(c=>String(c).includes('ลำดับ'));
+    const idxStatus=cols.findIndex(c=>String(c).includes('สถานะ'));
+    if(idxCheck>=0)row[idxCheck]='';
+    if(idxNo>=0)row[idxNo]=String(currentWorkspace.rows.length+1);
+    if(idxStatus>=0)row[idxStatus]='ยังไม่เริ่ม';
+    currentWorkspace.rows.push(row);
+    renderWorkspaceEditorTable();
+  };
+  function install(){installWorkspaceBuilderV728();renderBuilderFromTextareas();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
+  setTimeout(install,800);setTimeout(install,1800);
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
