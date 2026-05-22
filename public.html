@@ -66,7 +66,7 @@
     .public-footer-note { color:var(--ha-muted); font-size:.78rem; }
     @media (max-width:768px){ .card{margin:18px 8px;border-radius:22px;} .card-body{padding:20px!important;} }
     @media print{ body{background:#fff!important;} .card{box-shadow:none!important;border:0!important;margin:0!important;max-width:100%!important;} .card-footer,.btn{display:none!important;} }
-    .workspace-card{max-width:1180px;} .workspace-table-wrap{overflow:auto;border:1px solid #e2e8f0;border-radius:16px;background:white;} .workspace-table th{position:sticky;top:0;background:#f8fafc;z-index:1;white-space:nowrap;} .workspace-table td{min-width:150px;vertical-align:top;} .workspace-cell[contenteditable="true"]{outline:2px solid transparent;border-radius:6px;min-height:28px;padding:4px;} .workspace-cell[contenteditable="true"]:focus{outline-color:#0ea5e9;background:#eff6ff;} .workspace-toolbar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+    .workspace-card{max-width:1180px;} .workspace-table-wrap{overflow:auto;border:1px solid #e2e8f0;border-radius:16px;background:white;} .workspace-table th{position:sticky;top:0;background:#f8fafc;z-index:1;white-space:nowrap;} .workspace-table td{min-width:150px;vertical-align:top;} .workspace-cell[contenteditable="true"]{outline:2px solid transparent;border-radius:6px;min-height:28px;padding:4px;} .workspace-cell[contenteditable="true"]:focus{outline-color:#0ea5e9;background:#eff6ff;} .workspace-textarea{min-width:220px;resize:vertical;} .workspace-toolbar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
 
 
     .live-survey-shell .card{max-width:980px;}
@@ -281,14 +281,16 @@ body{background:radial-gradient(circle at 12% 10%,rgba(14,165,233,.20),transpare
       const raw = String(label || '').trim();
       const dropdown = raw.match(/\[(?:dropdown|ดรอปดาวน์):\s*([^\]]+)\]/i);
       const radio = raw.match(/\[(?:radio|ตัวเลือก):\s*([^\]]+)\]/i);
+      const textarea = /\[(?:textarea|longtext|ข้อความยาว|ยาว)\]/i.test(raw);
       const checkbox = /\[(?:checkbox|check|ติ๊กถูก)\]/i.test(raw);
       const image = /\[(?:image|รูปภาพ|แนบรูปภาพ)\]/i.test(raw) || /รูปภาพ|ภาพถ่าย|หลักฐานภาพ/i.test(raw);
       const cleanLabel = raw
         .replace(/\[(?:dropdown|ดรอปดาวน์|radio|ตัวเลือก):[^\]]+\]/ig, '')
-        .replace(/\[(?:image|รูปภาพ|แนบรูปภาพ|checkbox|check|ติ๊กถูก)\]/ig, '')
+        .replace(/\[(?:textarea|longtext|ข้อความยาว|ยาว|image|รูปภาพ|แนบรูปภาพ|checkbox|check|ติ๊กถูก)\]/ig, '')
         .trim();
       if (dropdown) return { label: cleanLabel, type: 'dropdown', options: dropdown[1].split(',').map(x=>x.trim()).filter(Boolean) };
       if (radio) return { label: cleanLabel, type: 'radio', options: radio[1].split(',').map(x=>x.trim()).filter(Boolean) };
+      if (textarea) return { label: cleanLabel, type: 'textarea', options: [] };
       if (checkbox) return { label: cleanLabel, type: 'checkbox', options: [] };
       if (image) return { label: cleanLabel, type: 'image', options: [] };
       return { label: cleanLabel || raw, type: 'text', options: [] };
@@ -333,6 +335,9 @@ body{background:radial-gradient(circle at 12% 10%,rgba(14,165,233,.20),transpare
         const safeName = 'pwsradio_'+r+'_'+i;
         return '<div class="d-flex gap-1 flex-wrap">'+field.options.map(o=>'<label class="btn btn-outline-primary btn-sm py-1 px-2 '+(String(value)===o?'active':'')+'"><input type="radio" class="workspace-radio me-1" name="'+safeName+'" data-r="'+r+'" data-c="'+i+'" value="'+escapeHtmlPublic(o)+'" '+(String(value)===o?'checked':'')+' '+(workspaceState.canEdit?'':'disabled')+'>'+escapeHtmlPublic(o)+'</label>').join('')+'</div>';
       }
+      if (field.type === 'textarea') {
+        return '<textarea class="form-control form-control-sm workspace-textarea" rows="3" data-r="'+r+'" data-c="'+i+'" '+(workspaceState.canEdit?'':'disabled')+'>'+escapeHtmlPublic(value||'')+'</textarea>';
+      }
       return '<div class="workspace-cell" '+(workspaceState.canEdit?'contenteditable="true"':'')+' data-r="'+r+'" data-c="'+i+'">'+escapeHtmlPublic(value||'')+'</div>';
     }
 
@@ -360,6 +365,7 @@ body{background:radial-gradient(circle at 12% 10%,rgba(14,165,233,.20),transpare
         else if (f.meta.type === 'radio') html += '<div class="d-flex gap-2 flex-wrap">'+opts.map(o=>'<label class="btn btn-outline-primary btn-sm"><input type="radio" class="workspace-form-field me-1" name="wsf_'+f.index+'" data-c="'+f.index+'" value="'+escapeHtmlPublic(o)+'">'+escapeHtmlPublic(o)+'</label>').join('')+'</div>';
         else if (f.meta.type === 'checkbox') html += '<div class="form-check"><input type="checkbox" class="form-check-input workspace-form-field" data-c="'+f.index+'" value="✓"><label class="form-check-label">ติ๊กเมื่อดำเนินการแล้ว</label></div>';
         else if (f.meta.type === 'image') html += '<input type="file" class="form-control workspace-form-file" data-c="'+f.index+'" accept="image/*"><small class="text-muted">รองรับการแนบรูปภาพ 1 รูปต่อช่อง</small>';
+        else if (f.meta.type === 'textarea') html += '<textarea class="form-control workspace-form-field" rows="3" data-c="'+f.index+'"></textarea>';
         else if (String(f.meta.label).includes('รายละเอียด') || String(f.meta.label).includes('หมายเหตุ')) html += '<textarea class="form-control workspace-form-field" rows="3" data-c="'+f.index+'"></textarea>';
         else html += '<input class="form-control workspace-form-field" data-c="'+f.index+'">';
         html += '</div>';
@@ -403,17 +409,28 @@ body{background:radial-gradient(circle at 12% 10%,rgba(14,165,233,.20),transpare
     }
 
     function collectWorkspaceRowsPublic(){
-      const rows = workspaceState.rows.map(r=>r.slice());
-      document.querySelectorAll('.workspace-cell').forEach(cell=>{ rows[Number(cell.dataset.r)][Number(cell.dataset.c)] = cell.innerText.trim(); });
-      document.querySelectorAll('.workspace-select').forEach(cell=>{ rows[Number(cell.dataset.r)][Number(cell.dataset.c)] = cell.value; });
-      document.querySelectorAll('.workspace-radio').forEach(cell=>{ if (cell.checked) rows[Number(cell.dataset.r)][Number(cell.dataset.c)] = cell.value; });
-      document.querySelectorAll('.workspace-check').forEach(cell=>{ rows[Number(cell.dataset.r)][Number(cell.dataset.c)] = cell.checked ? '✓' : ''; });
-      document.querySelectorAll('.workspace-image').forEach(cell=>{ rows[Number(cell.dataset.r)][Number(cell.dataset.c)] = cell.value || ''; });
+      const cols = workspaceState.columns || [];
+      const baseRows = Array.isArray(workspaceState.rows) ? workspaceState.rows : [];
+      const rows = baseRows.map(r=>Array.isArray(r) ? r.slice() : []);
+      const ensure = (r,c) => {
+        while (rows.length <= r) rows.push(new Array(cols.length).fill(''));
+        while (rows[r].length < cols.length) rows[r].push('');
+        if (c >= rows[r].length) rows[r][c] = '';
+        return rows[r];
+      };
+      document.querySelectorAll('.workspace-cell').forEach(cell=>{ const r=Number(cell.dataset.r), c=Number(cell.dataset.c); ensure(r,c)[c] = cell.innerText.trim(); });
+      document.querySelectorAll('.workspace-textarea').forEach(cell=>{ const r=Number(cell.dataset.r), c=Number(cell.dataset.c); ensure(r,c)[c] = cell.value.trim(); });
+      document.querySelectorAll('.workspace-select').forEach(cell=>{ const r=Number(cell.dataset.r), c=Number(cell.dataset.c); ensure(r,c)[c] = cell.value; });
+      document.querySelectorAll('.workspace-radio').forEach(cell=>{ if (cell.checked) { const r=Number(cell.dataset.r), c=Number(cell.dataset.c); ensure(r,c)[c] = cell.value; } });
+      document.querySelectorAll('.workspace-check').forEach(cell=>{ const r=Number(cell.dataset.r), c=Number(cell.dataset.c); ensure(r,c)[c] = cell.checked ? '✓' : ''; });
+      document.querySelectorAll('.workspace-image').forEach(cell=>{ const r=Number(cell.dataset.r), c=Number(cell.dataset.c); ensure(r,c)[c] = cell.value || ''; });
       return rows;
     }
 
     function addWorkspaceRowPublic(){
-      workspaceState.rows.push(new Array(workspaceState.columns.length).fill(''));
+      if (!workspaceState || !workspaceState.canEdit) return;
+      workspaceState.rows = collectWorkspaceRowsPublic();
+      workspaceState.rows.push(new Array((workspaceState.columns || []).length).fill(''));
       renderWorkspaceTablePublic();
     }
     function saveWorkspacePublic(){
