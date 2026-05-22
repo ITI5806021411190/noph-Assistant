@@ -5420,14 +5420,16 @@ function openWorkspaceCreateModal() {
       const raw = String(label || '').trim();
       const dropdown = raw.match(/\[(?:dropdown|ดรอปดาวน์):\s*([^\]]+)\]/i);
       const radio = raw.match(/\[(?:radio|ตัวเลือก):\s*([^\]]+)\]/i);
+      const textarea = /\[(?:textarea|longtext|ข้อความยาว|ยาว)\]/i.test(raw);
       const checkbox = /\[(?:checkbox|check|ติ๊กถูก)\]/i.test(raw);
       const image = /\[(?:image|รูปภาพ|แนบรูปภาพ)\]/i.test(raw) || /รูปภาพ|ภาพถ่าย|หลักฐานภาพ/i.test(raw);
       const cleanLabel = raw
         .replace(/\[(?:dropdown|ดรอปดาวน์|radio|ตัวเลือก):[^\]]+\]/ig, '')
-        .replace(/\[(?:image|รูปภาพ|แนบรูปภาพ|checkbox|check|ติ๊กถูก)\]/ig, '')
+        .replace(/\[(?:textarea|longtext|ข้อความยาว|ยาว|image|รูปภาพ|แนบรูปภาพ|checkbox|check|ติ๊กถูก)\]/ig, '')
         .trim();
       if (dropdown) return { label: cleanLabel, type:'dropdown', options: dropdown[1].split(',').map(x=>x.trim()).filter(Boolean) };
       if (radio) return { label: cleanLabel, type:'radio', options: radio[1].split(',').map(x=>x.trim()).filter(Boolean) };
+      if (textarea) return { label: cleanLabel, type:'textarea', options: [] };
       if (checkbox) return { label: cleanLabel, type:'checkbox', options: [] };
       if (image) return { label: cleanLabel, type:'image', options: [] };
       return { label: cleanLabel || raw, type:'text', options: [] };
@@ -5478,6 +5480,9 @@ function openWorkspaceCreateModal() {
         const img = url ? `<a href="${escapeHtml(url)}" target="_blank"><img src="${escapeHtml(url)}" style="max-width:90px;max-height:70px;border-radius:8px;border:1px solid #e2e8f0;"></a>` : '<span class="text-muted small">ยังไม่มีรูป</span>';
         return `<div class="workspace-image-box" style="min-width:160px;"><div class="workspace-image-preview mb-1">${img}</div><input type="hidden" class="workspace-image-cell" data-r="${r}" data-c="${i}" value="${escapeHtml(url)}">${can?`<input type="file" class="form-control form-control-sm" accept="image/*" onchange="uploadWorkspaceImageCellApp_(this)">`:''}</div>`;
       }
+      if (field.type === 'textarea') {
+        return `<textarea class="form-control form-control-sm workspace-textarea-cell" rows="3" data-r="${r}" data-c="${i}" style="min-width:220px;resize:vertical;" ${can?'':'disabled'}>${escapeHtml(value||'')}</textarea>`;
+      }
       return `<div contenteditable="${can ? 'true':'false'}" class="p-1 rounded workspace-app-cell" data-r="${r}" data-c="${i}" style="min-width:140px;min-height:28px;outline:1px solid transparent;">${escapeHtml(value||'')}</div>`;
     }
 
@@ -5495,6 +5500,7 @@ function openWorkspaceCreateModal() {
     function collectWorkspaceRowsApp() {
       const rows = (currentWorkspace.rows || []).map(r=>r.slice());
       document.querySelectorAll('.workspace-app-cell').forEach(cell=>{ rows[Number(cell.dataset.r)][Number(cell.dataset.c)] = cell.innerText.trim(); });
+      document.querySelectorAll('.workspace-textarea-cell').forEach(cell=>{ rows[Number(cell.dataset.r)][Number(cell.dataset.c)] = cell.value.trim(); });
       document.querySelectorAll('.workspace-select-cell').forEach(cell=>{ rows[Number(cell.dataset.r)][Number(cell.dataset.c)] = cell.value; });
       document.querySelectorAll('.workspace-radio-cell').forEach(cell=>{ if (cell.checked) rows[Number(cell.dataset.r)][Number(cell.dataset.c)] = cell.value; });
       document.querySelectorAll('.workspace-check-cell').forEach(cell=>{ rows[Number(cell.dataset.r)][Number(cell.dataset.c)] = cell.checked ? '✓' : ''; });
@@ -5504,12 +5510,14 @@ function openWorkspaceCreateModal() {
 
     function addWorkspaceRowApp() {
       if (!currentWorkspace || !currentWorkspace.canManage) return Swal.fire('แจ้งเตือน','คุณไม่มีสิทธิ์แก้ไขพื้นที่นี้','warning');
+      currentWorkspace.rows = collectWorkspaceRowsApp();
       currentWorkspace.rows.push(new Array((currentWorkspace.columns || []).length).fill(''));
       renderWorkspaceEditorTable();
     }
 
     function addChecklistItemApp() {
       if (!currentWorkspace || !currentWorkspace.canManage) return Swal.fire('แจ้งเตือน','คุณไม่มีสิทธิ์แก้ไขพื้นที่นี้','warning');
+      currentWorkspace.rows = collectWorkspaceRowsApp();
       const cols = currentWorkspace.columns || [];
       const row = new Array(cols.length).fill('');
       const idxCheck = cols.findIndex(c=>String(c).includes('เสร็จ'));
@@ -13246,11 +13254,13 @@ HAOS v68.6 FINISHING FIX
     const raw=String(spec||'').trim();
     const dropdown=raw.match(/\[(?:dropdown|ดรอปดาวน์):\s*([^\]]+)\]/i);
     const radio=raw.match(/\[(?:radio|ตัวเลือก):\s*([^\]]+)\]/i);
+    const textarea=/\[(?:textarea|longtext|ข้อความยาว|ยาว)\]/i.test(raw);
     const checkbox=/\[(?:checkbox|check|ติ๊กถูก)\]/i.test(raw);
     const image=/\[(?:image|รูปภาพ|แนบรูปภาพ)\]/i.test(raw)||/รูปภาพ|ภาพถ่าย|หลักฐานภาพ/i.test(raw);
-    const label=raw.replace(/\[(?:dropdown|ดรอปดาวน์|radio|ตัวเลือก):[^\]]+\]/ig,'').replace(/\[(?:image|รูปภาพ|แนบรูปภาพ|checkbox|check|ติ๊กถูก)\]/ig,'').trim();
+    const label=raw.replace(/\[(?:dropdown|ดรอปดาวน์|radio|ตัวเลือก):[^\]]+\]/ig,'').replace(/\[(?:textarea|longtext|ข้อความยาว|ยาว|image|รูปภาพ|แนบรูปภาพ|checkbox|check|ติ๊กถูก)\]/ig,'').trim();
     if(dropdown)return {label:label||raw,type:'dropdown',options:dropdown[1].split(',').map(x=>x.trim()).filter(Boolean).join(', ')};
     if(radio)return {label:label||raw,type:'radio',options:radio[1].split(',').map(x=>x.trim()).filter(Boolean).join(', ')};
+    if(textarea)return {label:label||raw,type:'textarea',options:''};
     if(checkbox)return {label:label||raw,type:'checkbox',options:''};
     if(image)return {label:label||raw,type:'image',options:''};
     return {label:label||raw,type:/รายละเอียด|หมายเหตุ|อธิบาย/i.test(raw)?'textarea':'text',options:''};
@@ -13262,6 +13272,7 @@ HAOS v68.6 FINISHING FIX
     if(!label)return '';
     if(type==='dropdown')return label+' [dropdown: '+(opts||'ตัวเลือก 1, ตัวเลือก 2')+']';
     if(type==='radio')return label+' [ตัวเลือก: '+(opts||'ตัวเลือก 1, ตัวเลือก 2')+']';
+    if(type==='textarea')return label+' [textarea]';
     if(type==='checkbox')return label+' [checkbox]';
     if(type==='image')return label+' [รูปภาพ]';
     return label;
