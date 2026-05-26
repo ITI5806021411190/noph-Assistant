@@ -13452,7 +13452,22 @@ HAOS v68.6 FINISHING FIX
   const gas=(fn,args)=>new Promise((resolve,reject)=>{try{google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run,args||[]);}catch(e){reject(e);}});
   function currentUser(){try{return window.user||user||{};}catch(e){return window.user||{};}}
   function setCurrentUser(data){window.user=data||null;try{user=data||null;}catch(e){}}
-  function activeProfiles(u){return (u&&Array.isArray(u.profiles)?u.profiles:[]).filter(p=>p&&p.isActive!==false&&String(p.isActive).toLowerCase()!=='false');}
+  function activeProfiles(u){
+    const seen=new Set();
+    return (u&&Array.isArray(u.profiles)?u.profiles:[]).filter(p=>{
+      if(!p||p.isActive===false||String(p.isActive).toLowerCase()==='false')return false;
+      const key=[
+        cleanPhone(p.phone||(u&&u.phone)||''),
+        String(p.department||'').replace(/^\d+\s*/,'').replace(/\s+/g,' ').trim().toLowerCase(),
+        String(p.position||'').replace(/\s+/g,' ').trim().toLowerCase(),
+        String(p.profileRole||'Member').trim().toLowerCase(),
+        bool(p.canApprove)?'approve':'no-approve'
+      ].join('|');
+      if(seen.has(key))return false;
+      seen.add(key);
+      return true;
+    });
+  }
   function roleLabel(role){
     role=String(role||'Member');
     const map={Member:'สมาชิก',Head:'หัวหน้ากลุ่มงาน','Acting Head':'รักษาการหัวหน้า',Coordinator:'ผู้ประสานงาน',User:'User',Admin:'Admin','Super Admin':'Super Admin'};
