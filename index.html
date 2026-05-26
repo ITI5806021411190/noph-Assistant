@@ -13427,5 +13427,393 @@ HAOS v68.6 FINISHING FIX
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<style id="haos-v70-29-user-profiles-style">
+  .haos-v729-switch-btn{border-radius:999px;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .haos-v729-profile-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;text-align:left}
+  .haos-v729-profile-card{display:block;border:1px solid #dbeafe;border-radius:16px;background:#fff;padding:14px;cursor:pointer;transition:.15s ease;min-height:132px}
+  .haos-v729-profile-card:hover{border-color:#38bdf8;box-shadow:0 12px 30px rgba(14,165,233,.12)}
+  .haos-v729-profile-card input{margin-right:8px}
+  .haos-v729-profile-card b{color:#075985}
+  .haos-v729-profile-meta{color:#64748b;font-size:.86rem;margin-top:4px}
+  .haos-v729-profile-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  .haos-v729-active-card{border:1px solid rgba(14,165,233,.28);border-radius:16px;background:linear-gradient(135deg,#eff6ff,#ecfeff);padding:12px;margin-bottom:14px}
+  .haos-v729-profile-table td,.haos-v729-profile-table th{vertical-align:middle}
+  .haos-v729-muted{color:#64748b;font-size:.82rem}
+</style>
+<script id="haos-v70-29-user-profiles-ui-script">
+(function(){
+  const PATCH='v70.29-user-profiles-ui';
+  if(window.__HAOS_V729_USER_PROFILES_UI__)return;
+  window.__HAOS_V729_USER_PROFILES_UI__=true;
+  const $=id=>document.getElementById(id);
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const cleanPhone=v=>String(v||'').replace(/'/g,'').replace(/\D/g,'');
+  const bool=v=>v===true||String(v).toLowerCase()==='true'||String(v)==='1';
+  const gas=(fn,args)=>new Promise((resolve,reject)=>{try{google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run,args||[]);}catch(e){reject(e);}});
+  function currentUser(){try{return window.user||user||{};}catch(e){return window.user||{};}}
+  function setCurrentUser(data){window.user=data||null;try{user=data||null;}catch(e){}}
+  function activeProfiles(u){return (u&&Array.isArray(u.profiles)?u.profiles:[]).filter(p=>p&&p.isActive!==false&&String(p.isActive).toLowerCase()!=='false');}
+  function roleLabel(role){
+    role=String(role||'Member');
+    const map={Member:'สมาชิก',Head:'หัวหน้ากลุ่มงาน','Acting Head':'รักษาการหัวหน้า',Coordinator:'ผู้ประสานงาน',User:'User',Admin:'Admin','Super Admin':'Super Admin'};
+    return map[role]||role;
+  }
+  function profileLabel(p){
+    if(!p)return 'เลือกโปรไฟล์';
+    const dept=String(p.department||'').replace(/^\d+\s*/,'');
+    return [dept||p.department||'-', p.position||''].filter(Boolean).join(' / ');
+  }
+  function accountRole(u){return String((u&&u.accountRole)||'')||String((u&&u.role)||'User');}
+  function isAccountAdmin(u){return /^(Admin|Super Admin)$/i.test(accountRole(u));}
+  function ensureDeptOption(select,value){
+    if(!select||!value)return;
+    if(!Array.from(select.options).some(o=>o.value===value)){
+      const opt=document.createElement('option');opt.value=value;opt.textContent=value;select.appendChild(opt);
+    }
+    select.value=value;
+  }
+  function deptValues(){
+    const seen=new Set(), out=[];
+    ['#regDepartment option','#profDept option','#addUDept option'].forEach(sel=>{
+      document.querySelectorAll(sel).forEach(o=>{const v=o.value||o.textContent;if(v&&!seen.has(v)){seen.add(v);out.push(v);}});
+    });
+    return out;
+  }
+  function deptDatalistHtml(current){
+    const vals=deptValues();
+    if(current&&!vals.includes(current))vals.push(current);
+    return '<datalist id="haosProfileDeptListV729">'+vals.map(v=>`<option value="${esc(v)}"></option>`).join('')+'</datalist>';
+  }
+  function profileBadgeHtml(p){
+    const badges=[];
+    if(bool(p.isPrimary))badges.push('<span class="badge bg-success">โปรไฟล์หลัก</span>');
+    if(bool(p.canApprove))badges.push('<span class="badge bg-warning text-dark">อนุมัติได้</span>');
+    badges.push(`<span class="badge bg-primary">${esc(roleLabel(p.profileRole))}</span>`);
+    if(!bool(p.isActive))badges.push('<span class="badge bg-secondary">ปิดใช้งาน</span>');
+    return badges.join(' ');
+  }
+  function decoratePayload(data){
+    if(!data||typeof data!=='object')return data;
+    const u=currentUser(), p=u.activeProfile||{};
+    data.activeProfileId=u.activeProfileId||p.profileId||data.activeProfileId||'';
+    data.profileId=data.profileId||data.activeProfileId||'';
+    data.profileRole=p.profileRole||u.profileRole||data.profileRole||'';
+    data.accountRole=u.accountRole||data.accountRole||'';
+    data.effectiveRole=u.role||data.effectiveRole||'';
+    if(data.department!==undefined)data.department=p.department||u.department||data.department||'';
+    if(data.ownerDepartment!==undefined)data.ownerDepartment=p.department||u.department||data.ownerDepartment||'';
+    data.activeProfileSummary=profileLabel(p);
+    return data;
+  }
+  window.haosDecorateActiveProfileV729=decoratePayload;
+  function syncUserChrome(){
+    const u=currentUser();if(!u)return;
+    const p=u.activeProfile||{};
+    if($('userName'))$('userName').innerText=u.fullName||u.name||'';
+    if($('userDeptDisplay'))$('userDeptDisplay').innerText=(u.department||'-')+(u.role&&u.role!=='User'?' ('+u.role+')':'');
+    if(typeof updateDashboardHeader==='function')updateDashboardHeader();
+    const admin=$('adminPanel');
+    if(admin){
+      admin.classList.toggle('d-none',!isAccountAdmin(u));
+      if(isAccountAdmin(u))setTimeout(()=>{try{restoreAdminPanelState_&&restoreAdminPanelState_();}catch(e){}},50);
+    }
+    ensureSwitcher();
+    const btn=$('profileSwitchBtnV729'), text=$('profileSwitchTextV729');
+    const list=activeProfiles(u);
+    if(btn){
+      btn.classList.toggle('d-none',list.length<=1);
+      btn.title='สลับโปรไฟล์การทำงาน';
+    }
+    if(text)text.textContent=profileLabel(p);
+  }
+  function finishLogin(userData){
+    setCurrentUser(userData);
+    syncUserChrome();
+    if(typeof initDashboard==='function')initDashboard();
+    if(typeof showSection==='function')showSection('appSection');
+    syncUserChrome();
+    setTimeout(()=>{try{openProgramGuide(false);}catch(e){}},650);
+    if(typeof syncOverviewCards==='function')syncOverviewCards();
+  }
+  function profileChoiceHtml(profiles,activeId){
+    return `<div class="haos-v729-profile-grid">${profiles.map(p=>`
+      <label class="haos-v729-profile-card">
+        <div><input type="radio" name="haosActiveProfileV729" value="${esc(p.profileId)}" ${String(p.profileId)===String(activeId)?'checked':''}><b>${esc(profileLabel(p))}</b></div>
+        <div class="haos-v729-profile-meta">${esc(p.department||'-')}</div>
+        <div class="haos-v729-profile-meta">${esc(roleLabel(p.profileRole))} · ${esc(p.effectiveRole||'User')}</div>
+        <div class="haos-v729-profile-badges">${profileBadgeHtml(p)}</div>
+      </label>`).join('')}</div>`;
+  }
+  async function chooseProfile(userData,required){
+    const profiles=activeProfiles(userData);
+    if(profiles.length<=1)return userData;
+    const activeId=userData.activeProfileId||(userData.activeProfile&&userData.activeProfile.profileId)||profiles[0].profileId;
+    const r=await Swal.fire({
+      title:'เลือกโปรไฟล์ที่ใช้งาน',
+      width:900,
+      html:profileChoiceHtml(profiles,activeId),
+      allowOutsideClick:!required,
+      showCancelButton:!required,
+      confirmButtonText:required?'เข้าใช้งาน':'สลับโปรไฟล์',
+      cancelButtonText:'ยกเลิก',
+      preConfirm:async()=>{
+        const selected=document.querySelector('input[name="haosActiveProfileV729"]:checked')?.value;
+        if(!selected){Swal.showValidationMessage('กรุณาเลือกโปรไฟล์');return false;}
+        if(String(selected)===String(activeId))return userData;
+        const res=await gas('setActiveUserProfileV729',[userData.phone,selected]);
+        if(!res||!res.success){Swal.showValidationMessage(res&&res.message?res.message:'สลับโปรไฟล์ไม่สำเร็จ');return false;}
+        return res.userData||userData;
+      }
+    });
+    return r.isConfirmed&&r.value?r.value:userData;
+  }
+  window.handleLogin=function(){
+    const p=$('loginPhone')?.value||'', pin=$('loginPin')?.value||'';
+    const btn=$('btnLogin'), spinner=$('loginSpinner');
+    if(btn)btn.disabled=true;if(spinner)spinner.classList.remove('d-none');
+    google.script.run.withSuccessHandler(async res=>{
+      if(btn)btn.disabled=false;if(spinner)spinner.classList.add('d-none');
+      if(!res||!res.success)return Swal.fire({icon:'error',title:'เข้าสู่ระบบไม่สำเร็จ',text:(res&&res.message)||'ข้อมูลไม่ถูกต้อง'});
+      try{
+        const selected=await chooseProfile(res.userData,true);
+        finishLogin(selected);
+      }catch(e){
+        Swal.fire('ผิดพลาด',e.message||String(e),'error');
+      }
+    }).withFailureHandler(err=>{
+      if(btn)btn.disabled=false;if(spinner)spinner.classList.add('d-none');
+      Swal.fire('ผิดพลาด',err&&err.message?err.message:String(err),'error');
+    }).loginAccount(p,pin);
+  };
+  function ensureSwitcher(){
+    if($('profileSwitchBtnV729'))return;
+    const profileBtn=document.querySelector('#topNav button[onclick="openProfileModal()"]');
+    if(!profileBtn)return;
+    profileBtn.insertAdjacentHTML('beforebegin','<button id="profileSwitchBtnV729" class="btn btn-outline-light btn-sm fw-bold me-2 haos-v729-switch-btn d-none" onclick="openProfileSwitchV729()" title="สลับโปรไฟล์"><i class="bi bi-person-vcard"></i> <span id="profileSwitchTextV729">โปรไฟล์</span></button>');
+  }
+  window.openProfileSwitchV729=async function(){
+    const u=currentUser();if(!u.phone)return;
+    let data=u;
+    try{
+      const fresh=await gas('getMyUserProfilesV729',[u.phone]);
+      if(fresh&&fresh.success){
+        data=Object.assign({},u,{profiles:fresh.profiles||u.profiles||[],activeProfile:fresh.activeProfile||u.activeProfile,activeProfileId:fresh.activeProfileId||u.activeProfileId});
+      }
+      const selected=await chooseProfile(data,false);
+      setCurrentUser(selected);
+      syncUserChrome();
+      if(typeof initDashboard==='function')initDashboard();
+      if(typeof syncOverviewCards==='function')syncOverviewCards();
+    }catch(e){Swal.fire('สลับโปรไฟล์ไม่สำเร็จ',e.message||String(e),'error');}
+  };
+  const oldOpenProfile=window.openProfileModal;
+  window.openProfileModal=function(){
+    const r=oldOpenProfile?oldOpenProfile.apply(this,arguments):undefined;
+    setTimeout(()=>{
+      const u=currentUser(), p=u.activeProfile||{};
+      ensureDeptOption($('profDept'),u.department||p.department||'');
+      if($('profPosition'))$('profPosition').value=u.position||p.position||'';
+      if($('profEmail'))$('profEmail').value=u.email||'';
+      const body=document.querySelector('#profileModal .modal-body');
+      if(body&&!$('haosActiveProfileCardV729')){
+        body.insertAdjacentHTML('afterbegin','<div id="haosActiveProfileCardV729" class="haos-v729-active-card"><div class="fw-bold text-primary"><i class="bi bi-person-vcard"></i> โปรไฟล์ที่ใช้งานอยู่</div><div id="haosActiveProfileTextV729" class="small text-muted"></div></div>');
+      }
+      if($('haosActiveProfileTextV729'))$('haosActiveProfileTextV729').innerHTML=`${esc(profileLabel(p))}<br><span class="haos-v729-muted">${esc(roleLabel(p.profileRole||u.profileRole||'Member'))} · ${esc(u.role||'User')}</span>`;
+    },260);
+    return r;
+  };
+  window.handleUpdateProfile=function(){
+    const btn=$('btnSaveProfile');if(btn){btn.disabled=true;btn.innerText='กำลังบันทึก...';}
+    const mode=document.querySelector('input[name="emailModeV718"]:checked')?.value||($('profEmailNotif')?.checked?'all':'none');
+    const cats=Array.from(document.querySelectorAll('.emailCatV718:checked')).map(x=>x.value);
+    const prefs={mode,categories:mode==='none'?[]:cats};
+    const data=decoratePayload({phone:currentUser().phone,position:$('profPosition')?.value||'',department:$('profDept')?.value||'',email:$('profEmail')?.value||'',emailNotify:mode==='none'?'Off':'On',emailNotifyPreferences:prefs});
+    google.script.run.withSuccessHandler(res=>{
+      if(btn){btn.disabled=false;btn.innerText='บันทึกข้อมูล';}
+      if(!res||!res.success)return Swal.fire('บันทึกไม่สำเร็จ',(res&&res.message)||'เกิดข้อผิดพลาด','error');
+      const u=currentUser();u.position=data.position;u.department=data.department;u.email=data.email;u.emailNotify=data.emailNotify;u.emailNotifyPreferences=JSON.stringify(prefs);
+      if(u.activeProfile){u.activeProfile.position=data.position;u.activeProfile.department=data.department;u.activeProfile.notifyEmail=data.email;}
+      if(Array.isArray(u.profiles))u.profiles.forEach(p=>{if(String(p.profileId)===String(u.activeProfileId)){p.position=data.position;p.department=data.department;p.notifyEmail=data.email;}});
+      setCurrentUser(u);syncUserChrome();try{profileModalObj.hide();}catch(e){}
+      Swal.fire('สำเร็จ',res.message,'success');
+    }).withFailureHandler(err=>{
+      if(btn){btn.disabled=false;btn.innerText='บันทึกข้อมูล';}
+      Swal.fire('บันทึกไม่สำเร็จ',err&&err.message?err.message:String(err),'error');
+    }).updateUserProfile(data);
+  };
+  const oldSubmitReport=window.submitReportData;
+  if(typeof oldSubmitReport==='function')window.submitReportData=function(data,btn){decoratePayload(data);return oldSubmitReport.call(this,data,btn);};
+  const oldSubmitSchedule=window.submitScheduleData;
+  if(typeof oldSubmitSchedule==='function')window.submitScheduleData=function(data,btn){decoratePayload(data);return oldSubmitSchedule.call(this,data,btn);};
+  if(typeof window.gasRunPromise_==='function'&&!window.gasRunPromise_.__haosV729Wrapped){
+    const oldGas=window.gasRunPromise_;
+    const wrapped=function(fn,args){
+      const next=Array.isArray(args)?args.slice():[];
+      if(['saveITBooking','saveMeetingMinutesV2','createSharedWorkspace','createLiveOpinionSurvey'].includes(fn)&&next[0]&&typeof next[0]==='object')decoratePayload(next[0]);
+      if(fn==='saveEMeetingV714'){if(next[0]&&typeof next[0]==='object')decoratePayload(next[0]);if(next[1]&&typeof next[1]==='object')decoratePayload(next[1]);}
+      if(['saveEMeetingAgendaV714','saveEMeetingParticipantsV714','saveEMeetingMinuteDecisionV714','setEMeetingLiveStateV714','saveEMeetingDocumentV715'].includes(fn)&&next[2]&&typeof next[2]==='object')decoratePayload(next[2]);
+      return oldGas(fn,next);
+    };
+    wrapped.__haosV729Wrapped=true;window.gasRunPromise_=wrapped;
+  }
+  function pinDisplay(u){
+    const id='pin-v729-'+cleanPhone(u.phone);
+    return `<div class="input-group input-group-sm" style="width:112px"><input type="password" class="form-control bg-white text-center px-1" value="${esc(u.pin||'')}" id="${id}" readonly><button class="btn btn-outline-secondary px-2" type="button" onclick="window.togglePinVisibilityV727&&window.togglePinVisibilityV727('${id}',this)" title="แสดง/ซ่อน PIN"><i class="bi bi-eye"></i></button></div>`;
+  }
+  function statusBadge(status){
+    status=status||'Active';
+    if(status==='Pending')return '<span class="badge bg-warning text-dark">รออนุมัติ</span>';
+    if(status==='Rejected')return '<span class="badge bg-secondary">ไม่อนุมัติ</span>';
+    if(status==='Inactive')return '<span class="badge bg-danger">ปิดใช้งาน</span>';
+    return '<span class="badge bg-success">ใช้งาน</span>';
+  }
+  function roleSelect(u){
+    if(cleanPhone(u.phone)==='0868246621')return '<span class="badge bg-danger">Master Admin</span>';
+    const legacyHead=u.role==='Head'?'<option value="Head" selected>Head (legacy)</option>':'';
+    return `<select class="form-select form-select-sm border-primary" onchange="changeUserRole('${esc(u.phone)}', this.value)">
+      <option value="User" ${u.role==='User'?'selected':''}>User</option>
+      ${legacyHead}
+      <option value="Admin" ${u.role==='Admin'?'selected':''}>Admin</option>
+      <option value="Super Admin" ${u.role==='Super Admin'?'selected':''}>Super Admin</option>
+    </select>`;
+  }
+  function normalizeAccountRoleControls(){
+    const sel=$('addURole');if(!sel)return;
+    Array.from(sel.options).forEach(o=>{if(o.value==='Head')o.remove();});
+    if(!Array.from(sel.options).some(o=>o.value==='Admin')){
+      const opt=document.createElement('option');opt.value='Admin';opt.textContent='Admin';sel.insertBefore(opt,sel.querySelector('option[value="Super Admin"]'));
+    }
+  }
+  function actionButtons(u){
+    const profileBtn=`<button class="btn btn-outline-info" onclick="openUserProfilesV729('${esc(u.phone)}')" title="โปรไฟล์งาน"><i class="bi bi-person-vcard"></i></button>`;
+    if(cleanPhone(u.phone)==='0868246621')return `<div class="btn-group btn-group-sm">${profileBtn}${accountRole(currentUser())==='Super Admin'?`<button class="btn btn-outline-primary" onclick="openSuperAdminEditUserV719('${esc(u.phone)}')" title="แก้ไขบัญชี"><i class="bi bi-pencil-square"></i></button>`:''}</div> <span class="badge bg-danger">Master</span>`;
+    const pending=u.accountStatus==='Pending';
+    return `<div class="btn-group btn-group-sm">
+      ${profileBtn}
+      ${accountRole(currentUser())==='Super Admin'?`<button class="btn btn-outline-primary" onclick="openSuperAdminEditUserV719('${esc(u.phone)}')" title="แก้ไขบัญชี"><i class="bi bi-pencil-square"></i></button>`:''}
+      ${pending?`<button class="btn btn-success" onclick="approveUserV718('${esc(u.phone)}')" title="อนุมัติ"><i class="bi bi-check2"></i></button><button class="btn btn-outline-danger" onclick="rejectUserV718('${esc(u.phone)}')" title="ไม่อนุมัติ"><i class="bi bi-x-lg"></i></button>`:''}
+      <button class="btn btn-outline-secondary" onclick="resetPin('${esc(u.phone)}')" title="รีเซ็ต PIN"><i class="bi bi-key"></i></button>
+      <button class="btn btn-outline-warning" onclick="toggleUserActive('${esc(u.phone)}','${(u.accountStatus||'Active')==='Inactive'?'Active':'Inactive'}')" title="เปิด/ปิดบัญชี"><i class="bi bi-power"></i></button>
+      <button class="btn btn-outline-danger" onclick="removeUser('${esc(u.phone)}')" title="ลบบัญชี"><i class="bi bi-trash"></i></button>
+    </div>`;
+  }
+  window.loadAdminUsersList=function(){
+    const tbody=$('userManageTable');if(!tbody)return;
+    tbody.innerHTML='<tr><td colspan="9" class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm"></span> กำลังโหลดรายชื่อ...</td></tr>';
+    google.script.run.withSuccessHandler(res=>{
+      if(!res||!res.success){tbody.innerHTML=`<tr><td colspan="9" class="text-center py-4 text-danger">${esc(res&&res.message?res.message:'โหลดไม่สำเร็จ')}</td></tr>`;return;}
+      window.haosAdminUsersCacheV719=res.data||[];
+      tbody.innerHTML=window.haosAdminUsersCacheV719.map(u=>`<tr class="${u.accountStatus==='Pending'?'haos-v718-pending-row':''}">
+        <td class="ps-3 fw-bold text-dark">${esc(u.name||'-')}${u.accountStatus==='Pending'?'<div class="small text-warning fw-bold"><i class="bi bi-hourglass-split"></i> รอ Admin / Super Admin อนุมัติ</div>':''}</td>
+        <td>${esc(u.phone||'')}</td><td>${pinDisplay(u)}</td><td><small>${esc(u.position||'')}</small></td><td><small>${esc(u.department||'')}</small></td>
+        <td>${roleSelect(u)}</td><td>${statusBadge(u.accountStatus)}</td><td><small class="text-muted">${esc(u.lastLogin||'-')}</small></td><td class="pe-3 text-center">${actionButtons(u)}</td>
+      </tr>`).join('');
+      try{installPinRequestAdminV727&&installPinRequestAdminV727();}catch(e){}
+    }).getAdminUsersData();
+  };
+  function pauseUserModalFocus(){
+    try{const el=$('userManageModal'), inst=bootstrap.Modal.getInstance(el);if(inst&&inst._focustrap)inst._focustrap.deactivate();}catch(e){}
+  }
+  function resumeUserModalFocus(){
+    try{const el=$('userManageModal'), inst=bootstrap.Modal.getInstance(el);if(el&&el.classList.contains('show')&&inst&&inst._focustrap)inst._focustrap.activate();}catch(e){}
+  }
+  function managerHtml(data){
+    const profiles=data.profiles||[];
+    const rows=profiles.map(p=>{
+      const active=bool(p.isActive);
+      return `<tr>
+        <td><b>${esc(profileLabel(p))}</b><div class="haos-v729-muted">${esc(p.profileId||'')}</div></td>
+        <td>${esc(p.department||'-')}</td>
+        <td>${esc(roleLabel(p.profileRole))}<div class="haos-v729-muted">${esc(p.effectiveRole||'User')}</div></td>
+        <td>${profileBadgeHtml(p)}</td>
+        <td class="text-end">
+          <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-primary" onclick="openUserProfileEditorV729('${esc(p.profileId)}')" title="แก้ไข"><i class="bi bi-pencil-square"></i></button>
+            ${active&&!bool(p.isPrimary)?`<button class="btn btn-outline-success" onclick="setPrimaryUserProfileV729('${esc(p.profileId)}')" title="ตั้งเป็นโปรไฟล์หลัก"><i class="bi bi-star"></i></button>`:''}
+            <button class="btn ${active?'btn-outline-warning':'btn-outline-success'}" onclick="toggleUserProfileActiveV729('${esc(p.profileId)}',${active?'false':'true'})" title="${active?'ปิดใช้งาน':'เปิดใช้งาน'}"><i class="bi bi-power"></i></button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('')||'<tr><td colspan="5" class="text-center text-muted py-4">ยังไม่มีโปรไฟล์</td></tr>';
+    return `<div class="text-start">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div><b>${esc(data.user?.fullName||data.user?.name||'-')}</b><div class="haos-v729-muted">${esc(data.user?.phone||data.targetPhone||'')}</div></div>
+        <button class="btn btn-primary btn-sm fw-bold" onclick="openUserProfileEditorV729('')"><i class="bi bi-plus-circle"></i> เพิ่มโปรไฟล์</button>
+      </div>
+      <div class="table-responsive"><table class="table table-hover align-middle haos-v729-profile-table"><thead class="table-light"><tr><th>โปรไฟล์</th><th>กลุ่มงาน</th><th>บทบาท</th><th>สถานะ</th><th class="text-end">จัดการ</th></tr></thead><tbody>${rows}</tbody></table></div>
+    </div>`;
+  }
+  window.openUserProfilesV729=async function(phone){
+    const admin=currentUser();if(!admin.phone)return;
+    pauseUserModalFocus();
+    Swal.fire({title:'กำลังโหลดโปรไฟล์...',allowOutsideClick:false,didOpen:()=>Swal.showLoading(),willClose:()=>setTimeout(resumeUserModalFocus,120)});
+    try{
+      const res=await gas('getUserProfilesForAdminV729',[phone,admin.phone]);
+      if(!res||!res.success)throw new Error(res&&res.message?res.message:'โหลดโปรไฟล์ไม่สำเร็จ');
+      window.haosV729ProfileAdminCache=Object.assign({targetPhone:phone},res);
+      Swal.fire({title:'โปรไฟล์การทำงาน',width:1080,html:managerHtml(window.haosV729ProfileAdminCache),showConfirmButton:false,showCloseButton:true,willClose:()=>setTimeout(resumeUserModalFocus,120)});
+    }catch(e){Swal.fire('โหลดโปรไฟล์ไม่สำเร็จ',e.message||String(e),'error').then(()=>resumeUserModalFocus());}
+  };
+  window.haosV729RoleChanged=function(){
+    const role=$('profileRoleV729')?.value||'Member';
+    const cb=$('profileCanApproveV729');
+    if(cb&&(role==='Head'||role==='Acting Head'))cb.checked=true;
+  };
+  window.openUserProfileEditorV729=async function(profileId){
+    const cache=window.haosV729ProfileAdminCache||{};const p=(cache.profiles||[]).find(x=>String(x.profileId)===String(profileId))||{};
+    const isNew=!profileId;
+    const role=p.profileRole||'Member';
+    const html=`<div class="text-start">
+      <label class="small fw-bold">ชื่อโปรไฟล์ / กลุ่มงาน</label>
+      <input id="profileDeptV729" class="form-control mb-2" list="haosProfileDeptListV729" value="${esc(p.department||cache.user?.department||'')}" placeholder="เลือกหรือพิมพ์กลุ่มงาน">${deptDatalistHtml(p.department||cache.user?.department||'')}
+      <label class="small fw-bold">ตำแหน่งในกลุ่มงานนี้</label>
+      <input id="profilePositionV729" class="form-control mb-2" value="${esc(p.position||cache.user?.position||'')}">
+      <div class="row g-2 mb-2">
+        <div class="col-md-6"><label class="small fw-bold">บทบาทในโปรไฟล์</label><select id="profileRoleV729" class="form-select" onchange="haosV729RoleChanged()">
+          ${['Member','Head','Acting Head','Coordinator'].map(r=>`<option value="${r}" ${role===r?'selected':''}>${esc(roleLabel(r))}</option>`).join('')}
+        </select></div>
+        <div class="col-md-6"><label class="small fw-bold">อีเมลแจ้งเตือน</label><input id="profileNotifyEmailV729" type="email" class="form-control" value="${esc(p.notifyEmail||cache.user?.email||'')}"></div>
+      </div>
+      <label class="small fw-bold">Telegram Chat ID</label><input id="profileNotifyTelegramV729" class="form-control mb-2" value="${esc(p.notifyTelegram||'')}">
+      <div class="d-flex flex-wrap gap-3 mb-2">
+        <label class="fw-bold"><input id="profilePrimaryV729" type="checkbox" ${bool(p.isPrimary)||isNew?'checked':''}> โปรไฟล์หลัก</label>
+        <label class="fw-bold"><input id="profileActiveV729" type="checkbox" ${p.isActive===undefined||bool(p.isActive)?'checked':''}> เปิดใช้งาน</label>
+        <label class="fw-bold"><input id="profileCanApproveV729" type="checkbox" ${bool(p.canApprove)||role==='Head'||role==='Acting Head'?'checked':''}> อนุมัติในนามกลุ่มงานได้</label>
+      </div>
+      <label class="small fw-bold">หมายเหตุ</label><textarea id="profileNotesV729" class="form-control" rows="2">${esc(p.notes||'')}</textarea>
+    </div>`;
+    const r=await Swal.fire({title:isNew?'เพิ่มโปรไฟล์':'แก้ไขโปรไฟล์',width:760,html,showCancelButton:true,confirmButtonText:'บันทึก',cancelButtonText:'ยกเลิก',didOpen:()=>setTimeout(()=>$('profileDeptV729')?.focus(),80),preConfirm:async()=>{
+      const payload={profileId:profileId||'',department:$('profileDeptV729').value.trim(),position:$('profilePositionV729').value.trim(),profileRole:$('profileRoleV729').value,isPrimary:$('profilePrimaryV729').checked,isActive:$('profileActiveV729').checked,canApprove:$('profileCanApproveV729').checked,notifyEmail:$('profileNotifyEmailV729').value.trim(),notifyTelegram:$('profileNotifyTelegramV729').value.trim(),notes:$('profileNotesV729').value.trim()};
+      if(!payload.department){Swal.showValidationMessage('กรุณาระบุกลุ่มงาน');return false;}
+      if(!payload.position){Swal.showValidationMessage('กรุณาระบุตำแหน่ง');return false;}
+      const res=await gas('saveUserProfileV729',[currentUser().phone,cache.targetPhone,payload]);
+      if(!res||!res.success){Swal.showValidationMessage(res&&res.message?res.message:'บันทึกไม่สำเร็จ');return false;}
+      return res;
+    }});
+    if(r.isConfirmed){Swal.fire({icon:'success',title:'บันทึกแล้ว',timer:1000,showConfirmButton:false});setTimeout(()=>openUserProfilesV729(cache.targetPhone),450);}
+  };
+  window.setPrimaryUserProfileV729=async function(profileId){
+    const cache=window.haosV729ProfileAdminCache||{};const p=(cache.profiles||[]).find(x=>String(x.profileId)===String(profileId));if(!p)return;
+    const payload=Object.assign({},p,{isPrimary:true,isActive:true});
+    const res=await gas('saveUserProfileV729',[currentUser().phone,cache.targetPhone,payload]);
+    if(res&&res.success){Swal.fire({icon:'success',title:'ตั้งเป็นโปรไฟล์หลักแล้ว',timer:900,showConfirmButton:false});setTimeout(()=>openUserProfilesV729(cache.targetPhone),350);}
+    else Swal.fire('ไม่สำเร็จ',res&&res.message?res.message:'บันทึกไม่สำเร็จ','error');
+  };
+  window.toggleUserProfileActiveV729=async function(profileId,nextActive){
+    const cache=window.haosV729ProfileAdminCache||{};
+    const ok=nextActive?{isConfirmed:true}:await Swal.fire({title:'ปิดใช้งานโปรไฟล์นี้?',icon:'warning',showCancelButton:true,confirmButtonText:'ปิดใช้งาน',cancelButtonText:'ยกเลิก'});
+    if(!ok.isConfirmed)return;
+    const res=await gas('setUserProfileActiveV729',[currentUser().phone,cache.targetPhone,profileId,!!nextActive]);
+    if(res&&res.success){Swal.fire({icon:'success',title:'บันทึกแล้ว',text:res.message,timer:1000,showConfirmButton:false});setTimeout(()=>openUserProfilesV729(cache.targetPhone),350);}
+    else Swal.fire('ไม่สำเร็จ',res&&res.message?res.message:'บันทึกไม่สำเร็จ','error');
+  };
+  const oldOpenUserManagement=window.openUserManagement;
+  window.openUserManagement=function(){const r=oldOpenUserManagement?oldOpenUserManagement.apply(this,arguments):undefined;setTimeout(()=>{normalizeAccountRoleControls();try{loadAdminUsersList();}catch(e){}},180);return r;};
+  function install(){ensureSwitcher();normalizeAccountRoleControls();syncUserChrome();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
+  setTimeout(install,800);setTimeout(install,1800);
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
