@@ -13830,5 +13830,134 @@ HAOS v68.6 FINISHING FIX
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<style id="haos-v70-30-db-repair-style">
+  .haos-v730-repair-options{display:grid;gap:10px;margin-top:8px}
+  .haos-v730-repair-options label{display:flex;gap:10px;align-items:flex-start;border:1px solid rgba(148,163,184,.35);border-radius:10px;padding:10px;background:#fff}
+  .haos-v730-repair-options input{margin-top:4px}
+  .haos-v730-repair-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+  .haos-v730-repair-summary .metric{border:1px solid rgba(14,165,233,.25);border-radius:10px;background:#f8fafc;padding:10px}
+  .haos-v730-repair-summary b{display:block;font-size:1.35rem;color:#075985}
+  .haos-v730-repair-table{max-height:360px;overflow:auto;border:1px solid rgba(148,163,184,.3);border-radius:10px}
+  .haos-v730-repair-table table{margin-bottom:0}
+</style>
+<script id="haos-v70-30-db-repair-ui-script">
+(function(){
+  const PATCH='v70.30-db-repair-ui';
+  if(window.__HAOS_V730_DB_REPAIR_UI__)return;
+  window.__HAOS_V730_DB_REPAIR_UI__=true;
+  const $=id=>document.getElementById(id);
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const currentUser=()=>{try{return window.user||user||{};}catch(e){return window.user||{};}};
+  const accountRole=()=>String(currentUser().accountRole||currentUser().role||'');
+  const isSuper=()=>/^Super Admin$/i.test(accountRole());
+  const gas=(fn,args)=>new Promise((resolve,reject)=>{try{google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run,args||[]);}catch(e){reject(e);}});
+  function installRepairButton(){
+    if(!isSuper())return;
+    const body=$('adminPanelBody'); if(!body||$('btnDatabaseRepairV730'))return;
+    const tools=body.querySelector('.d-flex.flex-wrap.gap-2.mt-3')||body;
+    tools.insertAdjacentHTML('beforeend','<button id="btnDatabaseRepairV730" class="btn btn-outline-primary btn-sm" onclick="openDatabaseRepairV730()"><i class="bi bi-wrench-adjustable-circle"></i> ซ่อมฐานข้อมูล</button>');
+  }
+  function selectedOptions(){
+    return {
+      dryRun:true,
+      fixDuplicateHeaders:$('repairHeadersV730')?.checked!==false,
+      dedupeProfiles:$('repairProfilesV730')?.checked!==false,
+      removeDemoData:!!$('repairDemoV730')?.checked,
+      trimBlankRows:!!$('repairTrimRowsV730')?.checked
+    };
+  }
+  function actionLabel(key){
+    return ({
+      duplicateHeaderRemoved:'ลบคอลัมน์หัวข้อซ้ำที่ว่าง',
+      duplicateHeaderNeedsReview:'หัวข้อซ้ำที่ต้องตรวจเอง',
+      duplicateProfileDisabled:'ปิดโปรไฟล์ซ้ำ',
+      extraPrimaryCleared:'ล้าง primary ซ้ำ',
+      demoLinkedRowDeleted:'ลบข้อมูลที่ผูกกับ test/demo',
+      demoUserDeleted:'ลบผู้ใช้ test/demo',
+      blankRowsTrimmed:'ลดแถวว่างท้ายชีต'
+    })[key]||key;
+  }
+  function renderRepairResult(res){
+    const counts=res.counts||{};
+    const keys=Object.keys(counts);
+    const summary=keys.length?keys.map(k=>`<div class="metric"><b>${esc(counts[k])}</b><span>${esc(actionLabel(k))}</span></div>`).join(''):'<div class="alert alert-success mb-0">ไม่พบรายการที่ต้องซ่อม</div>';
+    const rows=(res.items||[]).slice(0,120).map(it=>`<tr><td>${esc(actionLabel(it.action))}</td><td>${esc(it.sheet)}</td><td>${esc(it.row)}</td><td>${esc(it.col)}</td><td>${esc(it.label)}</td><td>${esc(it.detail)}</td></tr>`).join('');
+    const more=(res.items||[]).length>120?`<div class="small text-muted mt-2">แสดง 120 รายการแรกจากทั้งหมด ${esc((res.items||[]).length)} รายการ</div>`:'';
+    return `<div class="text-start">
+      <div class="alert ${res.dryRun?'alert-info':'alert-success'} py-2"><b>${esc(res.message||'ผลการตรวจสอบ')}</b><br><small>โหมด: ${res.dryRun?'ตรวจสอบก่อนซ่อม':'ซ่อมจริง'} · รวม ${esc(res.total||0)} รายการ</small></div>
+      <div class="haos-v730-repair-summary">${summary}</div>
+      ${rows?`<div class="haos-v730-repair-table"><table class="table table-sm table-hover align-middle"><thead><tr><th>รายการ</th><th>ชีต</th><th>แถว</th><th>คอลัมน์</th><th>อ้างอิง</th><th>รายละเอียด</th></tr></thead><tbody>${rows}</tbody></table></div>${more}`:''}
+    </div>`;
+  }
+  async function previewRepair(options){
+    Swal.fire({title:'กำลังตรวจฐานข้อมูล...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+    const res=await gas('repairDatabaseV730',[currentUser().phone,options]);
+    if(!res||!res.success)throw new Error(res&&res.message?res.message:'ตรวจฐานข้อมูลไม่สำเร็จ');
+    return res;
+  }
+  async function applyRepair(options){
+    const ok=await Swal.fire({
+      title:'ซ่อมฐานข้อมูลจริง?',
+      html:'ระบบจะปรับข้อมูลตามรายการ preview เท่านั้น<br><b class="text-danger">ควรมี backup ล่าสุดก่อนทำรายการนี้</b><br><br>พิมพ์ <b>REPAIR</b> เพื่อยืนยัน',
+      icon:'warning',
+      input:'text',
+      inputPlaceholder:'REPAIR',
+      showCancelButton:true,
+      confirmButtonText:'ซ่อมฐานข้อมูล',
+      cancelButtonText:'ยกเลิก',
+      confirmButtonColor:'#0ea5e9',
+      preConfirm:v=>{if(v!=='REPAIR'){Swal.showValidationMessage('กรุณาพิมพ์ REPAIR ให้ถูกต้อง');return false;}return true;}
+    });
+    if(!ok.isConfirmed)return;
+    Swal.fire({title:'กำลังซ่อมฐานข้อมูล...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+    const res=await gas('repairDatabaseV730',[currentUser().phone,Object.assign({},options,{dryRun:false})]);
+    if(!res||!res.success)throw new Error(res&&res.message?res.message:'ซ่อมฐานข้อมูลไม่สำเร็จ');
+    await Swal.fire({title:'ซ่อมเสร็จแล้ว',width:980,html:renderRepairResult(res),icon:'success',confirmButtonText:'ปิด'});
+    try{initDashboard&&initDashboard();}catch(e){}
+  }
+  window.openDatabaseRepairV730=async function(){
+    if(!isSuper())return Swal.fire('ไม่มีสิทธิ์','เมนูนี้สำหรับ Super Admin เท่านั้น','warning');
+    const first=await Swal.fire({
+      title:'ซ่อมแซมฐานข้อมูล',
+      width:780,
+      html:`<div class="text-start">
+        <div class="alert alert-info py-2 small mb-2"><b>ตรวจสอบก่อนซ่อมเสมอ</b> ระบบจะแสดงรายการที่จะปรับก่อนทำจริง</div>
+        <div class="haos-v730-repair-options">
+          <label><input id="repairProfilesV730" type="checkbox" checked><span><b>ซ่อมโปรไฟล์ผู้ใช้ซ้ำ</b><br><small class="text-muted">ปิดโปรไฟล์ที่ซ้ำกัน และเหลือ primary ที่ใช้งานได้เพียงรายการเดียว</small></span></label>
+          <label><input id="repairHeadersV730" type="checkbox" checked><span><b>ลบหัวคอลัมน์ซ้ำที่ว่าง</b><br><small class="text-muted">เช่น Active Profile ID ที่ถูกเพิ่มซ้ำ แต่ไม่มีข้อมูลในคอลัมน์นั้น</small></span></label>
+          <label><input id="repairTrimRowsV730" type="checkbox"><span><b>ลดแถวว่างท้ายชีต</b><br><small class="text-muted">ตัดแถวเปล่าที่อยู่ท้ายชีตออก เหลือ buffer ประมาณ 25 แถวเพื่อลดภาระฐานข้อมูล</small></span></label>
+          <label><input id="repairDemoV730" type="checkbox"><span><b>ลบข้อมูล test/demo ที่ระบบระบุได้</b><br><small class="text-muted">ลบผู้ใช้ demo/test และข้อมูลที่ผูกกับเบอร์ทดสอบหรือรหัส APP-DEMO/REP-DEMO/NTF-DEMO</small></span></label>
+        </div>
+      </div>`,
+      showCancelButton:true,
+      confirmButtonText:'ตรวจสอบ',
+      cancelButtonText:'ยกเลิก',
+      preConfirm:()=>selectedOptions()
+    });
+    if(!first.isConfirmed)return;
+    try{
+      const options=first.value;
+      const preview=await previewRepair(options);
+      const view=await Swal.fire({
+        title:'ผลตรวจฐานข้อมูล',
+        width:980,
+        html:renderRepairResult(preview),
+        icon:preview.total?'info':'success',
+        showCancelButton:!!preview.total,
+        confirmButtonText:preview.total?'ซ่อมตามรายการนี้':'ปิด',
+        cancelButtonText:'ยังไม่ทำ',
+        confirmButtonColor:'#0ea5e9'
+      });
+      if(view.isConfirmed&&preview.total)await applyRepair(options);
+    }catch(e){
+      Swal.fire('ผิดพลาด',e.message||String(e),'error');
+    }
+  };
+  function install(){installRepairButton();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
+  setTimeout(install,800);setTimeout(install,1800);setTimeout(install,3200);
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
