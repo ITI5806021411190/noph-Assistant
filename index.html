@@ -1098,6 +1098,7 @@ label,.form-label{font-weight:800;color:#334155;margin-bottom:6px;}
             <button class="btn btn-warning btn-sm text-dark" onclick="seedDemoDataUI()"><i class="bi bi-database-add"></i> สร้างข้อมูลทดสอบ</button>
             <button class="btn btn-outline-warning btn-sm" onclick="resetAndSeedDemoDataUI()"><i class="bi bi-arrow-repeat"></i> รีเซ็ต Demo</button>
             <button class="btn btn-outline-danger btn-sm" onclick="clearDemoDatabaseUI()"><i class="bi bi-trash3"></i> เคลียร์ฐานข้อมูล</button>
+            <button id="btnDatabaseRepairV730" class="btn btn-outline-primary btn-sm" onclick="openDatabaseRepairV730()"><i class="bi bi-wrench-adjustable-circle"></i> ซ่อมฐานข้อมูล</button>
             <button class="btn btn-outline-info btn-sm" onclick="connectTelegram()"><i class="bi bi-telegram"></i> ผูก Telegram</button>
             <button class="btn btn-success btn-sm" onclick="toggleSystem('on')"><i class="bi bi-play-circle"></i> เปิดแจ้งเตือน/บอท</button>
             <button class="btn btn-outline-danger btn-sm" onclick="toggleSystem('off')"><i class="bi bi-stop-circle"></i> ปิดแจ้งเตือน/บอท</button>
@@ -2783,7 +2784,7 @@ label,.form-label{font-weight:800;color:#334155;margin-bottom:6px;}
         } else { 
           Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: res.message }); 
         }
-      }).loginAccount(p, pin);
+      }).loginAccountFastV730(p, pin);
     }
 
     function handleRegister() {
@@ -12328,7 +12329,7 @@ HAOS v68.6 FINISHING FIX
         }
         initDashboard();showSection('appSection');updateDashboardHeader();setTimeout(()=>{try{openProgramGuide(false);}catch(e){}},650);updateDashboardHeader();syncOverviewCards();
       }else Swal.fire({icon:'error',title:'เกิดข้อผิดพลาด',text:res.message});
-    }).loginAccount(p,pin);
+    }).loginAccountFastV730(p,pin);
   };
   window.handleRegister=function(){
     if(!$('regPDPA')?.checked)return Swal.fire({icon:'warning',title:'แจ้งเตือน',text:'กรุณายินยอมเงื่อนไข PDPA ก่อนลงทะเบียนครับ'});
@@ -13598,7 +13599,7 @@ HAOS v68.6 FINISHING FIX
     }).withFailureHandler(err=>{
       if(btn)btn.disabled=false;if(spinner)spinner.classList.add('d-none');
       Swal.fire('ผิดพลาด',err&&err.message?err.message:String(err),'error');
-    }).loginAccount(p,pin);
+    }).loginAccountFastV730(p,pin);
   };
   function ensureSwitcher(){
     if($('profileSwitchBtnV729'))return;
