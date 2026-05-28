@@ -913,6 +913,13 @@ label,.form-label{font-weight:800;color:#334155;margin-bottom:6px;}
             <label class="form-label small fw-bold">รหัสผ่าน (PIN)</label>
             <input type="password" id="loginPin" class="form-control bg-light" maxlength="6" oninput="this.value = this.value.replace(/[^0-9]/g, '')" required>
           </div>
+          <div class="form-check text-start mb-3" id="rememberDeviceWrapV731">
+            <input class="form-check-input" type="checkbox" id="rememberDeviceV731">
+            <label class="form-check-label small fw-bold" for="rememberDeviceV731">
+              จำอุปกรณ์นี้และเข้าสู่ระบบอัตโนมัติครั้งถัดไป
+            </label>
+            <div class="form-text small">ระบบจะเก็บโทเคนอุปกรณ์ ไม่เก็บ PIN ไว้ในเครื่องนี้</div>
+          </div>
           <button type="submit" class="btn btn-primary w-100 shadow-sm" id="btnLogin">
             <span class="spinner-border spinner-border-sm d-none" id="loginSpinner"></span> <i class="bi bi-box-arrow-in-right"></i> เข้าสู่ระบบ
           </button>
@@ -13500,6 +13507,14 @@ HAOS v68.6 FINISHING FIX
     if(current&&!vals.includes(current))vals.push(current);
     return '<datalist id="haosProfileDeptListV729">'+vals.map(v=>`<option value="${esc(v)}"></option>`).join('')+'</datalist>';
   }
+  function deptSelectHtml(current){
+    const vals=deptValues();
+    if(current&&!vals.includes(current))vals.push(current);
+    return `<select id="profileDeptV729" class="form-select mb-2">
+      <option value="">เลือกกลุ่มงาน</option>
+      ${vals.map(v=>`<option value="${esc(v)}" ${String(v)===String(current)?'selected':''}>${esc(v)}</option>`).join('')}
+    </select>`;
+  }
   function profileBadgeHtml(p){
     const badges=[];
     if(bool(p.isPrimary))badges.push('<span class="badge bg-success">โปรไฟล์หลัก</span>');
@@ -13781,7 +13796,7 @@ HAOS v68.6 FINISHING FIX
     const role=p.profileRole||'Member';
     const html=`<div class="text-start">
       <label class="small fw-bold">ชื่อโปรไฟล์ / กลุ่มงาน</label>
-      <input id="profileDeptV729" class="form-control mb-2" list="haosProfileDeptListV729" value="${esc(p.department||cache.user?.department||'')}" placeholder="เลือกหรือพิมพ์กลุ่มงาน">${deptDatalistHtml(p.department||cache.user?.department||'')}
+      ${deptSelectHtml(p.department||cache.user?.department||'')}
       <label class="small fw-bold">ตำแหน่งในกลุ่มงานนี้</label>
       <input id="profilePositionV729" class="form-control mb-2" value="${esc(p.position||cache.user?.position||'')}">
       <div class="row g-2 mb-2">
@@ -13957,6 +13972,366 @@ HAOS v68.6 FINISHING FIX
   function install(){installRepairButton();}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
   setTimeout(install,800);setTimeout(install,1800);setTimeout(install,3200);
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
+<style id="haos-v70-31-auto-login-style">
+  .haos-v731-auto-card{border:1px solid rgba(14,165,233,.28);border-radius:8px;background:#f8fafc;padding:14px;margin-top:14px}
+  .haos-v731-auto-card .form-switch .form-check-input{width:3rem;height:1.45rem}
+  .haos-v731-login-note{border-radius:8px;padding:8px 10px;margin-bottom:12px;font-size:.86rem}
+  .haos-v731-device-table{max-height:420px;overflow:auto;border:1px solid rgba(148,163,184,.35);border-radius:8px}
+  .haos-v731-device-table table{margin-bottom:0}
+  .haos-v731-current-device{background:#ecfdf5}
+</style>
+<script id="haos-v70-31-auto-login-ui-script">
+(function(){
+  const PATCH='v70.31-auto-login-ui';
+  if(window.__HAOS_V731_AUTO_LOGIN_UI__)return;
+  window.__HAOS_V731_AUTO_LOGIN_UI__=true;
+  const STORAGE_KEY='haos_auto_login_device_v731';
+  const SKIP_KEY='haos_auto_login_skip_v731';
+  const $=id=>document.getElementById(id);
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const cleanPhone=v=>String(v||'').replace(/'/g,'').trim();
+  const currentUser=()=>{try{return window.user||user||{};}catch(e){return window.user||{};}};
+  const setCurrentUser=data=>{window.user=data||null;try{user=data||null;}catch(e){}};
+  const gas=(fn,args)=>new Promise((resolve,reject)=>{try{google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run,args||[]);}catch(e){reject(e);}});
+
+  function readSavedDevice(){
+    try{
+      const data=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
+      if(!data||!data.deviceId||!data.token)return null;
+      return data;
+    }catch(e){return null;}
+  }
+  function saveDevice(data){
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(Object.assign({},data,{savedAt:new Date().toISOString()})));
+  }
+  function clearSavedDevice(){localStorage.removeItem(STORAGE_KEY);}
+  function randomHex(bytes){
+    const arr=new Uint8Array(bytes||32);
+    (window.crypto||window.msCrypto).getRandomValues(arr);
+    return Array.from(arr,b=>('0'+b.toString(16)).slice(-2)).join('');
+  }
+  function detectDeviceLabel(){
+    const ua=navigator.userAgent||'';
+    const platform=(navigator.userAgentData&&navigator.userAgentData.platform)||navigator.platform||'';
+    let browser='Browser';
+    if(/Edg\//.test(ua))browser='Microsoft Edge';
+    else if(/Chrome\//.test(ua))browser='Chrome';
+    else if(/Firefox\//.test(ua))browser='Firefox';
+    else if(/Safari\//.test(ua))browser='Safari';
+    return [browser,platform].filter(Boolean).join(' on ')||'อุปกรณ์นี้';
+  }
+  function makeDevicePayload(phone){
+    const targetPhone=cleanPhone(phone);
+    const saved=readSavedDevice();
+    const reuse=!!(saved&&cleanPhone(saved.phone)===targetPhone);
+    return {
+      phone:targetPhone,
+      deviceId:(reuse&&saved.deviceId)||('DEV-'+Date.now().toString(36)+'-'+randomHex(8)),
+      token:(reuse&&saved.token)||randomHex(32),
+      deviceLabel:(reuse&&saved.deviceLabel)||detectDeviceLabel(),
+      userAgent:navigator.userAgent||''
+    };
+  }
+  function toast(icon,title){
+    try{Swal.fire({toast:true,position:'top-end',icon,title,showConfirmButton:false,timer:1800,timerProgressBar:true});}catch(e){}
+  }
+  function accountRole(u){return String((u&&u.accountRole)||'')||String((u&&u.role)||'User');}
+  function isAccountAdmin(u){return /^(Admin|Super Admin)$/i.test(accountRole(u));}
+  function bool(value){
+    if(value===true)return true;
+    const s=String(value).toLowerCase();
+    if(s==='true'||s==='1'||s==='yes')return true;
+    if(s==='false'||s==='0'||s==='no')return false;
+    return !!value;
+  }
+  function roleLabel(role){
+    role=String(role||'Member');
+    const map={Member:'สมาชิก',Head:'หัวหน้ากลุ่มงาน','Acting Head':'รักษาการหัวหน้า',Coordinator:'ผู้ประสานงาน',User:'User',Admin:'Admin','Super Admin':'Super Admin'};
+    return map[role]||role;
+  }
+  function profileLabel(p){
+    if(!p)return 'โปรไฟล์';
+    const dept=String(p.department||'').replace(/^\d+\s*/,'');
+    return [dept||p.department||'-',p.position||''].filter(Boolean).join(' / ');
+  }
+  function activeProfiles(u){
+    return (Array.isArray(u&&u.profiles)?u.profiles:[]).filter(p=>p&&bool(p.isActive)!==false);
+  }
+  function profileChoiceHtml(profiles,activeId){
+    return `<div class="haos-v729-profile-grid">${profiles.map(p=>`
+      <label class="haos-v729-profile-card">
+        <div><input type="radio" name="haosActiveProfileV731" value="${esc(p.profileId)}" ${String(p.profileId)===String(activeId)?'checked':''}> <b>${esc(profileLabel(p))}</b></div>
+        <div class="haos-v729-profile-meta">${esc(p.department||'-')}</div>
+        <div class="haos-v729-profile-meta">${esc(roleLabel(p.profileRole))} · ${esc(p.effectiveRole||'User')}</div>
+      </label>`).join('')}</div>`;
+  }
+  async function chooseProfile(userData,required){
+    const profiles=activeProfiles(userData);
+    if(profiles.length<=1)return userData;
+    const activeId=userData.activeProfileId||(userData.activeProfile&&userData.activeProfile.profileId)||profiles[0].profileId;
+    const r=await Swal.fire({
+      title:'เลือกโปรไฟล์ที่ใช้งาน',
+      width:900,
+      html:profileChoiceHtml(profiles,activeId),
+      allowOutsideClick:!required,
+      showCancelButton:!required,
+      confirmButtonText:required?'เข้าใช้งาน':'สลับโปรไฟล์',
+      cancelButtonText:'ยกเลิก',
+      preConfirm:async()=>{
+        const selected=document.querySelector('input[name="haosActiveProfileV731"]:checked')?.value;
+        if(!selected){Swal.showValidationMessage('กรุณาเลือกโปรไฟล์');return false;}
+        if(String(selected)===String(activeId))return userData;
+        const res=await gas('setActiveUserProfileV729',[userData.phone,selected]);
+        if(!res||!res.success){Swal.showValidationMessage(res&&res.message?res.message:'สลับโปรไฟล์ไม่สำเร็จ');return false;}
+        return res.userData||userData;
+      }
+    });
+    return r.isConfirmed&&r.value?r.value:userData;
+  }
+  function syncUserChrome(){
+    const u=currentUser();if(!u||!u.phone)return;
+    if($('userName'))$('userName').innerText=u.fullName||u.name||'';
+    if($('userDeptDisplay'))$('userDeptDisplay').innerText=(u.department||'-')+(u.role&&u.role!=='User'?' ('+u.role+')':'');
+    if($('adminPanel')){
+      $('adminPanel').classList.toggle('d-none',!isAccountAdmin(u));
+      if(isAccountAdmin(u))setTimeout(()=>{try{restoreAdminPanelState_&&restoreAdminPanelState_();}catch(e){}},50);
+    }
+    const list=activeProfiles(u), btn=$('profileSwitchBtnV729'), text=$('profileSwitchTextV729');
+    if(btn)btn.classList.toggle('d-none',list.length<=1);
+    if(text)text.textContent=profileLabel(u.activeProfile||list[0]);
+    try{updateDashboardHeader&&updateDashboardHeader();}catch(e){}
+  }
+  function finishLogin(userData){
+    setCurrentUser(userData);
+    sessionStorage.removeItem(SKIP_KEY);
+    syncUserChrome();
+    try{initDashboard&&initDashboard();}catch(e){}
+    try{showSection&&showSection('appSection');}catch(e){}
+    syncUserChrome();
+    try{syncOverviewCards&&syncOverviewCards();}catch(e){}
+    setTimeout(()=>{try{openProgramGuide(false);}catch(e){}},650);
+  }
+  async function rememberDevice(phone,pin){
+    const previous=readSavedDevice();
+    const payload=makeDevicePayload(phone);
+    const res=await gas('registerAutoLoginDeviceV731',[payload.phone,pin,payload.deviceId,payload.token,payload.deviceLabel,payload.userAgent]);
+    if(!res||!res.success)throw new Error(res&&res.message?res.message:'จำอุปกรณ์ไม่สำเร็จ');
+    if(previous&&cleanPhone(previous.phone)!==payload.phone){
+      try{await gas('setAutoLoginDeviceActiveV731',[previous.phone,previous.deviceId,false]);}catch(e){}
+    }
+    saveDevice(payload);
+    sessionStorage.removeItem(SKIP_KEY);
+    syncLoginRememberUi();
+    refreshAutoLoginProfileUi();
+    return res;
+  }
+  async function forgetCurrentDevice(phone){
+    const saved=readSavedDevice();
+    if(saved&&cleanPhone(saved.phone)===cleanPhone(phone)){
+      try{await gas('setAutoLoginDeviceActiveV731',[phone,saved.deviceId,false]);}catch(e){}
+    }
+    clearSavedDevice();
+    sessionStorage.setItem(SKIP_KEY,'1');
+    syncLoginRememberUi();
+  }
+  function syncLoginRememberUi(){
+    const saved=readSavedDevice();
+    const cb=$('rememberDeviceV731');
+    if(cb)cb.checked=!!saved;
+    if(saved&&$('loginPhone')&&!$('loginPhone').value)$('loginPhone').value=cleanPhone(saved.phone);
+  }
+  function setLoginNotice(message,type){
+    let note=$('autoLoginNoticeV731');
+    const form=$('btnLogin')?.closest('form');
+    if(!form)return;
+    if(!note){
+      form.insertAdjacentHTML('afterbegin','<div id="autoLoginNoticeV731" class="haos-v731-login-note d-none"></div>');
+      note=$('autoLoginNoticeV731');
+    }
+    if(!message){note.className='haos-v731-login-note d-none';note.textContent='';return;}
+    const cls=type==='warning'?'alert-warning':type==='success'?'alert-success':'alert-info';
+    note.className='haos-v731-login-note '+cls;
+    note.textContent=message;
+  }
+  window.handleLogin=async function(){
+    const p=cleanPhone($('loginPhone')?.value||''), pin=$('loginPin')?.value||'';
+    const btn=$('btnLogin'), spinner=$('loginSpinner'), remember=!!$('rememberDeviceV731')?.checked;
+    if(btn)btn.disabled=true;if(spinner)spinner.classList.remove('d-none');
+    try{
+      const res=await gas('loginAccountFastV730',[p,pin]);
+      if(!res||!res.success)throw new Error(res&&res.message?res.message:'ข้อมูลไม่ถูกต้อง');
+      const selected=await chooseProfile(res.userData,true);
+      finishLogin(selected);
+      if(remember){
+        try{await rememberDevice(p,pin);toast('success','เปิดเข้าสู่ระบบอัตโนมัติแล้ว');}
+        catch(e){Swal.fire('ยังจำอุปกรณ์ไม่ได้',e.message||String(e),'warning');}
+      }else{
+        await forgetCurrentDevice(p);
+      }
+    }catch(e){
+      Swal.fire({icon:'error',title:'เข้าสู่ระบบไม่สำเร็จ',text:e.message||String(e)});
+    }finally{
+      if(btn)btn.disabled=false;if(spinner)spinner.classList.add('d-none');
+    }
+  };
+  async function tryAutoLogin(){
+    const saved=readSavedDevice();
+    syncLoginRememberUi();
+    if(!saved||currentUser().phone||sessionStorage.getItem(SKIP_KEY)==='1')return;
+    const btn=$('btnLogin'), spinner=$('loginSpinner');
+    if(btn)btn.disabled=true;if(spinner)spinner.classList.remove('d-none');
+    setLoginNotice('กำลังเข้าสู่ระบบอัตโนมัติจากอุปกรณ์นี้...','info');
+    try{
+      const res=await gas('loginWithAutoDeviceV731',[saved.deviceId,saved.token]);
+      if(!res||!res.success){
+        clearSavedDevice();
+        syncLoginRememberUi();
+        setLoginNotice('อุปกรณ์นี้ไม่ได้เปิดเข้าสู่ระบบอัตโนมัติแล้ว กรุณาเข้าสู่ระบบด้วย PIN อีกครั้ง','warning');
+        return;
+      }
+      saveDevice(Object.assign({},saved,{phone:res.userData.phone,deviceLabel:saved.deviceLabel||detectDeviceLabel()}));
+      setLoginNotice('',null);
+      finishLogin(res.userData);
+    }catch(e){
+      setLoginNotice('เข้าสู่ระบบอัตโนมัติไม่สำเร็จ กรุณาเข้าสู่ระบบด้วย PIN','warning');
+    }finally{
+      if(btn)btn.disabled=false;if(spinner)spinner.classList.add('d-none');
+    }
+  }
+  function installProfileAutoLoginCard(){
+    const u=currentUser();
+    const body=document.querySelector('#profileModal .modal-body');
+    if(!body||!u.phone)return;
+    if(!$('haosAutoLoginProfileV731')){
+      body.insertAdjacentHTML('beforeend',`
+        <div id="haosAutoLoginProfileV731" class="haos-v731-auto-card">
+          <div class="d-flex justify-content-between align-items-start gap-3">
+            <div>
+              <div class="fw-bold text-primary"><i class="bi bi-phone"></i> เข้าสู่ระบบอัตโนมัติ</div>
+              <div id="autoLoginStatusV731" class="small text-muted">กำลังตรวจสอบอุปกรณ์...</div>
+            </div>
+            <div class="form-check form-switch m-0">
+              <input class="form-check-input" type="checkbox" id="autoLoginToggleV731">
+            </div>
+          </div>
+          <div class="d-flex flex-wrap gap-2 mt-2">
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="openAutoLoginDevicesV731()"><i class="bi bi-display"></i> ดูอุปกรณ์ที่เปิดไว้</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="refreshAutoLoginProfileUiV731()"><i class="bi bi-arrow-clockwise"></i> รีเฟรช</button>
+          </div>
+        </div>`);
+      $('autoLoginToggleV731')?.addEventListener('change',handleAutoLoginToggle);
+    }
+    refreshAutoLoginProfileUi();
+  }
+  async function handleAutoLoginToggle(ev){
+    const toggle=ev.currentTarget;
+    const u=currentUser();
+    if(!u.phone){toggle.checked=false;return;}
+    if(toggle.checked){
+      const saved=readSavedDevice();
+      if(saved&&cleanPhone(saved.phone)===cleanPhone(u.phone)){
+        const res=await gas('setAutoLoginDeviceActiveV731',[u.phone,saved.deviceId,true,saved.token]);
+        if(!res||!res.success){toggle.checked=false;return Swal.fire('เปิดไม่สำเร็จ',(res&&res.message)||'ไม่พบอุปกรณ์นี้','warning');}
+        toast('success','เปิดเข้าสู่ระบบอัตโนมัติแล้ว');
+        refreshAutoLoginProfileUi();
+        return;
+      }
+      const r=await Swal.fire({
+        title:'ยืนยัน PIN เพื่อเปิดอุปกรณ์นี้',
+        input:'password',
+        inputAttributes:{maxlength:6,inputmode:'numeric',autocomplete:'current-password'},
+        showCancelButton:true,
+        confirmButtonText:'เปิดใช้งาน',
+        cancelButtonText:'ยกเลิก',
+        preConfirm:v=>{if(!String(v||'').trim()){Swal.showValidationMessage('กรุณากรอก PIN');return false;}return String(v||'').trim();}
+      });
+      if(!r.isConfirmed){toggle.checked=false;return;}
+      try{await rememberDevice(u.phone,r.value);toast('success','เปิดเข้าสู่ระบบอัตโนมัติแล้ว');}
+      catch(e){toggle.checked=false;Swal.fire('เปิดไม่สำเร็จ',e.message||String(e),'error');}
+    }else{
+      await forgetCurrentDevice(u.phone);
+      toast('success','ปิดเข้าสู่ระบบอัตโนมัติของอุปกรณ์นี้แล้ว');
+    }
+    refreshAutoLoginProfileUi();
+  }
+  async function refreshAutoLoginProfileUi(){
+    const u=currentUser(), status=$('autoLoginStatusV731'), toggle=$('autoLoginToggleV731');
+    if(!status||!u.phone)return;
+    const saved=readSavedDevice();
+    if(toggle)toggle.checked=!!(saved&&cleanPhone(saved.phone)===cleanPhone(u.phone));
+    try{
+      const res=await gas('getMyAutoLoginDevicesV731',[u.phone]);
+      if(!res||!res.success)throw new Error(res&&res.message?res.message:'โหลดรายการอุปกรณ์ไม่สำเร็จ');
+      const devices=res.devices||[];
+      const active=devices.filter(d=>d.isActive).length;
+      const current=saved?devices.find(d=>String(d.deviceId)===String(saved.deviceId)):null;
+      if(saved&&(!current||!current.isActive)){clearSavedDevice();if(toggle)toggle.checked=false;}
+      status.innerHTML=`เปิดไว้ ${esc(active)} อุปกรณ์${current&&current.isActive?' · อุปกรณ์นี้เปิดอยู่':' · อุปกรณ์นี้ยังไม่เปิด'}`;
+    }catch(e){
+      status.textContent='ยังตรวจสอบรายการอุปกรณ์ไม่ได้';
+    }
+  }
+  window.refreshAutoLoginProfileUiV731=refreshAutoLoginProfileUi;
+  function deviceRows(devices,currentId){
+    if(!devices.length)return '<tr><td colspan="5" class="text-center text-muted py-4">ยังไม่มีอุปกรณ์ที่เปิดเข้าสู่ระบบอัตโนมัติ</td></tr>';
+    return devices.map(d=>{
+      const isCurrent=String(d.deviceId)===String(currentId||'');
+      return `<tr class="${isCurrent?'haos-v731-current-device':''}">
+        <td><b>${esc(d.deviceLabel||'อุปกรณ์')}</b>${isCurrent?' <span class="badge bg-success">อุปกรณ์นี้</span>':''}<div class="small text-muted">${esc(d.deviceId)}</div></td>
+        <td>${d.isActive?'<span class="badge bg-success">เปิดอยู่</span>':'<span class="badge bg-secondary">ปิดแล้ว</span>'}</td>
+        <td><small>${esc(d.lastUsedAt||'-')}</small></td>
+        <td><small>${esc(d.expiresAt||'-')}</small></td>
+        <td class="text-end">${d.isActive?`<button class="btn btn-sm btn-outline-danger" onclick="revokeAutoLoginDeviceV731('${esc(d.deviceId)}')"><i class="bi bi-x-circle"></i> ปิด</button>`:'-'}</td>
+      </tr>`;
+    }).join('');
+  }
+  window.openAutoLoginDevicesV731=async function(){
+    const u=currentUser();if(!u.phone)return;
+    Swal.fire({title:'กำลังโหลดอุปกรณ์...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+    try{
+      const res=await gas('getMyAutoLoginDevicesV731',[u.phone]);
+      if(!res||!res.success)throw new Error(res&&res.message?res.message:'โหลดรายการอุปกรณ์ไม่สำเร็จ');
+      const saved=readSavedDevice();
+      const html=`<div class="text-start">
+        <div class="alert alert-info py-2 small">รายการนี้คืออุปกรณ์ที่เคยเปิด “เข้าสู่ระบบอัตโนมัติ” ไว้กับบัญชีของคุณ สามารถปิดอุปกรณ์ที่ไม่ใช้งานแล้วได้ทันที</div>
+        <div class="haos-v731-device-table"><table class="table table-sm table-hover align-middle">
+          <thead class="table-light"><tr><th>อุปกรณ์</th><th>สถานะ</th><th>ใช้ล่าสุด</th><th>หมดอายุ</th><th class="text-end">จัดการ</th></tr></thead>
+          <tbody>${deviceRows(res.devices||[],saved&&saved.deviceId)}</tbody>
+        </table></div>
+      </div>`;
+      await Swal.fire({title:'อุปกรณ์ที่เปิดเข้าสู่ระบบอัตโนมัติ',width:980,html,showCloseButton:true,confirmButtonText:'ปิด'});
+    }catch(e){Swal.fire('โหลดอุปกรณ์ไม่สำเร็จ',e.message||String(e),'error');}
+  };
+  window.revokeAutoLoginDeviceV731=async function(deviceId){
+    const u=currentUser();if(!u.phone)return;
+    const ok=await Swal.fire({title:'ปิดอุปกรณ์นี้?',text:'อุปกรณ์นี้จะไม่สามารถเข้าสู่ระบบอัตโนมัติได้อีกจนกว่าจะเปิดใหม่',icon:'warning',showCancelButton:true,confirmButtonText:'ปิดอุปกรณ์',cancelButtonText:'ยกเลิก'});
+    if(!ok.isConfirmed)return;
+    const res=await gas('revokeAutoLoginDeviceV731',[u.phone,deviceId]);
+    if(!res||!res.success)return Swal.fire('ปิดไม่สำเร็จ',(res&&res.message)||'เกิดข้อผิดพลาด','error');
+    const saved=readSavedDevice();
+    if(saved&&String(saved.deviceId)===String(deviceId))clearSavedDevice();
+    toast('success','ปิดอุปกรณ์แล้ว');
+    refreshAutoLoginProfileUi();
+    setTimeout(()=>openAutoLoginDevicesV731(),250);
+  };
+  const oldOpenProfile=window.openProfileModal;
+  window.openProfileModal=function(){
+    const r=oldOpenProfile?oldOpenProfile.apply(this,arguments):undefined;
+    setTimeout(installProfileAutoLoginCard,380);
+    return r;
+  };
+  const oldLogout=window.logout;
+  window.logout=function(){
+    sessionStorage.setItem(SKIP_KEY,'1');
+    return oldLogout?oldLogout.apply(this,arguments):(setCurrentUser(null),showSection&&showSection('loginSection'));
+  };
+  function install(){syncLoginRememberUi();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
+  window.addEventListener('load',()=>{install();setTimeout(tryAutoLogin,450);});
+  setTimeout(install,800);
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
