@@ -15211,7 +15211,7 @@ HAOS v68.6 FINISHING FIX
         const type='<span class="badge bg-success-subtle text-success border">'+(typeMap[ws.workspaceType]||'ตาราง')+'</span>';
         const exp=ws.expiresAt?(ws.expired?'<span class="badge bg-danger">หมดอายุ '+esc(ws.expiresAt)+'</span>':'<span class="badge bg-light text-dark border">'+esc(ws.expiresAt)+'</span>'):'<span class="text-muted">ไม่กำหนด</span>';
         const right=ws.canManage?'เจ้าของ/จัดการได้':(ws.canEdit?'แก้ไขได้':'ดูได้');
-        const access='<span class="haos-v735-access-chip"><i class="bi bi-person-lock"></i> '+right+'</span> <span class="haos-v735-access-chip"><i class="bi bi-eye"></i> '+(ws.viewersCount||0)+'</span> <span class="haos-v735-access-chip"><i class="bi bi-pencil"></i> '+(ws.editorsCount||0)+'</span>'+(ws.requiredFields?'<span class="haos-v735-access-chip"><i class="bi bi-asterisk"></i> จำเป็น '+ws.requiredFields+'</span>':'');
+        const access='<span class="haos-v735-access-chip"><i class="bi bi-person-lock"></i> '+right+'</span> <span class="haos-v735-access-chip" title="จำนวนผู้ใช้ที่มีสิทธิ์ดู"><i class="bi bi-eye"></i> ผู้ดู '+(ws.viewersCount||0)+'</span> <span class="haos-v735-access-chip" title="จำนวนผู้ใช้ที่มีสิทธิ์แก้ไข"><i class="bi bi-pencil"></i> ผู้แก้ไข '+(ws.editorsCount||0)+'</span>'+(ws.requiredFields?'<span class="haos-v735-access-chip"><i class="bi bi-asterisk"></i> จำเป็น '+ws.requiredFields+'</span>':'');
         const permBtn=ws.canManage?`<button class="btn btn-sm btn-outline-dark me-1" onclick="openWorkspacePermissionsV735('${esc(ws.id)}')" title="กำหนดสิทธิ์"><i class="bi bi-shield-lock"></i></button>`:'';
         let action;
         if(ws.workspaceType==='google_sheet'||ws.workspaceType==='google_form'){
@@ -15400,12 +15400,20 @@ HAOS v68.6 FINISHING FIX
   #unifiedScheduleListV702[hidden],#unifiedScheduleCardV702[hidden],#unifiedScheduleCalendarV702[hidden]{display:none!important}
   #unifiedScheduleListV702 .haos-v738-scope-my td{background:linear-gradient(90deg,#dbeafe 0%,#eef6ff 42%,#ffffff 100%)!important}
   #unifiedScheduleListV702 .haos-v738-scope-dept td{background:linear-gradient(90deg,#bbf7d0 0%,#dcfce7 42%,#ffffff 100%)!important}
+  #unifiedScheduleListV702 .haos-v740-priority-urgent td{background:linear-gradient(90deg,#fed7aa 0%,#fff7ed 44%,#ffffff 100%)!important}
+  #unifiedScheduleListV702 .haos-v740-priority-critical td{background:linear-gradient(90deg,#fecaca 0%,#fff1f2 44%,#ffffff 100%)!important}
   #unifiedScheduleListV702 .haos-v738-scope-my td:first-child{border-left:9px solid #1d4ed8!important}
   #unifiedScheduleListV702 .haos-v738-scope-dept td:first-child{border-left:9px solid #047857!important}
+  #unifiedScheduleListV702 .haos-v740-priority-urgent td:first-child{border-left-color:#f97316!important}
+  #unifiedScheduleListV702 .haos-v740-priority-critical td:first-child{border-left-color:#dc2626!important;box-shadow:inset 0 0 0 2px rgba(220,38,38,.12)!important}
   #unifiedScheduleListV702 .haos-v738-scope-my .haos-v702-kind{background:#2563eb!important;color:#fff!important;border:1px solid #1d4ed8!important}
   #unifiedScheduleListV702 .haos-v738-scope-dept .haos-v702-kind{background:#059669!important;color:#fff!important;border:1px solid #047857!important}
   .haos-v702-card.haos-v738-scope-my{border-left:9px solid #1d4ed8!important;background:linear-gradient(180deg,#dbeafe,#fff)!important}
   .haos-v702-card.haos-v738-scope-dept{border-left:9px solid #047857!important;background:linear-gradient(180deg,#bbf7d0,#fff)!important}
+  .haos-v702-card.haos-v740-priority-urgent{border-left-color:#f97316!important;background:linear-gradient(180deg,#ffedd5,#fff)!important}
+  .haos-v702-card.haos-v740-priority-critical{border-left-color:#dc2626!important;background:linear-gradient(180deg,#fecaca,#fff)!important;box-shadow:0 18px 44px rgba(220,38,38,.18)!important}
+  .haos-v740-urgent-mark{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:4px 9px;margin-top:4px;background:#fff7ed;color:#c2410c;border:1px solid #fdba74;font-weight:950;font-size:.76rem}
+  .haos-v740-urgent-mark.critical{background:#fee2e2;color:#b91c1c;border-color:#fca5a5}
   .haos-v692-schedule-shell-head{display:none!important}
   .haos-v739-schedule-legend{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:6px}
   .haos-v739-schedule-legend span{display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:#fff;padding:8px 12px;font-weight:950;box-shadow:0 8px 20px rgba(15,23,42,.06);border:1px solid rgba(148,163,184,.22)}
@@ -15427,7 +15435,7 @@ HAOS v68.6 FINISHING FIX
 </style>
 <script id="haos-v70-37-workspace-schedule-it-script">
 (function(){
-  const PATCH='v70.39-schedule-filters-pagination';
+  const PATCH='v70.40-urgent-workspace-edit-fixes';
   if(window.__HAOS_V737_WORKSPACE_SCHEDULE_IT__)return;
   window.__HAOS_V737_WORKSPACE_SCHEDULE_IT__=true;
   const $=id=>document.getElementById(id);
@@ -15579,7 +15587,13 @@ HAOS v68.6 FINISHING FIX
           Swal.fire({icon:'success',title:'บันทึกแล้ว',text:save.message,timer:1300,showConfirmButton:false});
           try{loadSharedWorkspaces();}catch(e){}
           const openWs=currentWsV737();
-          if(openWs&&openWs.id===id){Object.assign(openWs,save.data||{});renderWorkspaceEditorTable();}
+          if(openWs&&openWs.id===id){
+            Object.assign(openWs,save.data||{});
+            if($('workspaceModalTitle'))$('workspaceModalTitle').innerText=openWs.title||'พื้นที่ทำงานร่วมกัน';
+            if($('workspaceModalSub'))$('workspaceModalSub').innerText=(openWs.description||'')+(openWs.expiresAt?' • หมดอายุ '+openWs.expiresAt:'')+(openWs.canEdit?' • แก้ไขได้':' • ดูอย่างเดียว');
+            renderWorkspaceEditorTable();
+          }
+          try{const listWs=sharedWsListV737().find(w=>w.id===id);if(listWs)Object.assign(listWs,save.data||{});}catch(e){}
         }).catch(e=>{Swal.close();Swal.fire('ผิดพลาด',e.message||String(e),'error');});
       });
     }).catch(e=>Swal.fire('ผิดพลาด',e.message||String(e),'error'));
@@ -15611,6 +15625,13 @@ HAOS v68.6 FINISHING FIX
     if(field.type==='image'&&text)return '<a href="'+esc(text)+'" target="_blank"><img src="'+esc(text)+'" style="max-width:140px;max-height:100px;border-radius:8px;border:1px solid #e2e8f0;object-fit:cover"></a>';
     return text?esc(text):'<span class="text-muted">-</span>';
   }
+  function editableResponseCellV740(field,value,rowIndex){
+    const ws=currentWsV737();
+    if(!canEditWorkspaceV737(ws)||rowIndex<0)return responseCellV737(field,value);
+    const col=(ws?.columns||[])[field.index]||field.label||'';
+    if(typeof window.renderWorkspaceCellApp_==='function')return window.renderWorkspaceCellApp_(col,value,rowIndex,field.index);
+    return `<div contenteditable="true" class="p-1 rounded workspace-app-cell" data-r="${rowIndex}" data-c="${field.index}" style="min-width:140px;min-height:28px;outline:1px solid transparent;">${esc(value||'')}</div>`;
+  }
   function responseGroupsV737(rows,fields,state){
     const groupField=fields.find(f=>String(f.index)===String(state.group));
     if(!groupField)return {'ทั้งหมด':rows};
@@ -15627,9 +15648,9 @@ HAOS v68.6 FINISHING FIX
     const body=Object.keys(groups).map(name=>{
       const groupRows=groups[name];
       if(state.view==='table'){
-        return `<div class="haos-v737-group-title">${esc(name)} (${groupRows.length})</div><div class="table-responsive"><table class="haos-v737-answer-table"><thead><tr><th>เวลา</th>${shownFields.map(f=>`<th>${esc(f.label)}</th>`).join('')}</tr></thead><tbody>${groupRows.map(row=>`<tr><td>${esc(row[0]||'-')}</td>${shownFields.map(f=>`<td>${responseCellV737(f,row[f.index])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+        return `<div class="haos-v737-group-title">${esc(name)} (${groupRows.length})</div><div class="table-responsive"><table class="haos-v737-answer-table"><thead><tr><th>เวลา</th>${shownFields.map(f=>`<th>${esc(f.label)}</th>`).join('')}</tr></thead><tbody>${groupRows.map(row=>{const rowIndex=(currentWsV737()?.rows||[]).indexOf(row);return `<tr><td>${esc(row[0]||'-')}</td>${shownFields.map(f=>`<td>${editableResponseCellV740(f,row[f.index],rowIndex)}</td>`).join('')}</tr>`;}).join('')}</tbody></table></div>`;
       }
-      return `<div class="haos-v737-group-title">${esc(name)} (${groupRows.length})</div><div class="haos-v735-response-grid">${groupRows.map((row,i)=>`<article class="haos-v735-response-card"><div class="haos-v735-response-card-head"><div><span>คำตอบ</span><b>${esc(row[0]||('รายการ '+(i+1)))}</b></div></div><div class="haos-v735-response-fields">${shownFields.map(f=>`<div class="haos-v735-response-field"><small>${esc(f.label)}${f.required?'<span class="haos-v735-required-star">*</span>':''}</small><div>${responseCellV737(f,row[f.index])}</div></div>`).join('')}</div></article>`).join('')}</div>`;
+      return `<div class="haos-v737-group-title">${esc(name)} (${groupRows.length})</div><div class="haos-v735-response-grid">${groupRows.map((row,i)=>{const rowIndex=(currentWsV737()?.rows||[]).indexOf(row);return `<article class="haos-v735-response-card"><div class="haos-v735-response-card-head"><div><span>คำตอบ</span><b>${esc(row[0]||('รายการ '+(i+1)))}</b></div></div><div class="haos-v735-response-fields">${shownFields.map(f=>`<div class="haos-v735-response-field"><small>${esc(f.label)}${f.required?'<span class="haos-v735-required-star">*</span>':''}</small><div>${editableResponseCellV740(f,row[f.index],rowIndex)}</div></div>`).join('')}</div></article>`;}).join('')}</div>`;
     }).join('')||'<div class="text-center text-muted py-4">ไม่พบคำตอบตามเงื่อนไข</div>';
     table.innerHTML=`<tbody><tr><td class="border-0 p-0"><section class="haos-v735-response-shell">
       <div class="haos-v737-toolbar">
@@ -15793,6 +15814,12 @@ HAOS v68.6 FINISHING FIX
   function passPeriodV737(item,period){if(!period)return true;const d=scheduleDateV737(item);if(!d)return true;const now=new Date();const start=new Date(now.getFullYear(),now.getMonth(),now.getDate());const diff=Math.floor((new Date(d.getFullYear(),d.getMonth(),d.getDate())-start)/86400000);if(period==='today')return diff===0;if(period==='week')return diff>=0&&diff<=7;if(period==='month')return diff>=0&&diff<=30;return true;}
   function badgeClsV737(status){try{return getScheduleBadgeClass(status);}catch(e){return 'bg-info text-dark';}}
   function priorityOfV737(item){return item.priority||item.eventPriority||item.workPriority||'ปกติ';}
+  function priorityToneV740(item){
+    const p=String(priorityOfV737(item)||'').toLowerCase();
+    if(p.includes('ด่วนมาก')||p.includes('critical')||p.includes('สูงมาก'))return 'critical';
+    if(p.includes('ด่วน')||p.includes('urgent')||p.includes('high'))return 'urgent';
+    return '';
+  }
   function tagsOfV737(item){return String(item.tags||item.eventTags||item.workTags||'').split(/\n|,/).map(x=>x.trim()).filter(Boolean);}
   function scheduleActionsV737(item){const id=String(item.id||item.publicId||item.eventId||'');const pins=schedulePinsV737();let html=`<button class="btn btn-sm ${pins.has(id)?'btn-warning':'btn-outline-warning'} me-1" onclick="toggleSchedulePinV737('${esc(id)}')" title="ปักหมุดงาน"><i class="bi ${pins.has(id)?'bi-star-fill':'bi-star'}"></i></button><button class="btn btn-outline-info btn-sm text-dark me-1" onclick="viewScheduleDetail('${esc(id)}')"><i class="bi bi-eye"></i></button>`;if(item.__scope==='my'||cleanPhone(item.ownerPhone||item.createdByPhone)===userKey())html+=`<button class="btn btn-outline-warning btn-sm text-dark me-1" onclick="editSchedule('${esc(id)}')"><i class="bi bi-pencil"></i></button><button class="btn btn-outline-danger btn-sm" onclick="handleDelete('${esc(id)}')"><i class="bi bi-trash"></i></button>`;return html;}
   function scheduleListV737(){
@@ -15900,12 +15927,12 @@ HAOS v68.6 FINISHING FIX
     if($('unifiedScheduleCurrentViewV702'))$('unifiedScheduleCurrentViewV702').textContent='กำลังดู: '+({list:'รายการ',card:'การ์ด',calendar:'ปฏิทิน'}[mode]||'รายการ');
     const listBox=$('unifiedScheduleListV702'),cardBox=$('unifiedScheduleCardV702'),calBox=$('unifiedScheduleCalendarV702');
     setUnifiedScheduleBoxesV737(mode);
-    const titleCell=item=>{const id=String(item.id||item.publicId||'');const d=scheduleDateV737(item);return `<div class="haos-v706-title-wrap"><span class="haos-v706-title-icon"><i class="bi ${pins.has(id)?'bi-star-fill':'bi-calendar-event'}"></i></span><div><div class="haos-v706-title-main">${esc(item.eventName||item.title||'-')}</div><div class="haos-v706-title-sub"><span><i class="bi bi-geo-alt"></i> ${esc(item.location||item.eventLocation||'-')}</span>${sameDay(d,new Date())?'<span class="badge bg-primary">วันนี้</span>':''}</div></div></div>`;};
+    const titleCell=item=>{const id=String(item.id||item.publicId||''),tone=priorityToneV740(item);const d=scheduleDateV737(item);return `<div class="haos-v706-title-wrap"><span class="haos-v706-title-icon"><i class="bi ${tone==='critical'?'bi-exclamation-octagon-fill':(tone==='urgent'?'bi-exclamation-triangle-fill':(pins.has(id)?'bi-star-fill':'bi-calendar-event'))}"></i></span><div><div class="haos-v706-title-main">${esc(item.eventName||item.title||'-')}</div><div class="haos-v706-title-sub"><span><i class="bi bi-geo-alt"></i> ${esc(item.location||item.eventLocation||'-')}</span>${sameDay(d,new Date())?'<span class="badge bg-primary">วันนี้</span>':''}</div>${tone?`<span class="haos-v740-urgent-mark ${tone==='critical'?'critical':''}"><i class="bi bi-lightning-charge-fill"></i>${tone==='critical'?'ด่วนมาก ต้องเร่งดำเนินการ':'ด่วน ควรรีบดำเนินการ'}</span>`:''}</div></div>`;};
     const metaCell=item=>tagsOfV737(item).map(t=>`<span class="haos-v706-chip tag">${esc(t)}</span>`).join('')+`<span class="haos-v706-chip priority-normal"><i class="bi bi-flag"></i>${esc(priorityOfV737(item))}</span>`;
-    const row=item=>{const id=String(item.id||item.publicId||''),d=scheduleDateV737(item),scopeCls=item.__scope==='dept'?'haos-v738-scope-dept':'haos-v738-scope-my';return `<tr class="${scopeCls} ${sameDay(d,new Date())?'haos-v737-schedule-today':''} ${pins.has(id)?'haos-v737-schedule-pin':''}"><td>${titleCell(item)}</td><td><div class="haos-v706-time"><i class="bi bi-clock"></i> ${esc(item.startTime||item.start||'-')}</div></td><td><span class="haos-v702-kind ${item.__scope==='dept'?'dept':'my'}">${item.__scope==='dept'?'กลุ่มงาน':'ส่วนตัว'}</span></td><td>${metaCell(item)}</td><td>${esc(item.ownerName||item.createdBy||item.assigneeName||'-')}</td><td><span class="badge ${badgeClsV737(item.workStatus||item.status)}">${esc(item.workStatus||item.status||'-')}</span></td><td class="text-end action-menu">${scheduleActionsV737(item)}</td></tr>`;};
+    const row=item=>{const id=String(item.id||item.publicId||''),d=scheduleDateV737(item),tone=priorityToneV740(item),scopeCls=item.__scope==='dept'?'haos-v738-scope-dept':'haos-v738-scope-my',priorityCls=tone==='critical'?'haos-v740-priority-critical':(tone==='urgent'?'haos-v740-priority-urgent':'');return `<tr class="${scopeCls} ${priorityCls} ${sameDay(d,new Date())?'haos-v737-schedule-today':''} ${pins.has(id)?'haos-v737-schedule-pin':''}"><td>${titleCell(item)}</td><td><div class="haos-v706-time"><i class="bi bi-clock"></i> ${esc(item.startTime||item.start||'-')}</div></td><td><span class="haos-v702-kind ${item.__scope==='dept'?'dept':'my'}">${item.__scope==='dept'?'กลุ่มงาน':'ส่วนตัว'}</span></td><td>${metaCell(item)}</td><td>${esc(item.ownerName||item.createdBy||item.assigneeName||'-')}</td><td><span class="badge ${badgeClsV737(item.workStatus||item.status)}">${esc(item.workStatus||item.status||'-')}</span></td><td class="text-end action-menu">${scheduleActionsV737(item)}</td></tr>`;};
     const todayStrip=`<div class="haos-v737-today-strip"><i class="bi bi-calendar-check"></i> วันนี้มีงานตามตัวกรอง ${todayCount} รายการ ${pins.size?`• ปักหมุดไว้ ${pins.size} งาน`:''}</div>`;
     if(mode==='list'&&listBox)listBox.innerHTML=todayStrip+'<table class="table haos-v702-table haos-v706-table align-middle small"><thead><tr><th>ชื่องาน</th><th>เวลาเริ่ม</th><th>ประเภท</th><th>Priority / Tags</th><th>ผู้สร้าง/เจ้าของ</th><th>สถานะ</th><th class="text-end">จัดการ</th></tr></thead><tbody>'+(list.length?list.map(row).join(''):'<tr><td colspan="7" class="text-center text-muted py-4">ไม่พบรายการตามเงื่อนไข</td></tr>')+'</tbody></table>'+pager;
-    if(mode==='card'&&cardBox)cardBox.innerHTML=todayStrip+(list.length?list.map(item=>`<article class="haos-v702-card ${item.__scope==='dept'?'haos-v738-scope-dept':'haos-v738-scope-my'} ${sameDay(scheduleDateV737(item),new Date())?'haos-v737-schedule-today':''} ${pins.has(String(item.id||item.publicId||''))?'haos-v737-schedule-pin':''}"><div class="d-flex justify-content-between gap-2 mb-2"><span class="haos-v702-kind ${item.__scope==='dept'?'dept':'my'}">${item.__scope==='dept'?'กลุ่มงาน':'ส่วนตัว'}</span><span class="badge ${badgeClsV737(item.workStatus||item.status)}">${esc(item.workStatus||item.status||'-')}</span></div><div class="title">${esc(item.eventName||item.title||'-')}</div><div class="meta"><span><i class="bi bi-clock"></i> ${esc(item.startTime||item.start||'-')}</span><span><i class="bi bi-geo-alt"></i> ${esc(item.location||item.eventLocation||'-')}</span></div><div>${metaCell(item)}</div><div class="text-end mt-2">${scheduleActionsV737(item)}</div></article>`).join(''):'<div class="text-muted small p-3">ไม่พบรายการตามเงื่อนไข</div>')+pager;
+    if(mode==='card'&&cardBox)cardBox.innerHTML=todayStrip+(list.length?list.map(item=>{const tone=priorityToneV740(item);return `<article class="haos-v702-card ${item.__scope==='dept'?'haos-v738-scope-dept':'haos-v738-scope-my'} ${tone==='critical'?'haos-v740-priority-critical':(tone==='urgent'?'haos-v740-priority-urgent':'')} ${sameDay(scheduleDateV737(item),new Date())?'haos-v737-schedule-today':''} ${pins.has(String(item.id||item.publicId||''))?'haos-v737-schedule-pin':''}"><div class="d-flex justify-content-between gap-2 mb-2"><span class="haos-v702-kind ${item.__scope==='dept'?'dept':'my'}">${item.__scope==='dept'?'กลุ่มงาน':'ส่วนตัว'}</span><span class="badge ${badgeClsV737(item.workStatus||item.status)}">${esc(item.workStatus||item.status||'-')}</span></div><div class="title">${esc(item.eventName||item.title||'-')}</div>${tone?`<span class="haos-v740-urgent-mark ${tone==='critical'?'critical':''}"><i class="bi bi-lightning-charge-fill"></i>${tone==='critical'?'ด่วนมาก ต้องเร่งดำเนินการ':'ด่วน ควรรีบดำเนินการ'}</span>`:''}<div class="meta"><span><i class="bi bi-clock"></i> ${esc(item.startTime||item.start||'-')}</span><span><i class="bi bi-geo-alt"></i> ${esc(item.location||item.eventLocation||'-')}</span></div><div>${metaCell(item)}</div><div class="text-end mt-2">${scheduleActionsV737(item)}</div></article>`;}).join(''):'<div class="text-muted small p-3">ไม่พบรายการตามเงื่อนไข</div>')+pager;
     if(mode==='calendar'&&calBox){
       calBox.innerHTML='<div id="unifiedScheduleCalendarInnerV737"></div>';
       if(window.haosUnifiedScheduleCalendarV702)try{window.haosUnifiedScheduleCalendarV702.destroy();}catch(e){}
