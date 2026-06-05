@@ -14807,5 +14807,432 @@ HAOS v68.6 FINISHING FIX
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<style id="haos-v70-35-workspace-permissions-style">
+  .haos-v735-access-panel{border:1px solid rgba(16,185,129,.24);border-radius:18px;background:linear-gradient(180deg,#ffffff,#f0fdf4);padding:14px;margin-bottom:14px;box-shadow:0 12px 30px rgba(15,23,42,.05)}
+  .haos-v735-access-panel h6{font-weight:950;color:#047857;margin:0 0 8px}
+  .haos-v735-access-panel select[multiple]{min-height:156px;border-radius:14px;font-weight:700}
+  .haos-v735-access-help{color:#64748b;font-size:.82rem;font-weight:700;margin-top:6px}
+  .haos-v735-required-toggle{display:flex;align-items:center;gap:7px;border:1px solid rgba(245,158,11,.28);border-radius:13px;background:#fffbeb;color:#92400e;font-weight:900;padding:8px 10px;white-space:nowrap}
+  .haos-v735-required-toggle input{width:1.05rem;height:1.05rem}
+  .haos-v735-required-star{color:#dc2626;font-weight:950;margin-left:3px}
+  .haos-v735-response-shell{padding:16px;background:#f8fafc;border-radius:18px}
+  .haos-v735-response-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:14px}
+  .haos-v735-response-kpi{border:1px solid rgba(148,163,184,.24);border-radius:16px;background:#fff;padding:13px;box-shadow:0 10px 24px rgba(15,23,42,.05)}
+  .haos-v735-response-kpi small{display:block;color:#64748b;font-weight:900}.haos-v735-response-kpi b{font-size:1.7rem;color:#0f766e;line-height:1.1}
+  .haos-v735-response-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+  .haos-v735-response-card{border:1px solid rgba(148,163,184,.24);border-radius:18px;background:#fff;box-shadow:0 14px 34px rgba(15,23,42,.07);overflow:hidden}
+  .haos-v735-response-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:13px 14px;background:linear-gradient(90deg,#ecfeff,#f0fdf4);border-bottom:1px solid rgba(226,232,240,.88)}
+  .haos-v735-response-card-head b{display:block;color:#0f172a}.haos-v735-response-card-head span{color:#64748b;font-size:.82rem;font-weight:800}
+  .haos-v735-response-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;padding:14px}
+  .haos-v735-response-field{border:1px solid rgba(226,232,240,.86);border-radius:14px;background:#fff;padding:10px;min-width:0}
+  .haos-v735-response-field small{display:block;color:#64748b;font-weight:900;margin-bottom:5px}.haos-v735-response-field div{font-weight:750;color:#0f172a;white-space:pre-wrap;word-break:break-word}
+  .haos-v735-access-chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:4px 8px;font-size:.74rem;font-weight:900;background:#ecfdf5;color:#047857;border:1px solid #bbf7d0;margin-top:4px}
+  @media(max-width:768px){.haos-v735-access-panel select[multiple]{min-height:132px}.haos-v735-response-grid{grid-template-columns:1fr}}
+</style>
+<script id="haos-v70-35-workspace-permissions-script">
+(function(){
+  const PATCH='v70.35-workspace-permissions-required-fields';
+  if(window.__HAOS_V735_WORKSPACE_PERMISSIONS__)return;
+  window.__HAOS_V735_WORKSPACE_PERMISSIONS__=true;
+  const $=id=>document.getElementById(id);
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const cleanPhone=v=>String(v||'').replace(/'/g,'').replace(/\D/g,'').trim();
+  let workspaceUsersV735=[];
+  let loadingUsersV735=false;
+
+  function fieldFromSpecV735(spec){
+    const raw=String(spec||'').trim();
+    const dropdown=raw.match(/\[(?:dropdown|dropdownlist|select|ตัวเลือก|ดรอปดาวน์):\s*([^\]]+)\]/i);
+    const radio=raw.match(/\[(?:radio|choice|ตัวเลือกเดี่ยว):\s*([^\]]+)\]/i);
+    const required=/\[(?:required|require|จำเป็น|บังคับ|\*)\]/i.test(raw)||/\*\s*$/.test(raw);
+    const textarea=/\[(?:textarea|longtext|paragraph|ข้อความยาว|ยาว)\]/i.test(raw);
+    const checkbox=/\[(?:checkbox|check|ติ๊ก|ติ๊กถูก)\]/i.test(raw);
+    const image=/\[(?:image|photo|picture|รูปภาพ|แนบรูปภาพ)\]/i.test(raw)||/รูปภาพ|ภาพถ่าย|หลักฐานภาพ/i.test(raw);
+    const label=raw.replace(/\[(?:dropdown|dropdownlist|select|ตัวเลือก|ดรอปดาวน์|radio|choice|ตัวเลือกเดี่ยว):[^\]]+\]/ig,'')
+      .replace(/\[(?:textarea|longtext|paragraph|ข้อความยาว|ยาว|image|photo|picture|รูปภาพ|แนบรูปภาพ|checkbox|check|ติ๊ก|ติ๊กถูก|required|require|จำเป็น|บังคับ|\*)\]/ig,'')
+      .replace(/\*\s*$/,'').trim()||raw;
+    const split=s=>String(s||'').split(',').map(x=>x.trim()).filter(Boolean);
+    if(dropdown)return {label,type:'dropdown',options:split(dropdown[1]),required};
+    if(radio)return {label,type:'radio',options:split(radio[1]),required};
+    if(textarea)return {label,type:'textarea',options:[],required};
+    if(checkbox)return {label,type:'checkbox',options:[],required};
+    if(image)return {label,type:'image',options:[],required};
+    return {label,type:'text',options:[],required};
+  }
+
+  function specFromFieldV735(field){
+    const label=String(field.label||'').trim()||'Field';
+    const opts=Array.isArray(field.options)?field.options.join(', '):String(field.options||'').trim();
+    let spec=label;
+    if(field.type==='dropdown')spec+=' [dropdown: '+(opts||'ตัวเลือก 1, ตัวเลือก 2')+']';
+    else if(field.type==='radio')spec+=' [radio: '+(opts||'ตัวเลือก 1, ตัวเลือก 2')+']';
+    else if(field.type==='textarea')spec+=' [textarea]';
+    else if(field.type==='checkbox')spec+=' [checkbox]';
+    else if(field.type==='image')spec+=' [image]';
+    if(field.required)spec+=' [required]';
+    return spec;
+  }
+
+  window.parseWorkspaceFieldApp_=function(label){return fieldFromSpecV735(label);};
+
+  function dedupeUsersV735(list){
+    const byPhone=new Map();
+    (Array.isArray(list)?list:[]).forEach(u=>{
+      const phone=cleanPhone(u.phone);
+      if(!phone||byPhone.has(phone))return;
+      byPhone.set(phone,{phone,name:u.fullName||u.name||phone,department:u.department||'',position:u.position||'',role:u.role||u.accountRole||'User'});
+    });
+    return Array.from(byPhone.values()).sort((a,b)=>(a.department||'').localeCompare(b.department||'','th')||(a.name||'').localeCompare(b.name||'','th'));
+  }
+
+  function ensureWorkspaceUsersV735(done){
+    if(workspaceUsersV735.length){done&&done(workspaceUsersV735);return;}
+    if(loadingUsersV735){setTimeout(()=>ensureWorkspaceUsersV735(done),250);return;}
+    loadingUsersV735=true;
+    try{
+      google.script.run.withSuccessHandler(res=>{
+        loadingUsersV735=false;
+        workspaceUsersV735=dedupeUsersV735(res&&res.success?res.data:[]);
+        renderWorkspaceAccessOptionsV735();
+        done&&done(workspaceUsersV735);
+      }).withFailureHandler(()=>{
+        loadingUsersV735=false;
+        workspaceUsersV735=[];
+        renderWorkspaceAccessOptionsV735();
+        done&&done([]);
+      }).getAllUsers();
+    }catch(e){loadingUsersV735=false;done&&done([]);}
+  }
+
+  function userOptionHtmlV735(selected){
+    const selectedSet=new Set((selected||[]).map(cleanPhone));
+    if(!workspaceUsersV735.length)return '<option disabled>กำลังโหลดรายชื่อผู้ใช้...</option>';
+    return workspaceUsersV735.map(u=>'<option value="'+esc(u.phone)+'" '+(selectedSet.has(u.phone)?'selected':'')+'>'+esc(u.name)+' - '+esc(u.department||'-')+'</option>').join('');
+  }
+
+  function selectedValuesV735(id){
+    return Array.from($(id)?.selectedOptions||[]).map(o=>cleanPhone(o.value)).filter(Boolean);
+  }
+
+  function ensureWorkspaceAccessPanelV735(){
+    const modal=$('workspaceCreateModal');
+    if(!modal||$('wsAccessPanelV735'))return;
+    const anchor=$('googleWorkspaceHint')||$('wsCreateColumns')?.closest('.mb-3');
+    if(!anchor)return;
+    anchor.insertAdjacentHTML('beforebegin',`
+      <div id="wsAccessPanelV735" class="haos-v735-access-panel">
+        <h6><i class="bi bi-shield-lock"></i> สิทธิ์เข้าถึงในระบบ</h6>
+        <div class="row g-2">
+          <div class="col-md-6">
+            <label class="small fw-bold text-muted">ให้ดูพื้นที่นี้ได้</label>
+            <select id="wsViewUsersV735" class="form-select" multiple></select>
+            <div class="haos-v735-access-help">เจ้าของพื้นที่และ Super Admin ดูได้เสมอ เลือกเพิ่มเฉพาะคนที่ต้องเห็นในเมนูของตนเอง</div>
+          </div>
+          <div class="col-md-6">
+            <label class="small fw-bold text-muted">ให้แก้ไขข้อมูลได้</label>
+            <select id="wsEditUsersV735" class="form-select" multiple></select>
+            <div class="haos-v735-access-help">ผู้ที่แก้ไขได้จะถูกนับเป็นผู้มีสิทธิ์ดูอัตโนมัติ</div>
+          </div>
+        </div>
+      </div>`);
+    renderWorkspaceAccessOptionsV735();
+  }
+
+  function renderWorkspaceAccessOptionsV735(viewers,editors){
+    if($('wsViewUsersV735'))$('wsViewUsersV735').innerHTML=userOptionHtmlV735(viewers||[]);
+    if($('wsEditUsersV735'))$('wsEditUsersV735').innerHTML=userOptionHtmlV735(editors||[]);
+  }
+
+  function collectWorkspaceAccessPolicyV735(){
+    return {
+      viewers:selectedValuesV735('wsViewUsersV735'),
+      editors:selectedValuesV735('wsEditUsersV735'),
+      allowDepartmentView:$('wsScope')?.value==='department'
+    };
+  }
+
+  function installRequiredTogglesV735(){
+    document.querySelectorAll('[data-ws-col-row]').forEach(row=>{
+      if(row.querySelector('.ws-col-required-v735'))return;
+      const labelInput=row.querySelector('.ws-col-label-v728');
+      const hadRequired=/\[(?:required|require|จำเป็น|บังคับ|\*)\]/i.test(labelInput?.value||'')||/\*\s*$/.test(labelInput?.value||'');
+      if(labelInput&&hadRequired)labelInput.value=String(labelInput.value||'').replace(/\[(?:required|require|จำเป็น|บังคับ|\*)\]/ig,'').replace(/\*\s*$/,'').trim();
+      const actions=row.querySelector('.d-flex.gap-1')||row;
+      actions.insertAdjacentHTML('beforebegin','<label class="haos-v735-required-toggle"><input type="checkbox" class="form-check-input ws-col-required-v735" '+(hadRequired?'checked':'')+' onchange="syncWorkspaceBuilderV728&&syncWorkspaceBuilderV728()"> จำเป็นต้องระบุ</label>');
+    });
+  }
+
+  function collectWorkspaceFieldConfigV735(){
+    const rows=Array.from(document.querySelectorAll('[data-ws-col-row]'));
+    if(rows.length){
+      return rows.map(row=>({
+        label:(row.querySelector('.ws-col-label-v728')?.value||'').trim(),
+        type:row.querySelector('.ws-col-type-v728')?.value||'text',
+        options:(row.querySelector('.ws-col-options-v728')?.value||'').split(',').map(x=>x.trim()).filter(Boolean),
+        required:!!row.querySelector('.ws-col-required-v735')?.checked
+      })).filter(x=>x.label);
+    }
+    return String($('wsCreateColumns')?.value||'').split(/\n|,/).map(x=>fieldFromSpecV735(x)).filter(x=>x.label);
+  }
+
+  function syncRequiredColumnsTextareaV735(){
+    installRequiredTogglesV735();
+    const fields=collectWorkspaceFieldConfigV735();
+    if($('wsCreateColumns')&&fields.length)$('wsCreateColumns').value=fields.map(specFromFieldV735).join('\n');
+  }
+
+  const oldSyncV728=window.syncWorkspaceBuilderV728;
+  window.syncWorkspaceBuilderV728=function(){
+    const r=oldSyncV728?oldSyncV728.apply(this,arguments):undefined;
+    syncRequiredColumnsTextareaV735();
+    return r;
+  };
+
+  const oldGetPayloadV735=window.getWorkspaceCreatePayload;
+  window.getWorkspaceCreatePayload=function(){
+    ensureWorkspaceAccessPanelV735();
+    syncRequiredColumnsTextareaV735();
+    const base=oldGetPayloadV735?oldGetPayloadV735.apply(this,arguments):{};
+    const fieldConfig=collectWorkspaceFieldConfigV735();
+    base.fieldConfig=fieldConfig;
+    base.columns=fieldConfig.map(specFromFieldV735);
+    base.accessPolicy=collectWorkspaceAccessPolicyV735();
+    return base;
+  };
+
+  const oldOpenCreateV735=window.openWorkspaceCreateModal;
+  window.openWorkspaceCreateModal=function(){
+    const r=oldOpenCreateV735?oldOpenCreateV735.apply(this,arguments):undefined;
+    setTimeout(()=>{
+      ensureWorkspaceAccessPanelV735();
+      renderWorkspaceAccessOptionsV735([],[]);
+      ensureWorkspaceUsersV735(()=>renderWorkspaceAccessOptionsV735([],[]));
+      installRequiredTogglesV735();
+      syncRequiredColumnsTextareaV735();
+    },120);
+    return r;
+  };
+
+  const oldApplyTemplateV735=window.applyWorkspaceTypeTemplate;
+  window.applyWorkspaceTypeTemplate=function(){
+    const r=oldApplyTemplateV735?oldApplyTemplateV735.apply(this,arguments):undefined;
+    setTimeout(()=>{installRequiredTogglesV735();syncRequiredColumnsTextareaV735();},80);
+    return r;
+  };
+
+  function canEditCurrentV735(){return !!(window.currentWorkspace&&(currentWorkspace.canEdit||currentWorkspace.canManage));}
+
+  window.renderWorkspaceCellApp_=function(columnName,value,r,i){
+    const can=canEditCurrentV735();
+    const name=String(columnName||'');
+    const field=fieldFromSpecV735(name);
+    const checkedValues=['true','1','✓','✔','เสร็จ','เสร็จแล้ว','done','yes'];
+    if(field.type==='checkbox'||(currentWorkspace?.workspaceType==='checklist'&&(name.includes('เสร็จ')||name.includes('ติ๊ก')))){
+      const checked=checkedValues.includes(String(value||'').trim().toLowerCase())||checkedValues.includes(String(value||'').trim());
+      return `<div class="text-center"><input type="checkbox" class="form-check-input workspace-check-cell" data-r="${r}" data-c="${i}" ${checked?'checked':''} ${can?'':'disabled'}></div>`;
+    }
+    if(field.type==='dropdown')return `<select class="form-select form-select-sm workspace-select-cell" data-r="${r}" data-c="${i}" ${can?'':'disabled'}><option value="">-- เลือก --</option>${field.options.map(o=>`<option value="${esc(o)}" ${String(value)===o?'selected':''}>${esc(o)}</option>`).join('')}</select>`;
+    if(field.type==='radio'){
+      const safeName=`wsradio_${r}_${i}`;
+      return `<div class="d-flex gap-1 flex-wrap">${field.options.map(o=>`<label class="btn btn-outline-primary btn-sm py-1 px-2 ${String(value)===o?'active':''}"><input type="radio" class="workspace-radio-cell me-1" name="${safeName}" data-r="${r}" data-c="${i}" value="${esc(o)}" ${String(value)===o?'checked':''} ${can?'':'disabled'}>${esc(o)}</label>`).join('')}</div>`;
+    }
+    if(field.type==='image'){
+      const url=String(value||'').trim();
+      const img=url?`<a href="${esc(url)}" target="_blank"><img src="${esc(url)}" style="max-width:90px;max-height:70px;border-radius:8px;border:1px solid #e2e8f0;object-fit:cover"></a>`:'<span class="text-muted small">ยังไม่มีรูป</span>';
+      return `<div class="workspace-image-box" style="min-width:160px;"><div class="workspace-image-preview mb-1">${img}</div><input type="hidden" class="workspace-image-cell" data-r="${r}" data-c="${i}" value="${esc(url)}">${can?`<input type="file" class="form-control form-control-sm" accept="image/*" onchange="uploadWorkspaceImageCellApp_(this)">`:''}</div>`;
+    }
+    if(field.type==='textarea')return `<textarea class="form-control form-control-sm workspace-textarea-cell" rows="3" data-r="${r}" data-c="${i}" style="min-width:220px;resize:vertical;" ${can?'':'disabled'}>${esc(value||'')}</textarea>`;
+    return `<div contenteditable="${can?'true':'false'}" class="p-1 rounded workspace-app-cell" data-r="${r}" data-c="${i}" style="min-width:140px;min-height:28px;outline:1px solid transparent;">${esc(value||'')}</div>`;
+  };
+
+  function fieldConfigForWorkspaceV735(){
+    const cfg=Array.isArray(currentWorkspace?.fieldConfig)?currentWorkspace.fieldConfig:[];
+    const cols=currentWorkspace?.columns||[];
+    return cols.map((c,i)=>Object.assign({index:i}, fieldFromSpecV735(c), cfg[i]||{}));
+  }
+
+  function updateWorkspaceToolbarV735(){
+    const bar=document.querySelector('#workspaceTableModal .modal-body > .d-flex');
+    if(!bar||!currentWorkspace)return;
+    const buttons=bar.querySelectorAll('button');
+    const can=canEditCurrentV735();
+    const isForm=currentWorkspace.workspaceType==='form';
+    if(buttons[1])buttons[1].style.display=can&&!isForm?'':'none';
+    if(buttons[2])buttons[2].style.display=can&&!isForm&&currentWorkspace.workspaceType==='checklist'?'':'none';
+    if(buttons[3])buttons[3].style.display=can&&!isForm?'':'none';
+  }
+
+  function responseValueHtmlV735(field,value){
+    const text=String(value??'').trim();
+    if(field.type==='image'&&text)return '<a href="'+esc(text)+'" target="_blank"><img src="'+esc(text)+'" style="max-width:100%;max-height:130px;border-radius:10px;border:1px solid #e2e8f0;object-fit:cover"></a>';
+    return text?esc(text):'<span class="text-muted">-</span>';
+  }
+
+  function renderFormResponsesV735(table,fields,rows){
+    const displayFields=fields.filter(f=>!(f.index===0&&/timestamp/i.test(f.label||'')));
+    const requiredCount=fields.filter(f=>f.required).length;
+    const last=rows.length?String(rows[rows.length-1]?.[0]||''):'-';
+    const cards=rows.slice().reverse().map((row,idx)=>{
+      const no=rows.length-idx;
+      const titleField=displayFields.find(f=>String(row[f.index]||'').trim()&&f.type!=='image')||displayFields[0];
+      const title=titleField?String(row[titleField.index]||'คำตอบ #'+no):'คำตอบ #'+no;
+      const time=String(row[0]||'');
+      return `<article class="haos-v735-response-card">
+        <div class="haos-v735-response-card-head"><div><span>คำตอบ #${no}</span><b>${esc(title||('คำตอบ #'+no))}</b></div><span><i class="bi bi-clock"></i> ${esc(time||'-')}</span></div>
+        <div class="haos-v735-response-fields">${displayFields.map(f=>`<div class="haos-v735-response-field"><small>${esc(f.label||'Field')}${f.required?'<span class="haos-v735-required-star">*</span>':''}</small><div>${responseValueHtmlV735(f,row[f.index])}</div></div>`).join('')}</div>
+      </article>`;
+    }).join('');
+    table.innerHTML=`<tbody><tr><td class="border-0 p-0">
+      <section class="haos-v735-response-shell">
+        <div class="haos-v735-response-kpis">
+          <div class="haos-v735-response-kpi"><small><i class="bi bi-inbox"></i> จำนวนคำตอบ</small><b>${rows.length}</b></div>
+          <div class="haos-v735-response-kpi"><small><i class="bi bi-ui-checks"></i> ช่องข้อมูล</small><b>${displayFields.length}</b></div>
+          <div class="haos-v735-response-kpi"><small><i class="bi bi-asterisk"></i> ช่องจำเป็น</small><b>${requiredCount}</b></div>
+          <div class="haos-v735-response-kpi"><small><i class="bi bi-clock-history"></i> ล่าสุด</small><div class="fw-bold text-muted mt-1">${esc(last||'-')}</div></div>
+        </div>
+        ${rows.length?'<div class="haos-v735-response-grid">'+cards+'</div>':'<div class="text-center text-muted py-4">ยังไม่มีคำตอบจากแบบฟอร์ม</div>'}
+      </section>
+    </td></tr></tbody>`;
+  }
+
+  window.renderWorkspaceEditorTable=function(){
+    const table=$('workspaceEditTable');
+    if(!table||!currentWorkspace)return;
+    updateWorkspaceToolbarV735();
+    const cols=currentWorkspace.columns||[];
+    const rows=currentWorkspace.rows||[];
+    const fields=fieldConfigForWorkspaceV735();
+    if(currentWorkspace.workspaceType==='form')return renderFormResponsesV735(table,fields,rows);
+    let html='<thead class="table-light"><tr>'+cols.map((c,i)=>'<th>'+esc((fields[i]&&fields[i].label)||fieldFromSpecV735(c).label||c)+(fields[i]&&fields[i].required?'<span class="haos-v735-required-star">*</span>':'')+'</th>').join('')+'</tr></thead><tbody>';
+    if(!rows.length)html+='<tr><td colspan="'+Math.max(cols.length,1)+'" class="text-center text-muted py-4">ยังไม่มีข้อมูล</td></tr>';
+    rows.forEach((row,r)=>{html+='<tr>'+cols.map((c,i)=>`<td>${renderWorkspaceCellApp_(c,row[i]||'',r,i)}</td>`).join('')+'</tr>';});
+    html+='</tbody>';
+    table.innerHTML=html;
+  };
+
+  window.addWorkspaceRowApp=function(){
+    if(!canEditCurrentV735())return Swal.fire('แจ้งเตือน','คุณไม่มีสิทธิ์แก้ไขพื้นที่นี้','warning');
+    currentWorkspace.rows=collectWorkspaceRowsApp();
+    currentWorkspace.rows.push(new Array((currentWorkspace.columns||[]).length).fill(''));
+    renderWorkspaceEditorTable();
+  };
+  window.addChecklistItemApp=function(){
+    if(!canEditCurrentV735())return Swal.fire('แจ้งเตือน','คุณไม่มีสิทธิ์แก้ไขพื้นที่นี้','warning');
+    currentWorkspace.rows=collectWorkspaceRowsApp();
+    const cols=currentWorkspace.columns||[];
+    const row=new Array(cols.length).fill('');
+    const idxCheck=cols.findIndex(c=>/เสร็จ|ติ๊ก|ดำเนินการแล้ว/.test(String(c)));
+    const idxNo=cols.findIndex(c=>/ลำดับ|no\.?/i.test(String(c)));
+    const idxStatus=cols.findIndex(c=>/สถานะ|status/i.test(String(c)));
+    if(idxCheck>=0)row[idxCheck]='';
+    if(idxNo>=0)row[idxNo]=String(currentWorkspace.rows.length+1);
+    if(idxStatus>=0)row[idxStatus]='ยังไม่เริ่ม';
+    currentWorkspace.rows.push(row);
+    renderWorkspaceEditorTable();
+  };
+  window.saveWorkspaceRowsApp=function(){
+    if(!canEditCurrentV735())return Swal.fire('แจ้งเตือน','คุณไม่มีสิทธิ์บันทึกพื้นที่นี้','warning');
+    const rows=collectWorkspaceRowsApp();
+    google.script.run.withSuccessHandler(res=>{
+      if(res.success){currentWorkspace.rows=rows;Swal.fire({icon:'success',title:'บันทึกแล้ว',timer:1200,showConfirmButton:false});loadSharedWorkspaces();}
+      else Swal.fire('ผิดพลาด',res.message,'error');
+    }).withFailureHandler(err=>Swal.fire('ผิดพลาด',err.message||String(err),'error')).updateSharedWorkspaceRows(currentWorkspace.id,rows,user.phone);
+  };
+
+  window.openWorkspaceEditor=function(id){
+    const ws=(sharedWorkspacesGlobal||[]).find(w=>w.id===id);
+    if(!ws)return;
+    if(ws.workspaceType==='google_sheet'||ws.workspaceType==='google_form'){window.open(ws.url,'_blank');return;}
+    const url=new URL(ws.url);
+    const token=url.searchParams.get('token')||'';
+    google.script.run.withSuccessHandler(res=>{
+      if(!res.success)return Swal.fire('ผิดพลาด',res.message,'error');
+      currentWorkspace=Object.assign({},res.data,{id,token,url:ws.url,canManage:!!ws.canManage,canEdit:!!(ws.canEdit||ws.canManage)});
+      $('workspaceModalTitle').innerText=currentWorkspace.title||'พื้นที่ทำงานร่วมกัน';
+      $('workspaceModalSub').innerText=(currentWorkspace.description||'')+(currentWorkspace.expiresAt?' • หมดอายุ '+currentWorkspace.expiresAt:'')+(currentWorkspace.canEdit?' • แก้ไขได้':' • ดูอย่างเดียว');
+      renderWorkspaceEditorTable();
+      if(!workspaceTableModalObj)workspaceTableModalObj=new bootstrap.Modal($('workspaceTableModal'));
+      workspaceTableModalObj.show();
+    }).withFailureHandler(err=>Swal.fire('ผิดพลาด',err.message||String(err),'error')).getPublicWorkspace(id,token);
+  };
+
+  window.openWorkspacePermissionsV735=function(id){
+    const ws=(sharedWorkspacesGlobal||[]).find(w=>w.id===id);
+    if(!ws||!ws.canManage)return Swal.fire('แจ้งเตือน','กำหนดสิทธิ์ได้เฉพาะเจ้าของพื้นที่หรือ Super Admin','warning');
+    ensureWorkspaceUsersV735(()=>{
+      const policy=ws.accessPolicy||{};
+      Swal.fire({
+        title:'กำหนดสิทธิ์พื้นที่ทำงาน',
+        width:820,
+        html:`<div class="text-start">
+          <div class="fw-bold mb-2">${esc(ws.title||'พื้นที่ทำงาน')}</div>
+          <div class="row g-2">
+            <div class="col-md-6"><label class="small fw-bold text-muted">ให้ดูได้</label><select id="swalWsViewUsersV735" class="form-select" multiple style="min-height:220px">${userOptionHtmlV735(policy.viewers||[])}</select></div>
+            <div class="col-md-6"><label class="small fw-bold text-muted">ให้แก้ไขได้</label><select id="swalWsEditUsersV735" class="form-select" multiple style="min-height:220px">${userOptionHtmlV735(policy.editors||[])}</select></div>
+          </div>
+          <label class="form-check mt-3"><input id="swalWsDeptViewV735" class="form-check-input" type="checkbox" ${policy.allowDepartmentView?'checked':''}> <span class="form-check-label fw-bold">ให้คนในกลุ่มงานเดียวกันเห็นพื้นที่นี้</span></label>
+          <div class="small text-muted mt-2">ผู้ที่แก้ไขได้จะถูกเพิ่มเป็นผู้มีสิทธิ์ดูอัตโนมัติเมื่อบันทึก</div>
+        </div>`,
+        showCancelButton:true,
+        confirmButtonText:'บันทึกสิทธิ์',
+        cancelButtonText:'ยกเลิก',
+        preConfirm:()=>({
+          viewers:Array.from(document.getElementById('swalWsViewUsersV735').selectedOptions).map(o=>cleanPhone(o.value)),
+          editors:Array.from(document.getElementById('swalWsEditUsersV735').selectedOptions).map(o=>cleanPhone(o.value)),
+          allowDepartmentView:!!document.getElementById('swalWsDeptViewV735')?.checked
+        })
+      }).then(r=>{
+        if(!r.isConfirmed)return;
+        Swal.fire({title:'กำลังบันทึกสิทธิ์...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+        google.script.run.withSuccessHandler(res=>{
+          Swal.close();
+          if(res.success){Swal.fire({icon:'success',title:'บันทึกสิทธิ์แล้ว',timer:1300,showConfirmButton:false});loadSharedWorkspaces();}
+          else Swal.fire('ผิดพลาด',res.message,'error');
+        }).withFailureHandler(err=>{Swal.close();Swal.fire('ผิดพลาด',err.message||String(err),'error');}).saveWorkspaceAccessPolicyV735(id,user.phone,r.value);
+      });
+    });
+  };
+
+  window.loadSharedWorkspaces=function(){
+    const tbody=$('workspaceTableBody');
+    if(!tbody||!user)return;
+    tbody.innerHTML='<tr><td colspan="6" class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm"></span> กำลังโหลด...</td></tr>';
+    google.script.run.withSuccessHandler(res=>{
+      if(!res.success){tbody.innerHTML='<tr><td colspan="6" class="text-center py-4 text-danger">'+esc(res.message)+'</td></tr>';return;}
+      sharedWorkspacesGlobal=res.data||[];
+      if(!sharedWorkspacesGlobal.length){tbody.innerHTML='<tr><td colspan="6" class="text-center py-4 text-muted">ยังไม่มีพื้นที่ทำงานร่วมกัน</td></tr>';return;}
+      tbody.innerHTML='';
+      sharedWorkspacesGlobal.forEach(ws=>{
+        const mode=ws.accessMode==='edit'?'<span class="badge bg-success">ลิงก์แก้ไขได้</span>':'<span class="badge bg-secondary">ลิงก์ดูอย่างเดียว</span>';
+        const login=ws.requireLoginToEdit?'<span class="badge bg-warning text-dark">ต้องล็อกอินก่อนแก้ไข</span>':'<span class="badge bg-info">ลิงก์ใช้งานได้ทันที</span>';
+        const scope=ws.scope==='department'?'<span class="badge bg-primary">กลุ่มงาน</span>':'<span class="badge bg-light text-dark border">ส่วนตัว</span>';
+        const typeMap={table:'ตาราง',checklist:'Checklist',form:'แบบฟอร์ม',google_sheet:'Google Sheet',google_form:'Google Form'};
+        const type='<span class="badge bg-success-subtle text-success border">'+(typeMap[ws.workspaceType]||'ตาราง')+'</span>';
+        const exp=ws.expiresAt?(ws.expired?'<span class="badge bg-danger">หมดอายุ '+esc(ws.expiresAt)+'</span>':'<span class="badge bg-light text-dark border">'+esc(ws.expiresAt)+'</span>'):'<span class="text-muted">ไม่กำหนด</span>';
+        const right=ws.canManage?'เจ้าของ/จัดการได้':(ws.canEdit?'แก้ไขได้':'ดูได้');
+        const access='<span class="haos-v735-access-chip"><i class="bi bi-person-lock"></i> '+right+'</span> <span class="haos-v735-access-chip"><i class="bi bi-eye"></i> '+(ws.viewersCount||0)+'</span> <span class="haos-v735-access-chip"><i class="bi bi-pencil"></i> '+(ws.editorsCount||0)+'</span>'+(ws.requiredFields?'<span class="haos-v735-access-chip"><i class="bi bi-asterisk"></i> จำเป็น '+ws.requiredFields+'</span>':'');
+        const permBtn=ws.canManage?`<button class="btn btn-sm btn-outline-dark me-1" onclick="openWorkspacePermissionsV735('${esc(ws.id)}')" title="กำหนดสิทธิ์"><i class="bi bi-shield-lock"></i></button>`:'';
+        let action;
+        if(ws.workspaceType==='google_sheet'||ws.workspaceType==='google_form'){
+          action=`<button class="btn btn-sm btn-outline-primary me-1" onclick="copyWorkspaceLink('${esc(ws.id)}')"><i class="bi bi-link-45deg"></i></button>${permBtn}<button class="btn btn-sm btn-outline-success me-1" onclick="openWorkspaceEditor('${esc(ws.id)}')"><i class="bi bi-box-arrow-up-right"></i></button>${ws.responseSheetUrl?`<button class="btn btn-sm btn-outline-info me-1" onclick="window.open('${esc(ws.responseSheetUrl)}','_blank')"><i class="bi bi-table"></i></button>`:''}${ws.canManage?`<button class="btn btn-sm btn-outline-danger" onclick="deleteWorkspaceUI('${esc(ws.id)}')"><i class="bi bi-trash"></i></button>`:''}`;
+        }else{
+          action=`<button class="btn btn-sm btn-outline-primary me-1" onclick="copyWorkspaceLink('${esc(ws.id)}')"><i class="bi bi-link-45deg"></i></button>${permBtn}<button class="btn btn-sm ${ws.canEdit?'btn-outline-success':'btn-outline-secondary'} me-1" onclick="openWorkspaceEditor('${esc(ws.id)}')"><i class="bi ${ws.canEdit?'bi-pencil-square':'bi-eye'}"></i></button>${ws.canManage?`<button class="btn btn-sm btn-outline-danger" onclick="deleteWorkspaceUI('${esc(ws.id)}')"><i class="bi bi-trash"></i></button>`:''}`;
+        }
+        tbody.innerHTML+=`<tr><td class="ps-4"><div class="fw-bold">${esc(ws.title)}</div><small class="text-muted">${esc(ws.description||'')}</small><br><small class="text-muted">เจ้าของ: ${esc(ws.ownerName||'-')}</small><div>${access}</div></td><td>${scope}</td><td>${type}</td><td>${mode}<br>${login}</td><td>${exp}</td><td class="pe-4 text-end">${action}</td></tr>`;
+      });
+      setTimeout(()=>{try{if(typeof applyWorkspaceFiltersV684==='function')applyWorkspaceFiltersV684();}catch(e){}},60);
+    }).withFailureHandler(err=>{tbody.innerHTML='<tr><td colspan="6" class="text-center py-4 text-danger">'+esc(err.message||String(err))+'</td></tr>';}).getMySharedWorkspaces(user.phone);
+  };
+
+  function installV735(){
+    ensureWorkspaceAccessPanelV735();
+    ensureWorkspaceUsersV735(()=>renderWorkspaceAccessOptionsV735([],[]));
+    installRequiredTogglesV735();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installV735,{once:true});else installV735();
+  setTimeout(installV735,900);setTimeout(installV735,2200);
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
