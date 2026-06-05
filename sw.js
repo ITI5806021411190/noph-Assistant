@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-40-urgent-workspace-edit-fixes';
+const CACHE_NAME = 'haos-v70-41-workspace-response-editor-ux';
 const CORE = ['/', '/index.html', '/public.html', '/manifest.json', '/icon-192.png', '/icon-512.png', '/logo-moph.png'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(CORE)).catch(() => {}));
