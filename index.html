@@ -15394,7 +15394,21 @@ HAOS v68.6 FINISHING FIX
   .haos-v737-info-steps{display:grid;gap:10px}
   .haos-v737-info-steps .item{border:1px solid rgba(148,163,184,.25);border-radius:8px;background:#fff;padding:12px}
   .haos-v737-info-steps b{color:#075985}
-  .haos-v737-edit-field{border:1px solid rgba(148,163,184,.24);border-radius:14px;background:#fff;padding:11px;margin-bottom:9px}
+  .haos-v737-edit-field{border:1px solid rgba(148,163,184,.24);border-radius:8px;background:#fff;padding:11px;margin-bottom:9px}
+  .haos-v741-editor-shell{display:grid;gap:14px;max-height:72vh;overflow:auto;padding-right:4px}
+  .haos-v741-edit-section{border:1px solid rgba(148,163,184,.28);border-radius:8px;background:#fff;padding:14px}
+  .haos-v741-section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .haos-v741-section-head b{color:#047857;font-size:1.02rem}
+  .haos-v741-section-note{color:#64748b;font-size:.82rem;font-weight:700}
+  .haos-v741-field-list{display:grid;gap:10px}
+  .haos-v741-field-card{border:1px solid #dbeafe;border-radius:8px;background:linear-gradient(180deg,#f8fbff,#fff);padding:12px}
+  .haos-v741-field-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+  .haos-v741-field-head .badge{font-size:.78rem}
+  .haos-v741-option-box{border:1px dashed #bfdbfe;border-radius:8px;background:#f8fafc;padding:9px;margin-top:8px}
+  .haos-v741-option-box[hidden]{display:none!important}
+  .haos-v741-option-hint{font-size:.78rem;color:#64748b;font-weight:700;margin-top:5px}
+  .haos-v741-required-inline{display:inline-flex;align-items:center;gap:7px;font-weight:900;color:#0f172a;margin-top:10px}
+  .haos-v741-report-title{font-weight:950;color:#0f172a}
   .haos-v737-schedule-today{border:1px solid #bfdbfe!important;background:linear-gradient(90deg,#eff6ff,#fff)!important;box-shadow:0 12px 28px rgba(37,99,235,.12)!important}
   .haos-v737-schedule-pin{border:1px solid #fde68a!important;background:linear-gradient(90deg,#fffbeb,#fff)!important}
   #unifiedScheduleListV702[hidden],#unifiedScheduleCardV702[hidden],#unifiedScheduleCalendarV702[hidden]{display:none!important}
@@ -15435,7 +15449,7 @@ HAOS v68.6 FINISHING FIX
 </style>
 <script id="haos-v70-37-workspace-schedule-it-script">
 (function(){
-  const PATCH='v70.40-urgent-workspace-edit-fixes';
+  const PATCH='v70.41-workspace-response-editor-ux';
   if(window.__HAOS_V737_WORKSPACE_SCHEDULE_IT__)return;
   window.__HAOS_V737_WORKSPACE_SCHEDULE_IT__=true;
   const $=id=>document.getElementById(id);
@@ -15599,6 +15613,177 @@ HAOS v68.6 FINISHING FIX
     }).catch(e=>Swal.fire('ผิดพลาด',e.message||String(e),'error'));
   };
 
+  function optionListV741(value){
+    return String(value||'').split(',').map(x=>x.trim()).filter(Boolean).filter((v,i,a)=>a.findIndex(x=>x.toLowerCase()===v.toLowerCase())===i);
+  }
+  function optionEditorHtmlV741(options){
+    const text=optionListV741(Array.isArray(options)?options.join(', '):options).join(', ');
+    return `<div class="haos-v741-option-box">
+      <div class="input-group input-group-sm">
+        <input class="form-control ws-edit-option-new-v737" placeholder="พิมพ์ตัวเลือกใหม่ แล้วกด +">
+        <button class="btn btn-outline-primary" type="button" onclick="haosV737AddEditOption(this)" title="เพิ่มตัวเลือก"><i class="bi bi-plus-lg"></i></button>
+      </div>
+      <input class="form-control form-control-sm mt-2 ws-edit-options-v737" value="${esc(text)}" placeholder="หรือพิมพ์ตัวเลือกคั่นด้วย , เช่น ใช่, ไม่ใช่, รอดำเนินการ">
+      <div class="haos-v741-option-hint">ใช้เฉพาะชนิด Dropdown และ Radio เท่านั้น</div>
+    </div>`;
+  }
+  function editFieldRowHtmlV741(field,i){
+    const type=field.type||'text';
+    return `<div class="haos-v737-edit-field haos-v741-field-card" data-ws-edit-field>
+      <div class="haos-v741-field-head">
+        <span class="badge bg-primary-subtle text-primary">ช่องข้อมูล ${i+1}</span>
+        <button type="button" class="btn btn-outline-danger btn-sm" onclick="haosV741RemoveWorkspaceEditField(this)" title="ลบช่องข้อมูล"><i class="bi bi-trash"></i></button>
+      </div>
+      <div class="row g-2 align-items-end">
+        <div class="col-lg-5 col-md-6">
+          <label class="small fw-bold text-muted">ชื่อช่องข้อมูล</label>
+          <input class="form-control ws-edit-label-v737" value="${esc(field.label||'')}" placeholder="เช่น กลุ่มงานของท่าน">
+        </div>
+        <div class="col-lg-3 col-md-6">
+          <label class="small fw-bold text-muted">ชนิดข้อมูล</label>
+          <select class="form-select ws-edit-type-v737" onchange="haosV741SyncEditOptionVisibility()">
+            <option value="text" ${type==='text'?'selected':''}>Text</option>
+            <option value="textarea" ${type==='textarea'?'selected':''}>ข้อความยาว</option>
+            <option value="dropdown" ${type==='dropdown'?'selected':''}>Dropdown</option>
+            <option value="radio" ${type==='radio'?'selected':''}>Radio</option>
+            <option value="checkbox" ${type==='checkbox'?'selected':''}>Checkbox</option>
+            <option value="image" ${type==='image'?'selected':''}>รูปภาพ</option>
+          </select>
+        </div>
+        <div class="col-lg-4 col-md-12">
+          <label class="haos-v741-required-inline"><input class="form-check-input ws-edit-required-v737" type="checkbox" ${field.required?'checked':''}> จำเป็นต้องระบุข้อมูล</label>
+        </div>
+        <div class="col-12 ws-edit-options-wrap-v741">${optionEditorHtmlV741(field.options||[])}</div>
+      </div>
+    </div>`;
+  }
+  window.haosV737AddEditOption=function(btn){
+    const row=btn.closest('[data-ws-edit-field]');
+    const input=row?.querySelector('.ws-edit-option-new-v737');
+    const target=row?.querySelector('.ws-edit-options-v737');
+    const value=String(input?.value||'').trim();
+    if(!value||!target)return;
+    const opts=optionListV741(target.value);
+    if(!opts.some(x=>x.toLowerCase()===value.toLowerCase()))opts.push(value);
+    target.value=opts.join(', ');
+    input.value='';
+    input.focus();
+  };
+  window.haosV741SyncEditOptionVisibility=function(){
+    qa('[data-ws-edit-field]').forEach(row=>{
+      const type=row.querySelector('.ws-edit-type-v737')?.value||'text';
+      const box=row.querySelector('.haos-v741-option-box');
+      const show=type==='dropdown'||type==='radio';
+      if(box)box.hidden=!show;
+      row.querySelectorAll('.ws-edit-option-new-v737,.ws-edit-options-v737').forEach(el=>{el.disabled=!show;});
+    });
+  };
+  window.haosV741RemoveWorkspaceEditField=function(btn){
+    const rows=qa('[data-ws-edit-field]');
+    if(rows.length<=1){Swal.showValidationMessage('ต้องมีช่องข้อมูลอย่างน้อย 1 ช่อง');return;}
+    btn.closest('[data-ws-edit-field]')?.remove();
+    qa('[data-ws-edit-field] .haos-v741-field-head .badge').forEach((b,i)=>b.textContent='ช่องข้อมูล '+(i+1));
+  };
+  window.haosV737AddWorkspaceEditField=function(){
+    const box=$('swalWorkspaceFieldsV737'); if(!box)return;
+    box.insertAdjacentHTML('beforeend',editFieldRowHtmlV741({label:'ช่องข้อมูลใหม่',type:'text',options:[],required:false},box.querySelectorAll('[data-ws-edit-field]').length));
+    haosV741SyncEditOptionVisibility();
+    box.lastElementChild?.querySelector('.ws-edit-label-v737')?.focus();
+  };
+  function collectWorkspaceEditFieldsV741(){
+    return qa('[data-ws-edit-field]').map(row=>{
+      const type=row.querySelector('.ws-edit-type-v737')?.value||'text';
+      return {
+        label:row.querySelector('.ws-edit-label-v737')?.value.trim()||'',
+        type,
+        options:(type==='dropdown'||type==='radio')?optionListV741(row.querySelector('.ws-edit-options-v737')?.value||''):[],
+        required:!!row.querySelector('.ws-edit-required-v737')?.checked
+      };
+    }).filter(f=>f.label);
+  }
+  function setWorkspaceExpireInputV741(ws){
+    const input=$('swalWsExpireV737');
+    if(!input||!ws.expiresAt)return;
+    const parsed=dateObj(ws.expiresAt);
+    if(parsed&&!isNaN(parsed))input.value=`${parsed.getFullYear()}-${String(parsed.getMonth()+1).padStart(2,'0')}-${String(parsed.getDate()).padStart(2,'0')}`;
+  }
+  window.openWorkspaceConfigEditorV737=function(id){
+    const openWs=currentWsV737();
+    const listWs=sharedWsListV737().find(w=>w.id===id)||(openWs&&openWs.id===id?openWs:null);
+    if(!listWs||!canEditWorkspaceV737(listWs))return Swal.fire('แจ้งเตือน','คุณไม่มีสิทธิ์แก้ไขพื้นที่นี้','warning');
+    let token=listWs.token||'';
+    try{token=(new URL(listWs.url)).searchParams.get('token')||token;}catch(e){}
+    gas('getPublicWorkspace',[id,token]).then(res=>{
+      if(!res.success)throw new Error(res.message||'โหลดพื้นที่ไม่สำเร็จ');
+      const ws=Object.assign({},res.data,{id,token,url:listWs.url,canEdit:listWs.canEdit,canManage:listWs.canManage});
+      const fields=workspaceFieldsV737(ws);
+      Swal.fire({
+        title:'แก้ไขพื้นที่ทำงานร่วมกัน',
+        width:1120,
+        customClass:{popup:'haos-v741-workspace-edit-popup'},
+        html:`<div class="haos-v741-editor-shell text-start">
+          <section class="haos-v741-edit-section">
+            <div class="haos-v741-section-head">
+              <b><i class="bi bi-info-circle"></i> ข้อมูลหลักของพื้นที่</b>
+              <span class="haos-v741-section-note">แก้ชื่อ คำอธิบาย สิทธิ์ และวันหมดอายุได้จากส่วนนี้</span>
+            </div>
+            <div class="row g-3">
+              <div class="col-lg-6"><label class="small fw-bold text-muted">ชื่อพื้นที่</label><input id="swalWsTitleV737" class="form-control" value="${esc(ws.title||'')}" placeholder="ชื่อพื้นที่ทำงานร่วมกัน"></div>
+              <div class="col-lg-3 col-md-6"><label class="small fw-bold text-muted">ขอบเขต</label><select id="swalWsScopeV737" class="form-select"><option value="personal" ${ws.scope!=='department'?'selected':''}>ส่วนตัว</option><option value="department" ${ws.scope==='department'?'selected':''}>กลุ่มงาน</option></select></div>
+              <div class="col-lg-3 col-md-6"><label class="small fw-bold text-muted">หมดอายุ</label><input id="swalWsExpireV737" type="date" class="form-control"></div>
+              <div class="col-12"><label class="small fw-bold text-muted">คำอธิบาย</label><textarea id="swalWsDescV737" class="form-control" rows="3" placeholder="อธิบายวัตถุประสงค์หรือวิธีกรอกข้อมูล">${esc(ws.description||'')}</textarea></div>
+              <div class="col-lg-6"><label class="small fw-bold text-muted">สิทธิ์ของลิงก์</label><select id="swalWsAccessV737" class="form-select"><option value="view" ${ws.accessMode!=='edit'?'selected':''}>ดูอย่างเดียว</option><option value="edit" ${ws.accessMode==='edit'?'selected':''}>ลิงก์แก้ไขได้</option></select></div>
+              <div class="col-lg-6"><label class="small fw-bold text-muted">เงื่อนไขแก้ไข</label><select id="swalWsLoginV737" class="form-select"><option value="false" ${!ws.requireLoginToEdit?'selected':''}>ไม่ต้องล็อกอิน</option><option value="true" ${ws.requireLoginToEdit?'selected':''}>ต้องล็อกอินก่อนแก้ไข</option></select></div>
+            </div>
+          </section>
+          <section class="haos-v741-edit-section">
+            <div class="haos-v741-section-head">
+              <div><b><i class="bi bi-columns-gap"></i> ช่องข้อมูล</b><div class="haos-v741-section-note">เปลี่ยนชื่อช่อง เลือกชนิดข้อมูล ตั้งค่าบังคับกรอก และเพิ่มตัวเลือก Dropdown/Radio ได้</div></div>
+              <button type="button" class="btn btn-outline-success fw-bold" onclick="haosV737AddWorkspaceEditField()"><i class="bi bi-plus-circle"></i> เพิ่มช่อง</button>
+            </div>
+            <div id="swalWorkspaceFieldsV737" class="haos-v741-field-list">${fields.map(editFieldRowHtmlV741).join('')}</div>
+          </section>
+          <div class="alert alert-warning py-2 mb-0"><i class="bi bi-exclamation-triangle"></i> ถ้าเพิ่มหรือลบช่อง ระบบจะปรับคำตอบเดิมให้ตรงกับโครงสร้างช่องข้อมูลใหม่โดยอัตโนมัติ</div>
+        </div>`,
+        showCancelButton:true,
+        confirmButtonText:'บันทึกการแก้ไข',
+        cancelButtonText:'ยกเลิก',
+        didOpen:()=>{
+          setWorkspaceExpireInputV741(ws);
+          ['swalWsTitleV737','swalWsDescV737'].forEach(id=>{const el=$(id);if(el){el.disabled=false;el.readOnly=false;}});
+          haosV741SyncEditOptionVisibility();
+        },
+        preConfirm:()=>{
+          const title=$('swalWsTitleV737')?.value.trim()||'';
+          const fieldConfig=collectWorkspaceEditFieldsV741();
+          if(!title){Swal.showValidationMessage('กรุณาระบุชื่อพื้นที่');return false;}
+          if(!fieldConfig.length){Swal.showValidationMessage('กรุณาระบุช่องข้อมูลอย่างน้อย 1 ช่อง');return false;}
+          const missingOptions=fieldConfig.find(f=>(f.type==='dropdown'||f.type==='radio')&&!f.options.length);
+          if(missingOptions){Swal.showValidationMessage('Dropdown/Radio ต้องมีตัวเลือกอย่างน้อย 1 รายการ: '+missingOptions.label);return false;}
+          return {title,description:$('swalWsDescV737')?.value.trim()||'',scope:$('swalWsScopeV737')?.value||'personal',expiresAt:$('swalWsExpireV737')?.value||'',accessMode:$('swalWsAccessV737')?.value||'view',requireLoginToEdit:$('swalWsLoginV737')?.value==='true',workspaceType:ws.workspaceType,fieldConfig,columns:fieldConfig.map(specFromFieldV737)};
+        }
+      }).then(r=>{
+        if(!r.isConfirmed)return;
+        Swal.fire({title:'กำลังบันทึก...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+        gas('updateSharedWorkspaceConfigV737',[id,(window.user||user||{}).phone,r.value]).then(save=>{
+          Swal.close();
+          if(!save.success)throw new Error(save.message||'บันทึกไม่สำเร็จ');
+          Swal.fire({icon:'success',title:'บันทึกแล้ว',text:save.message,timer:1300,showConfirmButton:false});
+          try{loadSharedWorkspaces();}catch(e){}
+          const merged=Object.assign({},r.value,save.data||{});
+          const openWs=currentWsV737();
+          if(openWs&&openWs.id===id){
+            Object.assign(openWs,merged);
+            if($('workspaceModalTitle'))$('workspaceModalTitle').innerText=openWs.title||'พื้นที่ทำงานร่วมกัน';
+            if($('workspaceModalSub'))$('workspaceModalSub').innerText=(openWs.description||'')+(openWs.expiresAt?' • หมดอายุ '+openWs.expiresAt:'')+(openWs.canEdit?' • แก้ไขได้':' • ดูอย่างเดียว');
+            renderWorkspaceEditorTable();
+          }
+          try{const rowWs=sharedWsListV737().find(w=>w.id===id);if(rowWs)Object.assign(rowWs,merged);}catch(e){}
+        }).catch(e=>{Swal.close();Swal.fire('ผิดพลาด',e.message||String(e),'error');});
+      });
+    }).catch(e=>Swal.fire('ผิดพลาด',e.message||String(e),'error'));
+  };
+
   function responseStateV737(){
     const s=window.haosWorkspaceResponseStateV737||{};
     ['question','answer','group','view'].forEach(k=>{const el=$('wsResp'+k.charAt(0).toUpperCase()+k.slice(1)+'V737');if(el)s[k]=el.value;});
@@ -15651,6 +15836,61 @@ HAOS v68.6 FINISHING FIX
         return `<div class="haos-v737-group-title">${esc(name)} (${groupRows.length})</div><div class="table-responsive"><table class="haos-v737-answer-table"><thead><tr><th>เวลา</th>${shownFields.map(f=>`<th>${esc(f.label)}</th>`).join('')}</tr></thead><tbody>${groupRows.map(row=>{const rowIndex=(currentWsV737()?.rows||[]).indexOf(row);return `<tr><td>${esc(row[0]||'-')}</td>${shownFields.map(f=>`<td>${editableResponseCellV740(f,row[f.index],rowIndex)}</td>`).join('')}</tr>`;}).join('')}</tbody></table></div>`;
       }
       return `<div class="haos-v737-group-title">${esc(name)} (${groupRows.length})</div><div class="haos-v735-response-grid">${groupRows.map((row,i)=>{const rowIndex=(currentWsV737()?.rows||[]).indexOf(row);return `<article class="haos-v735-response-card"><div class="haos-v735-response-card-head"><div><span>คำตอบ</span><b>${esc(row[0]||('รายการ '+(i+1)))}</b></div></div><div class="haos-v735-response-fields">${shownFields.map(f=>`<div class="haos-v735-response-field"><small>${esc(f.label)}${f.required?'<span class="haos-v735-required-star">*</span>':''}</small><div>${editableResponseCellV740(f,row[f.index],rowIndex)}</div></div>`).join('')}</div></article>`;}).join('')}</div>`;
+    }).join('')||'<div class="text-center text-muted py-4">ไม่พบคำตอบตามเงื่อนไข</div>';
+    table.innerHTML=`<tbody><tr><td class="border-0 p-0"><section class="haos-v735-response-shell">
+      <div class="haos-v737-toolbar">
+        <select id="wsRespQuestionV737" class="form-select" style="max-width:230px" onchange="renderWorkspaceEditorTable()"><option value="">ทุกคำถาม</option>${fieldOptions}</select>
+        <input id="wsRespAnswerV737" class="form-control" style="max-width:260px" placeholder="ค้น/กรองคำตอบ..." value="${esc(state.answer||'')}" oninput="renderWorkspaceEditorTable()">
+        <select id="wsRespGroupV737" class="form-select" style="max-width:230px" onchange="renderWorkspaceEditorTable()"><option value="">ไม่จัดกลุ่ม</option>${groupOptions}</select>
+        <select id="wsRespViewV737" class="form-select" style="max-width:140px" onchange="renderWorkspaceEditorTable()"><option value="card" ${state.view!=='table'?'selected':''}>การ์ด</option><option value="table" ${state.view==='table'?'selected':''}>ตาราง</option></select>
+        <button class="btn btn-outline-primary btn-sm fw-bold" onclick="exportWorkspaceResponsesV737('pdf','p')"><i class="bi bi-filetype-pdf"></i> PDF</button>
+        <button class="btn btn-outline-success btn-sm fw-bold" onclick="exportWorkspaceResponsesV737('xls')"><i class="bi bi-file-earmark-excel"></i> Excel</button>
+        <button class="btn btn-outline-info btn-sm fw-bold" onclick="exportWorkspaceResponsesV737('png','l')"><i class="bi bi-image"></i> รูป A4 แนวนอน</button>
+        <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="exportWorkspaceResponsesV737('png','p')"><i class="bi bi-file-image"></i> รูป A4 แนวตั้ง</button>
+      </div>
+      <div id="workspaceResponseReportV737" class="haos-v737-report">
+        <div class="haos-v737-report-head"><div><h5>${esc(ws.title||'รายงานคำตอบ')}</h5><small>${esc(ws.description||'')} • จำนวน ${rows.length} คำตอบ</small></div><small>${new Date().toLocaleString('th-TH')}</small></div>
+        ${body}
+      </div>
+    </section></td></tr></tbody>`;
+  }
+
+  function responseHasTimestampV741(fields){
+    const first=fields.find(f=>f.index===0);
+    if(!first)return false;
+    return /timestamp|submitted|created|datetime|date time|เวลาส่ง|เวลาบันทึก|วันที่ส่ง|วันที่บันทึก/i.test(String(first.label||''));
+  }
+  function responseSelectableFieldsV741(fields){
+    const hasTimestamp=responseHasTimestampV741(fields);
+    return fields.filter(f=>!(hasTimestamp&&f.index===0));
+  }
+  function responseTitleV741(row,shownFields,i,hasTimestamp){
+    if(hasTimestamp&&row[0])return row[0];
+    const field=shownFields.find(f=>f.type!=='image'&&String(row[f.index]??'').trim());
+    if(field)return row[field.index];
+    const first=(row||[]).find(v=>String(v??'').trim());
+    return first||('รายการ '+(i+1));
+  }
+  function renderWorkspaceResponsesV737(table,fields){
+    const ws=currentWsV737()||{};
+    const state=responseStateV737();
+    const rows=responseRowsV737(fields,state);
+    const selectable=responseSelectableFieldsV741(fields);
+    if(state.question!==''&&!selectable.some(f=>String(f.index)===String(state.question)))state.question='';
+    if(state.group!==''&&!selectable.some(f=>String(f.index)===String(state.group)))state.group='';
+    let shownFields=selectable;
+    if(state.question!=='')shownFields=shownFields.filter(f=>String(f.index)===String(state.question));
+    const groups=responseGroupsV737(rows,fields,state);
+    const hasTimestamp=responseHasTimestampV741(fields);
+    const fieldOptions=selectable.map(f=>`<option value="${f.index}" ${String(state.question)===String(f.index)?'selected':''}>${esc(f.label||('ช่อง '+(f.index+1)))}</option>`).join('');
+    const groupOptions=selectable.map(f=>`<option value="${f.index}" ${String(state.group)===String(f.index)?'selected':''}>${esc(f.label||('ช่อง '+(f.index+1)))}</option>`).join('');
+    const body=Object.keys(groups).map(name=>{
+      const groupRows=groups[name];
+      if(state.view==='table'){
+        const timeHead=hasTimestamp?'<th>เวลา</th>':'';
+        return `<div class="haos-v737-group-title">${esc(name)} (${groupRows.length})</div><div class="table-responsive"><table class="haos-v737-answer-table"><thead><tr>${timeHead}${shownFields.map(f=>`<th>${esc(f.label)}</th>`).join('')}</tr></thead><tbody>${groupRows.map(row=>{const rowIndex=(currentWsV737()?.rows||[]).indexOf(row);const timeCell=hasTimestamp?`<td>${esc(row[0]||'-')}</td>`:'';return `<tr>${timeCell}${shownFields.map(f=>`<td>${editableResponseCellV740(f,row[f.index],rowIndex)}</td>`).join('')}</tr>`;}).join('')}</tbody></table></div>`;
+      }
+      return `<div class="haos-v737-group-title">${esc(name)} (${groupRows.length})</div><div class="haos-v735-response-grid">${groupRows.map((row,i)=>{const rowIndex=(currentWsV737()?.rows||[]).indexOf(row);return `<article class="haos-v735-response-card"><div class="haos-v735-response-card-head"><div><span>คำตอบ</span><b class="haos-v741-report-title">${esc(responseTitleV741(row,shownFields,i,hasTimestamp))}</b></div></div><div class="haos-v735-response-fields">${shownFields.map(f=>`<div class="haos-v735-response-field"><small>${esc(f.label)}${f.required?'<span class="haos-v735-required-star">*</span>':''}</small><div>${editableResponseCellV740(f,row[f.index],rowIndex)}</div></div>`).join('')}</div></article>`;}).join('')}</div>`;
     }).join('')||'<div class="text-center text-muted py-4">ไม่พบคำตอบตามเงื่อนไข</div>';
     table.innerHTML=`<tbody><tr><td class="border-0 p-0"><section class="haos-v735-response-shell">
       <div class="haos-v737-toolbar">
