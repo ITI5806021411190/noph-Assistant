@@ -1566,5 +1566,152 @@ body{background:radial-gradient(circle at 12% 10%,rgba(14,165,233,.20),transpare
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<style id="haos-v70-35-public-workspace-style">
+  .haos-v735-public-required{color:#dc2626;font-weight:950;margin-left:4px}
+  .haos-v735-public-form{padding:18px;text-align:left;background:linear-gradient(180deg,#ffffff,#f8fafc);border-radius:18px}
+  .haos-v735-public-field{border:1px solid rgba(148,163,184,.22);border-radius:16px;background:#fff;padding:13px;margin-bottom:12px;box-shadow:0 8px 20px rgba(15,23,42,.04)}
+  .haos-v735-public-field label{color:#334155}
+  .haos-v735-public-summary{border:1px solid rgba(16,185,129,.24);border-radius:16px;background:#ecfdf5;color:#047857;font-weight:850;padding:12px;margin-top:14px}
+</style>
+<script id="haos-v70-35-public-workspace-script">
+(function(){
+  const PATCH='v70.35-public-workspace-required-fields';
+  if(window.__HAOS_V735_PUBLIC_WORKSPACE__)return;
+  window.__HAOS_V735_PUBLIC_WORKSPACE__=true;
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+  function fieldFromSpecV735(spec){
+    const raw=String(spec||'').trim();
+    const dropdown=raw.match(/\[(?:dropdown|dropdownlist|select|ตัวเลือก|ดรอปดาวน์):\s*([^\]]+)\]/i);
+    const radio=raw.match(/\[(?:radio|choice|ตัวเลือกเดี่ยว):\s*([^\]]+)\]/i);
+    const required=/\[(?:required|require|จำเป็น|บังคับ|\*)\]/i.test(raw)||/\*\s*$/.test(raw);
+    const textarea=/\[(?:textarea|longtext|paragraph|ข้อความยาว|ยาว)\]/i.test(raw);
+    const checkbox=/\[(?:checkbox|check|ติ๊ก|ติ๊กถูก)\]/i.test(raw);
+    const image=/\[(?:image|photo|picture|รูปภาพ|แนบรูปภาพ)\]/i.test(raw)||/รูปภาพ|ภาพถ่าย|หลักฐานภาพ/i.test(raw);
+    const label=raw.replace(/\[(?:dropdown|dropdownlist|select|ตัวเลือก|ดรอปดาวน์|radio|choice|ตัวเลือกเดี่ยว):[^\]]+\]/ig,'')
+      .replace(/\[(?:textarea|longtext|paragraph|ข้อความยาว|ยาว|image|photo|picture|รูปภาพ|แนบรูปภาพ|checkbox|check|ติ๊ก|ติ๊กถูก|required|require|จำเป็น|บังคับ|\*)\]/ig,'')
+      .replace(/\*\s*$/,'').trim()||raw;
+    const split=s=>String(s||'').split(',').map(x=>x.trim()).filter(Boolean);
+    if(dropdown)return {label,type:'dropdown',options:split(dropdown[1]),required};
+    if(radio)return {label,type:'radio',options:split(radio[1]),required};
+    if(textarea)return {label,type:'textarea',options:[],required};
+    if(checkbox)return {label,type:'checkbox',options:[],required};
+    if(image)return {label,type:'image',options:[],required};
+    return {label,type:'text',options:[],required};
+  }
+
+  window.parseWorkspaceFieldPublic_=function(label){return fieldFromSpecV735(label);};
+
+  function fieldsPublicV735(){
+    const cols=workspaceState.columns||[];
+    const cfg=Array.isArray(workspaceState.fieldConfig)?workspaceState.fieldConfig:[];
+    return cols.map((c,i)=>Object.assign({index:i},fieldFromSpecV735(c),cfg[i]||{}));
+  }
+
+  function requiredMissingPublicV735(row){
+    const missing=[];
+    fieldsPublicV735().forEach(f=>{
+      if(!f.required)return;
+      if(f.index===0&&/timestamp/i.test(f.label||''))return;
+      const v=row[f.index];
+      const empty=f.type==='checkbox'?!String(v||'').trim():!String(v??'').trim();
+      if(empty)missing.push(f.label||('ช่อง '+(f.index+1)));
+    });
+    return missing;
+  }
+
+  window.loadPublicWorkspace=function(workspaceId,token){
+    google.script.run.withFailureHandler(function(err){
+      document.getElementById('loadingDiv').innerHTML='<div class="text-danger fw-bold">โหลดพื้นที่ทำงานไม่สำเร็จ: '+esc(err.message||err)+'</div>';
+    }).withSuccessHandler(function(res){
+      document.getElementById('loadingDiv').style.display='none';
+      if(!res.success){
+        document.getElementById('loadingDiv').style.display='block';
+        document.getElementById('loadingDiv').innerHTML='<div class="text-danger fw-bold"><i class="bi bi-exclamation-triangle"></i> '+esc(res.message)+'</div>';
+        return;
+      }
+      const d=res.data;
+      workspaceState={id:workspaceId,token:token,columns:d.columns||[],rows:d.rows||[],fieldConfig:d.fieldConfig||[],canEdit:(d.accessMode==='edit'&&!d.requireLoginToEdit),workspaceType:d.workspaceType||'table'};
+      document.querySelector('.public-mark').innerHTML='<i class="bi bi-table"></i>';
+      document.querySelector('.card-header h4').innerText=workspaceState.workspaceType==='form'?'แบบฟอร์มออนไลน์':'พื้นที่ทำงานร่วมกัน';
+      document.getElementById('workspaceDiv').style.display='block';
+      document.getElementById('footerDiv').style.display='block';
+      document.getElementById('wsTitle').innerText=d.title||'-';
+      document.getElementById('wsDescription').innerText=d.description||'';
+      const typeText=workspaceState.workspaceType==='form'?'แบบฟอร์มออนไลน์':(workspaceState.workspaceType==='checklist'?'Checklist':'ตารางร่วมกัน');
+      document.getElementById('wsModeBadge').innerText=typeText+' • '+(workspaceState.canEdit?'แก้ไขร่วมกันได้':'ดูอย่างเดียว');
+      document.getElementById('wsUpdated').innerText=(d.updatedAt?('อัปเดตล่าสุด '+d.updatedAt):'')+(d.expiresAt?(' • หมดอายุ '+d.expiresAt):'');
+      document.getElementById('workspaceEditToolbar').style.display=(workspaceState.canEdit&&workspaceState.workspaceType!=='form')?'flex':'none';
+      document.getElementById('workspaceLoginNotice').style.display=(d.accessMode==='edit'&&d.requireLoginToEdit)?'block':'none';
+      renderWorkspaceTablePublic();
+    }).getPublicWorkspace(workspaceId,token);
+  };
+
+  window.renderWorkspaceTablePublic=function(){
+    if(workspaceState.workspaceType==='form')return renderWorkspaceFormPublic();
+    const table=document.getElementById('workspaceTable');
+    const cols=workspaceState.columns||[];
+    const rows=workspaceState.rows||[];
+    const fields=fieldsPublicV735();
+    let html='<thead><tr>'+cols.map((c,i)=>'<th>'+esc((fields[i]&&fields[i].label)||fieldFromSpecV735(c).label||c)+(fields[i]&&fields[i].required?'<span class="haos-v735-public-required">*</span>':'')+'</th>').join('')+'</tr></thead><tbody>';
+    if(!rows.length)html+='<tr><td colspan="'+Math.max(cols.length,1)+'" class="text-center text-muted py-4">ยังไม่มีข้อมูล</td></tr>';
+    rows.forEach((row,r)=>{html+='<tr>'+cols.map((c,i)=>'<td>'+renderWorkspaceCellPublic_(c,row[i]||'',r,i)+'</td>').join('')+'</tr>';});
+    html+='</tbody>';
+    table.innerHTML=html;
+  };
+
+  window.renderWorkspaceFormPublic=function(){
+    const table=document.getElementById('workspaceTable');
+    const fields=fieldsPublicV735().filter(f=>!(f.index===0&&/timestamp/i.test(f.label||'')));
+    let html='<tbody><tr><td><div class="haos-v735-public-form">';
+    fields.forEach(f=>{
+      html+='<div class="haos-v735-public-field"><label class="form-label small fw-bold">'+esc(f.label)+(f.required?'<span class="haos-v735-public-required">*</span>':'')+'</label>';
+      const opts=f.options||[];
+      if(f.type==='dropdown')html+='<select class="form-select workspace-form-field" data-c="'+f.index+'"><option value="">-- เลือก --</option>'+opts.map(o=>'<option value="'+esc(o)+'">'+esc(o)+'</option>').join('')+'</select>';
+      else if(f.type==='radio')html+='<div class="d-flex gap-2 flex-wrap">'+opts.map(o=>'<label class="btn btn-outline-primary btn-sm"><input type="radio" class="workspace-form-field me-1" name="wsf_'+f.index+'" data-c="'+f.index+'" value="'+esc(o)+'">'+esc(o)+'</label>').join('')+'</div>';
+      else if(f.type==='checkbox')html+='<div class="form-check"><input type="checkbox" class="form-check-input workspace-form-field" data-c="'+f.index+'" value="✓"><label class="form-check-label">เลือกช่องนี้</label></div>';
+      else if(f.type==='image')html+='<input type="file" class="form-control workspace-form-file" data-c="'+f.index+'" accept="image/*"><small class="text-muted">รองรับการแนบรูปภาพ 1 รูปต่อช่อง</small>';
+      else if(f.type==='textarea')html+='<textarea class="form-control workspace-form-field" rows="3" data-c="'+f.index+'"></textarea>';
+      else html+='<input class="form-control workspace-form-field" data-c="'+f.index+'">';
+      html+='</div>';
+    });
+    html+='<div class="text-center"><button class="btn btn-success fw-bold" onclick="submitWorkspaceFormPublic()"><i class="bi bi-send"></i> ส่งข้อมูล</button></div>';
+    if((workspaceState.rows||[]).length)html+='<div class="haos-v735-public-summary"><i class="bi bi-check-circle"></i> มีข้อมูลที่ส่งแล้ว '+workspaceState.rows.length+' รายการ ผู้สร้างพื้นที่สามารถดูผลลัพธ์ในระบบหลัก</div>';
+    html+='</div></td></tr></tbody>';
+    table.innerHTML=html;
+  };
+
+  window.submitWorkspaceFormPublic=async function(){
+    const row=new Array((workspaceState.columns||[]).length).fill('');
+    document.querySelectorAll('.workspace-form-field').forEach(el=>{
+      if(el.type==='radio'&&!el.checked)return;
+      if(el.type==='checkbox'){row[Number(el.dataset.c)]=el.checked?'✓':'';return;}
+      row[Number(el.dataset.c)]=(el.value||'').trim();
+    });
+    const fileInputs=Array.from(document.querySelectorAll('.workspace-form-file')).filter(el=>el.files&&el.files.length);
+    try{
+      for(const input of fileInputs){
+        const file=input.files[0];
+        const base64=await readFileBase64Public_(file);
+        const res=await gasRunPromisePublic_('uploadFileToDrive',[base64,file.name,file.type||'image/png']);
+        if(!res.success)throw new Error(res.message||'อัปโหลดรูปภาพไม่สำเร็จ');
+        row[Number(input.dataset.c)]=res.url;
+      }
+    }catch(err){return Swal.fire('ผิดพลาด',err.message||String(err),'error');}
+    const missing=requiredMissingPublicV735(row);
+    if(missing.length)return Swal.fire('กรุณากรอกข้อมูลให้ครบ','ช่องจำเป็นที่ยังไม่ได้กรอก: '+missing.join(', '),'warning');
+    if(!row.some(v=>String(v||'').trim()))return Swal.fire('แจ้งเตือน','กรุณากรอกข้อมูลอย่างน้อย 1 ช่อง','warning');
+    google.script.run.withSuccessHandler(function(res){
+      if(res.success){
+        Swal.fire({icon:'success',title:'ส่งข้อมูลแล้ว',text:res.message,timer:1600,showConfirmButton:false});
+        workspaceState.rows.push(row);
+        renderWorkspaceFormPublic();
+      }else Swal.fire('ผิดพลาด',res.message,'error');
+    }).withFailureHandler(err=>Swal.fire('ผิดพลาด',err.message||String(err),'error')).submitPublicWorkspaceForm(workspaceState.id,workspaceState.token,row);
+  };
+
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
