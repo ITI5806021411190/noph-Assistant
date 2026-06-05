@@ -15234,5 +15234,151 @@ HAOS v68.6 FINISHING FIX
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<style id="haos-v70-36-workspace-option-builder-style">
+  .haos-v736-option-box{margin-top:8px;border:1px solid rgba(37,99,235,.18);border-radius:14px;background:#f8fbff;padding:9px}
+  .haos-v736-option-note{color:#64748b;font-size:.78rem;font-weight:750;margin-bottom:7px}
+  .haos-v736-option-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:28px}
+  .haos-v736-option-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(37,99,235,.22);border-radius:999px;background:#eff6ff;color:#1d4ed8;font-weight:900;font-size:.78rem;padding:5px 8px;max-width:100%}
+  .haos-v736-option-chip span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+  .haos-v736-option-chip button{border:0;background:transparent;color:#dc2626;font-weight:950;line-height:1;padding:0 2px}
+  .haos-v736-option-empty{color:#94a3b8;font-weight:800;font-size:.8rem;padding:4px 0}
+  .haos-v736-option-add .form-control{border-radius:12px 0 0 12px!important}
+  .haos-v736-option-add .btn{border-radius:0 12px 12px 0!important;font-weight:950}
+</style>
+<script id="haos-v70-36-workspace-option-builder-script">
+(function(){
+  const PATCH='v70.36-workspace-dropdown-radio-options';
+  if(window.__HAOS_V736_WORKSPACE_OPTION_BUILDER__)return;
+  window.__HAOS_V736_WORKSPACE_OPTION_BUILDER__=true;
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+  function splitOptionsV736(value){
+    const seen=new Set();
+    return String(value||'').split(',').map(x=>x.trim()).filter(Boolean).filter(x=>{
+      const key=x.toLowerCase();
+      if(seen.has(key))return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  function setOptionsV736(row, options){
+    const input=row&&row.querySelector('.ws-col-options-v728');
+    if(!input)return;
+    input.value=splitOptionsV736(options.join(', ')).join(', ');
+    try{if(typeof window.syncWorkspaceBuilderV728==='function')window.syncWorkspaceBuilderV728();}catch(e){}
+    renderOptionBoxV736(row);
+  }
+
+  function renderOptionBoxV736(row){
+    if(!row)return;
+    const type=row.querySelector('.ws-col-type-v728')?.value||'text';
+    const box=row.querySelector('.haos-v736-option-box');
+    if(!box)return;
+    box.style.display=(type==='dropdown'||type==='radio')?'block':'none';
+    if(box.style.display==='none')return;
+    const input=row.querySelector('.ws-col-options-v728');
+    const list=box.querySelector('.haos-v736-option-list');
+    const options=splitOptionsV736(input?.value||'');
+    list.innerHTML=options.length?options.map((opt,i)=>`
+      <span class="haos-v736-option-chip" title="${esc(opt)}">
+        <span>${esc(opt)}</span>
+        <button type="button" data-v736-remove="${i}" title="ลบตัวเลือกนี้">&times;</button>
+      </span>`).join(''):'<div class="haos-v736-option-empty">ยังไม่มีตัวเลือก เพิ่มด้วยช่องด้านล่าง หรือพิมพ์คั่นด้วย , ในช่องเดิมได้เลย</div>';
+  }
+
+  function ensureOptionBoxV736(row){
+    if(!row||row.querySelector('.haos-v736-option-box'))return;
+    const wrap=row.querySelector('.ws-col-options-wrap-v728');
+    const input=row.querySelector('.ws-col-options-v728');
+    if(!wrap||!input)return;
+    const help=wrap.querySelector('.haos-v728-field-chip');
+    if(help)help.textContent='พิมพ์ตัวเลือกคั่นด้วย , ได้เหมือนเดิม หรือเพิ่มทีละข้อด้วยปุ่ม + ด้านล่าง';
+    wrap.insertAdjacentHTML('beforeend',`
+      <div class="haos-v736-option-box">
+        <div class="haos-v736-option-note"><i class="bi bi-list-check"></i> รายการตัวเลือก</div>
+        <div class="haos-v736-option-list"></div>
+        <div class="input-group input-group-sm haos-v736-option-add">
+          <input class="form-control haos-v736-option-new" placeholder="พิมพ์ตัวเลือกใหม่ เช่น รอดำเนินการ">
+          <button class="btn btn-primary" type="button" data-v736-add><i class="bi bi-plus-lg"></i></button>
+        </div>
+      </div>`);
+    input.addEventListener('input',()=>renderOptionBoxV736(row));
+    const newInput=row.querySelector('.haos-v736-option-new');
+    newInput?.addEventListener('keydown',ev=>{
+      if(ev.key==='Enter'){
+        ev.preventDefault();
+        addOptionV736(row);
+      }
+    });
+    row.querySelector('[data-v736-add]')?.addEventListener('click',()=>addOptionV736(row));
+    row.querySelector('.haos-v736-option-list')?.addEventListener('click',ev=>{
+      const btn=ev.target.closest('[data-v736-remove]');
+      if(!btn)return;
+      const options=splitOptionsV736(input.value);
+      options.splice(Number(btn.dataset.v736Remove),1);
+      setOptionsV736(row,options);
+    });
+    renderOptionBoxV736(row);
+  }
+
+  function addOptionV736(row){
+    const newInput=row.querySelector('.haos-v736-option-new');
+    const main=row.querySelector('.ws-col-options-v728');
+    if(!newInput||!main)return;
+    const additions=splitOptionsV736(newInput.value);
+    if(!additions.length){newInput.focus();return;}
+    const options=splitOptionsV736(main.value);
+    additions.forEach(opt=>{
+      if(!options.some(x=>x.toLowerCase()===opt.toLowerCase()))options.push(opt);
+    });
+    newInput.value='';
+    setOptionsV736(row,options);
+    newInput.focus();
+  }
+
+  function installOptionBuildersV736(){
+    document.querySelectorAll('[data-ws-col-row]').forEach(row=>{
+      ensureOptionBoxV736(row);
+      renderOptionBoxV736(row);
+    });
+  }
+
+  const prevSync=window.syncWorkspaceBuilderV728;
+  window.syncWorkspaceBuilderV728=function(){
+    const r=prevSync?prevSync.apply(this,arguments):undefined;
+    installOptionBuildersV736();
+    return r;
+  };
+
+  ['refreshWorkspaceSampleV728','installWorkspaceBuilderV728','applyWorkspaceTypeTemplate'].forEach(name=>{
+    const prev=window[name];
+    if(typeof prev==='function'){
+      window[name]=function(){
+        const r=prev.apply(this,arguments);
+        setTimeout(installOptionBuildersV736,0);
+        return r;
+      };
+    }
+  });
+
+  const prevAdd=window.addWorkspaceColumnV728;
+  if(typeof prevAdd==='function'){
+    window.addWorkspaceColumnV728=function(){
+      const r=prevAdd.apply(this,arguments);
+      setTimeout(installOptionBuildersV736,0);
+      return r;
+    };
+  }
+
+  function bootV736(){
+    installOptionBuildersV736();
+    setTimeout(installOptionBuildersV736,500);
+    setTimeout(installOptionBuildersV736,1500);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootV736,{once:true});else bootV736();
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
