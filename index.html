@@ -16225,7 +16225,7 @@ HAOS v68.6 FINISHING FIX
 </style>
 <script id="haos-v70-42-schedule-workspace-polish-script">
 (function(){
-  const PATCH='v70.42-schedule-workspace-polish';
+  const PATCH='v70.43-workspace-popup-restore-fix';
   if(window.__HAOS_V742_SCHEDULE_WORKSPACE_POLISH__)return;
   window.__HAOS_V742_SCHEDULE_WORKSPACE_POLISH__=true;
   const $=id=>document.getElementById(id);
@@ -16395,16 +16395,23 @@ HAOS v68.6 FINISHING FIX
     }
     setTimeout(()=>prevOpenConfigV742.call(this,id),wasOpen?260:0);
     if(wasOpen&&modal){
-      let seen=false, ticks=0;
+      let seen=false, restoreTimer=null;
       const timer=setInterval(()=>{
-        ticks++;
         const has=!!document.querySelector('.swal2-container');
-        if(has)seen=true;
-        if((seen&&!has)||ticks>90){
-          clearInterval(timer);
-          try{modal.show();}catch(e){}
+        if(has){
+          seen=true;
+          if(restoreTimer){clearTimeout(restoreTimer);restoreTimer=null;}
+          return;
         }
-      },300);
+        if(seen&&!restoreTimer){
+          restoreTimer=setTimeout(()=>{
+            restoreTimer=null;
+            if(document.querySelector('.swal2-container'))return;
+            clearInterval(timer);
+            try{modal.show();}catch(e){}
+          },900);
+        }
+      },250);
     }
   };
 
