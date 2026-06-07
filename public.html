@@ -1713,5 +1713,211 @@ body{background:radial-gradient(circle at 12% 10%,rgba(14,165,233,.20),transpare
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<style id="haos-v70-44-public-workspace-quiz-style">
+  .haos-v744-public-choice{display:flex;gap:8px;flex-wrap:wrap}
+  .haos-v744-public-choice label{border:1px solid #bfdbfe;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-weight:850;padding:7px 11px;cursor:pointer}
+  .haos-v744-public-quiz-note{border:1px solid #c4b5fd;border-radius:8px;background:#faf5ff;color:#5b21b6;font-weight:850;padding:11px;margin-bottom:14px}
+  .haos-v744-public-result{border:1px solid #bbf7d0;border-radius:8px;background:#ecfdf5;color:#047857;font-weight:900;padding:12px;text-align:left}
+  .haos-v744-public-result .wrong{color:#b91c1c}.haos-v744-public-result .muted{color:#64748b}
+</style>
+<script id="haos-v70-44-public-workspace-quiz-script">
+(function(){
+  const PATCH='v70.44-public-workspace-quiz-checkbox';
+  if(window.__HAOS_V744_PUBLIC_WORKSPACE_QUIZ__)return;
+  window.__HAOS_V744_PUBLIC_WORKSPACE_QUIZ__=true;
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const qa=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
+  const choiceTypes=new Set(['dropdown','radio','checkbox']);
+  const splitOptions=value=>{
+    const seen=new Set();
+    return String(value||'').split(/[,|]/).map(x=>x.trim()).filter(Boolean).filter(x=>{const k=x.toLowerCase();if(seen.has(k))return false;seen.add(k);return true;});
+  };
+  function cleanFieldLabel(raw){
+    return String(raw||'').replace(/\[(?:dropdown|dropdownlist|select|radio|choice|checkbox|check):[^\]]+\]/ig,'').replace(/\[[^\]]+\]/g,'').replace(/\*\s*$/,'').trim()||String(raw||'').trim();
+  }
+  function fieldFromSpecV744(spec){
+    const raw=String(spec||'').trim();
+    const required=/\[(?:required|require|\*)\]/i.test(raw)||/\*\s*$/.test(raw);
+    const dropdown=raw.match(/\[(?:dropdown|dropdownlist|select|ตัวเลือก|ดรอปดาวน์):\s*([^\]]+)\]/i);
+    const radio=raw.match(/\[(?:radio|choice|ตัวเลือกเดี่ยว|ตัวเลือก):\s*([^\]]+)\]/i);
+    const checkboxChoice=raw.match(/\[(?:checkbox|check):\s*([^\]]+)\]/i);
+    if(dropdown)return {label:cleanFieldLabel(raw),type:'dropdown',options:splitOptions(dropdown[1]),required};
+    if(radio)return {label:cleanFieldLabel(raw),type:'radio',options:splitOptions(radio[1]),required};
+    if(checkboxChoice)return {label:cleanFieldLabel(raw),type:'checkbox',options:splitOptions(checkboxChoice[1]),required};
+    if(/\[(?:textarea|longtext|paragraph|ข้อความยาว|ยาว)\]/i.test(raw))return {label:cleanFieldLabel(raw),type:'textarea',options:[],required};
+    if(/\[(?:image|photo|picture|รูปภาพ|แนบรูปภาพ)\]/i.test(raw)||/รูปภาพ|ภาพถ่าย|หลักฐานภาพ/i.test(raw))return {label:cleanFieldLabel(raw),type:'image',options:[],required};
+    if(/\[(?:checkbox|check|ติ๊ก|ติ๊กถูก)\]/i.test(raw))return {label:cleanFieldLabel(raw),type:'checkbox',options:[],required};
+    return {label:cleanFieldLabel(raw),type:'text',options:[],required};
+  }
+  window.parseWorkspaceFieldPublic_=fieldFromSpecV744;
+  function fieldsPublicV744(){
+    const cols=workspaceState.columns||[];
+    const cfg=Array.isArray(workspaceState.fieldConfig)?workspaceState.fieldConfig:[];
+    return cols.map((c,i)=>Object.assign({index:i},fieldFromSpecV744(c),cfg[i]||{}));
+  }
+  function quizSettingsPublic(fields){
+    const owner=fields.find(f=>f.quizSettings)||fields[0]||{};
+    return owner.quizSettings||{showScore:owner.quizShowScore!==false,showCorrect:!!owner.quizShowCorrect};
+  }
+  function requiredMissingPublicV744(row){
+    const missing=[];
+    fieldsPublicV744().forEach(f=>{
+      if(!f.required)return;
+      if(f.index===0&&/timestamp/i.test(f.label||''))return;
+      const value=row[f.index];
+      const empty=f.type==='checkbox'?!splitOptions(value).length:!String(value??'').trim();
+      if(empty)missing.push(f.label||('ช่อง '+(f.index+1)));
+    });
+    return missing;
+  }
+  function renderWorkspaceCellPublicV744(col,value,r,i){
+    const f=fieldFromSpecV744(col);
+    if(f.type==='checkbox'&&splitOptions(f.options).length){
+      const selected=new Set(splitOptions(value).map(x=>x.toLowerCase()));
+      return '<div class="haos-v744-public-choice">'+splitOptions(f.options).map(o=>'<label><input type="checkbox" class="workspace-check-multi" data-r="'+r+'" data-c="'+i+'" value="'+esc(o)+'" '+(selected.has(o.toLowerCase())?'checked':'')+' '+(workspaceState.canEdit?'':'disabled')+'> '+esc(o)+'</label>').join('')+'</div>';
+    }
+    if(typeof window.renderWorkspaceCellPublic_==='function')return window.renderWorkspaceCellPublic_(col,value,r,i);
+    return esc(value||'');
+  }
+  window.loadPublicWorkspace=function(workspaceId,token){
+    google.script.run.withFailureHandler(function(err){
+      document.getElementById('loadingDiv').innerHTML='<div class="text-danger fw-bold">โหลดพื้นที่ทำงานไม่สำเร็จ: '+esc(err.message||err)+'</div>';
+    }).withSuccessHandler(function(res){
+      document.getElementById('loadingDiv').style.display='none';
+      if(!res.success){
+        document.getElementById('loadingDiv').style.display='block';
+        document.getElementById('loadingDiv').innerHTML='<div class="text-danger fw-bold"><i class="bi bi-exclamation-triangle"></i> '+esc(res.message)+'</div>';
+        return;
+      }
+      const d=res.data;
+      workspaceState={id:workspaceId,token:token,columns:d.columns||[],rows:d.rows||[],fieldConfig:d.fieldConfig||[],canEdit:(d.accessMode==='edit'&&!d.requireLoginToEdit),workspaceType:d.workspaceType||'table'};
+      document.querySelector('.public-mark').innerHTML=workspaceState.workspaceType==='quiz'?'<i class="bi bi-patch-question"></i>':'<i class="bi bi-table"></i>';
+      document.querySelector('.card-header h4').innerText=workspaceState.workspaceType==='quiz'?'แบบทดสอบออนไลน์':(workspaceState.workspaceType==='form'?'แบบฟอร์มออนไลน์':'พื้นที่ทำงานร่วมกัน');
+      document.getElementById('workspaceDiv').style.display='block';
+      document.getElementById('footerDiv').style.display='block';
+      document.getElementById('wsTitle').innerText=d.title||'-';
+      document.getElementById('wsDescription').innerText=d.description||'';
+      const typeText=workspaceState.workspaceType==='quiz'?'แบบทดสอบออนไลน์':(workspaceState.workspaceType==='form'?'แบบฟอร์มออนไลน์':(workspaceState.workspaceType==='checklist'?'Checklist':'ตารางร่วมกัน'));
+      document.getElementById('wsModeBadge').innerText=typeText+' • '+(workspaceState.canEdit?'แก้ไขร่วมกันได้':'ดูอย่างเดียว');
+      document.getElementById('wsUpdated').innerText=(d.updatedAt?('อัปเดตล่าสุด '+d.updatedAt):'')+(d.expiresAt?(' • หมดอายุ '+d.expiresAt):'');
+      document.getElementById('workspaceEditToolbar').style.display=(workspaceState.canEdit&&workspaceState.workspaceType!=='form'&&workspaceState.workspaceType!=='quiz')?'flex':'none';
+      document.getElementById('workspaceLoginNotice').style.display=(d.accessMode==='edit'&&d.requireLoginToEdit)?'block':'none';
+      renderWorkspaceTablePublic();
+    }).getPublicWorkspace(workspaceId,token);
+  };
+  window.renderWorkspaceTablePublic=function(){
+    if(workspaceState.workspaceType==='form'||workspaceState.workspaceType==='quiz')return renderWorkspaceFormPublic();
+    const table=document.getElementById('workspaceTable');
+    const cols=workspaceState.columns||[];
+    const rows=workspaceState.rows||[];
+    const fields=fieldsPublicV744();
+    let html='<thead><tr>'+cols.map((c,i)=>'<th>'+esc((fields[i]&&fields[i].label)||fieldFromSpecV744(c).label||c)+(fields[i]&&fields[i].required?'<span class="haos-v735-public-required">*</span>':'')+'</th>').join('')+'</tr></thead><tbody>';
+    if(!rows.length)html+='<tr><td colspan="'+Math.max(cols.length,1)+'" class="text-center text-muted py-4">ยังไม่มีข้อมูล</td></tr>';
+    rows.forEach((row,r)=>{html+='<tr>'+cols.map((c,i)=>'<td>'+renderWorkspaceCellPublicV744(c,row[i]||'',r,i)+'</td>').join('')+'</tr>';});
+    html+='</tbody>';
+    table.innerHTML=html;
+  };
+  function formFieldHtml(f){
+    const opts=splitOptions(f.options);
+    let html='<div class="haos-v735-public-field"><label class="form-label small fw-bold">'+esc(f.label)+(f.required?'<span class="haos-v735-public-required">*</span>':'')+'</label>';
+    if(f.type==='dropdown')html+='<select class="form-select workspace-form-field" data-c="'+f.index+'"><option value="">-- เลือก --</option>'+opts.map(o=>'<option value="'+esc(o)+'">'+esc(o)+'</option>').join('')+'</select>';
+    else if(f.type==='radio')html+='<div class="haos-v744-public-choice">'+opts.map(o=>'<label><input type="radio" class="workspace-form-field me-1" name="wsf_'+f.index+'" data-c="'+f.index+'" value="'+esc(o)+'">'+esc(o)+'</label>').join('')+'</div>';
+    else if(f.type==='checkbox'&&opts.length)html+='<div class="haos-v744-public-choice">'+opts.map(o=>'<label><input type="checkbox" class="workspace-form-check-multi me-1" data-c="'+f.index+'" value="'+esc(o)+'">'+esc(o)+'</label>').join('')+'</div><div class="small text-muted mt-2">เลือกได้มากกว่า 1 ข้อ</div>';
+    else if(f.type==='checkbox')html+='<div class="form-check"><input type="checkbox" class="form-check-input workspace-form-field" data-c="'+f.index+'" value="✓"><label class="form-check-label">เลือกช่องนี้</label></div>';
+    else if(f.type==='image')html+='<input type="file" class="form-control workspace-form-file" data-c="'+f.index+'" accept="image/*"><small class="text-muted">รองรับการแนบรูปภาพ 1 รูปต่อช่อง</small>';
+    else if(f.type==='textarea')html+='<textarea class="form-control workspace-form-field" rows="3" data-c="'+f.index+'"></textarea>';
+    else html+='<input class="form-control workspace-form-field" data-c="'+f.index+'">';
+    return html+'</div>';
+  }
+  window.renderWorkspaceFormPublic=function(){
+    const table=document.getElementById('workspaceTable');
+    const fields=fieldsPublicV744().filter(f=>!(f.index===0&&/timestamp/i.test(f.label||'')));
+    const isQuiz=workspaceState.workspaceType==='quiz';
+    const settings=quizSettingsPublic(fields);
+    let html='<tbody><tr><td><div class="haos-v735-public-form">';
+    if(isQuiz)html+='<div class="haos-v744-public-quiz-note"><i class="bi bi-patch-question"></i> แบบทดสอบนี้'+(settings.showScore?'จะแสดงคะแนนหลังส่งคำตอบ':'จะไม่แสดงคะแนนหลังส่งคำตอบ')+(settings.showCorrect?' และแสดงเฉลย':'')+'</div>';
+    html+=fields.map(formFieldHtml).join('');
+    html+='<div class="text-center"><button class="btn btn-success fw-bold" onclick="submitWorkspaceFormPublic()"><i class="bi bi-send"></i> '+(isQuiz?'ส่งคำตอบ':'ส่งข้อมูล')+'</button></div>';
+    if((workspaceState.rows||[]).length)html+='<div class="haos-v735-public-summary"><i class="bi bi-check-circle"></i> มีข้อมูลที่ส่งแล้ว '+workspaceState.rows.length+' รายการ ผู้สร้างพื้นที่สามารถดูผลลัพธ์ในระบบหลัก</div>';
+    table.innerHTML=html+'</div></td></tr></tbody>';
+  };
+  function collectFormRowV744(){
+    const row=new Array((workspaceState.columns||[]).length).fill('');
+    document.querySelectorAll('.workspace-form-field').forEach(el=>{
+      if(el.type==='radio'&&!el.checked)return;
+      if(el.type==='checkbox'){row[Number(el.dataset.c)]=el.checked?'✓':'';return;}
+      row[Number(el.dataset.c)]=(el.value||'').trim();
+    });
+    const grouped={};
+    document.querySelectorAll('.workspace-form-check-multi').forEach(el=>{const c=Number(el.dataset.c);(grouped[c]=grouped[c]||[]);if(el.checked)grouped[c].push(el.value);});
+    Object.keys(grouped).forEach(c=>row[Number(c)]=grouped[c].join(', '));
+    return row;
+  }
+  function scoreQuizPublic(fields,row){
+    let total=0,score=0;
+    const detail=[];
+    fields.forEach(f=>{
+      if(!choiceTypes.has(f.type)||!splitOptions(f.correctAnswers).length)return;
+      const points=Number(f.points||1)||0;
+      total+=points;
+      const got=splitOptions(row[f.index]).map(x=>x.toLowerCase()).sort();
+      const correct=splitOptions(f.correctAnswers).map(x=>x.toLowerCase()).sort();
+      const ok=got.length===correct.length&&got.every((x,i)=>x===correct[i]);
+      if(ok)score+=points;
+      detail.push({label:f.label,ok,answer:row[f.index]||'-',correct:splitOptions(f.correctAnswers).join(', ')});
+    });
+    return {score,total,detail};
+  }
+  function quizResultHtmlPublic(fields,row){
+    if(workspaceState.workspaceType!=='quiz')return '';
+    const settings=quizSettingsPublic(fields);
+    const result=scoreQuizPublic(fields,row);
+    let html='<div class="haos-v744-public-result">';
+    if(settings.showScore!==false)html+='<div class="fs-5 mb-2">คะแนนของคุณ: '+result.score+' / '+result.total+'</div>';
+    if(settings.showCorrect)html+=result.detail.map(d=>'<div class="'+(d.ok?'':'wrong')+'"><i class="bi '+(d.ok?'bi-check-circle':'bi-x-circle')+'"></i> '+esc(d.label)+' <span class="muted">ตอบ: '+esc(d.answer)+' | เฉลย: '+esc(d.correct)+'</span></div>').join('');
+    if(settings.showScore===false&&!settings.showCorrect)html+='<div>ส่งคำตอบเรียบร้อยแล้ว</div>';
+    return html+'</div>';
+  }
+  window.submitWorkspaceFormPublic=async function(){
+    const fields=fieldsPublicV744();
+    const row=collectFormRowV744();
+    const fileInputs=Array.from(document.querySelectorAll('.workspace-form-file')).filter(el=>el.files&&el.files.length);
+    try{
+      for(const input of fileInputs){
+        const file=input.files[0];
+        const base64=await readFileBase64Public_(file);
+        const res=await gasRunPromisePublic_('uploadFileToDrive',[base64,file.name,file.type||'image/png']);
+        if(!res.success)throw new Error(res.message||'อัปโหลดรูปภาพไม่สำเร็จ');
+        row[Number(input.dataset.c)]=res.url;
+      }
+    }catch(err){return Swal.fire('ผิดพลาด',err.message||String(err),'error');}
+    const missing=requiredMissingPublicV744(row);
+    if(missing.length)return Swal.fire('กรุณากรอกข้อมูลให้ครบ','ช่องจำเป็นที่ยังไม่ได้กรอก: '+missing.join(', '),'warning');
+    if(!row.some(v=>String(v||'').trim()))return Swal.fire('แจ้งเตือน','กรุณากรอกข้อมูลอย่างน้อย 1 ช่อง','warning');
+    google.script.run.withSuccessHandler(function(res){
+      if(res.success){
+        const html=quizResultHtmlPublic(fields,row);
+        Swal.fire({icon:'success',title:workspaceState.workspaceType==='quiz'?'ส่งคำตอบแล้ว':'ส่งข้อมูลแล้ว',html:html||esc(res.message),timer:html?undefined:1600,showConfirmButton:!!html});
+        workspaceState.rows.push(row);
+        renderWorkspaceFormPublic();
+      }else Swal.fire('ผิดพลาด',res.message,'error');
+    }).withFailureHandler(err=>Swal.fire('ผิดพลาด',err.message||String(err),'error')).submitPublicWorkspaceForm(workspaceState.id,workspaceState.token,row);
+  };
+  const prevCollectPublicRowsV744=window.collectWorkspaceRowsPublic;
+  if(typeof prevCollectPublicRowsV744==='function')window.collectWorkspaceRowsPublic=function(){
+    const rows=prevCollectPublicRowsV744.apply(this,arguments);
+    const grouped={};
+    document.querySelectorAll('.workspace-check-multi').forEach(el=>{
+      const r=Number(el.dataset.r),c=Number(el.dataset.c),key=r+'|'+c;
+      if(!rows[r])rows[r]=[];
+      grouped[key]=grouped[key]||{r,c,values:[]};
+      if(el.checked)grouped[key].values.push(el.value);
+    });
+    Object.keys(grouped).forEach(k=>{const g=grouped[k];rows[g.r][g.c]=g.values.join(', ');});
+    return rows;
+  };
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
