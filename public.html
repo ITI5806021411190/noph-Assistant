@@ -1919,5 +1919,164 @@ body{background:radial-gradient(circle at 12% 10%,rgba(14,165,233,.20),transpare
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<style id="haos-v70-45-public-submit-style">
+  .haos-v745-public-busy{display:inline-flex;align-items:center;gap:8px}
+  .haos-v745-public-saving{opacity:.72;pointer-events:none}
+</style>
+<script id="haos-v70-45-public-submit-script">
+(function(){
+  const PATCH='v70.45-public-workspace-submit-loading';
+  if(window.__HAOS_V745_PUBLIC_SUBMIT_LOADING__)return;
+  window.__HAOS_V745_PUBLIC_SUBMIT_LOADING__=true;
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const qa=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
+  const choiceTypes=new Set(['dropdown','radio','checkbox']);
+  const splitOptions=value=>{
+    const seen=new Set();
+    return String(value||'').split(/[,|]/).map(x=>x.trim()).filter(Boolean).filter(x=>{const k=x.toLowerCase();if(seen.has(k))return false;seen.add(k);return true;});
+  };
+  function parseField(spec,i){
+    const cfg=(workspaceState.fieldConfig||[])[i];
+    if(cfg&&cfg.label)return Object.assign({index:i},cfg);
+    const raw=String(spec||'');
+    const required=/\[(?:required|require|\*)\]/i.test(raw)||/\*\s*$/.test(raw);
+    const clean=raw.replace(/\[(?:dropdown|dropdownlist|select|radio|choice|checkbox|check):[^\]]+\]/ig,'').replace(/\[[^\]]+\]/g,'').replace(/\*\s*$/,'').trim()||raw;
+    const dropdown=raw.match(/\[(?:dropdown|dropdownlist|select):\s*([^\]]+)\]/i);
+    const radio=raw.match(/\[(?:radio|choice):\s*([^\]]+)\]/i);
+    const check=raw.match(/\[(?:checkbox|check):\s*([^\]]+)\]/i);
+    if(dropdown)return {index:i,label:clean,type:'dropdown',options:splitOptions(dropdown[1]),required};
+    if(radio)return {index:i,label:clean,type:'radio',options:splitOptions(radio[1]),required};
+    if(check)return {index:i,label:clean,type:'checkbox',options:splitOptions(check[1]),required};
+    if(/\[(?:textarea|longtext|paragraph)\]/i.test(raw))return {index:i,label:clean,type:'textarea',options:[],required};
+    if(/\[(?:image|photo|picture)\]/i.test(raw))return {index:i,label:clean,type:'image',options:[],required};
+    if(/\[(?:checkbox|check)\]/i.test(raw))return {index:i,label:clean,type:'checkbox',options:[],required};
+    return {index:i,label:clean,type:'text',options:[],required};
+  }
+  function fields(){
+    return (workspaceState.columns||[]).map(parseField).filter(f=>!(f.index===0&&/timestamp/i.test(f.label||'')));
+  }
+  function readFileBase64(file){
+    return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result||'').split(',')[1]||'');r.onerror=()=>reject(r.error||new Error('อ่านไฟล์ไม่สำเร็จ'));r.readAsDataURL(file);});
+  }
+  function gasRun(fn,args){
+    return new Promise((resolve,reject)=>google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(null,args||[]));
+  }
+  function setButtonBusy(selector,on,text){
+    const btn=document.querySelector(selector);
+    if(!btn)return;
+    if(on){
+      btn.dataset.v745OldHtml=btn.innerHTML;
+      btn.disabled=true;
+      btn.innerHTML='<span class="haos-v745-public-busy"><span class="spinner-border spinner-border-sm"></span>'+esc(text)+'</span>';
+      document.body.classList.add('haos-v745-public-saving');
+    }else{
+      btn.disabled=false;
+      if(btn.dataset.v745OldHtml)btn.innerHTML=btn.dataset.v745OldHtml;
+      document.body.classList.remove('haos-v745-public-saving');
+    }
+  }
+  function collectFormRow(){
+    const row=new Array((workspaceState.columns||[]).length).fill('');
+    qa('.workspace-form-field').forEach(el=>{
+      if(el.type==='radio'&&!el.checked)return;
+      if(el.type==='checkbox'){row[Number(el.dataset.c)]=el.checked?'✓':'';return;}
+      row[Number(el.dataset.c)]=(el.value||'').trim();
+    });
+    const grouped={};
+    qa('.workspace-form-check-multi').forEach(el=>{const c=Number(el.dataset.c);grouped[c]=grouped[c]||[];if(el.checked)grouped[c].push(el.value);});
+    Object.keys(grouped).forEach(c=>row[Number(c)]=grouped[c].join(', '));
+    return row;
+  }
+  function requiredMissing(row){
+    return fields().filter(f=>{
+      if(!f.required)return false;
+      const value=row[f.index];
+      if(f.type==='checkbox'&&splitOptions(f.options).length)return !splitOptions(value).length;
+      return !String(value||'').trim();
+    }).map(f=>f.label);
+  }
+  function quizSettings(fs){
+    const owner=fs.find(f=>f.quizSettings)||fs[0]||{};
+    return owner.quizSettings||{showScore:owner.quizShowScore!==false,showCorrect:!!owner.quizShowCorrect};
+  }
+  function scoreQuiz(fs,row){
+    let score=0,total=0;
+    const detail=[];
+    fs.forEach(f=>{
+      if(f.isQuizField===false||f.skipQuiz===true||!choiceTypes.has(f.type)||!splitOptions(f.correctAnswers).length)return;
+      const points=Number(f.points||1)||0;
+      total+=points;
+      const got=splitOptions(row[f.index]).map(x=>x.toLowerCase()).sort();
+      const correct=splitOptions(f.correctAnswers).map(x=>x.toLowerCase()).sort();
+      const ok=got.length===correct.length&&got.every((x,i)=>x===correct[i]);
+      if(ok)score+=points;
+      detail.push({label:f.label,ok,answer:row[f.index]||'-',correct:splitOptions(f.correctAnswers).join(', ')});
+    });
+    return {score,total,detail};
+  }
+  function quizResultHtml(fs,row){
+    if(workspaceState.workspaceType!=='quiz')return '';
+    const settings=quizSettings(fs);
+    const result=scoreQuiz(fs,row);
+    let html='<div class="haos-v744-public-result">';
+    if(settings.showScore!==false)html+='<div class="fs-5 mb-2">คะแนนของคุณ: '+result.score+' / '+result.total+'</div>';
+    if(settings.showCorrect)html+=result.detail.map(d=>'<div class="'+(d.ok?'':'wrong')+'"><i class="bi '+(d.ok?'bi-check-circle':'bi-x-circle')+'"></i> '+esc(d.label)+' <span class="muted">ตอบ: '+esc(d.answer)+' | เฉลย: '+esc(d.correct)+'</span></div>').join('');
+    if(settings.showScore===false&&!settings.showCorrect)html+='<div>ส่งคำตอบเรียบร้อยแล้ว</div>';
+    return html+'</div>';
+  }
+  window.submitWorkspaceFormPublic=async function(){
+    if(window.__HAOS_PUBLIC_SUBMITTING__)return;
+    const fs=fields();
+    const row=collectFormRow();
+    const missing=requiredMissing(row);
+    if(missing.length)return Swal.fire('กรุณากรอกข้อมูลให้ครบ','ช่องจำเป็นที่ยังไม่ได้กรอก: '+missing.join(', '),'warning');
+    if(!row.some(v=>String(v||'').trim()))return Swal.fire('แจ้งเตือน','กรุณากรอกข้อมูลอย่างน้อย 1 ช่อง','warning');
+    window.__HAOS_PUBLIC_SUBMITTING__=true;
+    setButtonBusy('button[onclick="submitWorkspaceFormPublic()"]',true,workspaceState.workspaceType==='quiz'?'กำลังส่งคำตอบ...':'กำลังส่งข้อมูล...');
+    try{
+      const fileInputs=qa('.workspace-form-file').filter(el=>el.files&&el.files.length);
+      for(const input of fileInputs){
+        const file=input.files[0];
+        const base64=await readFileBase64(file);
+        const up=await gasRun('uploadFileToDrive',[base64,file.name,file.type||'image/png']);
+        if(!up||!up.success)throw new Error(up&&up.message?up.message:'อัปโหลดไฟล์ไม่สำเร็จ');
+        row[Number(input.dataset.c)]=up.url;
+      }
+      const res=await gasRun('submitPublicWorkspaceForm',[workspaceState.id,workspaceState.token,row]);
+      if(!res||!res.success)throw new Error(res&&res.message?res.message:'ส่งข้อมูลไม่สำเร็จ');
+      const html=quizResultHtml(fs,row);
+      Swal.fire({icon:'success',title:workspaceState.workspaceType==='quiz'?'ส่งคำตอบแล้ว':'ส่งข้อมูลแล้ว',html:html||esc(res.message),timer:html?undefined:1600,showConfirmButton:!!html});
+      workspaceState.rows=workspaceState.rows||[];
+      workspaceState.rows.push(row);
+      if(typeof renderWorkspaceFormPublic==='function')renderWorkspaceFormPublic();
+    }catch(err){
+      Swal.fire('ผิดพลาด',err.message||String(err),'error');
+    }finally{
+      window.__HAOS_PUBLIC_SUBMITTING__=false;
+      setButtonBusy('button[onclick="submitWorkspaceFormPublic()"]',false);
+    }
+  };
+  const oldSavePublic=window.saveWorkspacePublic;
+  window.saveWorkspacePublic=async function(){
+    if(window.__HAOS_PUBLIC_SAVING__)return;
+    const rows=typeof collectWorkspaceRowsPublic==='function'?collectWorkspaceRowsPublic():(workspaceState.rows||[]);
+    window.__HAOS_PUBLIC_SAVING__=true;
+    setButtonBusy('button[onclick="saveWorkspacePublic()"]',true,'กำลังบันทึกข้อมูล...');
+    try{
+      const res=await gasRun('updatePublicWorkspaceRows',[workspaceState.id,workspaceState.token,rows]);
+      if(!res||!res.success)throw new Error(res&&res.message?res.message:'บันทึกข้อมูลไม่สำเร็จ');
+      workspaceState.rows=rows;
+      Swal.fire({icon:'success',title:'บันทึกแล้ว',timer:1200,showConfirmButton:false});
+    }catch(err){
+      if(oldSavePublic&&!String(err.message||'').trim())return oldSavePublic.apply(this,arguments);
+      Swal.fire('ผิดพลาด',err.message||String(err),'error');
+    }finally{
+      window.__HAOS_PUBLIC_SAVING__=false;
+      setButtonBusy('button[onclick="saveWorkspacePublic()"]',false);
+    }
+  };
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
