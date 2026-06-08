@@ -18632,5 +18632,163 @@ HAOS v68.6 FINISHING FIX
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<style id="haos-v70-51-stability-style">
+  #eMeetingInfoBtnV746,
+  #eMeetingInfoBtnV748,
+  #eMeetingInfoBtnV749,
+  button[onclick*="openEMeetingInfoV746"],
+  button[onclick*="openEMeetingInfoV749"]{display:none!important;}
+  #haosAdminRoadmapV68 + #haosAdminRoadmapV750,
+  #haosAdminRoadmapV750 + #haosAdminRoadmapV68{display:none!important;}
+  .haos-v751-reset-card{border:1px solid rgba(14,165,233,.22);background:linear-gradient(135deg,#f8fbff,#ecfeff);border-radius:18px;padding:14px;text-align:left}
+  .haos-v751-reset-card .form-control{border-radius:14px;font-weight:700}
+  .haos-v751-tool-note{font-size:.82rem;color:#64748b;margin-top:8px}
+</style>
+<script id="haos-v70-51-stability-script">
+(function(){
+  const PATCH='v70.51-stability-cleanup';
+  if(window.__HAOS_V751_STABILITY__)return;
+  window.__HAOS_V751_STABILITY__=true;
+  const $=id=>document.getElementById(id);
+  const qa=(sel,root=document)=>Array.from((root||document).querySelectorAll(sel));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const clean=v=>String(v??'').replace(/\s+/g,' ').trim();
+  const phoneOnly=v=>String(v??'').replace(/\D/g,'');
+  function userObj(){try{if(typeof window.currentUser==='function')return window.currentUser()||{};}catch(e){}try{return window.user||user||{};}catch(e){return window.user||{};}}
+  function roleOf(){const u=userObj();return clean(u.accountRole||u.role||u.effectiveRole||'User');}
+  function isAdmin(){return ['Admin','Super Admin'].includes(roleOf());}
+  function isSuper(){return roleOf()==='Super Admin';}
+  function gas(fn,args){if(typeof window.gasRunPromise_==='function')return window.gasRunPromise_(fn,args||[]);return new Promise((resolve,reject)=>google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(null,args||[]));}
+
+  function rollbackEMeetingInfoV751(root=document){
+    qa('#eMeetingInfoBtnV746,#eMeetingInfoBtnV748,#eMeetingInfoBtnV749,button[onclick*="openEMeetingInfoV746"],button[onclick*="openEMeetingInfoV749"]',root)
+      .forEach(btn=>{try{btn.remove();}catch(e){btn.style.display='none';}});
+  }
+  window.openEMeetingInfoV746=function(){return false;};
+  window.openEMeetingInfoV749=function(){return false;};
+
+  function btn(cls,icon,text,onclick,disabled){
+    return `<button type="button" class="btn ${cls} btn-sm fw-bold" ${disabled?'disabled':''} onclick="${onclick}"><i class="bi ${icon}"></i> ${esc(text)}</button>`;
+  }
+  function card(icon,title,desc,buttons){
+    return `<div class="haos-v750-tool-card"><h6><i class="bi ${icon}"></i> ${esc(title)}</h6><p>${esc(desc)}</p><div class="d-flex flex-wrap gap-2">${buttons}</div></div>`;
+  }
+  function systemToolsHtmlV751(){
+    const admin=isAdmin(), superAdmin=isSuper();
+    const cards=[];
+    cards.push(card('bi-people-fill text-primary','ผู้ใช้และโปรไฟล์','จัดการบัญชี ผู้ใช้งาน โปรไฟล์หลายกลุ่มงาน และคำขอเปลี่ยน PIN',
+      btn('btn-primary','bi-people','จัดการผู้ใช้','window.openUserManagement&&openUserManagement()',!admin)));
+    if(superAdmin){
+      cards.push(card('bi-wrench-adjustable-circle text-success','ซ่อมฐานข้อมูล','ตรวจและซ่อมข้อมูลซ้ำ header ซ้ำ โปรไฟล์ซ้ำ demo data และแถวว่าง',
+        btn('btn-success','bi-magic','ซ่อมฐานข้อมูล','window.openDatabaseRepairV730&&openDatabaseRepairV730()',false)));
+    }
+    cards.push(card('bi-bell-fill text-warning','แจ้งเตือนและอีเมล','ตรวจการเชื่อมแจ้งเตือน และแจ้งผู้ใช้ที่ยังไม่มีอีเมลสำหรับ OTP',
+      btn('btn-outline-dark','bi-diagram-3','ตรวจแจ้งเตือน','window.openNotificationCoverageV732&&openNotificationCoverageV732()',!admin)+
+      btn('btn-outline-success','bi-envelope-exclamation','แจ้งเพิ่มอีเมล','window.notifyMissingEmailV748&&notifyMissingEmailV748()',!admin)));
+    cards.push(card('bi-camera-video-fill text-primary','จองห้อง/Zoom','ติดตามคำขอแก้ไขหรือยกเลิกรายการจองห้อง/Zoom จากเจ้าของรายการ',
+      btn('btn-outline-primary','bi-hourglass-split','คำขอแก้ไข/ยกเลิก','window.openITBookingChangeRequestsV748&&openITBookingChangeRequestsV748()',!admin)));
+    cards.push(card('bi-cloud-arrow-down-fill text-info','Backup / Restore','สำรองฐานข้อมูลและเรียกดูไฟล์สำรองย้อนหลัง',
+      btn('btn-outline-primary','bi-cloud-arrow-down','Backup','window.createBackupV63_&&createBackupV63_()',!admin)+
+      (superAdmin?btn('btn-outline-danger','bi-arrow-counterclockwise','Restore','window.listBackupsV63_&&listBackupsV63_()',false):'')));
+    cards.push(card('bi-shield-lock-fill text-danger','Permission Matrix','กำหนดสิทธิ์กลางให้ role ปัจจุบันทำงานร่วมกับฟังก์ชันเก่าและใหม่',
+      btn('btn-outline-dark','bi-person-lock','ตั้งค่าสิทธิ์','window.openPermissionMatrixV64_&&openPermissionMatrixV64_()',!admin)));
+    cards.push(card('bi-palette-fill text-success','Branding / PWA','ตั้งค่าโลโก้ สี ชื่อระบบ หน้า Login และข้อมูลติดตั้งบนอุปกรณ์',
+      btn('btn-outline-success','bi-palette','Branding / PWA','window.openBrandingV65_&&openBrandingV65_()',!admin)));
+    cards.push(card('bi-calendar-check-fill text-warning','Google Calendar Sync','ซิงก์ตารางงานและรายการจองห้อง/Zoom ที่อนุมัติแล้วเข้าปฏิทินกลาง',
+      btn('btn-warning','bi-calendar-check','Sync ใหม่ทั้งหมด','window.resyncCalendarV66_&&resyncCalendarV66_()',!admin)));
+    cards.push(card('bi-activity text-primary','System Health','ตรวจ whitelist ฟังก์ชันสำคัญ และ sheet ที่รองรับเวอร์ชันปัจจุบัน',
+      btn('btn-outline-primary','bi-clipboard2-pulse','ตรวจสุขภาพ','window.openSystemToolsHealthV750&&openSystemToolsHealthV750()',!admin)));
+    return `<div class="haos-v750-tools-wrap"><div class="haos-v750-tools-head"><div><div class="haos-v750-tools-title"><i class="bi bi-stars text-primary"></i> เครื่องมือระบบขั้นสูง</div><div class="haos-v750-tools-sub">รวมเครื่องมือดูแลระบบที่ยังใช้งานอยู่จริง ลดการซ้อนกับเครื่องมือผู้ดูแลระบบ และแสดงตามสิทธิ์ของ ${esc(roleOf())}</div><div class="haos-v751-tool-note">Admin เห็นเครื่องมือปฏิบัติการทั่วไป ส่วน Super Admin จะเห็นเครื่องมือซ่อมฐานข้อมูลและ Restore เพิ่มเติม</div></div><button class="btn btn-outline-primary btn-sm fw-bold" onclick="openSystemToolsHealthV750()"><i class="bi bi-activity"></i> Health Check</button></div><div class="haos-v750-tools-grid">${cards.join('')}</div></div>`;
+  }
+  function dedupeSystemToolsV751(){
+    if(!isAdmin())return;
+    const adminBody=$('adminPanelBody')||document.querySelector('#adminPanel .card-body,.super-admin-panel .card-body,.admin-panel .card-body');
+    if(!adminBody)return;
+    let wraps=qa('#haosAdminRoadmapV68,#haosAdminRoadmapV750',adminBody);
+    if(!wraps.length){
+      const wrap=document.createElement('div');
+      wrap.id='haosAdminRoadmapV68';
+      wrap.className='mt-3';
+      adminBody.appendChild(wrap);
+      wraps=[wrap];
+    }
+    let keep=$('haosAdminRoadmapV68')||wraps[0];
+    if(!keep.id)keep.id='haosAdminRoadmapV68';
+    wraps.forEach(w=>{if(w!==keep)w.remove();});
+    keep.className='mt-3';
+    keep.dataset.v750Installed='1';
+    keep.dataset.v751Installed='1';
+    if(keep.dataset.v751Rendered!==roleOf()){
+      keep.dataset.v751Rendered=roleOf();
+      keep.innerHTML=systemToolsHtmlV751();
+    }
+    qa('.haos-v750-tools-wrap',adminBody).forEach((box,i)=>{
+      const owner=box.closest('#haosAdminRoadmapV68,#haosAdminRoadmapV750');
+      if(!owner&&i>0)box.remove();
+    });
+  }
+  window.openV66ControlCenter=function(){
+    Swal.fire({title:'เครื่องมือระบบขั้นสูง',width:1080,html:systemToolsHtmlV751(),showConfirmButton:false,showCloseButton:true});
+  };
+
+  window.openForgotPinResetV727=async function(){
+    const html=`<div class="haos-v751-reset-card">
+      <div class="alert alert-primary small mb-3"><i class="bi bi-shield-lock"></i> ระบุเบอร์มือถือและอีเมลให้ตรงกับบัญชี ระบบจะส่ง OTP ไปที่อีเมลนั้น</div>
+      <label class="small fw-bold">เบอร์มือถือ</label>
+      <input id="fpPhoneV751" class="form-control mb-2" maxlength="10" inputmode="numeric" placeholder="เช่น 0812345678" value="${esc($('loginPhone')?.value||'')}">
+      <label class="small fw-bold">อีเมล</label>
+      <input id="fpEmailV751" type="email" class="form-control" placeholder="example@email.com">
+    </div>`;
+    const r=await Swal.fire({
+      title:'ลืมรหัสผ่าน / รีเซ็ต PIN',
+      width:560,
+      html,
+      showCancelButton:true,
+      confirmButtonText:'ส่ง OTP',
+      cancelButtonText:'ยกเลิก',
+      didOpen:()=>setTimeout(()=>$('fpPhoneV751')?.focus(),80),
+      preConfirm:async()=>{
+        const payload={phone:phoneOnly($('fpPhoneV751')?.value),email:clean($('fpEmailV751')?.value)};
+        if(payload.phone.length!==10){Swal.showValidationMessage('กรุณากรอกเบอร์มือถือ 10 หลัก');return false;}
+        if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)){Swal.showValidationMessage('กรุณาระบุอีเมลให้ถูกต้อง');return false;}
+        const res=await gas('sendForgotPinOtpV748',[payload]);
+        if(!res||!res.success){Swal.showValidationMessage(res?.message||'ส่ง OTP ไม่สำเร็จ');return false;}
+        return Object.assign(payload,res);
+      }
+    });
+    if(!r.isConfirmed||!r.value)return;
+    const payload=r.value;
+    const v=await Swal.fire({
+      title:'กรอก OTP',
+      width:520,
+      html:`<div class="text-start"><div class="alert alert-success small">ส่ง OTP ไปยัง ${esc(payload.emailMasked||payload.email)} แล้ว รหัสหมดอายุใน 10 นาที</div><input id="fpOtpV751" class="form-control form-control-lg text-center fw-bold" maxlength="6" inputmode="numeric" placeholder="000000"></div>`,
+      showCancelButton:true,
+      confirmButtonText:'ยืนยันและรีเซ็ต PIN',
+      cancelButtonText:'ยกเลิก',
+      didOpen:()=>setTimeout(()=>$('fpOtpV751')?.focus(),80),
+      preConfirm:async()=>{
+        const otp=phoneOnly($('fpOtpV751')?.value);
+        if(otp.length!==6){Swal.showValidationMessage('กรุณากรอก OTP 6 หลัก');return false;}
+        const res=await gas('verifyForgotPinOtpAndResetV748',[Object.assign({},payload,{otpToken:payload.otpToken,otp,step:'verify'})]);
+        if(!res||!res.success){Swal.showValidationMessage(res?.message||'ยืนยัน OTP ไม่สำเร็จ');return false;}
+        return res;
+      }
+    });
+    if(!v.isConfirmed||!v.value)return;
+    if($('loginPhone'))$('loginPhone').value=v.value.phone||payload.phone||'';
+    Swal.fire({icon:'success',title:'รีเซ็ต PIN สำเร็จ',html:`<div class="text-muted mb-2">${esc(v.value.name||'')}</div><div class="fs-2 fw-bold text-primary">${esc(v.value.pin)}</div><div class="small text-muted mt-2">ระบบส่ง PIN ใหม่ไปทางอีเมลที่ลงทะเบียนไว้แล้ว</div>`});
+  };
+
+  function bootV751(){
+    rollbackEMeetingInfoV751();
+    dedupeSystemToolsV751();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootV751,{once:true});else bootV751();
+  const obs=new MutationObserver(()=>{clearTimeout(window.__haosV751Timer);window.__haosV751Timer=setTimeout(bootV751,80);});
+  try{obs.observe(document.body,{childList:true,subtree:true});}catch(e){}
+  setInterval(bootV751,900);
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
