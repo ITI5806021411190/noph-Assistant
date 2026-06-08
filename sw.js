@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-44-workspace-builder-quiz-preview';
+const CACHE_NAME = 'haos-v70-45-workspace-notification-calendar';
 const CORE = ['/', '/index.html', '/public.html', '/manifest.json', '/icon-192.png', '/icon-512.png', '/logo-moph.png'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(CORE)).catch(() => {}));
