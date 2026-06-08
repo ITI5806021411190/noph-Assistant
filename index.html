@@ -17849,5 +17849,380 @@ HAOS v68.6 FINISHING FIX
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<style id="haos-v70-48-booking-security-emeeting-style">
+  .haos-v748-toolbar{border:1px solid rgba(14,165,233,.22);border-radius:18px;background:linear-gradient(135deg,#eef6ff,#f0fdf4);padding:12px;margin:14px}
+  .haos-v748-toolbar .btn{border-radius:14px;font-weight:850}
+  .haos-v748-filter{display:none;border-top:1px dashed rgba(14,165,233,.28);margin-top:10px;padding-top:10px}
+  .haos-v748-filter.show{display:block}
+  .haos-v748-card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(285px,1fr));gap:12px;padding:14px}
+  .haos-v748-booking-card{border:1px solid rgba(148,163,184,.25);border-left:6px solid #0ea5e9;border-radius:18px;background:#fff;box-shadow:0 12px 30px rgba(15,23,42,.07);padding:14px}
+  .haos-v748-booking-card.is-pinned{border-left-color:#f59e0b;background:linear-gradient(135deg,#fffbeb,#fff)}
+  .haos-v748-type-badge{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 10px;font-size:.78rem;font-weight:950}
+  .haos-v748-host{background:linear-gradient(135deg,#dbeafe,#bfdbfe);color:#1d4ed8;border:1px solid #93c5fd}
+  .haos-v748-join{background:linear-gradient(135deg,#dcfce7,#bbf7d0);color:#047857;border:1px solid #86efac}
+  .haos-v748-pending-change{display:inline-flex;align-items:center;gap:5px;border-radius:999px;background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;padding:4px 8px;font-size:.76rem;font-weight:900}
+  .haos-v748-pager{display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:0 14px 14px}
+  .haos-v748-calendar-selected{border:1px solid rgba(37,99,235,.18);border-radius:16px;background:linear-gradient(135deg,#eff6ff,#ecfeff);padding:12px;margin-top:10px;text-align:left}
+  .haos-v748-dept-group{background:linear-gradient(135deg,#e0f2fe,#ecfdf5)!important;color:#075985;font-weight:950}
+  .haos-v748-admin-toolbar{border:1px solid rgba(37,99,235,.18);border-radius:18px;background:#f8fbff;padding:12px;margin-bottom:12px}
+  .haos-v748-guide-hero{border-radius:22px;background:linear-gradient(135deg,#0ea5e9,#2563eb 62%,#10b981);color:#fff;padding:20px;text-align:left;box-shadow:0 18px 46px rgba(37,99,235,.24)}
+  .haos-v748-guide-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-top:14px}
+  .haos-v748-guide-card{border:1px solid rgba(148,163,184,.22);border-radius:18px;background:#fff;padding:14px;text-align:left;box-shadow:0 10px 26px rgba(15,23,42,.05)}
+  .haos-v748-guide-card h6{font-weight:950;color:#0f172a}
+  .haos-v748-emeeting-form-polish .swal2-title{color:#0f172a!important;font-weight:950!important}
+  .haos-v748-emeeting-form-polish .haos-v717-form{background:linear-gradient(180deg,#f8fbff,#fff);border-radius:20px;padding:10px}
+  .haos-v748-emeeting-form-polish .section{border:1px solid rgba(37,99,235,.16)!important;border-radius:18px!important;background:#fff!important;box-shadow:0 10px 24px rgba(15,23,42,.04)!important}
+  .haos-v748-emeeting-hero{border-radius:18px;background:linear-gradient(135deg,#e0f2fe,#dcfce7);border:1px solid rgba(14,165,233,.22);padding:14px;margin-bottom:12px;text-align:left}
+  .haos-v748-sign-modal{z-index:10850!important}
+  .haos-v748-sign-modal + .modal-backdrop{z-index:10840!important}
+  .haos-v748-sign-preview{min-height:110px;border:1px dashed rgba(14,165,233,.35);border-radius:16px;background:#f8fafc;display:grid;place-items:center;overflow:hidden}
+  .haos-v748-sign-preview img{max-width:100%;max-height:140px}
+  .haos-v748-it-guide-btn{border-radius:999px!important;background:linear-gradient(135deg,#0ea5e9,#2563eb)!important;color:#fff!important;border:0!important;box-shadow:0 10px 24px rgba(37,99,235,.22)}
+</style>
+<script id="haos-v70-48-booking-security-emeeting-script">
+(function(){
+  const PATCH='v70.48-booking-security-emeeting';
+  if(window.__HAOS_V748_BOOKING_SECURITY__)return;
+  window.__HAOS_V748_BOOKING_SECURITY__=true;
+  const $=id=>document.getElementById(id);
+  const qa=(sel,root=document)=>Array.from((root||document).querySelectorAll(sel));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const clean=v=>String(v??'').replace(/\s+/g,' ').trim();
+  const phoneKey=v=>String(v||'').replace(/'/g,'').replace(/\D/g,'');
+  const currentUser=()=>{try{return typeof getUser==='function'?(getUser()||{}):(window.user||user||{});}catch(e){return window.user||{};}};
+  const gas=(fn,args)=>{if(typeof window.gasRunPromise_==='function')return window.gasRunPromise_(fn,args||[]);return new Promise((resolve,reject)=>{try{google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run,args||[]);}catch(e){reject(e);}});};
+
+  function stripDeptPrefixV748(value){
+    return String(value??'').replace(/^\s*\d{1,3}\s+(?=(?:กลุ่มงาน|สำนักงาน|นพ\.สสจ\.นย\.|รอง|ผู้ช่วย))/u,'').replace(/\s{2,}/g,' ').trim();
+  }
+  window.stripDepartmentPrefixV745=stripDeptPrefixV748;
+  window.stripDepartmentPrefixV747=stripDeptPrefixV748;
+  window.stripDepartmentPrefixV748=stripDeptPrefixV748;
+  function cleanDeptDomV748(root=document.body){
+    if(!root)return;
+    qa('option',root).forEach(opt=>{opt.textContent=stripDeptPrefixV748(opt.textContent); if(opt.label)opt.label=stripDeptPrefixV748(opt.label);});
+    qa('[data-department],[data-dept],.department,.dept,.user-dept',root).forEach(el=>{el.textContent=stripDeptPrefixV748(el.textContent);});
+    qa('input:not([type="hidden"]),textarea',root).forEach(el=>{
+      const hint=[el.id,el.name,el.placeholder,el.getAttribute('aria-label')].join(' ');
+      if(/dept|department|กลุ่มงาน|หน่วยงาน/i.test(hint) && /^\s*\d{1,3}\s+/.test(el.value||'')) el.value=stripDeptPrefixV748(el.value);
+    });
+    const re=/^\s*\d{1,3}\s+(?=(?:กลุ่มงาน|สำนักงาน|นพ\.สสจ\.นย\.|รอง|ผู้ช่วย))/u;
+    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode(node){
+      const p=node.parentElement;
+      if(!p||/SCRIPT|STYLE|TEXTAREA|INPUT|SELECT|OPTION/.test(p.tagName))return NodeFilter.FILTER_REJECT;
+      return re.test(node.nodeValue||'')?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT;
+    }});
+    const nodes=[]; while(walker.nextNode())nodes.push(walker.currentNode);
+    nodes.forEach(n=>{n.nodeValue=stripDeptPrefixV748(n.nodeValue);});
+  }
+  window.cleanDepartmentPrefixDomV748=cleanDeptDomV748;
+
+  function parseDate(v){
+    if(!v)return null;
+    if(v instanceof Date&&!isNaN(v))return v;
+    const s=String(v).trim();
+    const d=new Date(s.replace(' ','T'));
+    return isNaN(d.getTime())?null:d;
+  }
+  function fmtDateTime(v){
+    const d=parseDate(v);
+    if(!d)return esc(v||'-');
+    return d.toLocaleString('th-TH',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
+  }
+  function fmtTimeRange(item){
+    const s=parseDate(item.rawStartTime||item.startTime), e=parseDate(item.rawEndTime||item.endTime);
+    const st=s?s.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',hour12:false}):'';
+    const et=e?e.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',hour12:false}):'';
+    if(st&&et)return `${st} - ${et}`;
+    return st||et||'-';
+  }
+  function scheduleDate(item){return parseDate(item.rawStartTime||item.startTime||item.date||item.eventDate);}
+  function scheduleEnd(item){return parseDate(item.rawEndTime||item.endTime);}
+  function allSchedulesV748(){
+    const list=[];
+    try{if(Array.isArray(window.mySchedulesGlobal))list.push(...window.mySchedulesGlobal.map(x=>Object.assign({__scope:'my'},x)));}catch(e){}
+    try{if(Array.isArray(window.departmentSchedulesGlobal))list.push(...window.departmentSchedulesGlobal.map(x=>Object.assign({__scope:'dept'},x)));}catch(e){}
+    const seen=new Set();
+    return list.filter(x=>{const k=x.id||x.publicId||JSON.stringify([x.eventName,x.startTime,x.ownerPhone]); if(seen.has(k))return false; seen.add(k); return true;});
+  }
+  window.openScheduleCalendarPopupV745=function(){
+    const render=()=>{
+      const list=allSchedulesV748().filter(x=>scheduleDate(x)).sort((a,b)=>scheduleDate(a)-scheduleDate(b));
+      const today=new Date(Date.now()-86400000);
+      const upcoming=list.filter(x=>scheduleDate(x)>=today).slice(0,14);
+      const html=`<div class="haos-v745-calendar-wrap"><div id="haosSchedulePopupCalendarV745"></div><div class="haos-v745-calendar-list" id="haosSchedulePopupSideV748">${
+        upcoming.length?upcoming.map(x=>`<button type="button" class="haos-v745-calendar-item w-100 text-start border-0" onclick="selectSchedulePopupItemV748('${esc(x.id||x.publicId||'')}')"><b>${esc(stripDeptPrefixV748(x.eventName||x.title||'-'))}</b><div class="small text-muted"><i class="bi bi-clock"></i> ${esc(fmtTimeRange(x))} | ${esc(stripDeptPrefixV748(x.location||x.eventLocation||'-'))}</div></button>`).join(''):'<div class="text-muted text-center py-3">ยังไม่มีตารางงานสำหรับแสดง</div>'
+      }<div id="haosSchedulePopupSelectedV748" class="haos-v748-calendar-selected d-none"></div></div></div>`;
+      Swal.fire({title:'ปฏิทินตารางงาน & นัดหมาย',width:1120,html,showCloseButton:true,confirmButtonText:'ปิด',didOpen:()=>{
+        const el=$('haosSchedulePopupCalendarV745');
+        if(!el||!window.FullCalendar)return;
+        const events=list.map(item=>{
+          const start=scheduleDate(item); if(!start)return null;
+          const end=scheduleEnd(item);
+          return {title:stripDeptPrefixV748(item.eventName||item.title||'-'),start,end:end||undefined,allDay:false,backgroundColor:item.__scope==='dept'?'#059669':'#2563eb',borderColor:'transparent',extendedProps:{id:item.id||item.publicId||''}};
+        }).filter(Boolean);
+        const cal=new FullCalendar.Calendar(el,{initialView:'dayGridMonth',locale:'th',height:560,headerToolbar:{left:'prev,next today',center:'title',right:'dayGridMonth,timeGridWeek,timeGridDay,listMonth'},events,displayEventTime:true,eventTimeFormat:{hour:'2-digit',minute:'2-digit',hour12:false},eventClick:info=>{info.jsEvent&&info.jsEvent.preventDefault();window.selectSchedulePopupItemV748(info.event.extendedProps.id);}});
+        cal.render();
+      }});
+    };
+    if(!allSchedulesV748().length){try{window.loadMySchedules&&window.loadMySchedules();window.loadDepartmentSchedules&&window.loadDepartmentSchedules();}catch(e){} setTimeout(render,800);}else render();
+  };
+  window.selectSchedulePopupItemV748=function(id){
+    const item=allSchedulesV748().find(x=>String(x.id||x.publicId||'')===String(id));
+    const box=$('haosSchedulePopupSelectedV748'); if(!box||!item)return;
+    box.classList.remove('d-none');
+    box.innerHTML=`<div class="d-flex justify-content-between gap-2 flex-wrap"><div><div class="fw-bold text-primary">${esc(stripDeptPrefixV748(item.eventName||item.title||'-'))}</div><div class="small text-muted"><i class="bi bi-calendar3"></i> ${fmtDateTime(item.rawStartTime||item.startTime)} ${item.endTime?'ถึง '+fmtDateTime(item.rawEndTime||item.endTime):''}</div><div class="small text-muted"><i class="bi bi-geo-alt"></i> ${esc(stripDeptPrefixV748(item.location||'-'))}</div></div><button type="button" class="btn btn-sm btn-outline-primary" onclick="viewScheduleDetail&&viewScheduleDetail('${esc(id)}')"><i class="bi bi-eye"></i> เปิดรายละเอียด</button></div>`;
+  };
+
+  const bookingState={view:'table',filtersOpen:false,search:'',status:'',type:'',sort:'desc',page:1,pageSize:20};
+  const pinKey='haosV748PinnedBookings';
+  function getBookings(){try{if(Array.isArray(itBookingsGlobal))return itBookingsGlobal;}catch(e){} return Array.isArray(window.itBookingsGlobal)?window.itBookingsGlobal:[];}
+  function setBookings(list){window.itBookingsGlobal=list||[];try{itBookingsGlobal=list||[];}catch(e){}}
+  function canManageBooking(){const u=currentUser();return /admin|super/i.test(String(u.role||''))||String(u.department||'').includes('สุขภาพดิจิทัล');}
+  function isOwner(item){return phoneKey(item.ownerPhone)===phoneKey(currentUser().phone);}
+  function pinnedSet(){try{return new Set(JSON.parse(localStorage.getItem(pinKey)||'[]'));}catch(e){return new Set();}}
+  function savePinned(set){localStorage.setItem(pinKey,JSON.stringify(Array.from(set)));}
+  window.toggleItBookingPinV748=function(id){const set=pinnedSet();set.has(id)?set.delete(id):set.add(id);savePinned(set);renderItBookings();};
+  function typeBadge(item){const t=String(item.bookingType||'Host');const host=/host/i.test(t);return `<span class="haos-v748-type-badge ${host?'haos-v748-host':'haos-v748-join'}"><i class="bi ${host?'bi-broadcast':'bi-box-arrow-in-right'}"></i> ${host?'Host':'Join'}</span>`;}
+  function statusBadge(s){return typeof window.itBookingStatusBadge_==='function'?window.itBookingStatusBadge_(s):`<span class="badge bg-secondary">${esc(s||'-')}</span>`;}
+  function bookingRoom(item){return stripDeptPrefixV748(item.roomName||item.otherLocation||item.resourceId||'-');}
+  function filteredBookings(){
+    const pins=pinnedSet();
+    let list=getBookings().slice();
+    const q=clean(bookingState.search).toLowerCase();
+    if(q)list=list.filter(x=>[x.topic,x.ownerName,x.department,x.roomName,x.otherLocation,x.meetingId].some(v=>String(v||'').toLowerCase().includes(q)));
+    if(bookingState.status)list=list.filter(x=>String(x.status||'')===bookingState.status);
+    if(bookingState.type)list=list.filter(x=>String(x.bookingType||'Host').toLowerCase()===bookingState.type.toLowerCase());
+    list.sort((a,b)=>{const ad=parseDate(a.rawStartTime||a.startTime)||new Date(0),bd=parseDate(b.rawStartTime||b.startTime)||new Date(0);return bookingState.sort==='asc'?ad-bd:bd-ad;});
+    list.sort((a,b)=>(pins.has(String(b.id))-pins.has(String(a.id))));
+    return list;
+  }
+  function installBookingShell(){
+    const panel=$('itBookingPanel'); if(!panel)return;
+    if(!$('itBookingToolbarV748')){
+      const header=panel.querySelector('.card-header');
+      header&&header.insertAdjacentHTML('afterend',`<div id="itBookingToolbarV748" class="haos-v748-toolbar">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-primary btn-sm" onclick="setItBookingViewV748('table')"><i class="bi bi-table"></i> ตาราง</button>
+            <button type="button" class="btn btn-outline-primary btn-sm" onclick="setItBookingViewV748('card')"><i class="bi bi-grid-3x3-gap"></i> การ์ด</button>
+            <button type="button" class="btn btn-outline-success btn-sm" onclick="setItBookingViewV748('calendar')"><i class="bi bi-calendar3"></i> ปฏิทิน</button>
+            <button type="button" class="btn btn-outline-dark btn-sm" onclick="toggleItBookingFiltersV748()"><i class="bi bi-funnel"></i> ตัวกรอง</button>
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            ${canManageBooking()?'<button type="button" class="btn btn-warning btn-sm text-dark" onclick="openITBookingChangeRequestsV748()"><i class="bi bi-hourglass-split"></i> คำขอแก้ไข/ยกเลิก</button>':''}
+          </div>
+        </div>
+        <div id="itBookingFiltersV748" class="haos-v748-filter">
+          <div class="row g-2 align-items-end">
+            <div class="col-md-4"><label class="small fw-bold">ค้นหา</label><input id="itBookSearchV748" class="form-control" placeholder="เรื่อง ผู้ขอ กลุ่มงาน ห้อง..." oninput="updateItBookingFilterV748()"></div>
+            <div class="col-md-2"><label class="small fw-bold">สถานะ</label><select id="itBookStatusV748" class="form-select" onchange="updateItBookingFilterV748()"><option value="">ทั้งหมด</option><option>รอเจ้าหน้าที่</option><option>อนุมัติ</option><option>ไม่อนุญาต</option><option>ยกเลิก</option></select></div>
+            <div class="col-md-2"><label class="small fw-bold">ประเภท</label><select id="itBookTypeV748" class="form-select" onchange="updateItBookingFilterV748()"><option value="">ทั้งหมด</option><option value="Host">Host</option><option value="Join">Join</option></select></div>
+            <div class="col-md-3"><label class="small fw-bold">เรียงวันที่</label><select id="itBookSortV748" class="form-select" onchange="updateItBookingFilterV748()"><option value="desc">วันที่มากไปน้อย</option><option value="asc">วันที่น้อยไปมาก</option></select></div>
+            <div class="col-md-1 d-grid"><button type="button" class="btn btn-outline-secondary" onclick="resetItBookingFilterV748()"><i class="bi bi-arrow-counterclockwise"></i></button></div>
+          </div>
+        </div>
+      </div>`);
+      const body=panel.querySelector('.card-body');
+      body&&body.insertAdjacentHTML('beforeend','<div id="itBookingCardViewV748" class="haos-v748-card-grid d-none"></div><div id="itBookingPagerV748" class="haos-v748-pager"></div>');
+    }
+    const f=$('itBookingFiltersV748'); if(f)f.classList.toggle('show',bookingState.filtersOpen);
+  }
+  window.toggleItBookingFiltersV748=function(){bookingState.filtersOpen=!bookingState.filtersOpen;installBookingShell();};
+  window.setItBookingViewV748=function(view){bookingState.view=view;bookingState.page=1;renderItBookings();};
+  window.updateItBookingFilterV748=function(){bookingState.search=$('itBookSearchV748')?.value||'';bookingState.status=$('itBookStatusV748')?.value||'';bookingState.type=$('itBookTypeV748')?.value||'';bookingState.sort=$('itBookSortV748')?.value||'desc';bookingState.page=1;renderItBookings();};
+  window.resetItBookingFilterV748=function(){bookingState.search='';bookingState.status='';bookingState.type='';bookingState.sort='desc';bookingState.page=1;['itBookSearchV748','itBookStatusV748','itBookTypeV748'].forEach(id=>{const el=$(id);if(el)el.value='';});if($('itBookSortV748'))$('itBookSortV748').value='desc';renderItBookings();};
+  window.setItBookingPageV748=function(page){bookingState.page=Math.max(1,page);renderItBookings();};
+  window.loadItBookings=async function(){
+    installBookingShell();
+    const body=$('itBookingTableBody'); if(body)body.innerHTML='<tr><td colspan="6" class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm"></span> กำลังโหลด...</td></tr>';
+    try{
+      const u=currentUser();
+      const res=await gas('getITBookings',[u.phone||'',u.role||'User',u.department||'']);
+      if(!res||!res.success)throw new Error(res?.message||'โหลดข้อมูลไม่สำเร็จ');
+      setBookings(res.data||[]);
+      window.haosV748BookingChangeRequests=res.changeRequests||[];
+      renderItBookings();
+    }catch(err){if(body)body.innerHTML=`<tr><td colspan="6" class="text-center py-4 text-danger">${esc(err.message||err)}</td></tr>`;}
+  };
+  window.renderItBookings=function(){
+    installBookingShell();
+    const body=$('itBookingTableBody'), card=$('itBookingCardViewV748'), table=document.querySelector('#itBookingPanel .table-responsive'), pager=$('itBookingPagerV748');
+    if(!body)return;
+    const all=filteredBookings(), totalPages=Math.max(1,Math.ceil(all.length/bookingState.pageSize));
+    if(bookingState.page>totalPages)bookingState.page=totalPages;
+    const pageItems=all.slice((bookingState.page-1)*bookingState.pageSize,bookingState.page*bookingState.pageSize);
+    const pins=pinnedSet();
+    table&&table.classList.toggle('d-none',bookingState.view!=='table');
+    card&&card.classList.toggle('d-none',bookingState.view!=='card');
+    const cal=$('itBookingCalendarBox'); if(cal)cal.classList.toggle('d-none',bookingState.view!=='calendar');
+    if(bookingState.view==='calendar'){try{showItBookingCalendarView_&&showItBookingCalendarView_();}catch(e){} return;}
+    if(!pageItems.length){
+      body.innerHTML='<tr><td colspan="6" class="text-center py-4 text-muted">ยังไม่มีคำขอจองห้อง/Zoom ตามเงื่อนไข</td></tr>';
+      if(card)card.innerHTML='<div class="text-muted text-center py-4">ยังไม่มีคำขอจองห้อง/Zoom ตามเงื่อนไข</div>';
+    }else{
+      body.innerHTML=pageItems.map(item=>{
+        const pin=pins.has(String(item.id));
+        const pending=item.pendingChangeRequest?'<div class="haos-v748-pending-change mt-1"><i class="bi bi-hourglass-split"></i> รออนุมัติคำขอเปลี่ยนแปลง</div>':'';
+        const actions=`<button class="btn btn-sm btn-outline-warning" onclick="toggleItBookingPinV748('${esc(item.id)}')" title="ปักหมุด"><i class="bi ${pin?'bi-star-fill':'bi-star'}"></i></button> <button class="btn btn-sm btn-outline-primary" onclick="openItBookingDetail('${esc(item.id)}')"><i class="bi bi-eye"></i> ดู</button>${isOwner(item)?` <button class="btn btn-sm btn-outline-info" onclick="openITBookingOwnerChangeV748('${esc(item.id)}','edit')"><i class="bi bi-pencil-square"></i> ขอแก้ไข</button> <button class="btn btn-sm btn-outline-danger" onclick="openITBookingOwnerChangeV748('${esc(item.id)}','cancel')"><i class="bi bi-x-circle"></i> ขอยกเลิก</button>`:''}${canManageBooking()?` <button class="btn btn-sm btn-outline-success" onclick="openItBookingManage('${esc(item.id)}')"><i class="bi bi-gear"></i> จัดการ</button>`:''}`;
+        return `<tr class="${pin?'table-warning':''}"><td class="ps-4"><div class="fw-bold text-primary">${esc(item.topic||'-')}</div><div class="d-flex flex-wrap gap-1 mt-1">${typeBadge(item)}${pending}</div></td><td>${esc(bookingRoom(item))}</td><td><b>${fmtDateTime(item.rawStartTime||item.startTime)}</b><br><span class="text-muted">ถึง ${fmtDateTime(item.rawEndTime||item.endTime)}</span></td><td>${esc(item.ownerName||'-')}<br><small class="text-muted">${esc(stripDeptPrefixV748(item.department||''))}</small></td><td>${statusBadge(item.status)}</td><td class="text-end pe-4">${actions}</td></tr>`;
+      }).join('');
+      if(card)card.innerHTML=pageItems.map(item=>`<article class="haos-v748-booking-card ${pins.has(String(item.id))?'is-pinned':''}"><div class="d-flex justify-content-between gap-2"><h6 class="fw-bold text-primary mb-1">${esc(item.topic||'-')}</h6>${typeBadge(item)}</div><div class="small text-muted mb-2"><i class="bi bi-clock"></i> ${fmtDateTime(item.rawStartTime||item.startTime)} ถึง ${fmtDateTime(item.rawEndTime||item.endTime)}</div><div class="small"><i class="bi bi-geo-alt"></i> ${esc(bookingRoom(item))}</div><div class="small"><i class="bi bi-person"></i> ${esc(item.ownerName||'-')} | ${esc(stripDeptPrefixV748(item.department||''))}</div><div class="mt-2">${statusBadge(item.status)} ${item.pendingChangeRequest?'<span class="haos-v748-pending-change ms-1">รออนุมัติคำขอ</span>':''}</div><div class="d-flex flex-wrap gap-2 mt-3"><button class="btn btn-sm btn-outline-warning" onclick="toggleItBookingPinV748('${esc(item.id)}')"><i class="bi ${pins.has(String(item.id))?'bi-star-fill':'bi-star'}"></i></button><button class="btn btn-sm btn-outline-primary" onclick="openItBookingDetail('${esc(item.id)}')"><i class="bi bi-eye"></i> ดู</button>${isOwner(item)?`<button class="btn btn-sm btn-outline-info" onclick="openITBookingOwnerChangeV748('${esc(item.id)}','edit')">ขอแก้ไข</button><button class="btn btn-sm btn-outline-danger" onclick="openITBookingOwnerChangeV748('${esc(item.id)}','cancel')">ขอยกเลิก</button>`:''}${canManageBooking()?`<button class="btn btn-sm btn-outline-success" onclick="openItBookingManage('${esc(item.id)}')">จัดการ</button>`:''}</div></article>`).join('');
+    }
+    if(pager) pager.innerHTML=all.length>bookingState.pageSize?`<button class="btn btn-sm btn-outline-secondary" ${bookingState.page<=1?'disabled':''} onclick="setItBookingPageV748(${bookingState.page-1})"><i class="bi bi-chevron-left"></i></button><span class="small fw-bold">หน้า ${bookingState.page}/${totalPages} | ${all.length} รายการ</span><button class="btn btn-sm btn-outline-secondary" ${bookingState.page>=totalPages?'disabled':''} onclick="setItBookingPageV748(${bookingState.page+1})"><i class="bi bi-chevron-right"></i></button>`:`<span class="small text-muted">${all.length} รายการ</span>`;
+    cleanDeptDomV748($('itBookingPanel'));
+  };
+  window.openITBookingOwnerChangeV748=async function(id,type){
+    const item=getBookings().find(x=>String(x.id)===String(id)); if(!item)return Swal.fire('ไม่พบข้อมูล','กรุณาโหลดใหม่','warning');
+    const isCancel=type==='cancel';
+    const html=isCancel?`<div class="text-start"><div class="alert alert-warning small">คำขอยกเลิกจะยังไม่เปลี่ยนสถานะจริง จนกว่าเจ้าหน้าที่จะอนุมัติ</div><label class="small fw-bold">เหตุผลการขอยกเลิก</label><textarea id="itbcReason" class="form-control" rows="4"></textarea></div>`:
+      `<div class="text-start"><div class="alert alert-info small">ข้อมูลจะถูกส่งเป็นคำขอแก้ไขและรอเจ้าหน้าที่อนุมัติก่อนมีผล</div><label class="small fw-bold">เรื่อง</label><input id="itbcTopic" class="form-control mb-2" value="${esc(item.topic||'')}"><div class="row g-2"><div class="col-md-6"><label class="small fw-bold">เริ่ม</label><input id="itbcStart" type="datetime-local" class="form-control" value="${esc(String(item.rawStartTime||'').slice(0,16))}"></div><div class="col-md-6"><label class="small fw-bold">สิ้นสุด</label><input id="itbcEnd" type="datetime-local" class="form-control" value="${esc(String(item.rawEndTime||'').slice(0,16))}"></div></div><label class="small fw-bold mt-2">ห้อง/สถานที่</label><input id="itbcOtherLocation" class="form-control mb-2" value="${esc(item.otherLocation||item.roomName||'')}"><label class="small fw-bold">Meeting Link</label><input id="itbcMeetingLink" class="form-control mb-2" value="${esc(item.meetingLink||'')}"><label class="small fw-bold">เหตุผล/รายละเอียดที่ต้องการแก้ไข</label><textarea id="itbcReason" class="form-control" rows="3"></textarea></div>`;
+    const r=await Swal.fire({title:isCancel?'ขอยกเลิกคำขอจอง':'ขอแก้ไขคำขอจอง',width:760,html,showCancelButton:true,confirmButtonText:'ส่งคำขอ',cancelButtonText:'ยกเลิก',preConfirm:()=>isCancel?{reason:clean($('itbcReason')?.value)}:{topic:clean($('itbcTopic')?.value),startTime:$('itbcStart')?.value,endTime:$('itbcEnd')?.value,otherLocation:clean($('itbcOtherLocation')?.value),meetingLink:clean($('itbcMeetingLink')?.value),reason:clean($('itbcReason')?.value)}});
+    if(!r.isConfirmed)return;
+    const u=currentUser();
+    Swal.fire({title:'กำลังส่งคำขอ...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+    try{const res=await gas('requestITBookingChangeV748',[id,isCancel?'cancel':'edit',r.value,u.phone||'']); if(!res||!res.success)throw new Error(res?.message||'ส่งคำขอไม่สำเร็จ'); Swal.fire({icon:'success',title:'ส่งคำขอแล้ว',text:res.message,timer:1500,showConfirmButton:false}); loadItBookings();}catch(e){Swal.fire('ผิดพลาด',e.message||String(e),'error');}
+  };
+  window.openITBookingChangeRequestsV748=async function(){
+    const u=currentUser();
+    Swal.fire({title:'กำลังโหลดคำขอ...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+    try{
+      const res=await gas('getITBookingChangeRequestsV748',[u.phone||'']);
+      if(!res||!res.success)throw new Error(res?.message||'โหลดไม่สำเร็จ');
+      const pending=(res.requests||[]).filter(x=>x.status==='Pending');
+      const rows=pending.map(x=>`<tr><td><b>${esc(x.bookingId)}</b><div class="small text-muted">${esc(x.ownerName||x.ownerPhone)}</div></td><td>${x.requestType==='cancel'?'<span class="badge bg-danger">ขอยกเลิก</span>':'<span class="badge bg-info text-dark">ขอแก้ไข</span>'}</td><td>${esc(x.reason||'-')}</td><td>${fmtDateTime(x.createdAt)}</td><td class="text-end"><button class="btn btn-sm btn-success" onclick="reviewITBookingChangeV748('${esc(x.requestId)}',true)">อนุมัติ</button> <button class="btn btn-sm btn-outline-danger" onclick="reviewITBookingChangeV748('${esc(x.requestId)}',false)">ไม่อนุมัติ</button></td></tr>`).join('')||'<tr><td colspan="5" class="text-center text-muted py-4">ยังไม่มีคำขอรอพิจารณา</td></tr>';
+      Swal.fire({title:'คำขอแก้ไข/ยกเลิกจองห้อง/Zoom',width:980,showConfirmButton:false,showCloseButton:true,html:`<div class="table-responsive text-start"><table class="table table-hover align-middle small"><thead><tr><th>รายการ</th><th>ประเภท</th><th>เหตุผล</th><th>ส่งเมื่อ</th><th class="text-end">จัดการ</th></tr></thead><tbody>${rows}</tbody></table></div>`});
+    }catch(e){Swal.fire('ผิดพลาด',e.message||String(e),'error');}
+  };
+  window.reviewITBookingChangeV748=async function(requestId,approve){
+    const r=await Swal.fire({title:approve?'อนุมัติคำขอนี้?':'ไม่อนุมัติคำขอนี้?',input:'textarea',inputPlaceholder:'หมายเหตุ (ถ้ามี)',showCancelButton:true,confirmButtonText:approve?'อนุมัติ':'ไม่อนุมัติ'});
+    if(!r.isConfirmed)return;
+    const u=currentUser();
+    const res=await gas('reviewITBookingChangeRequestV748',[requestId,approve,r.value||'',u.phone||'']);
+    if(!res||!res.success)return Swal.fire('ผิดพลาด',res?.message||'บันทึกไม่สำเร็จ','error');
+    Swal.fire({icon:'success',title:'บันทึกแล้ว',text:res.message,timer:1300,showConfirmButton:false});
+    setTimeout(()=>{openITBookingChangeRequestsV748();loadItBookings();},600);
+  };
+
+  window.openMySignatureManager=async function(){
+    let modal=$('haosSignatureModalV748');
+    if(!modal){
+      document.body.insertAdjacentHTML('beforeend',`<div class="modal fade haos-v748-sign-modal" id="haosSignatureModalV748" tabindex="-1" data-bs-backdrop="static"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header bg-success text-white"><h5 class="modal-title"><i class="bi bi-pen"></i> ตั้งค่าลายเซ็น</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="haos-v748-sign-preview mb-3" id="haosSignaturePreviewV748"><span class="text-muted">ยังไม่มีลายเซ็น</span></div><input id="haosSignatureFileV748" type="file" accept="image/*" class="form-control mb-2"><div class="small text-muted">เลือกรูปลายเซ็น แล้วกดบันทึกเป็นลายเซ็นหลักของคุณ</div><div id="haosSignatureMsgV748" class="small fw-bold mt-2"></div></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">ปิด</button><button type="button" class="btn btn-success fw-bold" onclick="saveSignatureModalV748()"><i class="bi bi-save"></i> บันทึกลายเซ็น</button></div></div></div></div>`);
+      modal=$('haosSignatureModalV748');
+      $('haosSignatureFileV748')?.addEventListener('change',ev=>{const file=ev.target.files&&ev.target.files[0]; if(!file)return; const r=new FileReader(); r.onload=()=>{window.__haosSignatureDataV748=r.result; $('haosSignaturePreviewV748').innerHTML=`<img src="${esc(r.result)}" alt="signature">`;}; r.readAsDataURL(file);});
+    }
+    try{const res=await gas('getMySignature',[currentUser().phone||'']); if(res&&res.success&&res.signature){window.__haosSignatureDataV748=res.signature; $('haosSignaturePreviewV748').innerHTML=`<img src="${esc(res.signature)}" alt="signature">`;}}catch(e){}
+    bootstrap.Modal.getOrCreateInstance(modal).show();
+  };
+  window.saveSignatureModalV748=async function(){
+    const data=window.__haosSignatureDataV748;
+    const msg=$('haosSignatureMsgV748');
+    if(!data){if(msg)msg.innerHTML='<span class="text-danger">กรุณาเลือกรูปลายเซ็นก่อน</span>';return;}
+    if(msg)msg.innerHTML='<span class="text-muted"><span class="spinner-border spinner-border-sm"></span> กำลังบันทึก...</span>';
+    const res=await gas('saveMySignature',[currentUser().phone||'',data]);
+    if(!res||!res.success){if(msg)msg.innerHTML='<span class="text-danger">บันทึกไม่สำเร็จ '+esc(res?.message||'')+'</span>';return;}
+    if(msg)msg.innerHTML='<span class="text-success"><i class="bi bi-check-circle"></i> บันทึกลายเซ็นแล้ว Popup คำขอจองยังค้างไว้เหมือนเดิม</span>';
+  };
+
+  function installEMeetingInfoV748(){
+    const panel=$('eMeetingPanelV715'); if(!panel)return;
+    qa('#eMeetingInfoBtnV746,#eMeetingInfoBtnV748').forEach(b=>b.remove());
+    const actions=panel.querySelector('.haos-v715-hero .d-flex.flex-wrap.gap-2');
+    if(actions)actions.insertAdjacentHTML('beforeend','<button id="eMeetingInfoBtnV748" type="button" class="btn btn-outline-light btn-sm fw-bold" onclick="openEMeetingInfoV746()"><i class="bi bi-info-circle"></i> คู่มือ</button>');
+  }
+  window.openEMeetingInfoV746=function(){
+    Swal.fire({title:'คู่มือ e-Meeting Manage',width:920,html:`<div class="haos-v748-guide-hero"><h5 class="fw-bold mb-1"><i class="bi bi-easel2"></i> e-Meeting Manage</h5><div>จัดประชุม วาระ เอกสาร RSVP Live View และรายงานการประชุมในที่เดียว</div></div><div class="haos-v748-guide-grid"><div class="haos-v748-guide-card"><h6><i class="bi bi-plus-circle text-primary"></i> สร้างประชุม</h6><div class="small text-muted">กำหนดชื่อ เวลา สถานที่ คณะกรรมการ ผู้เข้าร่วม และวาระเริ่มต้น</div></div><div class="haos-v748-guide-card"><h6><i class="bi bi-person-check text-success"></i> ตอบรับ</h6><div class="small text-muted">ส่งลิงก์ RSVP ให้ผู้เข้าร่วมยืนยันหรือมอบหมายผู้แทน</div></div><div class="haos-v748-guide-card"><h6><i class="bi bi-folder2-open text-info"></i> เอกสาร</h6><div class="small text-muted">แนบเอกสารแยกตามวาระและเปิด Live View สำหรับอ่านร่วมกัน</div></div><div class="haos-v748-guide-card"><h6><i class="bi bi-file-earmark-word text-warning"></i> รายงาน</h6><div class="small text-muted">ใช้ข้อมูลวาระ มติ และงานติดตาม สร้างรายงานการประชุมต่อได้</div></div></div>`,confirmButtonText:'เข้าใจแล้ว'});
+  };
+  function polishEMeetingFormV748(){
+    const popup=document.querySelector('.swal2-popup');
+    if(!popup||!popup.querySelector('.haos-v717-form')||popup.classList.contains('haos-v748-emeeting-form-polish'))return;
+    popup.classList.add('haos-v748-emeeting-form-polish');
+    const form=popup.querySelector('.haos-v717-form');
+    form.insertAdjacentHTML('afterbegin','<div class="haos-v748-emeeting-hero"><div class="fw-bold text-primary"><i class="bi bi-stars"></i> แบบฟอร์ม e-Meeting</div><div class="small text-muted">กรอกข้อมูลหลักก่อน แล้วค่อยเติมวาระและรายชื่อผู้เข้าร่วม ระบบจะใช้ข้อมูลนี้ต่อยอด RSVP, Live View และรายงานการประชุม</div></div>');
+  }
+  function scrubEMeetingPhaseV748(root=document.body){
+    if(!root)return;
+    const re=/\s*(?:Phase|ระยะ)\s*4\b/gi;
+    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode(node){
+      const p=node.parentElement;
+      if(!p||/SCRIPT|STYLE|TEXTAREA|INPUT/.test(p.tagName))return NodeFilter.FILTER_REJECT;
+      return re.test(node.nodeValue||'')?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT;
+    }});
+    const nodes=[]; while(walker.nextNode())nodes.push(walker.currentNode);
+    nodes.forEach(n=>{n.nodeValue=String(n.nodeValue||'').replace(re,'');});
+  }
+
+  window.openItServicesRoadmap=function(){
+    Swal.fire({title:'คู่มือการใช้งาน IT Services',width:940,html:`<div class="haos-v748-guide-hero"><h5 class="fw-bold"><i class="bi bi-pc-display"></i> IT Services Hub</h5><div>ศูนย์รวมบริการ IT ที่เชื่อมกับแจ้งเตือน ตารางงาน สิทธิ์ผู้ใช้ และ Audit Log ของ Health Assistant OS</div></div><div class="haos-v748-guide-grid"><div class="haos-v748-guide-card"><h6><i class="bi bi-camera-video text-primary"></i> จองห้อง / Zoom</h6><div class="small text-muted">สร้างคำขอ Host/Join ติดตามสถานะ ขอแก้ไขหรือยกเลิก และรอเจ้าหน้าที่อนุมัติ</div></div><div class="haos-v748-guide-card"><h6><i class="bi bi-tools text-success"></i> แจ้งซ่อม IT</h6><div class="small text-muted">ส่งเรื่องซ่อม ติดตามสถานะ และรับการแจ้งเตือนเมื่อมีความคืบหน้า</div></div><div class="haos-v748-guide-card"><h6><i class="bi bi-clouds text-info"></i> สำรวจสด / Word Cloud</h6><div class="small text-muted">เก็บความเห็นสดจากผู้เข้าร่วมอบรมหรือประชุม และแสดงผลบนจอ</div></div><div class="haos-v748-guide-card"><h6><i class="bi bi-grid-3x3-gap text-warning"></i> พื้นที่ทำงานร่วมกัน</h6><div class="small text-muted">สร้างแบบฟอร์ม ตารางออนไลน์ checklist หรือ quiz พร้อมสิทธิ์ดู/แก้ไข</div></div></div>`,confirmButtonText:'เข้าใจแล้ว'});
+  };
+  function installITGuideButtonV748(){
+    qa('button[onclick*="openItServicesRoadmap"]').forEach(btn=>{btn.classList.add('haos-v748-it-guide-btn');btn.innerHTML='<i class="bi bi-info-circle"></i> คู่มือ IT Services';});
+  }
+
+  function deptOptionsHtml(selected){
+    const opts=qa('#regDepartment option').map(o=>({value:o.value,text:stripDeptPrefixV748(o.textContent)})).filter(o=>o.value);
+    if(selected&&!opts.some(o=>stripDeptPrefixV748(o.value)===stripDeptPrefixV748(selected)))opts.push({value:selected,text:stripDeptPrefixV748(selected)});
+    return ['<option value="">ทุกกลุ่มงาน</option>'].concat(opts.map(o=>`<option value="${esc(o.value)}" ${stripDeptPrefixV748(o.value)===stripDeptPrefixV748(selected)?'selected':''}>${esc(o.text)}</option>`)).join('');
+  }
+  function adminStatusBadge(status){status=status||'Active'; if(status==='Pending')return '<span class="badge bg-warning text-dark">รออนุมัติ</span>'; if(status==='Inactive')return '<span class="badge bg-danger">ปิดใช้งาน</span>'; if(status==='Rejected')return '<span class="badge bg-secondary">ไม่อนุมัติ</span>'; return '<span class="badge bg-success">ใช้งาน</span>';}
+  function adminRoleSelect(u){if(u.phone==='0868246621')return '<span class="badge bg-danger">Master Admin</span>';return `<select class="form-select form-select-sm border-primary" onchange="changeUserRole('${esc(u.phone)}',this.value)"><option value="User" ${u.role==='User'?'selected':''}>User</option><option value="Head" ${u.role==='Head'?'selected':''}>Head</option><option value="Admin" ${u.role==='Admin'?'selected':''}>Admin</option><option value="Super Admin" ${u.role==='Super Admin'?'selected':''}>Super Admin</option></select>`;}
+  function adminActions(u){if(u.phone==='0868246621')return '<span class="badge bg-danger">Master</span>'; const pending=u.accountStatus==='Pending'; return `<div class="btn-group btn-group-sm">${typeof openSuperAdminEditUserV719==='function'?`<button class="btn btn-outline-primary" onclick="openSuperAdminEditUserV719('${esc(u.phone)}')"><i class="bi bi-pencil-square"></i></button>`:''}${pending?`<button class="btn btn-success" onclick="approveUserV718('${esc(u.phone)}')"><i class="bi bi-check2"></i></button><button class="btn btn-outline-danger" onclick="rejectUserV718('${esc(u.phone)}')"><i class="bi bi-x-lg"></i></button>`:''}<button class="btn btn-outline-secondary" onclick="resetPin('${esc(u.phone)}')"><i class="bi bi-key"></i></button><button class="btn btn-outline-warning" onclick="toggleUserActive('${esc(u.phone)}','${(u.accountStatus||'Active')==='Inactive'?'Active':'Inactive'}')"><i class="bi bi-power"></i></button><button class="btn btn-outline-danger" onclick="removeUser('${esc(u.phone)}')"><i class="bi bi-trash"></i></button></div>`;}
+  function installAdminToolbarV748(){
+    const tbody=$('userManageTable'); if(!tbody)return;
+    const table=tbody.closest('table'); if(!table||$('adminUserToolbarV748'))return;
+    table.insertAdjacentHTML('beforebegin',`<div id="adminUserToolbarV748" class="haos-v748-admin-toolbar"><div class="row g-2 align-items-end"><div class="col-md-4"><label class="small fw-bold">ค้นหาผู้ใช้งาน</label><input id="adminUserSearchV748" class="form-control" placeholder="ชื่อ เบอร์ ตำแหน่ง..." oninput="renderAdminUsersV748()"></div><div class="col-md-3"><label class="small fw-bold">กลุ่มงาน</label><select id="adminUserDeptV748" class="form-select" onchange="renderAdminUsersV748()">${deptOptionsHtml('')}</select></div><div class="col-md-2"><label class="small fw-bold">สถานะ</label><select id="adminUserStatusV748" class="form-select" onchange="renderAdminUsersV748()"><option value="">ทั้งหมด</option><option>Active</option><option>Pending</option><option>Inactive</option><option>Rejected</option></select></div><div class="col-md-3 d-flex gap-2"><button class="btn btn-outline-primary fw-bold flex-fill" onclick="loadAdminUsersList()"><i class="bi bi-arrow-clockwise"></i></button><button class="btn btn-outline-success fw-bold flex-fill" onclick="notifyMissingEmailV748()"><i class="bi bi-envelope-exclamation"></i> แจ้งเพิ่มอีเมล</button></div></div><div class="small text-muted mt-2">ค่าเริ่มต้นจัดกลุ่มตามกลุ่มงาน เพื่อให้ดูสมาชิกจำนวนมากได้ง่ายขึ้น</div></div>`);
+  }
+  window.loadAdminUsersList=function(){
+    const tbody=$('userManageTable'); if(!tbody)return;
+    installAdminToolbarV748();
+    tbody.innerHTML='<tr><td colspan="9" class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm"></span> กำลังโหลดรายชื่อ...</td></tr>';
+    google.script.run.withSuccessHandler(res=>{if(!res||!res.success){tbody.innerHTML=`<tr><td colspan="9" class="text-center py-4 text-danger">${esc(res?.message||'โหลดไม่สำเร็จ')}</td></tr>`;return;} window.haosAdminUsersCacheV748=res.data||[]; renderAdminUsersV748();}).getAdminUsersData();
+  };
+  window.renderAdminUsersV748=function(){
+    const tbody=$('userManageTable'); if(!tbody)return;
+    const q=clean($('adminUserSearchV748')?.value).toLowerCase(), dept=stripDeptPrefixV748($('adminUserDeptV748')?.value||''), st=$('adminUserStatusV748')?.value||'';
+    let list=(window.haosAdminUsersCacheV748||[]).filter(u=>{const ud=stripDeptPrefixV748(u.department||''); return (!q||[u.name,u.phone,u.position,ud,u.email].some(v=>String(v||'').toLowerCase().includes(q)))&&(!dept||ud===dept)&&(!st||String(u.accountStatus||'Active')===st);});
+    list.sort((a,b)=>stripDeptPrefixV748(a.department||'').localeCompare(stripDeptPrefixV748(b.department||''),'th')||String(a.name||'').localeCompare(String(b.name||''),'th'));
+    let last='',html='';
+    list.forEach(u=>{const d=stripDeptPrefixV748(u.department||'ไม่ระบุกลุ่มงาน'); if(d!==last){last=d;html+=`<tr class="haos-v748-dept-group"><td colspan="9"><i class="bi bi-people"></i> ${esc(d)}</td></tr>`;} html+=`<tr><td class="ps-3 fw-bold">${esc(u.name||'-')}${u.email?`<div class="small text-success"><i class="bi bi-envelope-check"></i> ${esc(u.email)}</div>`:'<div class="small text-danger"><i class="bi bi-envelope-exclamation"></i> ยังไม่มีอีเมล</div>'}</td><td>${esc(u.phone||'')}</td><td><input type="password" class="form-control form-control-sm text-center" value="${esc(u.pin||'')}" readonly style="max-width:90px"></td><td><small>${esc(u.position||'')}</small></td><td><small>${esc(d)}</small></td><td>${adminRoleSelect(u)}</td><td>${adminStatusBadge(u.accountStatus)}</td><td><small class="text-muted">${esc(u.lastLogin||'-')}</small></td><td class="text-center">${adminActions(u)}</td></tr>`;});
+    tbody.innerHTML=html||'<tr><td colspan="9" class="text-center text-muted py-4">ไม่พบผู้ใช้งานตามเงื่อนไข</td></tr>';
+  };
+  window.notifyMissingEmailV748=async function(){const u=currentUser();const res=await gas('notifyUsersMissingEmailV748',[u.phone||'']); if(res&&res.success)Swal.fire({icon:'success',title:'ส่งแจ้งเตือนแล้ว',text:res.message}); else Swal.fire('ไม่สำเร็จ',res?.message||'','error');};
+
+  const oldForgot=window.openForgotPinResetV727;
+  window.openForgotPinResetV727=async function(){
+    const html=`<div class="text-start"><div class="alert alert-primary small fw-bold"><i class="bi bi-shield-lock"></i> ขั้นตอนใหม่: ตรวจสอบข้อมูลก่อน แล้วระบบจะส่ง OTP ไปยังอีเมลที่ลงทะเบียนไว้</div><div class="row g-2"><div class="col-md-6"><label class="small fw-bold">ชื่อ-นามสกุล</label><input id="fpNameV748" class="form-control"></div><div class="col-md-6"><label class="small fw-bold">ตำแหน่ง</label><input id="fpPositionV748" class="form-control"></div><div class="col-md-6"><label class="small fw-bold">กลุ่มงาน</label><select id="fpDeptV748" class="form-select">${deptOptionsHtml('')}</select></div><div class="col-md-6"><label class="small fw-bold">เบอร์โทรศัพท์</label><input id="fpPhoneV748" class="form-control" maxlength="10" inputmode="numeric" value="${esc($('loginPhone')?.value||'')}"></div><div class="col-12"><label class="small fw-bold">อีเมล</label><input id="fpEmailV748" type="email" class="form-control"></div></div></div>`;
+    const r=await Swal.fire({title:'ลืมรหัสผ่าน / รีเซ็ต PIN',width:760,html,showCancelButton:true,confirmButtonText:'ส่ง OTP',cancelButtonText:'ยกเลิก',preConfirm:async()=>{const payload={fullName:clean($('fpNameV748').value),position:clean($('fpPositionV748').value),department:$('fpDeptV748').value,phone:$('fpPhoneV748').value.replace(/\D/g,''),email:clean($('fpEmailV748').value)}; if(!payload.fullName||!payload.position||!payload.department||payload.phone.length!==10||!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(payload.email)){Swal.showValidationMessage('กรุณากรอกข้อมูลให้ครบและระบุอีเมลให้ถูกต้อง');return false;} const res=await gas('sendForgotPinOtpV748',[payload]); if(!res||!res.success){Swal.showValidationMessage(res?.message||'ส่ง OTP ไม่สำเร็จ');return false;} return Object.assign(payload,res);}});
+    if(!r.isConfirmed||!r.value)return;
+    const payload=r.value;
+    const v=await Swal.fire({title:'กรอก OTP',width:520,html:`<div class="text-start"><div class="alert alert-success small">ส่ง OTP ไปยัง ${esc(payload.emailMasked||payload.email)} แล้ว รหัสหมดอายุใน 10 นาที</div><input id="fpOtpV748" class="form-control form-control-lg text-center fw-bold" maxlength="6" inputmode="numeric" placeholder="000000"></div>`,showCancelButton:true,confirmButtonText:'ยืนยันและรีเซ็ต PIN',cancelButtonText:'ยกเลิก',preConfirm:async()=>{const otp=$('fpOtpV748').value.replace(/\D/g,''); if(otp.length!==6){Swal.showValidationMessage('กรุณากรอก OTP 6 หลัก');return false;} const res=await gas('verifyForgotPinOtpAndResetV748',[Object.assign({},payload,{otpToken:payload.otpToken,otp,step:'verify'})]); if(!res||!res.success){Swal.showValidationMessage(res?.message||'ยืนยัน OTP ไม่สำเร็จ');return false;} return res;}});
+    if(!v.isConfirmed||!v.value)return;
+    if($('loginPhone'))$('loginPhone').value=v.value.phone||payload.phone||'';
+    Swal.fire({icon:'success',title:'รีเซ็ต PIN สำเร็จ',html:`<div class="text-muted mb-2">${esc(v.value.name||'')}</div><div class="fs-2 fw-bold text-primary">${esc(v.value.pin)}</div><div class="small text-muted mt-2">ระบบส่ง PIN ใหม่ไปทางอีเมลที่ลงทะเบียนไว้แล้ว</div>`});
+  };
+  const oldHandleRegister=window.handleRegister;
+  window.handleRegister=function(){
+    const email=clean($('regEmail')?.value);
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return Swal.fire({icon:'warning',title:'กรุณาระบุอีเมล',text:'อีเมลจำเป็นสำหรับ OTP รีเซ็ต PIN และการแจ้งเตือนสำคัญ'});
+    return oldHandleRegister?oldHandleRegister.apply(this,arguments):undefined;
+  };
+  function requireRegisterEmail(){const el=$('regEmail'); if(el){el.required=true;el.placeholder=el.placeholder||'example@email.com'; const label=el.closest('.mb-3,.col-md-6,.col-12')?.querySelector('label'); if(label&&!label.textContent.includes('*'))label.textContent=label.textContent.trim()+' *';}}
+
+  function bootV748(){
+    cleanDeptDomV748();
+    installBookingShell();
+    installEMeetingInfoV748();
+    scrubEMeetingPhaseV748();
+    installITGuideButtonV748();
+    requireRegisterEmail();
+    qa('button[onclick*="toggleCalendarView"],button[onclick*="openScheduleCalendarPopupV745"]').filter(b=>b.querySelector('.bi-calendar3')).forEach(btn=>{btn.onclick=()=>window.openScheduleCalendarPopupV745();btn.setAttribute('onclick','openScheduleCalendarPopupV745()');});
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootV748,{once:true});else bootV748();
+  const obs=new MutationObserver(()=>{clearTimeout(window.__haosV748MutTimer);window.__haosV748MutTimer=setTimeout(()=>{cleanDeptDomV748();installEMeetingInfoV748();scrubEMeetingPhaseV748();installITGuideButtonV748();polishEMeetingFormV748();requireRegisterEmail();},80);});
+  try{obs.observe(document.body,{childList:true,subtree:true,characterData:true});}catch(e){}
+  setInterval(()=>{try{cleanDeptDomV748();installEMeetingInfoV748();scrubEMeetingPhaseV748();installITGuideButtonV748();}catch(e){}},1800);
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
