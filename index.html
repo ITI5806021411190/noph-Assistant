@@ -17429,5 +17429,265 @@ HAOS v68.6 FINISHING FIX
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<style id="haos-v70-46-ui-polish-style">
+  .hero-kicker{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .haos-v746-hero-time{display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(255,255,255,.28);border-radius:999px;background:rgba(255,255,255,.16);padding:4px 10px;font-weight:900;color:#fff}
+  .quick-actions .btn{border:1px solid rgba(255,255,255,.36)!important;box-shadow:0 12px 28px rgba(15,23,42,.10);transition:.18s ease}
+  .quick-actions .btn:hover{transform:translateY(-2px);box-shadow:0 16px 34px rgba(15,23,42,.16)}
+  .quick-actions .btn:nth-child(1){background:linear-gradient(135deg,#0ea5e9,#2563eb)!important;color:#fff!important}
+  .quick-actions .btn:nth-child(2){background:linear-gradient(135deg,#10b981,#059669)!important;color:#fff!important}
+  .quick-actions .btn:nth-child(3){background:linear-gradient(135deg,#f59e0b,#ef4444)!important;color:#fff!important}
+  .quick-actions .btn:nth-child(4){background:linear-gradient(135deg,#6366f1,#7c3aed)!important;color:#fff!important}
+  .quick-actions .btn:nth-child(5){background:linear-gradient(135deg,#14b8a6,#0891b2)!important;color:#fff!important}
+  .quick-actions .btn:nth-child(6){background:linear-gradient(135deg,#06b6d4,#0284c7)!important;color:#fff!important}
+  .quick-actions .btn:nth-child(7){background:linear-gradient(135deg,#8b5cf6,#4f46e5)!important;color:#fff!important}
+  .quick-actions .btn:nth-child(8){background:linear-gradient(135deg,#64748b,#334155)!important;color:#fff!important}
+  #notificationCenterList{gap:10px;display:grid}
+  .haos-v746-notif-card{--tone:#2563eb;--soft:#eff6ff;position:relative;border:1px solid rgba(148,163,184,.28)!important;border-left:8px solid var(--tone)!important;border-radius:8px!important;background:linear-gradient(135deg,var(--soft),#fff 70%)!important;box-shadow:0 12px 28px rgba(15,23,42,.07);padding:14px!important}
+  .haos-v746-notif-card.unread{box-shadow:0 16px 36px rgba(37,99,235,.13)}
+  .haos-v746-notif-card[data-module="itBooking"]{--tone:#7c3aed;--soft:#f5f3ff}
+  .haos-v746-notif-card[data-module="schedule"]{--tone:#2563eb;--soft:#eff6ff}
+  .haos-v746-notif-card[data-module="itRepair"]{--tone:#dc2626;--soft:#fff1f2}
+  .haos-v746-notif-card[data-module="itAsset"]{--tone:#0891b2;--soft:#ecfeff}
+  .haos-v746-notif-card[data-module="eMeeting"]{--tone:#0f766e;--soft:#ecfdf5}
+  .haos-v746-notif-icon{width:44px;height:44px;border-radius:8px;background:var(--tone);color:#fff;display:grid;place-items:center;font-size:1.2rem;box-shadow:0 10px 20px color-mix(in srgb,var(--tone) 28%,transparent)}
+  .haos-v746-notif-title{font-weight:950;color:#0f172a;font-size:1rem;line-height:1.45}
+  .haos-v746-notif-meta{display:flex;gap:7px;flex-wrap:wrap;margin-top:7px}
+  .haos-v746-notif-pill{display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(148,163,184,.25);border-radius:999px;background:#fff;color:#475569;font-weight:850;font-size:.82rem;padding:5px 9px}
+  .haos-v746-notif-pill.module{color:var(--tone);border-color:color-mix(in srgb,var(--tone) 28%,#fff)}
+  .haos-v746-notif-pill.urgent{background:#fff7ed;color:#c2410c;border-color:#fdba74}
+  .haos-v746-notif-pill.critical{background:#fef2f2;color:#b91c1c;border-color:#fca5a5}
+  .haos-v746-notif-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  .haos-v746-public-toggle{border:1px solid rgba(14,165,233,.24);border-radius:8px;background:linear-gradient(135deg,#f8fbff,#ecfeff);padding:10px 12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  #itPublicDashboardCardV704.haos-v746-hidden{display:none!important}
+  .haos-v746-custom-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid rgba(148,163,184,.26);border-radius:8px;background:#fff;padding:10px;margin-bottom:8px}
+  .haos-v746-custom-row.hidden{opacity:.58;background:#f8fafc}
+  .haos-v746-custom-row .tools{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+  .haos-v746-emeeting-guide{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;text-align:left}
+  .haos-v746-emeeting-guide .item{border:1px solid rgba(148,163,184,.25);border-radius:8px;background:#fff;padding:13px}
+  .haos-v746-emeeting-guide b{display:flex;align-items:center;gap:8px;color:#075985;margin-bottom:6px}
+</style>
+<script id="haos-v70-46-ui-polish-script">
+(function(){
+  const PATCH='v70.46-ui-polish';
+  if(window.__HAOS_V746_UI_POLISH__)return;
+  window.__HAOS_V746_UI_POLISH__=true;
+  const $=id=>document.getElementById(id);
+  const qa=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const userNow=()=>{try{return window.user||user||{};}catch(e){return window.user||{};}};
+  const phoneKey=()=>String(userNow().phone||'guest').replace(/'/g,'').replace(/\D/g,'')||'guest';
+  const prefKey=()=>('haos_it_hub_pref_v737_'+phoneKey());
+  const readJson=(key,def)=>{try{return JSON.parse(localStorage.getItem(key)||JSON.stringify(def));}catch(e){return def;}};
+  const saveJson=(key,val)=>localStorage.setItem(key,JSON.stringify(val||{}));
+
+  function thaiDateWithTime(){
+    const now=new Date();
+    const date=now.toLocaleDateString('th-TH',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    const time=now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',hour12:false});
+    return {date,time};
+  }
+  function updateHeroDateTimeV746(){
+    const hero=$('heroToday');
+    if(!hero)return;
+    const dt=thaiDateWithTime();
+    hero.textContent=dt.date;
+    let badge=$('heroCurrentTimeV746');
+    if(!badge){
+      hero.insertAdjacentHTML('afterend','<span id="heroCurrentTimeV746" class="haos-v746-hero-time"><i class="bi bi-clock"></i><span></span></span>');
+      badge=$('heroCurrentTimeV746');
+    }
+    const span=badge.querySelector('span');
+    if(span)span.textContent=dt.time+' น.';
+  }
+  const oldUpdateHeaderV746=window.updateDashboardHeader;
+  if(typeof oldUpdateHeaderV746==='function')window.updateDashboardHeader=function(){const r=oldUpdateHeaderV746.apply(this,arguments);setTimeout(updateHeroDateTimeV746,0);return r;};
+
+  function moduleInfo(m){
+    const map={
+      itBooking:['จองห้อง/Zoom','bi-camera-video'],
+      schedule:['ตารางงาน','bi-calendar2-check'],
+      itRepair:['แจ้งซ่อม IT','bi-tools'],
+      itAsset:['ทรัพย์สิน IT','bi-hdd-network'],
+      eMeeting:['e-Meeting','bi-easel2'],
+      helpChat:['ศูนย์ช่วยเหลือ','bi-chat-dots'],
+      systemTools:['เครื่องมือระบบ','bi-shield-check'],
+      system:['ระบบ','bi-info-circle']
+    };
+    return map[m]||[m||'ทั่วไป','bi-info-circle'];
+  }
+  function priorityTone(p){
+    const s=String(p||'').toLowerCase();
+    if(s.includes('ด่วนมาก')||s.includes('critical'))return 'critical';
+    if(s.includes('ด่วน')||s.includes('urgent')||s.includes('high'))return 'urgent';
+    return '';
+  }
+  function notifHtmlV746(n){
+    const mod=n.module||'system';
+    const [label,icon]=moduleInfo(mod);
+    const tone=priorityTone(n.priority);
+    const entity=String(n.entityId||'');
+    const unread=!n.isRead;
+    return `<div class="list-group-item haos-v746-notif-card ${unread?'unread':''}" data-module="${esc(mod)}">
+      <div class="d-flex gap-3 align-items-start">
+        <div class="haos-v746-notif-icon"><i class="bi ${icon}"></i></div>
+        <div class="flex-grow-1">
+          <div class="haos-v746-notif-title">${esc(n.message||'-')}</div>
+          <div class="haos-v746-notif-meta">
+            <span class="haos-v746-notif-pill module"><i class="bi ${icon}"></i>${esc(label)}</span>
+            <span class="haos-v746-notif-pill"><i class="bi bi-calendar3"></i>${esc(n.time||'-')}</span>
+            <span class="haos-v746-notif-pill"><i class="bi bi-tag"></i>${esc(n.type||'ทั่วไป')}</span>
+            <span class="haos-v746-notif-pill ${tone}"><i class="bi bi-flag"></i>${esc(n.priority||'ปกติ')}</span>
+          </div>
+        </div>
+        <div class="haos-v746-notif-actions">
+          <button class="btn btn-sm btn-primary" ${(!entity&&n.virtual)?'disabled':''} onclick="openNotificationTargetV732&&openNotificationTargetV732('${esc(mod)}','${esc(entity)}','${esc(n.action||'')}')"><i class="bi bi-box-arrow-up-right"></i> เปิดรายการ</button>
+          ${n.virtual?'':`<button class="btn btn-sm btn-outline-success" onclick="readNotif&&readNotif('${esc(n.id)}');setTimeout(loadNotificationCenter,250)" title="อ่านแล้ว"><i class="bi bi-check"></i></button><button class="btn btn-sm btn-outline-danger" onclick="deleteNotificationUI&&deleteNotificationUI('${esc(n.id)}')" title="ลบ"><i class="bi bi-trash"></i></button>`}
+        </div>
+      </div>
+    </div>`;
+  }
+  function renderNotifOverrideV746(){
+    const list=$('notificationCenterList');
+    const state=window.__haosNotifStateV746;
+    if(!list||!state)return false;
+    const q=String($('notifSearchV745')?.value||'').toLowerCase().trim();
+    const mod=$('notifModuleV745')?.value||'';
+    const pr=$('notifPriorityV745')?.value||'';
+    let data=(state.items||[]).filter(n=>(!q||String(Object.values(n).join(' ')).toLowerCase().includes(q))&&(!mod||String(n.module||'')===mod)&&(!pr||String(n.priority||'')===pr));
+    const limit=20,pages=Math.max(1,Math.ceil(data.length/limit));
+    state.page=Math.min(Math.max(1,Number(state.page||1)),pages);
+    const start=(state.page-1)*limit, show=data.slice(start,start+limit);
+    list.innerHTML=show.length?show.map(notifHtmlV746).join(''):'<div class="text-center py-4 text-muted">ไม่มีแจ้งเตือนตามตัวกรอง</div>';
+    if(data.length>limit)list.insertAdjacentHTML('beforeend',`<div class="haos-v745-pager"><button class="btn btn-sm btn-outline-primary" ${state.page<=1?'disabled':''} onclick="haosV746SetNotifPage(${state.page-1})"><i class="bi bi-chevron-left"></i></button><span>หน้า ${state.page} / ${pages} • ${data.length} รายการ</span><button class="btn btn-sm btn-outline-primary" ${state.page>=pages?'disabled':''} onclick="haosV746SetNotifPage(${state.page+1})"><i class="bi bi-chevron-right"></i></button></div>`);
+    return true;
+  }
+  window.haosV746SetNotifPage=function(page){const s=window.__haosNotifStateV746;if(s){s.page=Number(page)||1;renderNotifOverrideV746();}};
+  const oldLoadCenterV746=window.loadNotificationCenter;
+  window.loadNotificationCenter=function(){
+    const list=$('notificationCenterList'), filter=$('notifFilter')?.value||'all', u=userNow();
+    if(!u.phone&&oldLoadCenterV746)return oldLoadCenterV746.apply(this,arguments);
+    if(list)list.innerHTML='<div class="text-center py-4 text-muted">กำลังโหลด...</div>';
+    google.script.run.withSuccessHandler(res=>{
+      if(!list)return;
+      if(!res||!res.success){list.innerHTML='<div class="text-danger p-3">'+esc(res&&res.message?res.message:'โหลดไม่สำเร็จ')+'</div>';return;}
+      window.__haosNotifStateV746={items:res.data||[],page:1};
+      renderNotifOverrideV746();
+    }).withFailureHandler(err=>{if(list)list.innerHTML='<div class="text-danger p-3">'+esc(err.message||err)+'</div>';}).getNotificationCenter(u.phone,filter);
+  };
+  ['notifSearchV745','notifModuleV745','notifPriorityV745'].forEach(id=>setInterval(()=>{const el=$(id);if(el&&!el.dataset.v746Hook){el.dataset.v746Hook='1';el.addEventListener(id==='notifSearchV745'?'input':'change',()=>{const s=window.__haosNotifStateV746;if(s)s.page=1;renderNotifOverrideV746();});}},700));
+
+  function publicDashKey(){return 'haos_public_it_dashboard_hidden_v746_'+phoneKey();}
+  function publicDashHidden(){return localStorage.getItem(publicDashKey())!=='0';}
+  window.togglePublicITDashboardV746=function(){
+    localStorage.setItem(publicDashKey(),publicDashHidden()?'0':'1');
+    applyPublicDashboardToggleV746();
+  };
+  function applyPublicDashboardToggleV746(){
+    const card=$('itPublicDashboardCardV704');
+    const pane=$('itservices-pane');
+    if(!pane)return;
+    let bar=$('itPublicDashboardToggleV746');
+    if(!bar){
+      const anchor=card||pane.querySelector('.row.g-3');
+      const html='<div id="itPublicDashboardToggleV746" class="haos-v746-public-toggle"><div><b><i class="bi bi-globe2 text-primary"></i> Public IT Services Dashboard</b><div class="small text-muted">ซ่อนไว้เป็นค่าเริ่มต้น เพื่อให้หน้า IT Services Hub สะอาดตา</div></div><button type="button" class="btn btn-sm btn-outline-primary fw-bold" onclick="togglePublicITDashboardV746()"></button></div>';
+      if(anchor)anchor.insertAdjacentHTML('beforebegin',html); else pane.insertAdjacentHTML('afterbegin',html);
+      bar=$('itPublicDashboardToggleV746');
+    }
+    const hidden=publicDashHidden();
+    card?.classList.toggle('haos-v746-hidden',hidden);
+    const btn=bar.querySelector('button');
+    if(btn)btn.innerHTML=hidden?'<i class="bi bi-eye"></i> แสดง Dashboard':'<i class="bi bi-eye-slash"></i> ซ่อน Dashboard';
+  }
+
+  function moduleCards(){
+    const row=$('itservices-pane')?.querySelector('.row.g-3.mb-4')||$('itservices-pane')?.querySelector('.row.g-3');
+    if(!row)return [];
+    return Array.from(row.children).filter(el=>el.querySelector('.it-service-card,.card.h-100')).map((el,i)=>{
+      if(!el.dataset.moduleId)el.dataset.moduleId=el.id||('itmod_'+i+'_'+(el.textContent||'module').trim().slice(0,12).replace(/\s+/g,'_'));
+      return {id:el.dataset.moduleId,title:(el.querySelector('h6')?.textContent||el.dataset.moduleId).trim(),el};
+    });
+  }
+  function itPrefs(){return readJson(prefKey(),{});}
+  function saveItPrefs(p){saveJson(prefKey(),p||{});}
+  function applyITHubLayoutV746(){
+    const cards=moduleCards();if(!cards.length)return;
+    const pref=itPrefs(), order=pref.order||cards.map(c=>c.id), pins=pref.pins||{}, hidden=pref.hidden||{};
+    const row=cards[0].el.parentElement;
+    cards.forEach(c=>{
+      c.el.classList.toggle('d-none',!!hidden[c.id]);
+      const card=c.el.querySelector('.it-service-card,.card.h-100');
+      card?.classList.toggle('haos-v737-pinned-card',!!pins[c.id]);
+    });
+    cards.sort((a,b)=>(pins[b.id]?1:0)-(pins[a.id]?1:0)||(order.indexOf(a.id)<0?999:order.indexOf(a.id))-(order.indexOf(b.id)<0?999:order.indexOf(b.id)));
+    cards.forEach(c=>row.appendChild(c.el));
+  }
+  window.openITHubCustomizeV737=function(){
+    const cards=moduleCards();
+    const pref=itPrefs();
+    let order=(pref.order&&pref.order.length?pref.order:cards.map(c=>c.id)).filter(id=>cards.some(c=>c.id===id)).concat(cards.map(c=>c.id).filter(id=>!(pref.order||[]).includes(id)));
+    window.haosItOrderTempV746=order;
+    window.haosItPinsTempV746=Object.assign({},pref.pins||{});
+    window.haosItHiddenTempV746=Object.assign({},pref.hidden||{});
+    function render(){
+      const map=Object.fromEntries(cards.map(c=>[c.id,c]));
+      const html='<div class="haos-v737-custom-list">'+window.haosItOrderTempV746.map((id,i)=>{
+        const hid=!!window.haosItHiddenTempV746[id], pin=!!window.haosItPinsTempV746[id];
+        return `<div class="haos-v746-custom-row ${hid?'hidden':''}"><div><b><i class="bi ${pin?'bi-star-fill text-warning':(hid?'bi-eye-slash text-muted':'bi-grid-3x3-gap text-primary')}"></i> ${esc(map[id]?.title||id)}</b><div class="small text-muted">${hid?'ซ่อนอยู่':'แสดงอยู่'}${pin?' • ปักหมุด':''}</div></div><div class="tools"><button class="btn btn-sm btn-outline-secondary" onclick="moveITHubModuleV746(${i},-1)" title="ขึ้น"><i class="bi bi-arrow-up"></i></button><button class="btn btn-sm btn-outline-secondary" onclick="moveITHubModuleV746(${i},1)" title="ลง"><i class="bi bi-arrow-down"></i></button><button class="btn btn-sm ${pin?'btn-warning':'btn-outline-warning'}" onclick="pinITHubModuleTempV746('${esc(id)}')" title="ปักหมุด"><i class="bi bi-star"></i></button><button class="btn btn-sm ${hid?'btn-outline-success':'btn-outline-danger'}" onclick="hideITHubModuleTempV746('${esc(id)}')" title="ซ่อน/แสดง"><i class="bi ${hid?'bi-eye':'bi-eye-slash'}"></i></button></div></div>`;
+      }).join('')+'</div>';
+      const box=$('itCustomizeListV746');if(box)box.innerHTML=html;
+      return html;
+    }
+    window.moveITHubModuleV746=function(i,dir){const a=window.haosItOrderTempV746,j=i+dir;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];render();};
+    window.pinITHubModuleTempV746=function(id){window.haosItPinsTempV746[id]=!window.haosItPinsTempV746[id];render();};
+    window.hideITHubModuleTempV746=function(id){window.haosItHiddenTempV746[id]=!window.haosItHiddenTempV746[id];render();};
+    Swal.fire({title:'จัดเรียง IT Services Hub',width:860,html:'<div id="itCustomizeListV746">'+render()+'</div><div class="small text-muted mt-2 text-start">ใช้ปักหมุดเพื่อดันโมดูลที่ใช้บ่อยขึ้นด้านบน และใช้ซ่อนสำหรับฟังก์ชันที่ยังไม่ต้องใช้งาน</div>',showCancelButton:true,confirmButtonText:'บันทึก',cancelButtonText:'ยกเลิก'}).then(r=>{if(!r.isConfirmed)return;saveItPrefs({order:window.haosItOrderTempV746,pins:window.haosItPinsTempV746,hidden:window.haosItHiddenTempV746});applyITHubLayoutV746();});
+  };
+  const oldTogglePinV746=window.toggleITHubPinV737;
+  window.toggleITHubPinV737=function(id){if(oldTogglePinV746)oldTogglePinV746.apply(this,arguments);setTimeout(applyITHubLayoutV746,40);};
+  function installITHubCustomizeLabel(){
+    const btn=$('itHubCustomizeBtnV737');
+    if(btn)btn.innerHTML='<i class="bi bi-stars"></i> จัดเรียง/ปักหมุด/ซ่อน';
+  }
+
+  function cleanEMeetingWords(root=document.body){
+    const repl=s=>String(s||'').replace(/Phase\s*4\s*Automation/gi,'ระบบช่วยจัดการประชุมอัตโนมัติ').replace(/Phase\s*4/gi,'ระบบอัตโนมัติ').replace(/ระยะ\s*4/g,'').replace(/[ \t]{2,}/g,' ');
+    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode(node){return /(Phase\s*4|ระยะ\s*4)/i.test(node.nodeValue||'')?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT;}});
+    const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
+    nodes.forEach(n=>{n.nodeValue=repl(n.nodeValue);});
+  }
+  window.openEMeetingInfoV746=function(){
+    Swal.fire({title:'คู่มือ e-Meeting Manage',width:980,confirmButtonText:'เข้าใจแล้ว',html:`<div class="haos-v746-emeeting-guide">
+      <div class="item"><b><i class="bi bi-calendar2-plus"></i> สร้างการประชุม</b><div class="small text-muted">กำหนดหัวข้อ วันที่ เวลา สถานที่ หรือประชุมออนไลน์ แล้วเลือกกลุ่มงานเจ้าภาพและผู้เกี่ยวข้อง</div></div>
+      <div class="item"><b><i class="bi bi-list-check"></i> วาระและเอกสาร</b><div class="small text-muted">เพิ่มวาระประชุม แนบเอกสารประกอบ เปิดอ่านร่วมกันผ่าน Live View และจัดชุดเอกสารประชุมได้</div></div>
+      <div class="item"><b><i class="bi bi-person-check"></i> RSVP</b><div class="small text-muted">ส่งลิงก์ตอบรับให้ผู้เข้าร่วม ผู้ใช้สามารถยืนยันเข้าร่วม ไม่เข้าร่วม หรือมอบหมายผู้แทนได้</div></div>
+      <div class="item"><b><i class="bi bi-bell"></i> แจ้งเตือนล่วงหน้า</b><div class="small text-muted">ส่งแจ้งเตือนก่อนประชุม 1 วันหรือ 7 วันผ่าน Notification Center เพื่อลดการพลาดนัดหมาย</div></div>
+      <div class="item"><b><i class="bi bi-check2-square"></i> มติและงานติดตาม</b><div class="small text-muted">บันทึกมติ กำหนดผู้รับผิดชอบและวันครบกำหนด แล้วติดตามสถานะงานหลังประชุมได้</div></div>
+      <div class="item"><b><i class="bi bi-file-earmark-word"></i> รายงานประชุม</b><div class="small text-muted">สร้างรายงานประชุม/ชุดเอกสารเป็นไฟล์ทางการ เชื่อมกับข้อมูลวาระ ผู้เข้าร่วม และมติ</div></div>
+    </div>`});
+  };
+  function installEMeetingInfoButton(){
+    const panel=$('eMeetingPanelV715')||$('eMeetingPanelV714');
+    if(!panel||$('eMeetingInfoBtnV746'))return;
+    const head=panel.querySelector('.card-header,.haos-v715-panel-head,.d-flex.justify-content-between')||panel;
+    head.insertAdjacentHTML('beforeend',' <button id="eMeetingInfoBtnV746" type="button" class="btn btn-sm btn-outline-info fw-bold" onclick="openEMeetingInfoV746()"><i class="bi bi-info-circle"></i> คู่มือ</button>');
+  }
+
+  function bootV746(){
+    updateHeroDateTimeV746();
+    applyPublicDashboardToggleV746();
+    applyITHubLayoutV746();
+    installITHubCustomizeLabel();
+    cleanEMeetingWords();
+    installEMeetingInfoButton();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootV746,{once:true});else bootV746();
+  setInterval(updateHeroDateTimeV746,30000);
+  setInterval(()=>{applyPublicDashboardToggleV746();applyITHubLayoutV746();installITHubCustomizeLabel();cleanEMeetingWords();installEMeetingInfoButton();},1200);
+  const obs=new MutationObserver(()=>{clearTimeout(window.__haosV746ObsTimer);window.__haosV746ObsTimer=setTimeout(()=>{cleanEMeetingWords();applyPublicDashboardToggleV746();applyITHubLayoutV746();installEMeetingInfoButton();},120);});
+  try{obs.observe(document.body,{childList:true,subtree:true,characterData:true});}catch(e){}
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
