@@ -17688,6 +17688,166 @@ HAOS v68.6 FINISHING FIX
   try{obs.observe(document.body,{childList:true,subtree:true,characterData:true});}catch(e){}
   console.info('HAOS '+PATCH+' loaded');
 })();
+  </script>
+<style id="haos-v70-47-calendar-dept-cleanup-style">
+  #haosSchedulePopupCalendarV745 .fc-event-time{display:none!important}
+  #haosSchedulePopupCalendarV745 .fc-event-title{white-space:normal;line-height:1.25}
+  .haos-v747-calendar-item-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+</style>
+<script id="haos-v70-47-calendar-dept-cleanup-script">
+(function(){
+  const PATCH='v70.47-calendar-dept-cleanup';
+  if(window.__HAOS_V747_CAL_DEPT__)return;
+  window.__HAOS_V747_CAL_DEPT__=true;
+  const $=id=>document.getElementById(id);
+  const qa=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const deptPrefixRe=/(^|[\s(,;:|•])(?:รหัส\s*)?\d{1,3}\s*[.)\-:–—]?\s*(กลุ่มงาน)/g;
+  const deptPrefixAtStartRe=/^\s*(?:รหัส\s*)?\d{1,3}\s*[.)\-:–—]?\s*(กลุ่มงาน)/;
+  const hasDeptPrefixRe=/(?:^|[\s(,;:|•])(?:รหัส\s*)?\d{1,3}\s*[.)\-:–—]?\s*กลุ่มงาน/;
+
+  function stripDeptPrefixV747(text){
+    return String(text??'').replace(deptPrefixRe,'$1$2').replace(deptPrefixAtStartRe,'$1');
+  }
+  window.stripDepartmentPrefixV745=stripDeptPrefixV747;
+  window.stripDepartmentPrefixV747=stripDeptPrefixV747;
+
+  function dateObj(v){
+    if(v instanceof Date)return v;
+    const s=String(v||'').trim();
+    if(!s)return null;
+    let d=new Date(s);
+    if(!isNaN(d))return d;
+    let m=s.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
+    if(m){
+      let y=+m[3];
+      if(y>2400)y-=543;
+      d=new Date(y,+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0));
+      if(!isNaN(d))return d;
+    }
+    return null;
+  }
+  function scheduleDate(item){return dateObj(item.rawStartTime||item.startTime||item.startDate||item.date||item.start);}
+  function scheduleEnd(item){return dateObj(item.rawEndTime||item.endTime||item.endDate||item.end);}
+  function allSchedulesForPopupV747(){
+    const list=[
+      ...(window.mySchedulesGlobal||[]).map(x=>Object.assign({},x,{__scope:'my'})),
+      ...(window.departmentSchedulesGlobal||[]).map(x=>Object.assign({},x,{__scope:'dept'}))
+    ];
+    const seen=new Set();
+    return list.filter((x,i)=>{
+      const k=String(x.id||x.publicId||i)+'|'+x.__scope;
+      if(seen.has(k))return false;
+      seen.add(k);
+      return true;
+    });
+  }
+  function dateOnlyText(item){
+    const d=scheduleDate(item);
+    return d?d.toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'}):'-';
+  }
+  function cleanDisplay(v){return stripDeptPrefixV747(v);}
+
+  window.openScheduleCalendarPopupV745=function(){
+    const render=()=>{
+      const list=allSchedulesForPopupV747().filter(x=>scheduleDate(x)).sort((a,b)=>scheduleDate(a)-scheduleDate(b));
+      const upcoming=list.filter(x=>scheduleDate(x)>=new Date(Date.now()-86400000)).slice(0,12);
+      const html='<div class="haos-v745-calendar-wrap"><div id="haosSchedulePopupCalendarV745"></div><div class="haos-v745-calendar-list">'+
+        (upcoming.length?upcoming.map(x=>'<div class="haos-v745-calendar-item"><b>'+esc(cleanDisplay(x.eventName||x.title||'-'))+'</b><div class="small text-muted haos-v747-calendar-item-meta"><span><i class="bi bi-calendar3"></i> '+esc(dateOnlyText(x))+'</span><span>| '+esc(cleanDisplay(x.location||x.eventLocation||'-'))+'</span></div></div>').join(''):'<div class="text-muted text-center py-3">ยังไม่มีตารางงานสำหรับแสดง</div>')+
+        '</div></div>';
+      Swal.fire({title:'ปฏิทินตารางงาน & นัดหมาย',width:1120,html,showCloseButton:true,confirmButtonText:'ปิด',didOpen:()=>{
+        const el=$('haosSchedulePopupCalendarV745');
+        if(!el||!window.FullCalendar)return;
+        const events=list.map(item=>{
+          const start=scheduleDate(item);
+          if(!start)return null;
+          const end=scheduleEnd(item);
+          return {
+            title:cleanDisplay(item.eventName||item.title||'-'),
+            start,
+            end:end||undefined,
+            allDay:false,
+            backgroundColor:item.__scope==='dept'?'#059669':'#2563eb',
+            borderColor:'transparent',
+            extendedProps:{id:item.id||item.publicId||''}
+          };
+        }).filter(Boolean);
+        const cal=new FullCalendar.Calendar(el,{
+          initialView:'dayGridMonth',
+          locale:'th',
+          height:560,
+          headerToolbar:{left:'prev,next today',center:'title',right:'dayGridMonth,timeGridWeek,timeGridDay,listMonth'},
+          events,
+          displayEventTime:false,
+          eventClick:info=>{const id=info.event.extendedProps.id;if(id&&window.viewScheduleDetail){Swal.close();setTimeout(()=>window.viewScheduleDetail(id),80);}}
+        });
+        cal.render();
+        setTimeout(()=>cleanDeptDomV747(el),40);
+      }});
+    };
+    if(!allSchedulesForPopupV747().length){
+      try{window.loadMySchedules&&window.loadMySchedules();window.loadDepartmentSchedules&&window.loadDepartmentSchedules();}catch(e){}
+      setTimeout(render,900);
+    }else render();
+  };
+
+  function installHeroCalendarButtonV747(){
+    qa('button[onclick*="toggleCalendarView"],button[onclick*="openScheduleCalendarPopupV745"]').filter(b=>b.querySelector('.bi-calendar3')).forEach(btn=>{
+      btn.onclick=()=>window.openScheduleCalendarPopupV745();
+      btn.setAttribute('onclick','openScheduleCalendarPopupV745()');
+    });
+  }
+
+  function cleanDeptDomV747(root=document.body){
+    if(!root)return;
+    qa('option',root).forEach(opt=>{
+      const clean=stripDeptPrefixV747(opt.textContent);
+      if(clean!==opt.textContent)opt.textContent=clean;
+      if(opt.label){
+        const label=stripDeptPrefixV747(opt.label);
+        if(label!==opt.label)opt.label=label;
+      }
+    });
+    qa('[title],[aria-label],[data-bs-title]',root).forEach(el=>{
+      ['title','aria-label','data-bs-title'].forEach(attr=>{
+        const val=el.getAttribute(attr);
+        if(!val||!hasDeptPrefixRe.test(val))return;
+        const clean=stripDeptPrefixV747(val);
+        if(clean!==val)el.setAttribute(attr,clean);
+      });
+    });
+    qa('input:not([type="hidden"]),textarea',root).forEach(el=>{
+      const hint=[el.id,el.name,el.className,el.placeholder,el.getAttribute('aria-label')].join(' ');
+      if(!/(dept|department|group|profile|กลุ่มงาน|หน่วยงาน)/i.test(hint))return;
+      if(!hasDeptPrefixRe.test(el.value||''))return;
+      const clean=stripDeptPrefixV747(el.value);
+      if(clean!==el.value)el.value=clean;
+    });
+    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode(node){
+      const parent=node.parentElement;
+      if(!parent||/SCRIPT|STYLE|TEXTAREA|INPUT|SELECT|OPTION/.test(parent.tagName))return NodeFilter.FILTER_REJECT;
+      return hasDeptPrefixRe.test(node.nodeValue||'')?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT;
+    }});
+    const nodes=[];
+    while(walker.nextNode())nodes.push(walker.currentNode);
+    nodes.forEach(node=>{
+      const clean=stripDeptPrefixV747(node.nodeValue);
+      if(clean!==node.nodeValue)node.nodeValue=clean;
+    });
+  }
+  window.cleanDepartmentPrefixDomV747=cleanDeptDomV747;
+
+  function bootV747(){
+    installHeroCalendarButtonV747();
+    cleanDeptDomV747();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootV747,{once:true});else bootV747();
+  setInterval(()=>{installHeroCalendarButtonV747();cleanDeptDomV747();},1200);
+  let deptTimer=null;
+  const obs=new MutationObserver(()=>{clearTimeout(deptTimer);deptTimer=setTimeout(()=>cleanDeptDomV747(),90);});
+  try{obs.observe(document.body,{childList:true,subtree:true,characterData:true});}catch(e){}
+  console.info('HAOS '+PATCH+' loaded');
+})();
 </script>
 </body>
 </html>
