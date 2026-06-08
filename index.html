@@ -15693,12 +15693,22 @@ HAOS v68.6 FINISHING FIX
   function collectWorkspaceEditFieldsV741(){
     return qa('[data-ws-edit-field]').map(row=>{
       const type=row.querySelector('.ws-edit-type-v737')?.value||'text';
-      return {
+      const field = {
         label:row.querySelector('.ws-edit-label-v737')?.value.trim()||'',
         type,
         options:(type==='dropdown'||type==='radio'||type==='checkbox')?optionListV741(row.querySelector('.ws-edit-options-v737')?.value||''):[],
         required:!!row.querySelector('.ws-edit-required-v737')?.checked
       };
+      if((type==='dropdown'||type==='radio'||type==='checkbox')&&row.querySelector('.haos-v745-edit-quiz')){
+        const skip=!!row.querySelector('.ws-edit-not-quiz-v745')?.checked;
+        field.isQuizField=!skip;
+        if(skip){field.skipQuiz=true;field.points=0;}
+        else{
+          field.points=Number(row.querySelector('.ws-edit-points-v745')?.value||1)||0;
+          field.correctAnswers=optionListV741(row.querySelector('.ws-edit-correct-v745')?.value||'');
+        }
+      }
+      return field;
     }).filter(f=>f.label);
   }
   function setWorkspaceExpireInputV741(ws){
@@ -16951,6 +16961,471 @@ HAOS v68.6 FINISHING FIX
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
   setTimeout(boot,700);setTimeout(boot,1600);
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
+<style id="haos-v70-45-workspace-notif-calendar-style">
+  .haos-v745-quiz-skip{grid-column:1/-1;display:flex;align-items:center;gap:8px;border:1px solid #fed7aa;border-radius:8px;background:#fff7ed;color:#9a3412;font-weight:900;padding:9px 11px}
+  .haos-v745-answer-picks{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .haos-v745-answer-picks button{border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;border-radius:999px;font-weight:850;padding:5px 10px}
+  .haos-v745-answer-picks button.active{background:#16a34a;border-color:#15803d;color:#fff}
+  .haos-v745-edit-quiz{border:1px dashed #c4b5fd;border-radius:8px;background:#faf5ff;padding:12px;margin-top:12px;display:none}
+  .haos-v745-edit-quiz.on{display:block}
+  .haos-v745-notif-filter{display:none;border:1px solid rgba(59,130,246,.24);border-radius:8px;background:#f8fbff;padding:10px;margin-bottom:10px}
+  .haos-v745-notif-filter.on{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+  .haos-v745-pager{display:flex;justify-content:center;align-items:center;gap:8px;padding:12px;flex-wrap:wrap}
+  .haos-v745-calendar-wrap{min-height:520px;text-align:left}
+  .haos-v745-calendar-list{display:grid;gap:8px;max-height:220px;overflow:auto;margin-top:12px}
+  .haos-v745-calendar-item{border:1px solid rgba(148,163,184,.25);border-radius:8px;background:#fff;padding:10px 12px}
+  .haos-v745-public-dashboard-hidden{display:none!important}
+</style>
+<script id="haos-v70-45-workspace-notif-calendar-script">
+(function(){
+  const PATCH='v70.45-workspace-notification-calendar';
+  if(window.__HAOS_V745_WORKSPACE_NOTIF_CALENDAR__)return;
+  window.__HAOS_V745_WORKSPACE_NOTIF_CALENDAR__=true;
+  const $=id=>document.getElementById(id);
+  const qa=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const choiceTypes=new Set(['dropdown','radio','checkbox']);
+  const splitOptions=value=>{
+    const seen=new Set();
+    return String(value||'').split(/[,|]/).map(x=>x.trim()).filter(Boolean).filter(x=>{const k=x.toLowerCase();if(seen.has(k))return false;seen.add(k);return true;});
+  };
+  const userNow=()=>{try{return window.user||user||{};}catch(e){return window.user||{};}};
+  const typeLabel=t=>({text:'ข้อความ',textarea:'ข้อความยาว',dropdown:'รายการเลือก (Dropdown)',radio:'ตัวเลือกเดียว (Radio)',checkbox:'หลายตัวเลือก (Checkbox)',image:'รูปภาพ'}[t]||t||'ข้อความ');
+  const specFromField=f=>{
+    const label=String(f.label||'').trim()||'Field';
+    const opts=splitOptions(f.options).join(', ');
+    let spec=label;
+    if(f.type==='dropdown')spec+=' [dropdown: '+(opts||'Option 1, Option 2')+']';
+    else if(f.type==='radio')spec+=' [radio: '+(opts||'Option 1, Option 2')+']';
+    else if(f.type==='checkbox')spec+=opts?' [checkbox: '+opts+']':' [checkbox]';
+    else if(f.type==='textarea')spec+=' [textarea]';
+    else if(f.type==='image')spec+=' [image]';
+    if(f.required)spec+=' [required]';
+    return spec;
+  };
+  function setTypeLabels(select){
+    if(!select)return;
+    qa('option',select).forEach(opt=>{const label=typeLabel(opt.value);if(label)opt.textContent=label;});
+  }
+  function setRowIndexes(rows){
+    rows.forEach((row,i)=>{
+      if(row.dataset.v744Index!==undefined)row.dataset.v744Index='ช่องข้อมูล '+(i+1);
+      const badge=row.querySelector('.haos-v741-field-head .badge');
+      if(badge)badge.textContent='ช่องข้อมูล '+(i+1);
+    });
+  }
+  function correctValuesFromRow(row){return splitOptions(row.querySelector('.ws-col-correct-v744,.ws-edit-correct-v745')?.value||'');}
+  function setCorrectValues(row,values){
+    const input=row.querySelector('.ws-col-correct-v744,.ws-edit-correct-v745');
+    if(input)input.value=splitOptions(values).join(', ');
+    renderCorrectChips(row);
+  }
+  function renderCorrectChips(row){
+    const box=row.querySelector('.haos-v745-answer-picks');
+    if(!box)return;
+    const type=row.querySelector('.ws-col-type-v728,.ws-edit-type-v737')?.value||'text';
+    const opts=splitOptions(row.querySelector('.ws-col-options-v728,.ws-edit-options-v737')?.value||'');
+    const picked=new Set(correctValuesFromRow(row).map(x=>x.toLowerCase()));
+    box.innerHTML=opts.length?opts.map(o=>'<button type="button" class="'+(picked.has(o.toLowerCase())?'active':'')+'" data-v745-answer="'+esc(o)+'"><i class="bi bi-check2-circle"></i> '+esc(o)+'</button>').join(''):'<span class="small text-muted">เพิ่มตัวเลือกก่อน แล้วคลิกเลือกเฉลยได้จากตรงนี้</span>';
+    qa('button[data-v745-answer]',box).forEach(btn=>{
+      btn.onclick=()=>{
+        const value=btn.dataset.v745Answer||'';
+        let values=correctValuesFromRow(row);
+        if(type==='checkbox'){
+          values=values.some(x=>x.toLowerCase()===value.toLowerCase())?values.filter(x=>x.toLowerCase()!==value.toLowerCase()):values.concat(value);
+        }else{
+          values=[value];
+        }
+        setCorrectValues(row,values);
+      };
+    });
+  }
+  function updateQuizControlState(row){
+    const isQuiz=$('wsWorkspaceType')?.value==='quiz';
+    const type=row.querySelector('.ws-col-type-v728,.ws-edit-type-v737')?.value||'text';
+    const choice=choiceTypes.has(type);
+    const wrap=row.querySelector('.haos-v744-quiz-controls,.haos-v745-edit-quiz');
+    const skip=row.querySelector('.ws-col-not-quiz-v745,.ws-edit-not-quiz-v745')?.checked;
+    if(wrap){
+      wrap.classList.toggle('on',isQuiz&&choice);
+      wrap.style.display=(isQuiz&&choice)?'grid':'none';
+    }
+    row.querySelectorAll('.ws-col-correct-v744,.ws-col-points-v744,.ws-edit-correct-v745,.ws-edit-points-v745').forEach(el=>{el.disabled=!!skip;});
+    renderCorrectChips(row);
+  }
+  function ensureCreateBuilderV745(){
+    qa('[data-ws-col-row]').forEach(row=>{
+      setTypeLabels(row.querySelector('.ws-col-type-v728'));
+      const actions=row.querySelector('.d-flex.gap-1')||row.lastElementChild;
+      if(actions&&!row.querySelector('.haos-v745-duplicate-col')){
+        actions.insertAdjacentHTML('afterbegin','<button type="button" class="btn btn-outline-primary haos-v745-duplicate-col" onclick="haosV745DuplicateCreateField(this)" title="ทำซ้ำช่องข้อมูล"><i class="bi bi-files"></i></button>');
+      }
+      const controls=row.querySelector('.haos-v744-quiz-controls');
+      if(controls&&!controls.querySelector('.ws-col-not-quiz-v745')){
+        controls.insertAdjacentHTML('afterbegin','<label class="haos-v745-quiz-skip"><input type="checkbox" class="form-check-input ws-col-not-quiz-v745"> ช่องนี้เป็นข้อมูลประกอบ ไม่คิดคะแนน</label>');
+        const correct=controls.querySelector('.ws-col-correct-v744')?.closest('div');
+        if(correct&&!controls.querySelector('.haos-v745-answer-picks'))correct.insertAdjacentHTML('beforeend','<div class="haos-v745-answer-picks"></div>');
+      }
+      row.querySelectorAll('input,select').forEach(el=>{
+        if(el.dataset.v745Hook)return;
+        el.dataset.v745Hook='1';
+        el.addEventListener(el.tagName==='SELECT'?'change':'input',()=>setTimeout(()=>{updateQuizControlState(row);},0));
+      });
+      updateQuizControlState(row);
+    });
+    setRowIndexes(qa('[data-ws-col-row]'));
+  }
+  window.haosV745DuplicateCreateField=function(btn){
+    const row=btn.closest('[data-ws-col-row]');
+    if(!row)return;
+    const clone=row.cloneNode(true);
+    clone.querySelectorAll('[data-v745-hook]').forEach(el=>delete el.dataset.v745Hook);
+    const label=clone.querySelector('.ws-col-label-v728');
+    if(label)label.value=(label.value||'ช่องข้อมูล')+' (สำเนา)';
+    row.insertAdjacentElement('afterend',clone);
+    ensureCreateBuilderV745();
+    try{window.syncWorkspaceBuilderV728&&window.syncWorkspaceBuilderV728();}catch(e){}
+    label?.focus();
+  };
+  function collectCreateFieldsV745(baseFields){
+    const rows=qa('[data-ws-col-row]');
+    if(!rows.length)return baseFields||[];
+    const isQuiz=$('wsWorkspaceType')?.value==='quiz';
+    const settings={showScore:$('wsQuizShowScoreV744')?.checked!==false,showCorrect:!!$('wsQuizShowCorrectV744')?.checked};
+    const fields=rows.map((row,i)=>{
+      const type=row.querySelector('.ws-col-type-v728')?.value||'text';
+      const f={index:i,label:(row.querySelector('.ws-col-label-v728')?.value||'').trim(),type,options:splitOptions(row.querySelector('.ws-col-options-v728')?.value||''),required:!!row.querySelector('.ws-col-required-v735')?.checked};
+      if(isQuiz&&choiceTypes.has(type)){
+        const skip=!!row.querySelector('.ws-col-not-quiz-v745')?.checked;
+        f.isQuizField=!skip;
+        if(skip){f.skipQuiz=true;f.points=0;}
+        else{f.points=Number(row.querySelector('.ws-col-points-v744')?.value||1)||0;f.correctAnswers=splitOptions(row.querySelector('.ws-col-correct-v744')?.value||'');}
+      }
+      return f;
+    }).filter(f=>f.label);
+    if(isQuiz&&fields[0]){
+      fields[0].quizSettings=settings;
+      fields.forEach(f=>{f.quizShowScore=settings.showScore;f.quizShowCorrect=settings.showCorrect;});
+    }
+    return fields;
+  }
+  const oldGetPayloadV745=window.getWorkspaceCreatePayload;
+  if(typeof oldGetPayloadV745==='function')window.getWorkspaceCreatePayload=function(){
+    const data=oldGetPayloadV745.apply(this,arguments)||{};
+    const fields=collectCreateFieldsV745(data.fieldConfig);
+    data.fieldConfig=fields;
+    data.columns=fields.map(specFromField);
+    if(($('wsWorkspaceType')?.value||data.workspaceType)==='quiz'){
+      data.workspaceType='quiz';
+      data.rows=[];
+      data.accessMode='edit';
+      data.requireLoginToEdit=false;
+      data.quizSettings={showScore:$('wsQuizShowScoreV744')?.checked!==false,showCorrect:!!$('wsQuizShowCorrectV744')?.checked};
+    }
+    return data;
+  };
+  function validateWorkspacePayloadV745(data){
+    if(!data.title)return 'กรุณาระบุชื่อพื้นที่ทำงาน';
+    if(!data.fieldConfig||!data.fieldConfig.length)return 'กรุณาเพิ่มช่องข้อมูลอย่างน้อย 1 ช่อง';
+    const missingChoice=data.fieldConfig.find(f=>choiceTypes.has(f.type)&&f.type!=='checkbox'&&!splitOptions(f.options).length);
+    if(missingChoice)return typeLabel(missingChoice.type)+' ต้องมีตัวเลือก: '+missingChoice.label;
+    if(data.workspaceType==='quiz'){
+      const bad=data.fieldConfig.find(f=>f.isQuizField!==false&&choiceTypes.has(f.type)&&(!splitOptions(f.options).length||!splitOptions(f.correctAnswers).length));
+      if(bad)return 'ข้อสอบต้องมีตัวเลือกและเฉลย: '+bad.label;
+    }
+    return '';
+  }
+  function previewFieldV745(field){
+    const opts=splitOptions(field.options);
+    const req=field.required?'<span class="text-danger ms-1">*</span>':'';
+    const label='<label class="title">'+esc(field.label)+req+'</label>';
+    if(field.type==='dropdown')return '<div class="haos-v744-preview-field">'+label+'<select class="form-select haos-v745-preview-input" data-c="'+field.index+'"><option value="">-- เลือก --</option>'+opts.map(o=>'<option value="'+esc(o)+'">'+esc(o)+'</option>').join('')+'</select></div>';
+    if(field.type==='radio')return '<div class="haos-v744-preview-field">'+label+'<div class="haos-v744-choice-grid">'+opts.map(o=>'<label><input type="radio" class="haos-v745-preview-input me-1" name="preview_'+field.index+'" data-c="'+field.index+'" value="'+esc(o)+'"> '+esc(o)+'</label>').join('')+'</div></div>';
+    if(field.type==='checkbox'&&opts.length)return '<div class="haos-v744-preview-field">'+label+'<div class="haos-v744-choice-grid">'+opts.map(o=>'<label><input type="checkbox" class="haos-v745-preview-check me-1" data-c="'+field.index+'" value="'+esc(o)+'"> '+esc(o)+'</label>').join('')+'</div></div>';
+    if(field.type==='textarea')return '<div class="haos-v744-preview-field">'+label+'<textarea class="form-control haos-v745-preview-input" rows="3" data-c="'+field.index+'"></textarea></div>';
+    if(field.type==='image')return '<div class="haos-v744-preview-field">'+label+'<input type="file" class="form-control" disabled><div class="small text-muted mt-1">พรีวิวไม่อัปโหลดไฟล์จริง</div></div>';
+    return '<div class="haos-v744-preview-field">'+label+'<input class="form-control haos-v745-preview-input" data-c="'+field.index+'"></div>';
+  }
+  function collectPreviewRowV745(fields){
+    const row=new Array(fields.length).fill('');
+    qa('.haos-v745-preview-input').forEach(el=>{
+      const c=Number(el.dataset.c);
+      if(el.type==='radio'&&!el.checked)return;
+      row[c]=(el.value||'').trim();
+    });
+    const grouped={};
+    qa('.haos-v745-preview-check').forEach(el=>{const c=Number(el.dataset.c);grouped[c]=grouped[c]||[];if(el.checked)grouped[c].push(el.value);});
+    Object.keys(grouped).forEach(c=>row[Number(c)]=grouped[c].join(', '));
+    return row;
+  }
+  function scoreQuizV745(fields,row){
+    let score=0,total=0;
+    const detail=[];
+    fields.forEach(f=>{
+      if(f.isQuizField===false||!choiceTypes.has(f.type)||!splitOptions(f.correctAnswers).length)return;
+      const points=Number(f.points||1)||0;
+      total+=points;
+      const got=splitOptions(row[f.index]).map(x=>x.toLowerCase()).sort();
+      const correct=splitOptions(f.correctAnswers).map(x=>x.toLowerCase()).sort();
+      const ok=got.length===correct.length&&got.every((x,i)=>x===correct[i]);
+      if(ok)score+=points;
+      detail.push({label:f.label,ok,answer:row[f.index]||'-',correct:splitOptions(f.correctAnswers).join(', ')});
+    });
+    return {score,total,detail};
+  }
+  function quizResultV745(data,row){
+    if(data.workspaceType!=='quiz')return '<div class="text-muted">ทดสอบการกรอกข้อมูลเรียบร้อยแล้ว</div>';
+    const result=scoreQuizV745(data.fieldConfig||[],row);
+    const showScore=data.quizSettings?.showScore!==false, showCorrect=!!data.quizSettings?.showCorrect;
+    let html='<div class="haos-v744-quiz-result">';
+    if(showScore)html+='<div class="fs-5 mb-2">คะแนนพรีวิว: '+result.score+' / '+result.total+'</div>';
+    if(showCorrect)html+=result.detail.map(d=>'<div class="'+(d.ok?'':'wrong')+'"><i class="bi '+(d.ok?'bi-check-circle':'bi-x-circle')+'"></i> '+esc(d.label)+' <span class="muted">ตอบ: '+esc(d.answer)+' | เฉลย: '+esc(d.correct)+'</span></div>').join('');
+    if(!showScore&&!showCorrect)html+='<div>ตั้งค่าไว้ไม่แสดงคะแนนและเฉลยหลังตอบ</div>';
+    return html+'</div>';
+  }
+  const oldCreateWorkspaceV745=window.createWorkspaceUI;
+  async function previewWorkspaceV745(){
+    ensureCreateBuilderV745();
+    const data=window.getWorkspaceCreatePayload?window.getWorkspaceCreatePayload():{};
+    const err=validateWorkspacePayloadV745(data);
+    if(err)return Swal.fire('แจ้งเตือน',err,'warning');
+    const fields=data.fieldConfig||[];
+    const res=await Swal.fire({title:data.workspaceType==='quiz'?'พรีวิวแบบทดสอบ':'พรีวิวพื้นที่ทำงานร่วมกัน',width:940,html:'<div class="haos-v744-preview-form"><div><h5 class="fw-bold mb-1">'+esc(data.title)+'</h5><div class="text-muted">'+esc(data.description||'')+'</div></div>'+fields.map(previewFieldV745).join('')+'</div>',showCancelButton:true,showDenyButton:true,confirmButtonText:'ทดสอบเสร็จ',denyButtonText:'กลับไปแก้ไข',cancelButtonText:'ยกเลิก',preConfirm:()=>collectPreviewRowV745(fields)});
+    if(!res.isConfirmed)return;
+    const row=res.value||[];
+    const confirm=await Swal.fire({title:'ยืนยันหลังพรีวิว',width:760,html:quizResultV745(data,row)+'<div class="small text-muted mt-3">ต้องการยืนยันการสร้าง หรือกลับไปปรับรายละเอียดก่อน?</div>',showCancelButton:true,showDenyButton:true,confirmButtonText:'ยืนยันสร้างพื้นที่',denyButtonText:'กลับไปแก้ไข',cancelButtonText:'ยกเลิก'});
+    if(confirm.isConfirmed&&typeof oldCreateWorkspaceV745==='function')return oldCreateWorkspaceV745.call(window,true);
+  }
+  window.previewWorkspaceCreate=previewWorkspaceV745;
+  if(typeof oldCreateWorkspaceV745==='function')window.createWorkspaceUI=function(skipPreview){return skipPreview===true?oldCreateWorkspaceV745.call(this,true):previewWorkspaceV745();};
+
+  function candidateFieldByLabel(label,index){
+    const pools=[];
+    try{if(window.currentWorkspace&&Array.isArray(window.currentWorkspace.fieldConfig))pools.push(window.currentWorkspace.fieldConfig);}catch(e){}
+    try{if(window.sharedWorkspacesGlobal)window.sharedWorkspacesGlobal.forEach(ws=>Array.isArray(ws.fieldConfig)&&pools.push(ws.fieldConfig));}catch(e){}
+    for(const list of pools){
+      if(list[index])return list[index];
+      const found=list.find(f=>String(f.label||'').trim()===String(label||'').trim());
+      if(found)return found;
+    }
+    return {};
+  }
+  function ensureEditPopupV745(){
+    const popup=document.querySelector('.haos-v741-workspace-edit-popup');
+    if(!popup)return;
+    qa('[data-ws-edit-field]',popup).forEach((row,i)=>{
+      const label=row.querySelector('.ws-edit-label-v737')?.value||'';
+      const field=candidateFieldByLabel(label,i);
+      setTypeLabels(row.querySelector('.ws-edit-type-v737'));
+      const head=row.querySelector('.haos-v741-field-head');
+      if(head&&!row.querySelector('.haos-v745-duplicate-edit'))head.insertAdjacentHTML('beforeend','<button type="button" class="btn btn-outline-primary btn-sm haos-v745-duplicate-edit" onclick="haosV745DuplicateEditField(this)" title="ทำซ้ำช่องข้อมูล"><i class="bi bi-files"></i></button>');
+      if(!row.querySelector('.haos-v745-edit-quiz')){
+        row.insertAdjacentHTML('beforeend','<div class="haos-v745-edit-quiz"><label class="haos-v745-quiz-skip"><input type="checkbox" class="form-check-input ws-edit-not-quiz-v745"> ช่องนี้เป็นข้อมูลประกอบ ไม่คิดคะแนน</label><div class="row g-2 align-items-end mt-1"><div class="col-md-8"><label class="small fw-bold text-muted">เฉลย / คำตอบที่ถูก</label><input class="form-control form-control-sm ws-edit-correct-v745" placeholder="เลือกจากตัวเลือกด้านล่าง หรือพิมพ์คั่นด้วย ,"><div class="haos-v745-answer-picks"></div></div><div class="col-md-4"><label class="small fw-bold text-muted">คะแนน</label><input type="number" min="0" step="0.5" class="form-control form-control-sm ws-edit-points-v745" value="1"></div></div></div>');
+        row.querySelector('.ws-edit-not-quiz-v745').checked=field.isQuizField===false||field.skipQuiz===true;
+        row.querySelector('.ws-edit-correct-v745').value=splitOptions(field.correctAnswers).join(', ');
+        row.querySelector('.ws-edit-points-v745').value=field.points||1;
+      }
+      row.querySelectorAll('input,select').forEach(el=>{
+        if(el.dataset.v745EditHook)return;
+        el.dataset.v745EditHook='1';
+        el.addEventListener(el.tagName==='SELECT'?'change':'input',()=>setTimeout(()=>updateQuizControlState(row),0));
+      });
+      updateQuizControlState(row);
+    });
+    setRowIndexes(qa('[data-ws-edit-field]',popup));
+  }
+  window.haosV745DuplicateEditField=function(btn){
+    const row=btn.closest('[data-ws-edit-field]');
+    if(!row)return;
+    const clone=row.cloneNode(true);
+    clone.querySelectorAll('[data-v745-edit-hook]').forEach(el=>delete el.dataset.v745EditHook);
+    const label=clone.querySelector('.ws-edit-label-v737');
+    if(label)label.value=(label.value||'ช่องข้อมูล')+' (สำเนา)';
+    row.insertAdjacentElement('afterend',clone);
+    ensureEditPopupV745();
+    try{window.haosV741SyncEditOptionVisibility&&window.haosV741SyncEditOptionVisibility();}catch(e){}
+  };
+  function collectEditFieldsV745(){
+    return qa('[data-ws-edit-field]').map((row,i)=>{
+      const type=row.querySelector('.ws-edit-type-v737')?.value||'text';
+      const f={index:i,label:(row.querySelector('.ws-edit-label-v737')?.value||'').trim(),type,options:choiceTypes.has(type)?splitOptions(row.querySelector('.ws-edit-options-v737')?.value||''):[],required:!!row.querySelector('.ws-edit-required-v737')?.checked};
+      if(choiceTypes.has(type)){
+        const skip=!!row.querySelector('.ws-edit-not-quiz-v745')?.checked;
+        f.isQuizField=!skip;
+        if(skip){f.skipQuiz=true;f.points=0;}
+        else{f.points=Number(row.querySelector('.ws-edit-points-v745')?.value||1)||0;f.correctAnswers=splitOptions(row.querySelector('.ws-edit-correct-v745')?.value||'');}
+      }
+      return f;
+    }).filter(f=>f.label);
+  }
+  const oldGasV745=window.gas;
+  if(typeof oldGasV745==='function'&&!oldGasV745.__haosV745Wrapped) {
+    window.gas=function(fn,args){
+      if(fn==='updateSharedWorkspaceConfigV737'&&Array.isArray(args)&&args[2]&&document.querySelector('.haos-v741-workspace-edit-popup')){
+        const fields=collectEditFieldsV745();
+        args=args.slice();
+        args[2]=Object.assign({},args[2],{fieldConfig:fields,columns:fields.map(specFromField)});
+      }
+      return oldGasV745.call(this,fn,args);
+    };
+    window.gas.__haosV745Wrapped=true;
+  }
+  function enrichWorkspaceConfigPayloadV745(argsLike){
+    const args=Array.from(argsLike||[]);
+    if(args[2]&&document.querySelector('.haos-v741-workspace-edit-popup')){
+      const fields=collectEditFieldsV745();
+      args[2]=Object.assign({},args[2],{fieldConfig:fields,columns:fields.map(specFromField)});
+    }
+    return args;
+  }
+  function patchGoogleRunnerV745(){
+    try{
+      const runner=google&&google.script&&google.script.run;
+      if(!runner||runner.__haosV745ConfigWrapped)return;
+      const prev=runner.updateSharedWorkspaceConfigV737;
+      if(typeof prev==='function'){
+        runner.updateSharedWorkspaceConfigV737=function(){
+          return prev.apply(this,enrichWorkspaceConfigPayloadV745(arguments));
+        };
+        runner.__haosV745ConfigWrapped=true;
+      }
+    }catch(e){}
+  }
+
+  function dateObj(v){
+    if(v instanceof Date)return v;
+    const s=String(v||'').trim(); if(!s)return null;
+    let d=new Date(s); if(!isNaN(d))return d;
+    let m=s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
+    if(m){let y=+m[3];if(y>2400)y-=543;d=new Date(y,+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0));if(!isNaN(d))return d;}
+    return null;
+  }
+  function scheduleDate(item){return dateObj(item.rawStartTime||item.startTime||item.startDate||item.date||item.start);}
+  function scheduleEnd(item){return dateObj(item.rawEndTime||item.endTime||item.end);}
+  function timeText(item){
+    const a=scheduleDate(item), b=scheduleEnd(item);
+    const f=d=>d?String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'):'';
+    return f(a)+(b?' - '+f(b):'');
+  }
+  function allSchedulesForPopup(){
+    const list=[...(window.mySchedulesGlobal||[]).map(x=>Object.assign({},x,{__scope:'my'})),...(window.departmentSchedulesGlobal||[]).map(x=>Object.assign({},x,{__scope:'dept'}))];
+    const seen=new Set();
+    return list.filter((x,i)=>{const k=String(x.id||x.publicId||i)+'|'+x.__scope;if(seen.has(k))return false;seen.add(k);return true;});
+  }
+  window.openScheduleCalendarPopupV745=function(){
+    const render=()=>{
+      const list=allSchedulesForPopup().filter(x=>scheduleDate(x)).sort((a,b)=>scheduleDate(a)-scheduleDate(b));
+      const upcoming=list.filter(x=>scheduleDate(x)>=new Date(Date.now()-86400000)).slice(0,12);
+      const html='<div class="haos-v745-calendar-wrap"><div id="haosSchedulePopupCalendarV745"></div><div class="haos-v745-calendar-list">'+(upcoming.length?upcoming.map(x=>'<div class="haos-v745-calendar-item"><b>'+esc(x.eventName||x.title||'-')+'</b><div class="small text-muted"><i class="bi bi-clock"></i> '+esc((x.startTime||'')+' '+timeText(x))+' | '+esc(x.location||x.eventLocation||'-')+'</div></div>').join(''):'<div class="text-muted text-center py-3">ยังไม่มีตารางงานสำหรับแสดง</div>')+'</div></div>';
+      Swal.fire({title:'ปฏิทินตารางงาน & นัดหมาย',width:1120,html,showCloseButton:true,confirmButtonText:'ปิด',didOpen:()=>{
+        const el=$('haosSchedulePopupCalendarV745');
+        if(!el||!window.FullCalendar)return;
+        const events=list.map(item=>{const start=scheduleDate(item);if(!start)return null;const end=scheduleEnd(item);const t=timeText(item);return{title:(t?t+' ':'')+(item.eventName||item.title||'-'),start,end:end||undefined,allDay:false,backgroundColor:item.__scope==='dept'?'#059669':'#2563eb',borderColor:'transparent',extendedProps:{id:item.id||item.publicId||''}};}).filter(Boolean);
+        const cal=new FullCalendar.Calendar(el,{initialView:'dayGridMonth',locale:'th',height:560,headerToolbar:{left:'prev,next today',center:'title',right:'dayGridMonth,timeGridWeek,timeGridDay,listMonth'},events,eventTimeFormat:{hour:'2-digit',minute:'2-digit',hour12:false},eventClick:info=>{const id=info.event.extendedProps.id;if(id&&window.viewScheduleDetail){Swal.close();setTimeout(()=>window.viewScheduleDetail(id),80);}}});
+        cal.render();
+      }});
+    };
+    if(!allSchedulesForPopup().length){try{window.loadMySchedules&&window.loadMySchedules();window.loadDepartmentSchedules&&window.loadDepartmentSchedules();}catch(e){}setTimeout(render,900);}else render();
+  };
+  function installHeroCalendarButtonV745(){
+    qa('button[onclick*="toggleCalendarView"]').filter(b=>b.querySelector('.bi-calendar3')).forEach(btn=>{btn.onclick=()=>window.openScheduleCalendarPopupV745();btn.setAttribute('onclick','openScheduleCalendarPopupV745()');});
+  }
+
+  const notifState={items:[],page:1,filtersHidden:true};
+  function moduleLabel(m){return {schedule:'ตารางงาน',itBooking:'จองห้อง/Zoom',itRepair:'แจ้งซ่อม',itAsset:'ทรัพย์สิน IT',eMeeting:'e-Meeting',systemTools:'เครื่องมือระบบ',helpChat:'ศูนย์ช่วยเหลือ'}[m]||m||'ทั่วไป';}
+  function installNotifFiltersV745(){
+    const bar=$('notifFilter')?.closest('.d-flex');
+    if(!bar||$('notifToggleFiltersV745'))return;
+    bar.insertAdjacentHTML('beforeend','<button id="notifToggleFiltersV745" class="btn btn-outline-secondary" type="button" onclick="haosV745ToggleNotifFilters()"><i class="bi bi-funnel"></i> ตัวกรอง</button>');
+    const list=$('notificationCenterList');
+    list?.insertAdjacentHTML('beforebegin','<div id="notifAdvancedFiltersV745" class="haos-v745-notif-filter"><input id="notifSearchV745" class="form-control" placeholder="ค้นหาแจ้งเตือน..."><select id="notifModuleV745" class="form-select"><option value="">ทุกฟังก์ชัน</option><option value="schedule">ตารางงาน</option><option value="itBooking">จองห้อง/Zoom</option><option value="itRepair">แจ้งซ่อม</option><option value="eMeeting">e-Meeting</option><option value="systemTools">เครื่องมือระบบ</option></select><select id="notifPriorityV745" class="form-select"><option value="">ทุกระดับ</option><option>ปกติ</option><option>ด่วน</option><option>ด่วนมาก</option></select></div>');
+    ['notifSearchV745','notifModuleV745','notifPriorityV745'].forEach(id=>$(id)?.addEventListener(id==='notifSearchV745'?'input':'change',()=>{notifState.page=1;renderNotificationCenterV745();}));
+  }
+  window.haosV745ToggleNotifFilters=function(){
+    notifState.filtersHidden=!notifState.filtersHidden;
+    $('notifAdvancedFiltersV745')?.classList.toggle('on',!notifState.filtersHidden);
+  };
+  function notifPass(n){
+    const q=String($('notifSearchV745')?.value||'').toLowerCase().trim();
+    const mod=$('notifModuleV745')?.value||'', pr=$('notifPriorityV745')?.value||'';
+    return (!q||String(Object.values(n).join(' ')).toLowerCase().includes(q))&&(!mod||String(n.module||'')===mod)&&(!pr||String(n.priority||'')===pr);
+  }
+  function notifHtmlV745(n){
+    const unread=!n.isRead;
+    const moduleName=n.module||'system', entity=String(n.entityId||'');
+    return '<div class="list-group-item '+(unread?'list-group-item-info':'')+'"><div class="d-flex justify-content-between align-items-start gap-2"><div class="flex-grow-1"><div class="fw-bold">'+esc(n.message||'-')+'</div><div class="small text-muted"><span class="badge bg-light text-dark border">'+esc(moduleLabel(moduleName))+'</span> '+esc(n.time||'-')+' • '+esc(n.type||'ทั่วไป')+' • '+esc(n.priority||'ปกติ')+'</div></div><div class="text-nowrap"><button class="btn btn-sm btn-outline-primary" '+(!entity&&n.virtual?'disabled':'')+' onclick="openNotificationTargetV732&&openNotificationTargetV732(\''+esc(moduleName)+'\',\''+esc(entity)+'\',\''+esc(n.action||'')+'\')"><i class="bi bi-box-arrow-up-right"></i> เปิดรายการ</button> '+(n.virtual?'':'<button class="btn btn-sm btn-outline-success" onclick="readNotif&&readNotif(\''+esc(n.id)+'\');setTimeout(loadNotificationCenter,250)"><i class="bi bi-check"></i></button> <button class="btn btn-sm btn-outline-danger" onclick="deleteNotificationUI&&deleteNotificationUI(\''+esc(n.id)+'\')"><i class="bi bi-trash"></i></button>')+'</div></div></div>';
+  }
+  function renderNotificationCenterV745(){
+    const list=$('notificationCenterList'); if(!list)return;
+    const data=notifState.items.filter(notifPass);
+    const limit=20,pages=Math.max(1,Math.ceil(data.length/limit));
+    if(notifState.page>pages)notifState.page=pages;
+    const start=(notifState.page-1)*limit, show=data.slice(start,start+limit);
+    list.innerHTML=show.length?show.map(notifHtmlV745).join(''):'<div class="text-center py-4 text-muted">ไม่มีแจ้งเตือนตามตัวกรอง</div>';
+    if(data.length>limit)list.insertAdjacentHTML('beforeend','<div class="haos-v745-pager"><button class="btn btn-sm btn-outline-primary" '+(notifState.page<=1?'disabled':'')+' onclick="haosV745SetNotifPage('+(notifState.page-1)+')"><i class="bi bi-chevron-left"></i></button><span>หน้า '+notifState.page+' / '+pages+' • '+data.length+' รายการ</span><button class="btn btn-sm btn-outline-primary" '+(notifState.page>=pages?'disabled':'')+' onclick="haosV745SetNotifPage('+(notifState.page+1)+')"><i class="bi bi-chevron-right"></i></button></div>');
+  }
+  window.haosV745SetNotifPage=function(page){notifState.page=Number(page)||1;renderNotificationCenterV745();};
+  const oldLoadCenterV745=window.loadNotificationCenter;
+  window.loadNotificationCenter=function(){
+    installNotifFiltersV745();
+    const list=$('notificationCenterList'), filter=$('notifFilter')?.value||'all', u=userNow();
+    if(!u.phone&&oldLoadCenterV745)return oldLoadCenterV745.apply(this,arguments);
+    if(list)list.innerHTML='<div class="text-center py-4 text-muted">กำลังโหลด...</div>';
+    google.script.run.withSuccessHandler(res=>{
+      if(!list)return;
+      if(!res||!res.success){list.innerHTML='<div class="text-danger p-3">'+esc(res&&res.message?res.message:'โหลดไม่สำเร็จ')+'</div>';return;}
+      notifState.items=res.data||[];
+      notifState.page=1;
+      renderNotificationCenterV745();
+    }).withFailureHandler(err=>{if(list)list.innerHTML='<div class="text-danger p-3">'+esc(err.message||err)+'</div>';}).getNotificationCenter(u.phone,filter);
+  };
+  const oldOpenCenterV745=window.openNotificationCenterModal;
+  window.openNotificationCenterModal=function(){
+    const r=oldOpenCenterV745?oldOpenCenterV745.apply(this,arguments):undefined;
+    setTimeout(()=>{installNotifFiltersV745();try{window.loadNotificationCenter();}catch(e){}},180);
+    return r;
+  };
+
+  function forceScheduleSortV745(){
+    ['unifiedScheduleSortV702','scheduleSort'].forEach(id=>{
+      const sel=$(id); if(!sel)return;
+      if(!sel.dataset.v745SortHook){sel.dataset.v745SortHook='1';sel.addEventListener('change',()=>{sel.dataset.v745Touched='1';});}
+      if(!sel.dataset.v745Touched&&(!sel.value||sel.value==='dateAsc'))sel.value='dateDesc';
+    });
+  }
+  const oldRenderUnifiedV745=window.renderUnifiedScheduleV702;
+  if(typeof oldRenderUnifiedV745==='function')window.renderUnifiedScheduleV702=function(){forceScheduleSortV745();const r=oldRenderUnifiedV745.apply(this,arguments);forceScheduleSortV745();return r;};
+
+  function stripDeptPrefixV745(text){return String(text||'').replace(/(^|[\s(])\d{1,3}\s+(กลุ่มงาน[^\n,•|]+)/g,'$1$2').replace(/^\s*\d{1,3}\s+(กลุ่มงาน.*)$/,'$1');}
+  window.stripDepartmentPrefixV745=stripDeptPrefixV745;
+  function cleanDeptDomV745(root=document.body){
+    if(!root)return;
+    qa('option',root).forEach(opt=>{const clean=stripDeptPrefixV745(opt.textContent);if(clean!==opt.textContent)opt.textContent=clean;});
+    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode(node){
+      const parent=node.parentElement;
+      if(!parent||/SCRIPT|STYLE|TEXTAREA|INPUT|SELECT/.test(parent.tagName))return NodeFilter.FILTER_REJECT;
+      return /\d{1,3}\s+กลุ่มงาน/.test(node.nodeValue||'')?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT;
+    }});
+    const nodes=[];
+    while(walker.nextNode())nodes.push(walker.currentNode);
+    nodes.forEach(node=>{const clean=stripDeptPrefixV745(node.nodeValue);if(clean!==node.nodeValue)node.nodeValue=clean;});
+  }
+  let deptTimer=null;
+  const obs=new MutationObserver(()=>{clearTimeout(deptTimer);deptTimer=setTimeout(()=>cleanDeptDomV745(),120);});
+  function bootV745(){
+    ensureCreateBuilderV745();
+    ensureEditPopupV745();
+    patchGoogleRunnerV745();
+    installHeroCalendarButtonV745();
+    forceScheduleSortV745();
+    cleanDeptDomV745();
+    try{obs.observe(document.body,{childList:true,subtree:true,characterData:true});}catch(e){}
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootV745,{once:true});else bootV745();
+  setInterval(()=>{ensureCreateBuilderV745();ensureEditPopupV745();patchGoogleRunnerV745();installHeroCalendarButtonV745();forceScheduleSortV745();},1200);
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
