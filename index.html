@@ -18790,14 +18790,14 @@ HAOS v68.6 FINISHING FIX
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
-<style id="haos-v70-52-remote-support-entry-style">
+<style id="haos-v70-56-remote-support-entry-style">
   #remoteSupportCardV752 .card{border-color:rgba(14,165,233,.45)!important;background:linear-gradient(180deg,#ffffff,#f0f9ff)!important}
   #remoteSupportCardV752 .remote-entry-icon{width:58px;height:58px;border-radius:20px;display:grid;place-items:center;background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff;font-size:1.9rem;box-shadow:0 16px 32px rgba(37,99,235,.22)}
   #remoteSupportCardV752 .btn{border-radius:14px!important;font-weight:900!important}
 </style>
-<script id="haos-v70-52-remote-support-entry-script">
+<script id="haos-v70-56-remote-support-entry-script">
 (function(){
-  const PATCH='v70.52-remote-support-entry';
+  const PATCH='v70.56-remote-support-phase5-entry';
   if(window.__HAOS_V752_REMOTE_ENTRY__)return;
   window.__HAOS_V752_REMOTE_ENTRY__=true;
   function currentUserV752(){try{if(typeof window.currentUser==='function')return window.currentUser()||{};}catch(e){}try{return window.user||user||{};}catch(e){return window.user||{};}}
@@ -18814,7 +18814,7 @@ HAOS v68.6 FINISHING FIX
     const u=currentUserV752();
     const phone=String(u.phone||'').replace(/\D/g,'');
     const mode=isRemoteStaffV752()?'staff':'user';
-    const url='/remote.html?mode='+encodeURIComponent(mode)+(phone?('&phone='+encodeURIComponent(phone)):'');
+    const url='/remote.html?v=7056&mode='+encodeURIComponent(mode)+(phone?('&phone='+encodeURIComponent(phone)):'');
     window.open(url,'_blank','noopener');
   };
   function installRemoteSupportCardV752(){
@@ -18829,12 +18829,12 @@ HAOS v68.6 FINISHING FIX
     const staff=isRemoteStaffV752();
     const u=currentUserV752();
     const phone=String(u.phone||'').replace(/\D/g,'');
-    const staffUrl='/remote.html?mode=staff'+(phone?('&phone='+encodeURIComponent(phone)):'');
+    const staffUrl='/remote.html?v=7056&mode=staff'+(phone?('&phone='+encodeURIComponent(phone)):'');
     card.innerHTML=`<div class="card h-100 it-service-card">
       <div class="card-body p-4 d-flex flex-column">
         <div class="remote-entry-icon mb-3"><i class="bi bi-display"></i></div>
         <h6 class="fw-bold">ช่วยเหลือทางไกล</h6>
-        <p class="text-muted small flex-grow-1">${staff?'คอนโซลเจ้าหน้าที่สำหรับรับงาน ดูหน้าจอ และช่วยควบคุมหลังผู้ใช้ยินยอม':'ขอให้ IT ช่วยเหลือแบบเร็ว ผู้ใช้เห็นเฉพาะขั้นตอนที่จำเป็น ไม่แสดงเครื่องมือผู้ดูแลระบบ'}</p>
+        <p class="text-muted small flex-grow-1">${staff?'คอนโซลเจ้าหน้าที่แบบ Realtime สำหรับรับงาน ดูหน้าจอ และช่วยควบคุมหลังผู้ใช้ยินยอม':'ขอให้ IT ช่วยเหลือแบบเร็ว ผู้ใช้เห็นเฉพาะขั้นตอนที่จำเป็น ไม่แสดงเครื่องมือผู้ดูแลระบบ'}</p>
         <div class="d-flex gap-2 flex-wrap">
           <button class="btn btn-primary btn-sm fw-bold" onclick="openRemoteSupportHubV752()"><i class="bi bi-box-arrow-up-right"></i> ${staff?'เปิดคอนโซล':'ขอความช่วยเหลือ'}</button>
           ${staff?`<a class="btn btn-outline-secondary btn-sm fw-bold" href="${staffUrl}" target="_blank" rel="noopener"><i class="bi bi-shield-check"></i> Staff</a>`:''}

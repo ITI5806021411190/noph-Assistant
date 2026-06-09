@@ -68,8 +68,8 @@
       <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
         <div>
           <div class="remote-pill mb-3"><i class="bi bi-display"></i> Remote Support Hub</div>
-          <h1>ช่วยเหลือทางไกลแบบ Portable Agent</h1>
-          <p>Phase 2-4 MVP: Portable Agent, ดูหน้าจอแบบ View-only, และควบคุมเครื่องแบบต้องได้รับการยินยอม พร้อม audit log และ rollback database แยกชัดเจน</p>
+          <h1>ช่วยเหลือทางไกลแบบ Realtime Agent</h1>
+          <p>Phase 5 Realtime: ผู้ใช้เปิด Agent แบบพกพา เจ้าหน้าที่ดูหน้าจอและควบคุมได้หลังผู้ใช้ยินยอม พร้อม audit log และ fallback สำรองเมื่อ relay ใช้งานไม่ได้</p>
         </div>
         <div class="remote-pill" id="configBadge"><i class="bi bi-hourglass-split"></i> กำลังตรวจสถานะ...</div>
       </div>
@@ -79,8 +79,8 @@
       <div class="panel-head">
         <ul class="nav nav-pills gap-2" id="remoteTabs" role="tablist">
           <li class="nav-item" role="presentation"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#requestPane" type="button"><i class="bi bi-plus-circle"></i> ขอความช่วยเหลือ</button></li>
-          <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#staffPane" type="button"><i class="bi bi-headset"></i> Staff Dashboard</button></li>
-          <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#agentPane" type="button"><i class="bi bi-cpu"></i> Agent Check-in</button></li>
+          <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#staffPane" type="button"><i class="bi bi-headset"></i> คอนโซลเจ้าหน้าที่</button></li>
+          <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#agentPane" type="button"><i class="bi bi-cpu"></i> Agent Legacy</button></li>
           <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#rollbackPane" type="button"><i class="bi bi-arrow-counterclockwise"></i> Rollback</button></li>
         </ul>
         <a class="btn btn-outline-secondary btn-sm" href="/"><i class="bi bi-house"></i> กลับระบบหลัก</a>
@@ -106,12 +106,12 @@
               </div>
               <div class="col-lg-5">
                 <div class="support-card h-100" id="sessionResult">
-                  <h5 class="fw-bold"><i class="bi bi-info-circle text-info"></i> วิธีใช้งาน Phase 2-4 MVP</h5>
+                  <h5 class="fw-bold"><i class="bi bi-info-circle text-info"></i> วิธีใช้งาน Phase 5 Realtime</h5>
                   <ol class="mini-muted mb-0">
                     <li>ผู้ใช้สร้าง session code จากหน้านี้</li>
-                    <li>เจ้าหน้าที่เปิด Staff Dashboard เพื่อรับงาน</li>
+                    <li>เจ้าหน้าที่เปิดคอนโซลเจ้าหน้าที่เพื่อรับงาน</li>
                     <li>ผู้ใช้เปิด Portable Agent แล้วกรอก code เดียวกัน</li>
-                    <li>หลัง build Portable Agent แล้ว เจ้าหน้าที่จะดูหน้าจอและควบคุมได้เมื่อผู้ใช้กดยินยอมเท่านั้น</li>
+                    <li>เจ้าหน้าที่เปิด Realtime Viewer เพื่อดูหน้าจอและควบคุมได้เมื่อผู้ใช้กดยินยอมเท่านั้น</li>
                   </ol>
                 </div>
               </div>
@@ -122,7 +122,7 @@
             <div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-3">
               <div class="row g-2 flex-grow-1">
                 <div class="col-md-3"><label class="small fw-bold">เบอร์เจ้าหน้าที่</label><input id="staffPhone" class="form-control" inputmode="numeric" maxlength="10"></div>
-                <div class="col-md-3"><label class="small fw-bold">สถานะ</label><select id="staffStatus" class="form-select"><option value="">ทั้งหมด</option><option>Waiting</option><option>Agent Ready</option><option>Assigned</option><option>In Session</option><option>Closed</option><option>Canceled</option></select></div>
+                <div class="col-md-3"><label class="small fw-bold">สถานะ</label><select id="staffStatus" class="form-select"><option value="__active" selected>งานที่ยังเปิดอยู่</option><option value="">ทั้งหมด</option><option>Waiting</option><option>Agent Ready</option><option>Assigned</option><option>In Session</option><option>Closed</option><option>Canceled</option></select></div>
                 <div class="col-md-4"><label class="small fw-bold">ค้นหา</label><input id="staffQuery" class="form-control" placeholder="code, ชื่อ, กลุ่มงาน, หัวข้อ"></div>
                 <div class="col-md-2 d-grid"><label class="small fw-bold">&nbsp;</label><button class="btn btn-outline-primary" onclick="loadStaffSessions()"><i class="bi bi-arrow-clockwise"></i> โหลด</button></div>
               </div>
@@ -134,10 +134,10 @@
             <div class="row g-3">
               <div class="col-lg-6">
                 <div class="support-card">
-                  <h5 class="fw-bold mb-3"><i class="bi bi-cpu text-success"></i> Portable Agent Check-in</h5>
+                  <h5 class="fw-bold mb-3"><i class="bi bi-cpu text-success"></i> Agent Legacy Check-in</h5>
                   <p class="mini-muted">หน้านี้จำลอง flow ที่ตัว <code>.exe</code> จะเรียกใช้ในอนาคต: กรอก session code, แจ้งว่า Agent พร้อม, และบันทึก heartbeat/audit log</p>
                   <label class="small fw-bold">Session Code</label><input id="agentCode" class="form-control mb-2" maxlength="6" inputmode="numeric">
-                  <label class="small fw-bold">Agent Version</label><input id="agentVersion" class="form-control mb-3" value="HealthAssistantRemoteAgent portable MVP">
+                  <label class="small fw-bold">Agent Version</label><input id="agentVersion" class="form-control mb-3" value="HealthAssistantRemoteAgent v0.3.0 Realtime">
                   <div class="d-flex flex-wrap gap-2">
                     <button class="btn btn-success" onclick="agentReady()"><i class="bi bi-check-circle"></i> แจ้งว่า Agent พร้อม</button>
                     <button class="btn btn-outline-primary" onclick="loadAgentSession()"><i class="bi bi-search"></i> ตรวจ Session</button>
@@ -330,7 +330,7 @@
     (function(){
       if(window.__REMOTE_SUPPORT_V753__)return;
       window.__REMOTE_SUPPORT_V753__=true;
-      const phaseLabel='<span class="phase-pill"><i class="bi bi-shield-check"></i> Phase 2-4 MVP</span>';
+      const phaseLabel='<span class="phase-pill phase-live"><i class="bi bi-broadcast-pin"></i> Phase 5 Realtime</span>';
       const viewerState={sessionId:'', staffPhone:'', timer:null, lastFrameId:'', session:null};
       function api(fn,args){return gas(fn,args||[]);}
       function sessionCanControl(s){return /Control Approved/i.test(String((s&&s.controlStatus)||''));}
@@ -669,7 +669,13 @@
       };
       window.renderStaffCard=function(s){
         const control=/Control Approved/i.test(String((s&&s.controlStatus)||''));
-        return `<div class="col-lg-6"><article class="support-card staff-fast-card h-100"><div class="d-flex justify-content-between gap-2"><div><h6 class="fw-bold mb-1">${esc(s.subject||'-')}</h6><div class="mini-muted">${esc(s.requesterName||'-')} · ${esc(s.department||'-')} · Code ${esc(s.sessionCode||'-')}</div></div>${statusBadge(s.status)}</div><div class="mt-3 mini-muted"><b>ปัญหา:</b> ${esc(s.description||'-')}<br><b>Agent:</b> ${esc(s.agentVersion||'ยังไม่เปิด Agent')}<br><b>สิทธิ์ควบคุม:</b> <span class="${control?'text-success':'text-warning'} fw-bold">${esc(s.controlStatus||'ยังไม่อนุญาต')}</span></div><div class="staff-fast-actions d-flex flex-wrap gap-2 mt-3"><button class="btn btn-primary btn-sm" onclick="quickStartRemoteSessionV754('${esc(s.sessionId)}')"><i class="bi bi-play-circle"></i> รับงานและเปิด Viewer</button><button class="btn btn-warning btn-sm" onclick="requestRemoteControlForSessionV753('${esc(s.sessionId)}')"><i class="bi bi-shield-lock"></i> ขอควบคุม</button><button class="btn btn-outline-secondary btn-sm" onclick="sessionAction('${esc(s.sessionId)}','end')"><i class="bi bi-check-circle"></i> จบงาน</button></div></article></div>`;
+        return `<div class="col-lg-6"><article class="support-card staff-fast-card h-100"><div class="d-flex justify-content-between gap-2"><div><h6 class="fw-bold mb-1">${esc(s.subject||'-')}</h6><div class="mini-muted">${esc(s.requesterName||'-')} · ${esc(s.department||'-')} · Code ${esc(s.sessionCode||'-')}</div></div>${statusBadge(s.status)}</div><div class="mt-3 mini-muted"><b>ปัญหา:</b> ${esc(s.description||'-')}<br><b>Agent:</b> ${esc(s.agentVersion||'ยังไม่เปิด Agent')}<br><b>สิทธิ์ควบคุม:</b> <span class="${control?'text-success':'text-warning'} fw-bold">${esc(s.controlStatus||'ยังไม่อนุญาต')}</span></div><div class="staff-fast-actions d-flex flex-wrap gap-2 mt-3"><button class="btn btn-success btn-sm" onclick="openRealtimeViewerV755('${esc(s.sessionCode)}')"><i class="bi bi-broadcast-pin"></i> เปิด Realtime</button><button class="btn btn-outline-primary btn-sm" onclick="quickStartRemoteSessionV754('${esc(s.sessionId)}')"><i class="bi bi-life-preserver"></i> สำรอง</button><button class="btn btn-warning btn-sm" onclick="requestRemoteControlForSessionV753('${esc(s.sessionId)}')"><i class="bi bi-shield-lock"></i> ขอควบคุม</button><button class="btn btn-outline-secondary btn-sm" onclick="sessionAction('${esc(s.sessionId)}','end')"><i class="bi bi-check-circle"></i> จบงาน</button></div></article></div>`;
+      };
+      window.openRealtimeViewerV755=function(sessionCode){
+        const phone=phoneOnly($('staffPhone')?.value||'');
+        const code=String(sessionCode||'').replace(/\D/g,'').slice(0,6);
+        const url='/remote-live.html?code='+encodeURIComponent(code)+(phone?'&phone='+encodeURIComponent(phone):'');
+        window.open(url,'_blank','noopener');
       };
       window.quickStartRemoteSessionV754=async function(sessionId){
         const phone=phoneOnly($('staffPhone')?.value||'');
@@ -682,6 +688,196 @@
         }catch(e){Swal.fire('เริ่มช่วยเหลือไม่สำเร็จ',e.message||String(e),'error');}
       };
       if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(applyRoleUxV754,120),{once:true});else setTimeout(applyRoleUxV754,120);
+      console.info('Remote Support '+PATCH+' loaded');
+    })();
+  </script>
+  <style id="remote-v70-56-phase5-clean-style">
+    .phase-live{background:#ecfdf5!important;color:#047857!important;border-color:#86efac!important}
+    .phase-fallback{background:#fff7ed!important;color:#b45309!important;border-color:#fed7aa!important}
+    .relay-status-v756{border:1px solid rgba(14,165,233,.25);border-radius:18px;background:linear-gradient(180deg,#f0f9ff,#fff);padding:12px 14px;margin-bottom:12px;color:#334155;font-weight:800}
+    .relay-status-v756.ok{border-color:rgba(16,185,129,.38);background:linear-gradient(180deg,#ecfdf5,#fff)}
+    .relay-status-v756.warn{border-color:rgba(245,158,11,.4);background:linear-gradient(180deg,#fff7ed,#fff)}
+    .staff-fast-card.v756-live{border-left:7px solid #10b981;background:linear-gradient(90deg,rgba(16,185,129,.09),#fff 38%)}
+    .legacy-agent-v756{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:.25rem .55rem;background:#fff7ed;color:#b45309;border:1px solid #fed7aa;font-weight:900;font-size:.78rem}
+    .live-agent-v756{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:.25rem .55rem;background:#ecfdf5;color:#047857;border:1px solid #bbf7d0;font-weight:900;font-size:.78rem}
+    .remote-help-muted-v756{font-size:.85rem;color:#64748b;line-height:1.55}
+  </style>
+  <script id="remote-v70-56-phase5-clean-script">
+    (function(){
+      if(window.__REMOTE_SUPPORT_V756_PHASE5_CLEAN__)return;
+      window.__REMOTE_SUPPORT_V756_PHASE5_CLEAN__=true;
+      const PATCH='v70.56-remote-support-phase5-clean-primary';
+      const ACTIVE='__active';
+      const CLOSED_RE=/^(Closed|Canceled)$/i;
+      function safe(id){return document.getElementById(id);}
+      function text(el,value){if(el)el.textContent=value;}
+      function html(el,value){if(el)el.innerHTML=value;}
+      function isLegacyAgent(s){
+        const v=String((s&&s.agentVersion)||'');
+        return /v0\.2|MVP|portable MVP/i.test(v);
+      }
+      function fmtDateV756(v){
+        try{return v?new Date(v).toLocaleString('th-TH'):'';}catch(e){return String(v||'');}
+      }
+      function setTabVisibleV756(target, visible){
+        const btn=document.querySelector(`[data-bs-target="${target}"]`);
+        const item=btn&&btn.closest('.nav-item');
+        if(item)item.style.display=visible?'':'none';
+      }
+      function activatePaneV756(target){
+        const btn=document.querySelector(`[data-bs-target="${target}"]`);
+        if(btn&&window.bootstrap)bootstrap.Tab.getOrCreateInstance(btn).show();
+      }
+      function ensureStaffFilterV756(){
+        const sel=safe('staffStatus');
+        if(!sel)return;
+        let active=Array.from(sel.options).find(o=>o.value===ACTIVE);
+        if(!active){
+          active=document.createElement('option');
+          active.value=ACTIVE;
+          active.textContent='งานที่ยังเปิดอยู่';
+          sel.insertBefore(active,sel.firstChild);
+        }
+        if(!sel.value)sel.value=ACTIVE;
+        if(!sel.dataset.v756Bound){
+          sel.dataset.v756Bound='1';
+          sel.addEventListener('change',()=>{if(phoneOnly(safe('staffPhone')?.value||'').length===10)loadStaffSessions();});
+        }
+      }
+      function currentModeV756(){
+        if(document.body.classList.contains('remote-user-simple'))return 'user';
+        const activePane=document.querySelector('.tab-pane.active');
+        if(activePane&&activePane.id==='staffPane')return 'staff';
+        const mode=String(new URLSearchParams(location.search).get('mode')||'').toLowerCase();
+        return mode==='staff'||mode==='admin'?'staff':'user';
+      }
+      function updatePhase5HeroV756(mode){
+        const h=document.querySelector('.remote-hero h1');
+        const p=document.querySelector('.remote-hero p');
+        if(mode==='staff'){
+          text(h,'คอนโซลช่วยเหลือทางไกล Realtime');
+          text(p,'รับงาน ดูหน้าจอแบบสด ขอสิทธิ์ควบคุม และจบงานจากหน้าเดียวสำหรับเจ้าหน้าที่ โดยใช้ Fallback เฉพาะกรณีสำรอง');
+        }else{
+          text(h,'ขอให้ IT ช่วยเหลือทางไกล');
+          text(p,'กรอกปัญหา เปิด Portable Agent แล้วรอเจ้าหน้าที่ช่วยเหลือ ผู้ใช้จะเห็นเฉพาะขั้นตอนที่จำเป็นเท่านั้น');
+        }
+      }
+      function applyRoleCleanV756(){
+        const mode=currentModeV756();
+        updatePhase5HeroV756(mode);
+        const staffTab=document.querySelector('[data-bs-target="#staffPane"]');
+        if(staffTab)staffTab.innerHTML='<i class="bi bi-headset"></i> คอนโซลเจ้าหน้าที่';
+        setTabVisibleV756('#agentPane',false);
+        if(mode==='staff'){
+          document.body.classList.remove('remote-user-simple');
+          setTabVisibleV756('#requestPane',false);
+          setTabVisibleV756('#staffPane',true);
+          activatePaneV756('#staffPane');
+          ensureStaffFilterV756();
+        }else{
+          document.body.classList.add('remote-user-simple');
+          setTabVisibleV756('#requestPane',true);
+          setTabVisibleV756('#staffPane',false);
+          setTabVisibleV756('#rollbackPane',false);
+          activatePaneV756('#requestPane');
+        }
+      }
+      function relayMessageV756(cfg){
+        const relayReady=!!(cfg&&cfg.relayUrl);
+        return relayReady
+          ? '<i class="bi bi-broadcast-pin"></i> Realtime Relay พร้อมใช้งาน เจ้าหน้าที่ควรใช้ปุ่ม <b>เปิด Realtime</b> เป็นหลัก'
+          : '<i class="bi bi-exclamation-triangle"></i> ยังไม่ได้ตั้งค่า Realtime Relay ระบบยังใช้ Fallback สำรองได้ แต่จะช้ากว่า';
+      }
+      window.loadConfig=async function(){
+        try{
+          let res;
+          try{res=await gas('getRemoteSupportConfigV755',[]);}catch(e){res=await gas('getRemoteSupportConfigV753',[]);}
+          remoteConfig=res||{enabled:true};
+          const relayReady=!!remoteConfig.relayUrl;
+          const phase=relayReady
+            ? '<span class="phase-pill phase-live"><i class="bi bi-broadcast-pin"></i> Phase 5 Realtime</span>'
+            : '<span class="phase-pill phase-fallback"><i class="bi bi-life-preserver"></i> Fallback สำรอง</span>';
+          html(safe('configBadge'),remoteConfig.enabled?'<i class="bi bi-check-circle"></i> เปิดใช้งาน '+phase:'<i class="bi bi-pause-circle"></i> ปิดใช้งาน');
+          safe('disabledAlert')?.classList.toggle('d-none',!!remoteConfig.enabled);
+          const staffPane=safe('staffPane');
+          if(staffPane&&!safe('relayStatusV756')){
+            staffPane.insertAdjacentHTML('afterbegin','<div id="relayStatusV756" class="relay-status-v756"></div>');
+          }
+          const box=safe('relayStatusV756');
+          if(box){
+            box.className='relay-status-v756 '+(relayReady?'ok':'warn');
+            box.innerHTML=relayMessageV756(remoteConfig);
+          }
+        }catch(e){
+          html(safe('configBadge'),'<i class="bi bi-wifi-off"></i> ตรวจสถานะไม่ได้');
+        }
+      };
+      window.loadStaffSessions=async function(){
+        const phone=phoneOnly(safe('staffPhone')?.value||'');
+        if(phone.length!==10)return Swal.fire('กรุณาระบุเบอร์เจ้าหน้าที่','','warning');
+        ensureStaffFilterV756();
+        const rawStatus=safe('staffStatus')?.value||ACTIVE;
+        const backendStatus=rawStatus===ACTIVE?'':rawStatus;
+        html(safe('staffSessions'),'<div class="col-12 text-center py-4"><span class="spinner-border spinner-border-sm"></span> กำลังโหลด...</div>');
+        try{
+          const res=await gas('getRemoteSupportSessionsV753',[phone,'','',{status:backendStatus,query:(safe('staffQuery')?.value||'').trim()}]);
+          if(!res||!res.success)throw new Error(res?.message||'โหลดไม่สำเร็จ');
+          let list=res.sessions||[];
+          if(rawStatus===ACTIVE)list=list.filter(s=>!CLOSED_RE.test(String(s.status||'')));
+          list.sort((a,b)=>String(b.updatedAt||b.createdAt||'').localeCompare(String(a.updatedAt||a.createdAt||'')));
+          html(safe('staffSessions'),list.length?list.map(renderStaffCard).join(''):'<div class="col-12 text-center text-muted py-4">ยังไม่มีงานที่ต้องดำเนินการ</div>');
+        }catch(e){
+          html(safe('staffSessions'),`<div class="col-12 text-danger text-center py-4">${esc(e.message||String(e))}</div>`);
+        }
+      };
+      window.renderStaffCard=function(s){
+        const control=/Control Approved/i.test(String((s&&s.controlStatus)||''));
+        const legacy=isLegacyAgent(s);
+        const code=String((s&&s.sessionCode)||'').replace(/\D/g,'').slice(0,6);
+        const agent=s&&s.agentVersion?esc(s.agentVersion):(legacy?'Agent รุ่นเก่า':'ยังไม่เปิด Agent');
+        const agentBadge=legacy
+          ? '<span class="legacy-agent-v756"><i class="bi bi-exclamation-triangle"></i> Agent รุ่นเก่า</span>'
+          : '<span class="live-agent-v756"><i class="bi bi-broadcast-pin"></i> พร้อม Realtime</span>';
+        const liveBtn=legacy
+          ? `<a class="btn btn-outline-success btn-sm" href="/agent/dist/HealthAssistantRemoteAgent.exe" download><i class="bi bi-download"></i> ให้ผู้ใช้โหลด Agent ใหม่</a>`
+          : `<button class="btn btn-success btn-sm" onclick="openRealtimeViewerV755('${esc(code)}')"><i class="bi bi-broadcast-pin"></i> เปิด Realtime</button>`;
+        return `<div class="col-lg-6"><article class="support-card staff-fast-card v756-live h-100">
+          <div class="d-flex justify-content-between gap-2"><div><h6 class="fw-bold mb-1">${esc(s.subject||'-')}</h6><div class="mini-muted">${esc(s.requesterName||'-')} · ${esc(s.department||'-')} · Code ${esc(code||'-')}</div></div>${statusBadge(s.status)}</div>
+          <div class="mt-3 remote-help-muted-v756"><b>ปัญหา:</b> ${esc(s.description||'-')}<br><b>Agent:</b> ${agent} ${agentBadge}<br><b>สิทธิ์ควบคุม:</b> <span class="${control?'text-success':'text-warning'} fw-bold">${esc(s.controlStatus||'ยังไม่อนุญาต')}</span>${s.updatedAt?'<br><b>อัปเดตล่าสุด:</b> '+esc(fmtDateV756(s.updatedAt)):''}</div>
+          <div class="staff-fast-actions d-flex flex-wrap gap-2 mt-3">
+            ${liveBtn}
+            <button class="btn btn-outline-primary btn-sm" onclick="openFallbackViewerV756('${esc(s.sessionId)}')"><i class="bi bi-life-preserver"></i> สำรอง</button>
+            <button class="btn btn-warning btn-sm" onclick="requestRemoteControlForSessionV753('${esc(s.sessionId)}')"><i class="bi bi-shield-lock"></i> ขอควบคุม</button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="sessionAction('${esc(s.sessionId)}','end')"><i class="bi bi-check-circle"></i> จบงาน</button>
+          </div>
+        </article></div>`;
+      };
+      window.openRealtimeViewerV755=function(sessionCode){
+        const phone=phoneOnly(safe('staffPhone')?.value||'');
+        const code=String(sessionCode||'').replace(/\D/g,'').slice(0,6);
+        if(code.length!==6)return Swal.fire('ไม่พบ Session Code','กรุณาโหลดรายการใหม่อีกครั้ง','warning');
+        const url='/remote-live.html?v=7056&code='+encodeURIComponent(code)+(phone?'&phone='+encodeURIComponent(phone):'');
+        window.open(url,'_blank','noopener');
+      };
+      window.openFallbackViewerV756=function(sessionId){
+        Swal.fire({
+          icon:'info',
+          title:'เปิดโหมดสำรอง',
+          text:'โหมดนี้ใช้เมื่อ Realtime Relay หรือ Agent ใหม่ยังไม่พร้อม ภาพจะช้ากว่าโหมด Realtime',
+          showCancelButton:true,
+          confirmButtonText:'เปิดสำรอง',
+          cancelButtonText:'ยกเลิก'
+        }).then(r=>{if(r.isConfirmed&&typeof quickStartRemoteSessionV754==='function')quickStartRemoteSessionV754(sessionId);});
+      };
+      function bootV756(){
+        applyRoleCleanV756();
+        loadConfig();
+        const phone=phoneOnly(safe('staffPhone')?.value||'');
+        if(currentModeV756()==='staff'&&phone.length===10)setTimeout(loadStaffSessions,120);
+      }
+      if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(bootV756,320),{once:true});else setTimeout(bootV756,320);
+      setTimeout(bootV756,1200);
+      setTimeout(bootV756,2400);
       console.info('Remote Support '+PATCH+' loaded');
     })();
   </script>
