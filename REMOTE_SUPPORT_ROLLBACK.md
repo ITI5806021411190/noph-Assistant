@@ -24,6 +24,18 @@
 - `Settings.REMOTE_SUPPORT_ENABLED`
   - ใช้เปิด/ปิดโมดูลทันที
 
+- `Settings.REMOTE_SUPPORT_RELAY_URL`
+  - URL ของ WebSocket relay สำหรับโหมด realtime
+
+- `Settings.REMOTE_SUPPORT_RELAY_SECRET`
+  - shared secret สำหรับป้องกัน relay ถ้ามีการตั้งค่า
+
+- `remote-live.html`
+  - หน้าควบคุม realtime สำหรับเจ้าหน้าที่ ใช้ WebSocket relay ไม่ส่งภาพผ่าน Google Sheet
+
+- `remote-relay/`
+  - server แยกสำหรับส่งภาพและคำสั่งแบบ realtime ต้อง deploy บนบริการที่รองรับ WebSocket
+
 - `Notifications`
   - อาจมีรายการประเภท `Remote Support` หรือ module `remoteSupport`
 
@@ -83,6 +95,22 @@
 - ปิดโมดูลหลัง rollback
 - ไม่แตะ `Users`, `Schedules`, `ITBookings`, `DailyReports`, `CollaborativeWorkspaces`
 
+## Rollback โหมด Realtime Relay
+
+ถ้า relay ไม่เวิร์ก แต่ยังอยากเก็บ remote support แบบ fallback:
+
+1. ล้างค่า `REMOTE_SUPPORT_RELAY_URL`
+2. ล้างค่า `REMOTE_SUPPORT_RELAY_SECRET` ถ้ามี
+3. หยุด/ลบ deployment ของ `remote-relay`
+4. ใช้ `Fallback Viewer` ใน `remote.html` ได้เหมือน Phase 2-4
+
+ถ้าต้องการถอดทั้งหมด:
+
+1. ทำ rollback database จาก `remote.html`
+2. ลบ/ไม่ deploy `remote-live.html`
+3. ลบ/ไม่ deploy โฟลเดอร์ `remote-relay/`
+4. ใช้ `agent/build_portable.ps1` build Agent ใหม่หลังถอดโค้ด realtime ถ้าต้องการลดขนาดไฟล์
+
 ## ฟังก์ชัน Apps Script ที่เกี่ยวข้อง
 
 - `getRemoteSupportConfigV752`
@@ -106,10 +134,17 @@
 - `ackRemoteSupportCommandV753`
 - `cleanupRemoteSupportDatabaseV753`
 - `bridgeWhitelistHealthCheckV753`
+- `getRemoteSupportPortalV754`
+- `bridgeWhitelistHealthCheckV754`
+- `getRemoteSupportConfigV755`
+- `getRemoteSupportRelayTokenV755`
+- `getRemoteSupportAgentConfigV755`
+- `setRemoteSupportRelayConfigV755`
+- `bridgeWhitelistHealthCheckV755`
 
 ## หมายเหตุด้านความปลอดภัย
 
-- Phase 2-4 MVP รองรับ view-only และ remote control แบบต้องยินยอม
+- Phase 5 realtime relay รองรับ view-only และ remote control แบบลื่นขึ้น แต่ยังต้องยินยอม
 - Portable Agent ต้องให้ผู้ใช้กดยินยอมทุกครั้ง
 - ไม่ควรเปิด unattended access ในช่วงแรก
 - ควรเก็บ audit log ทุกครั้งที่เริ่ม ดูหน้าจอ ขอควบคุม และจบ session
