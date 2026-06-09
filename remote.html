@@ -674,7 +674,7 @@
       window.openRealtimeViewerV755=function(sessionCode){
         const phone=phoneOnly($('staffPhone')?.value||'');
         const code=String(sessionCode||'').replace(/\D/g,'').slice(0,6);
-        const url='/remote-live.html?code='+encodeURIComponent(code)+(phone?'&phone='+encodeURIComponent(phone):'');
+        const url='/remote-live.html?v=7057&code='+encodeURIComponent(code)+(phone?'&phone='+encodeURIComponent(phone):'');
         window.open(url,'_blank','noopener');
       };
       window.quickStartRemoteSessionV754=async function(sessionId){
@@ -706,7 +706,7 @@
     (function(){
       if(window.__REMOTE_SUPPORT_V756_PHASE5_CLEAN__)return;
       window.__REMOTE_SUPPORT_V756_PHASE5_CLEAN__=true;
-      const PATCH='v70.56-remote-support-phase5-clean-primary';
+      const PATCH='v70.57-remote-support-live-route-fix';
       const ACTIVE='__active';
       const CLOSED_RE=/^(Closed|Canceled)$/i;
       function safe(id){return document.getElementById(id);}
@@ -856,7 +856,7 @@
         const phone=phoneOnly(safe('staffPhone')?.value||'');
         const code=String(sessionCode||'').replace(/\D/g,'').slice(0,6);
         if(code.length!==6)return Swal.fire('ไม่พบ Session Code','กรุณาโหลดรายการใหม่อีกครั้ง','warning');
-        const url='/remote-live.html?v=7056&code='+encodeURIComponent(code)+(phone?'&phone='+encodeURIComponent(phone):'');
+        const url='/remote-live.html?v=7057&code='+encodeURIComponent(code)+(phone?'&phone='+encodeURIComponent(phone):'');
         window.open(url,'_blank','noopener');
       };
       window.openFallbackViewerV756=function(sessionId){

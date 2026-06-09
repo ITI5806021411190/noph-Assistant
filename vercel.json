@@ -1,24 +1,18 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
-  "headers": [
+  "trailingSlash": false,
+  "rewrites": [
     {
-      "source": "/(.*).html",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store"
-        }
-      ]
+      "source": "/remote-live",
+      "destination": "/remote-live.html"
     },
     {
-      "source": "/api/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store"
-        }
-      ]
+      "source": "/remote",
+      "destination": "/remote.html"
+    },
+    {
+      "source": "/public",
+      "destination": "/public.html"
     }
   ]
 }

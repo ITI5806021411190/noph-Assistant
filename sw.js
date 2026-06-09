@@ -1,5 +1,5 @@
-const CACHE_NAME = 'haos-v70-56-remote-support-phase5-clean';
-const CORE = ['/', '/index.html', '/public.html', '/remote.html', '/remote-live.html', '/manifest.json', '/icon-192.png', '/icon-512.png', '/logo-moph.png'];
+const CACHE_NAME = 'haos-v70-57-remote-live-route-fix';
+const CORE = ['/', '/index.html', '/public.html', '/public', '/remote.html', '/remote', '/remote-live.html', '/remote-live', '/manifest.json', '/icon-192.png', '/icon-512.png', '/logo-moph.png'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(CORE)).catch(() => {}));
   self.skipWaiting();
@@ -12,6 +12,16 @@ self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
   if (url.pathname.startsWith('/api/')) return;
+  if (url.pathname === '/remote-live') {
+    const target = new URL('/remote-live.html' + url.search, url.origin);
+    event.respondWith(fetch(target).then(response => {
+      if (!response || !response.ok) return response;
+      const copy = response.clone();
+      caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy)).catch(() => {});
+      return response;
+    }).catch(() => caches.match('/remote-live.html').then(r => r || caches.match('/index.html'))));
+    return;
+  }
   event.respondWith(
     fetch(event.request).then(response => {
       if (!response || !response.ok) return response;
