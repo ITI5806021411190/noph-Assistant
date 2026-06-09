@@ -533,5 +533,157 @@
       console.info('Remote Support v70.53 viewer/control loaded');
     })();
   </script>
+  <style id="remote-v70-54-role-ux-style">
+    body.remote-user-simple .remote-shell{max-width:980px}
+    body.remote-user-simple #remoteTabs{display:none!important}
+    body.remote-user-simple .remote-panel .panel-head{justify-content:flex-end}
+    body.remote-user-simple .remote-hero{background:linear-gradient(135deg,#0ea5e9,#2563eb 48%,#22c55e)}
+    .quick-user-panel{border:1px solid rgba(14,165,233,.28);border-radius:22px;background:linear-gradient(180deg,#f0f9ff,#fff);padding:18px;margin-bottom:16px}
+    .quick-user-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+    .quick-step{border:1px solid rgba(148,163,184,.24);border-radius:18px;background:#fff;padding:14px;min-height:108px}
+    .quick-step .num{width:34px;height:34px;border-radius:12px;display:grid;place-items:center;background:#2563eb;color:#fff;font-weight:900;margin-bottom:8px}
+    .user-next-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .user-code-card{border:1px solid rgba(16,185,129,.35);border-radius:20px;background:#ecfdf5;padding:16px;text-align:center}
+    .staff-fast-card{border-left:6px solid #2563eb}
+    .staff-fast-actions .btn{min-height:42px}
+    @media (max-width:768px){.quick-user-steps,.user-next-actions{grid-template-columns:1fr}}
+  </style>
+  <script id="remote-v70-54-role-ux-script">
+    (function(){
+      if(window.__REMOTE_SUPPORT_V754_ROLE_UX__)return;
+      window.__REMOTE_SUPPORT_V754_ROLE_UX__=true;
+      const PATCH='v70.54-remote-support-role-aware-ux';
+      let remotePortalV754={canManage:false,canRollback:false,defaultMode:'user',profile:{}};
+      function modeParamV754(){return String(qs.get('mode')||'auto').toLowerCase();}
+      function phoneParamV754(){return phoneOnly(qs.get('phone')||$('reqPhone')?.value||$('staffPhone')?.value||'');}
+      function setTabVisibleV754(target, visible){
+        const btn=document.querySelector(`[data-bs-target="${target}"]`);
+        const item=btn&&btn.closest('.nav-item');
+        if(item)item.style.display=visible?'':'none';
+      }
+      function activatePaneV754(target){
+        const btn=document.querySelector(`[data-bs-target="${target}"]`);
+        if(btn) bootstrap.Tab.getOrCreateInstance(btn).show();
+      }
+      function updateHeroV754(mode){
+        const h=document.querySelector('.remote-hero h1');
+        const p=document.querySelector('.remote-hero p');
+        if(mode==='staff'){
+          if(h)h.textContent='คอนโซลช่วยเหลือทางไกล';
+          if(p)p.textContent='รับงาน ดูหน้าจอ ขอสิทธิ์ควบคุม และจบงานจากหน้าเดียวสำหรับเจ้าหน้าที่';
+        }else{
+          if(h)h.textContent='ขอให้ IT ช่วยเหลือทางไกล';
+          if(p)p.textContent='กรอกปัญหา เปิด Portable Agent แล้วรอเจ้าหน้าที่ช่วยเหลือ ไม่ต้องเห็นเมนูของผู้ดูแลระบบ';
+        }
+      }
+      function installQuickUserPanelV754(){
+        if($('quickUserPanelV754'))return;
+        const pane=$('requestPane');
+        if(!pane)return;
+        const box=document.createElement('div');
+        box.id='quickUserPanelV754';
+        box.className='quick-user-panel';
+        box.innerHTML=`<div class="d-flex justify-content-between align-items-start gap-2 flex-wrap mb-3">
+          <div><h5 class="fw-bold mb-1"><i class="bi bi-lightning-charge text-primary"></i> ขอความช่วยเหลือแบบเร็ว</h5><div class="mini-muted">ผู้ใช้ทำแค่ 3 ขั้นตอน เจ้าหน้าที่จะเห็นคำขอและเข้าช่วยเหลือจากคอนโซลของเจ้าหน้าที่เอง</div></div>
+          <a class="btn btn-success" href="/agent/dist/HealthAssistantRemoteAgent.exe" download><i class="bi bi-download"></i> ดาวน์โหลด Agent</a>
+        </div>
+        <div class="quick-user-steps">
+          <div class="quick-step"><div class="num">1</div><b>กรอกปัญหา</b><div class="mini-muted mt-1">ใส่เบอร์ หัวข้อ และรายละเอียดสั้น ๆ</div></div>
+          <div class="quick-step"><div class="num">2</div><b>เปิด Agent</b><div class="mini-muted mt-1">เปิดไฟล์ Agent แล้วกรอก Session Code</div></div>
+          <div class="quick-step"><div class="num">3</div><b>กดยินยอม</b><div class="mini-muted mt-1">อนุญาตดูหน้าจอ/ควบคุมเฉพาะตอนที่ต้องการ</div></div>
+        </div>`;
+        pane.prepend(box);
+      }
+      function userLayoutV754(){
+        document.body.classList.add('remote-user-simple');
+        updateHeroV754('user');
+        installQuickUserPanelV754();
+        setTabVisibleV754('#requestPane',true);
+        setTabVisibleV754('#staffPane',false);
+        setTabVisibleV754('#agentPane',false);
+        setTabVisibleV754('#rollbackPane',false);
+        activatePaneV754('#requestPane');
+        const pref=$('reqPreferredMode');
+        if(pref)pref.value='Portable Agent';
+        [$('reqPreferredMode')?.closest('.col-md-6'),$('reqTicketId')?.closest('.col-md-6')].forEach(el=>{if(el)el.style.display='none';});
+        const result=$('sessionResult');
+        if(result&&!result.dataset.v754User){
+          result.dataset.v754User='1';
+          result.innerHTML='<h5 class="fw-bold"><i class="bi bi-person-check text-success"></i> ผู้ใช้ทั่วไป</h5><div class="mini-muted">หน้านี้ถูกย่อให้เหลือเฉพาะการขอความช่วยเหลือ ไม่แสดงเครื่องมือของเจ้าหน้าที่/Admin เพื่อลดความสับสน</div>';
+        }
+      }
+      function staffLayoutV754(){
+        document.body.classList.remove('remote-user-simple');
+        updateHeroV754('staff');
+        setTabVisibleV754('#requestPane',false);
+        setTabVisibleV754('#staffPane',true);
+        setTabVisibleV754('#agentPane',false);
+        setTabVisibleV754('#rollbackPane',!!remotePortalV754.canRollback);
+        activatePaneV754('#staffPane');
+        if(phoneOnly($('staffPhone')?.value||'').length===10)setTimeout(()=>loadStaffSessions(),250);
+      }
+      async function applyRoleUxV754(){
+        const phone=phoneParamV754();
+        try{
+          const res=await gas('getRemoteSupportPortalV754',[phone]);
+          if(res&&res.success)remotePortalV754=res;
+        }catch(e){
+          remotePortalV754={success:false,canManage:false,canRollback:false,defaultMode:'user',profile:{}};
+        }
+        const requested=modeParamV754();
+        let mode=requested==='staff'||requested==='admin'?'staff':requested==='user'?'user':remotePortalV754.defaultMode;
+        if(mode==='staff'&&!remotePortalV754.canManage&&phone)mode='user';
+        if(mode==='staff')staffLayoutV754();else userLayoutV754();
+      }
+      const oldCreateV754=window.createRemoteSession;
+      window.createRemoteSession=async function(){
+        const isUserMode=document.body.classList.contains('remote-user-simple');
+        if(!isUserMode&&typeof oldCreateV754==='function')return oldCreateV754.apply(this,arguments);
+        if(!remoteConfig.enabled)return Swal.fire('ปิดใช้งานอยู่','Remote Support ถูกปิดโดยผู้ดูแลระบบ','warning');
+        const btn=$('btnCreateSession');
+        const payload={
+          requesterPhone:phoneOnly($('reqPhone').value),
+          issueType:$('reqIssueType').value,
+          subject:$('reqSubject').value.trim(),
+          description:$('reqDescription').value.trim(),
+          preferredMode:'Portable Agent',
+          ticketId:''
+        };
+        if(payload.requesterPhone.length!==10)return Swal.fire('ข้อมูลไม่ครบ','กรุณาระบุเบอร์ผู้ขอ 10 หลัก','warning');
+        if(!payload.subject)return Swal.fire('ข้อมูลไม่ครบ','กรุณาระบุหัวข้อปัญหา','warning');
+        setBusy(btn,true,'<span class="spinner-border spinner-border-sm"></span> กำลังสร้าง...');
+        try{
+          const res=await gas('createRemoteSupportSessionV753',[payload,payload.requesterPhone]);
+          if(!res||!res.success)throw new Error(res?.message||'สร้าง session ไม่สำเร็จ');
+          const s=res.session||{};
+          if($('agentCode'))$('agentCode').value=s.sessionCode||'';
+          $('sessionResult').innerHTML=`<div class="user-code-card mb-3"><div class="mini-muted">Session Code</div><div class="session-code">${esc(s.sessionCode||'')}</div><button class="btn btn-outline-success btn-sm" onclick="copyText('${esc(s.sessionCode||'')}')"><i class="bi bi-copy"></i> คัดลอก Code</button></div>
+          <div class="user-next-actions">
+            <a class="btn btn-success" href="/agent/dist/HealthAssistantRemoteAgent.exe" download><i class="bi bi-download"></i> ดาวน์โหลด/เปิด Agent</a>
+            <button class="btn btn-outline-primary" onclick="copyText('${esc(s.sessionCode||'')}')"><i class="bi bi-clipboard-check"></i> คัดลอกให้เจ้าหน้าที่</button>
+          </div>
+          <div class="alert alert-info mt-3 mb-0 small"><b>ขั้นตอนต่อไป:</b> เปิด Agent, กรอก Session Code นี้, กด Start View-only แล้วรอเจ้าหน้าที่ติดต่อ หากเจ้าหน้าที่ต้องควบคุมเครื่อง ระบบจะถามให้คุณยืนยันอีกครั้ง</div>`;
+          Swal.fire({icon:'success',title:'ส่งคำขอแล้ว',text:'เปิด Agent แล้วกรอก Session Code ได้เลย'});
+        }catch(e){Swal.fire('ผิดพลาด',e.message||String(e),'error');}
+        finally{setBusy(btn,false,'<i class="bi bi-shield-plus"></i> สร้าง Session Code');}
+      };
+      window.renderStaffCard=function(s){
+        const control=/Control Approved/i.test(String((s&&s.controlStatus)||''));
+        return `<div class="col-lg-6"><article class="support-card staff-fast-card h-100"><div class="d-flex justify-content-between gap-2"><div><h6 class="fw-bold mb-1">${esc(s.subject||'-')}</h6><div class="mini-muted">${esc(s.requesterName||'-')} · ${esc(s.department||'-')} · Code ${esc(s.sessionCode||'-')}</div></div>${statusBadge(s.status)}</div><div class="mt-3 mini-muted"><b>ปัญหา:</b> ${esc(s.description||'-')}<br><b>Agent:</b> ${esc(s.agentVersion||'ยังไม่เปิด Agent')}<br><b>สิทธิ์ควบคุม:</b> <span class="${control?'text-success':'text-warning'} fw-bold">${esc(s.controlStatus||'ยังไม่อนุญาต')}</span></div><div class="staff-fast-actions d-flex flex-wrap gap-2 mt-3"><button class="btn btn-primary btn-sm" onclick="quickStartRemoteSessionV754('${esc(s.sessionId)}')"><i class="bi bi-play-circle"></i> รับงานและเปิด Viewer</button><button class="btn btn-warning btn-sm" onclick="requestRemoteControlForSessionV753('${esc(s.sessionId)}')"><i class="bi bi-shield-lock"></i> ขอควบคุม</button><button class="btn btn-outline-secondary btn-sm" onclick="sessionAction('${esc(s.sessionId)}','end')"><i class="bi bi-check-circle"></i> จบงาน</button></div></article></div>`;
+      };
+      window.quickStartRemoteSessionV754=async function(sessionId){
+        const phone=phoneOnly($('staffPhone')?.value||'');
+        if(phone.length!==10)return Swal.fire('กรุณาระบุเบอร์เจ้าหน้าที่ก่อน','','warning');
+        try{
+          await gas('updateRemoteSupportSessionV753',[sessionId,phone,'assign',{}]);
+          await gas('updateRemoteSupportSessionV753',[sessionId,phone,'start',{}]);
+          await loadStaffSessions();
+          openRemoteViewerV753(sessionId);
+        }catch(e){Swal.fire('เริ่มช่วยเหลือไม่สำเร็จ',e.message||String(e),'error');}
+      };
+      if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(applyRoleUxV754,120),{once:true});else setTimeout(applyRoleUxV754,120);
+      console.info('Remote Support '+PATCH+' loaded');
+    })();
+  </script>
 </body>
 </html>

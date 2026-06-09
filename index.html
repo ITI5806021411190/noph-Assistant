@@ -18802,10 +18802,19 @@ HAOS v68.6 FINISHING FIX
   window.__HAOS_V752_REMOTE_ENTRY__=true;
   function currentUserV752(){try{if(typeof window.currentUser==='function')return window.currentUser()||{};}catch(e){}try{return window.user||user||{};}catch(e){return window.user||{};}}
   function escV752(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+  function isRemoteStaffV752(){
+    try{if(typeof isAdmin==='function'&&isAdmin())return true;}catch(e){}
+    try{if(typeof isSuper==='function'&&isSuper())return true;}catch(e){}
+    const u=currentUserV752();
+    const role=String(u.role||u.profileRole||'').toLowerCase();
+    const dept=String(u.department||u.departmentName||'').toLowerCase();
+    return /admin|super|head/.test(role)||dept.indexOf('สุขภาพดิจิทัล')!==-1;
+  }
   window.openRemoteSupportHubV752=function(){
     const u=currentUserV752();
     const phone=String(u.phone||'').replace(/\D/g,'');
-    const url='/remote.html'+(phone?('?phone='+encodeURIComponent(phone)):'');
+    const mode=isRemoteStaffV752()?'staff':'user';
+    const url='/remote.html?mode='+encodeURIComponent(mode)+(phone?('&phone='+encodeURIComponent(phone)):'');
     window.open(url,'_blank','noopener');
   };
   function installRemoteSupportCardV752(){
@@ -18817,14 +18826,18 @@ HAOS v68.6 FINISHING FIX
     const card=document.createElement('div');
     card.id='remoteSupportCardV752';
     card.className='col-md-4';
+    const staff=isRemoteStaffV752();
+    const u=currentUserV752();
+    const phone=String(u.phone||'').replace(/\D/g,'');
+    const staffUrl='/remote.html?mode=staff'+(phone?('&phone='+encodeURIComponent(phone)):'');
     card.innerHTML=`<div class="card h-100 it-service-card">
       <div class="card-body p-4 d-flex flex-column">
         <div class="remote-entry-icon mb-3"><i class="bi bi-display"></i></div>
         <h6 class="fw-bold">ช่วยเหลือทางไกล</h6>
-        <p class="text-muted small flex-grow-1">Portable Agent, ดูหน้าจอแบบ View-only และควบคุมเครื่องแบบต้องยินยอม พร้อม Audit Log และ rollback database เฉพาะโมดูล</p>
+        <p class="text-muted small flex-grow-1">${staff?'คอนโซลเจ้าหน้าที่สำหรับรับงาน ดูหน้าจอ และช่วยควบคุมหลังผู้ใช้ยินยอม':'ขอให้ IT ช่วยเหลือแบบเร็ว ผู้ใช้เห็นเฉพาะขั้นตอนที่จำเป็น ไม่แสดงเครื่องมือผู้ดูแลระบบ'}</p>
         <div class="d-flex gap-2 flex-wrap">
-          <button class="btn btn-primary btn-sm fw-bold" onclick="openRemoteSupportHubV752()"><i class="bi bi-box-arrow-up-right"></i> เปิด Remote Hub</button>
-          <a class="btn btn-outline-secondary btn-sm fw-bold" href="/remote.html" target="_blank" rel="noopener"><i class="bi bi-shield-check"></i> Staff</a>
+          <button class="btn btn-primary btn-sm fw-bold" onclick="openRemoteSupportHubV752()"><i class="bi bi-box-arrow-up-right"></i> ${staff?'เปิดคอนโซล':'ขอความช่วยเหลือ'}</button>
+          ${staff?`<a class="btn btn-outline-secondary btn-sm fw-bold" href="${staffUrl}" target="_blank" rel="noopener"><i class="bi bi-shield-check"></i> Staff</a>`:''}
         </div>
       </div>
     </div>`;
