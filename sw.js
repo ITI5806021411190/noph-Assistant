@@ -1,5 +1,5 @@
-const CACHE_NAME = 'haos-v70-51-stability-cleanup';
-const CORE = ['/', '/index.html', '/public.html', '/manifest.json', '/icon-192.png', '/icon-512.png', '/logo-moph.png'];
+const CACHE_NAME = 'haos-v70-52-remote-support-phase1';
+const CORE = ['/', '/index.html', '/public.html', '/remote.html', '/manifest.json', '/icon-192.png', '/icon-512.png', '/logo-moph.png'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(CORE)).catch(() => {}));
   self.skipWaiting();
