@@ -135,7 +135,7 @@
               <div class="col-lg-6">
                 <div class="support-card">
                   <h5 class="fw-bold mb-3"><i class="bi bi-cpu text-success"></i> Portable Agent Check-in</h5>
-                  <p class="mini-muted">หน้านี้จำลอง flow ที่ตัว `.exe` จะเรียกใช้ในอนาคต: กรอก session code, แจ้งว่า Agent พร้อม, และบันทึก heartbeat/audit log</p>
+                  <p class="mini-muted">หน้านี้จำลอง flow ที่ตัว <code>.exe</code> จะเรียกใช้ในอนาคต: กรอก session code, แจ้งว่า Agent พร้อม, และบันทึก heartbeat/audit log</p>
                   <label class="small fw-bold">Session Code</label><input id="agentCode" class="form-control mb-2" maxlength="6" inputmode="numeric">
                   <label class="small fw-bold">Agent Version</label><input id="agentVersion" class="form-control mb-3" value="HealthAssistantRemoteAgent portable scaffold">
                   <div class="d-flex flex-wrap gap-2">
@@ -218,7 +218,7 @@
         const res=await gas('createRemoteSupportSessionV752',[payload,payload.requesterPhone]);
         if(!res||!res.success)throw new Error(res?.message||'สร้าง session ไม่สำเร็จ');
         const s=res.session;
-        $('sessionResult').innerHTML=`<h5 class="fw-bold text-success"><i class="bi bi-check-circle"></i> สร้าง Session แล้ว</h5><div class="text-center py-3"><div class="mini-muted">Session Code</div><div class="session-code">${esc(s.sessionCode)}</div></div><div class="link-box mb-3">${esc(s.joinUrl||'')}</div><div class="d-flex gap-2 flex-wrap"><button class="btn btn-outline-primary btn-sm" onclick="copyText('${esc(s.sessionCode)}')"><i class="bi bi-copy"></i> คัดลอก Code</button><button class="btn btn-outline-success btn-sm" onclick="copyText('${esc(s.joinUrl||'')}')"><i class="bi bi-link"></i> คัดลอกลิงก์</button></div><hr><div class="mini-muted">Portable Agent `.exe` จะใช้ code นี้ในการเชื่อมกับ Health Assistant OS ใน phase ถัดไป</div>`;
+        $('sessionResult').innerHTML=`<h5 class="fw-bold text-success"><i class="bi bi-check-circle"></i> สร้าง Session แล้ว</h5><div class="text-center py-3"><div class="mini-muted">Session Code</div><div class="session-code">${esc(s.sessionCode)}</div></div><div class="link-box mb-3">${esc(s.joinUrl||'')}</div><div class="d-flex gap-2 flex-wrap"><button class="btn btn-outline-primary btn-sm" onclick="copyText('${esc(s.sessionCode)}')"><i class="bi bi-copy"></i> คัดลอก Code</button><button class="btn btn-outline-success btn-sm" onclick="copyText('${esc(s.joinUrl||'')}')"><i class="bi bi-link"></i> คัดลอกลิงก์</button></div><hr><div class="mini-muted">Portable Agent <code>.exe</code> จะใช้ code นี้ในการเชื่อมกับ Health Assistant OS ใน phase ถัดไป</div>`;
         Swal.fire({icon:'success',title:'สร้างคำขอแล้ว',text:'ส่งแจ้งเตือนไปยังเจ้าหน้าที่ IT แล้ว'});
       }catch(e){Swal.fire('ผิดพลาด',e.message||String(e),'error');}
       finally{setBusy(btn,false,'<i class="bi bi-shield-plus"></i> สร้าง Session Code');}
