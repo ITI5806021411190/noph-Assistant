@@ -5,8 +5,10 @@ Portable Agent สำหรับ Remote Support Phase 2-4 MVP
 ## สถานะปัจจุบัน
 
 - Phase 2: มี source สำหรับ Portable Agent แล้ว
-- Phase 3: Agent ส่งภาพหน้าจอแบบ view-only ผ่าน polling ไปยัง `remote.html`
-- Phase 4: เจ้าหน้าที่ส่งคำสั่ง mouse/keyboard ได้เฉพาะหลังผู้ใช้กดยินยอมควบคุม
+- Phase 3: Agent ส่งภาพหน้าจอแบบ view-only ได้ 2 โหมด
+  - Realtime WebSocket relay สำหรับใช้งานจริง
+  - Google Sheet polling fallback เมื่อยังไม่ได้ตั้ง relay
+- Phase 4: เจ้าหน้าที่ส่งคำสั่ง mouse/keyboard ผ่าน relay ได้เฉพาะหลังผู้ใช้กดยินยอมควบคุม
 - ยังไม่มี unattended access และไม่ควรเปิดใช้ unattended access ในช่วงแรก
 
 ## ไฟล์ในโฟลเดอร์นี้
@@ -33,9 +35,11 @@ python health_assistant_remote_agent.py
 
 4. เปิด `remote.html` แล้วสร้าง Session Code
 5. ใส่ Session Code ใน Agent แล้วกด `Connect`
-6. ผู้ใช้กด `Start View-only`
-7. เจ้าหน้าที่เปิด `Staff Dashboard` แล้วกด `เปิด Viewer`
-8. ถ้าต้องควบคุม ให้เจ้าหน้าที่กด `ขอควบคุมเครื่อง` และผู้ใช้ต้องกด `Approve Control`
+6. ถ้าระบบตั้งค่า Relay URL แล้ว Agent จะเติมช่อง Realtime Relay URL ให้อัตโนมัติ
+7. ผู้ใช้กด `Start View-only`
+8. เจ้าหน้าที่เปิด `Staff Dashboard` แล้วกด `Realtime`
+9. ถ้ายังไม่ได้ตั้ง relay ให้ใช้ `Fallback Viewer` ชั่วคราว
+10. ถ้าต้องควบคุม ให้เจ้าหน้าที่กด `ขอควบคุมเครื่อง` และผู้ใช้ต้องกด `Approve Control`
 
 ## วิธี build portable `.exe`
 
@@ -56,6 +60,19 @@ agent\dist\HealthAssistantRemoteAgent.exe
 - คำสั่งควบคุมถูกจำกัดเฉพาะ click, key, type text, scroll และ hotkey allowlist ฝั่งระบบ
 - ทุก action สำคัญถูกบันทึกใน `RemoteSupportEvents`
 - ถ้าต้องหยุดฉุกเฉิน ให้ปิด Agent หรือเลื่อนเมาส์ไปมุมหน้าจอเพื่อ trigger pyautogui failsafe
+
+## Realtime Relay
+
+ถ้าต้องการให้ลื่นแบบโปรแกรม remote desktop จริง ต้อง deploy `remote-relay`
+แล้วตั้งค่าในระบบ:
+
+```text
+REMOTE_SUPPORT_RELAY_URL=wss://your-relay-domain/ws
+REMOTE_SUPPORT_RELAY_SECRET=optional-shared-secret
+```
+
+เมื่อ Agent กด `Connect` ระบบจะดึงค่า relay มาเอง และเมื่อผู้ใช้กด `Start View-only`
+Agent จะส่งภาพผ่าน WebSocket แทน Google Sheet polling
 
 ## Rollback
 
