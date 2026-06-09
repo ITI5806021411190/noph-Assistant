@@ -15,7 +15,11 @@
   - เก็บ audit log รายเหตุการณ์ของ remote session
 
 - `RemoteSupportSignals`
-  - เตรียมไว้สำหรับ signaling ระหว่างเว็บกับ Portable Agent ใน phase ถัดไป
+  - เก็บ command queue ระหว่าง Staff Viewer กับ Portable Agent เช่น request control, click, key, type text
+
+- `RemoteSupportFrames`
+  - เก็บภาพหน้าจอล่าสุดแบบ base64 ขนาดเล็กสำหรับ view-only MVP
+  - ระบบเก็บเฉพาะเฟรมล่าสุดของแต่ละ session เพื่อลดภาระ database
 
 - `Settings.REMOTE_SUPPORT_ENABLED`
   - ใช้เปิด/ปิดโมดูลทันที
@@ -55,6 +59,7 @@
 - ลบข้อมูลใน `RemoteSupportSessions`
 - ลบข้อมูลใน `RemoteSupportEvents`
 - ลบข้อมูลใน `RemoteSupportSignals`
+- ลบข้อมูลใน `RemoteSupportFrames`
 - เก็บ header ของ sheet ไว้
 - ปิดโมดูลหลัง rollback โดยค่าเริ่มต้น
 
@@ -74,6 +79,7 @@
 - ลบ sheet `RemoteSupportSessions`
 - ลบ sheet `RemoteSupportEvents`
 - ลบ sheet `RemoteSupportSignals`
+- ลบ sheet `RemoteSupportFrames`
 - ปิดโมดูลหลัง rollback
 - ไม่แตะ `Users`, `Schedules`, `ITBookings`, `DailyReports`, `CollaborativeWorkspaces`
 
@@ -87,10 +93,23 @@
 - `updateRemoteSupportSessionV752`
 - `cleanupRemoteSupportDatabaseV752`
 - `bridgeWhitelistHealthCheckV752`
+- `getRemoteSupportConfigV753`
+- `createRemoteSupportSessionV753`
+- `getRemoteSupportSessionV753`
+- `getRemoteSupportSessionsV753`
+- `updateRemoteSupportSessionV753`
+- `agentRemoteSupportCheckInV753`
+- `pushRemoteSupportFrameV753`
+- `getRemoteSupportFrameV753`
+- `enqueueRemoteSupportCommandV753`
+- `pollRemoteSupportCommandsV753`
+- `ackRemoteSupportCommandV753`
+- `cleanupRemoteSupportDatabaseV753`
+- `bridgeWhitelistHealthCheckV753`
 
 ## หมายเหตุด้านความปลอดภัย
 
-- Phase 1 ยังไม่ควบคุมเครื่องจริง
-- Portable Agent ตัวจริงต้องให้ผู้ใช้กดยินยอมทุกครั้ง
+- Phase 2-4 MVP รองรับ view-only และ remote control แบบต้องยินยอม
+- Portable Agent ต้องให้ผู้ใช้กดยินยอมทุกครั้ง
 - ไม่ควรเปิด unattended access ในช่วงแรก
 - ควรเก็บ audit log ทุกครั้งที่เริ่ม ดูหน้าจอ ขอควบคุม และจบ session

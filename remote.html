@@ -69,7 +69,7 @@
         <div>
           <div class="remote-pill mb-3"><i class="bi bi-display"></i> Remote Support Hub</div>
           <h1>ช่วยเหลือทางไกลแบบ Portable Agent</h1>
-          <p>ระยะที่ 1: สร้าง session code, บันทึก audit log, เตรียม flow สำหรับ Agent แบบเปิดเอง ไม่ติดตั้ง และมีแผน rollback database แยกชัดเจน</p>
+          <p>Phase 2-4 MVP: Portable Agent, ดูหน้าจอแบบ View-only, และควบคุมเครื่องแบบต้องได้รับการยินยอม พร้อม audit log และ rollback database แยกชัดเจน</p>
         </div>
         <div class="remote-pill" id="configBadge"><i class="bi bi-hourglass-split"></i> กำลังตรวจสถานะ...</div>
       </div>
@@ -106,12 +106,12 @@
               </div>
               <div class="col-lg-5">
                 <div class="support-card h-100" id="sessionResult">
-                  <h5 class="fw-bold"><i class="bi bi-info-circle text-info"></i> วิธีใช้งานระยะที่ 1</h5>
+                  <h5 class="fw-bold"><i class="bi bi-info-circle text-info"></i> วิธีใช้งาน Phase 2-4 MVP</h5>
                   <ol class="mini-muted mb-0">
                     <li>ผู้ใช้สร้าง session code จากหน้านี้</li>
                     <li>เจ้าหน้าที่เปิด Staff Dashboard เพื่อรับงาน</li>
                     <li>ผู้ใช้เปิด Portable Agent แล้วกรอก code เดียวกัน</li>
-                    <li>ตอนนี้เป็น scaffold สำหรับ Agent: ยังไม่ควบคุมเครื่องจริงจนกว่าจะ build .exe</li>
+                    <li>หลัง build Portable Agent แล้ว เจ้าหน้าที่จะดูหน้าจอและควบคุมได้เมื่อผู้ใช้กดยินยอมเท่านั้น</li>
                   </ol>
                 </div>
               </div>
@@ -137,7 +137,7 @@
                   <h5 class="fw-bold mb-3"><i class="bi bi-cpu text-success"></i> Portable Agent Check-in</h5>
                   <p class="mini-muted">หน้านี้จำลอง flow ที่ตัว <code>.exe</code> จะเรียกใช้ในอนาคต: กรอก session code, แจ้งว่า Agent พร้อม, และบันทึก heartbeat/audit log</p>
                   <label class="small fw-bold">Session Code</label><input id="agentCode" class="form-control mb-2" maxlength="6" inputmode="numeric">
-                  <label class="small fw-bold">Agent Version</label><input id="agentVersion" class="form-control mb-3" value="HealthAssistantRemoteAgent portable scaffold">
+                  <label class="small fw-bold">Agent Version</label><input id="agentVersion" class="form-control mb-3" value="HealthAssistantRemoteAgent portable MVP">
                   <div class="d-flex flex-wrap gap-2">
                     <button class="btn btn-success" onclick="agentReady()"><i class="bi bi-check-circle"></i> แจ้งว่า Agent พร้อม</button>
                     <button class="btn btn-outline-primary" onclick="loadAgentSession()"><i class="bi bi-search"></i> ตรวจ Session</button>
@@ -218,7 +218,7 @@
         const res=await gas('createRemoteSupportSessionV752',[payload,payload.requesterPhone]);
         if(!res||!res.success)throw new Error(res?.message||'สร้าง session ไม่สำเร็จ');
         const s=res.session;
-        $('sessionResult').innerHTML=`<h5 class="fw-bold text-success"><i class="bi bi-check-circle"></i> สร้าง Session แล้ว</h5><div class="text-center py-3"><div class="mini-muted">Session Code</div><div class="session-code">${esc(s.sessionCode)}</div></div><div class="link-box mb-3">${esc(s.joinUrl||'')}</div><div class="d-flex gap-2 flex-wrap"><button class="btn btn-outline-primary btn-sm" onclick="copyText('${esc(s.sessionCode)}')"><i class="bi bi-copy"></i> คัดลอก Code</button><button class="btn btn-outline-success btn-sm" onclick="copyText('${esc(s.joinUrl||'')}')"><i class="bi bi-link"></i> คัดลอกลิงก์</button></div><hr><div class="mini-muted">Portable Agent <code>.exe</code> จะใช้ code นี้ในการเชื่อมกับ Health Assistant OS ใน phase ถัดไป</div>`;
+        $('sessionResult').innerHTML=`<h5 class="fw-bold text-success"><i class="bi bi-check-circle"></i> สร้าง Session แล้ว</h5><div class="text-center py-3"><div class="mini-muted">Session Code</div><div class="session-code">${esc(s.sessionCode)}</div></div><div class="link-box mb-3">${esc(s.joinUrl||'')}</div><div class="d-flex gap-2 flex-wrap"><button class="btn btn-outline-primary btn-sm" onclick="copyText('${esc(s.sessionCode)}')"><i class="bi bi-copy"></i> คัดลอก Code</button><button class="btn btn-outline-success btn-sm" onclick="copyText('${esc(s.joinUrl||'')}')"><i class="bi bi-link"></i> คัดลอกลิงก์</button></div><hr><div class="mini-muted">Portable Agent <code>.exe</code> ใช้ code นี้เพื่อเชื่อมต่อ ส่งภาพหน้าจอ และรับคำสั่งควบคุมหลังผู้ใช้ยินยอม</div>`;
         Swal.fire({icon:'success',title:'สร้างคำขอแล้ว',text:'ส่งแจ้งเตือนไปยังเจ้าหน้าที่ IT แล้ว'});
       }catch(e){Swal.fire('ผิดพลาด',e.message||String(e),'error');}
       finally{setBusy(btn,false,'<i class="bi bi-shield-plus"></i> สร้าง Session Code');}
@@ -313,6 +313,225 @@
     }
     function copyText(text){navigator.clipboard&&navigator.clipboard.writeText(text).then(()=>Swal.fire({icon:'success',title:'คัดลอกแล้ว',timer:900,showConfirmButton:false}));}
     document.addEventListener('DOMContentLoaded',async()=>{fillFromQuery();await loadConfig();});
+  </script>
+  <style id="remote-v70-53-style">
+    .viewer-shell{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:14px;text-align:left}
+    .viewer-screen{min-height:430px;border:1px solid rgba(148,163,184,.35);border-radius:20px;background:#0f172a;display:grid;place-items:center;overflow:hidden;position:relative}
+    .viewer-screen img{max-width:100%;max-height:70vh;display:block;cursor:crosshair}
+    .viewer-empty{color:#cbd5e1;text-align:center;padding:28px}
+    .viewer-side{border:1px solid rgba(148,163,184,.28);border-radius:18px;padding:14px;background:#f8fafc}
+    .viewer-control-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .viewer-control-grid .btn{min-height:44px}
+    .viewer-meta{font-size:.83rem;color:#64748b;line-height:1.55}
+    .phase-pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:.35rem .6rem;font-weight:900;font-size:.78rem;background:#ecfeff;color:#0e7490;border:1px solid #a5f3fc}
+    @media (max-width:900px){.viewer-shell{grid-template-columns:1fr}.viewer-side{order:-1}.viewer-screen{min-height:300px}}
+  </style>
+  <script id="remote-v70-53-script">
+    (function(){
+      if(window.__REMOTE_SUPPORT_V753__)return;
+      window.__REMOTE_SUPPORT_V753__=true;
+      const phaseLabel='<span class="phase-pill"><i class="bi bi-shield-check"></i> Phase 2-4 MVP</span>';
+      const viewerState={sessionId:'', staffPhone:'', timer:null, lastFrameId:'', session:null};
+      function api(fn,args){return gas(fn,args||[]);}
+      function sessionCanControl(s){return /Control Approved/i.test(String((s&&s.controlStatus)||''));}
+      function fmtTime(v){try{return v?new Date(v).toLocaleString('th-TH'):'';}catch(e){return String(v||'');}}
+      function viewerHtml(){
+        return `<div class="viewer-shell">
+          <div class="viewer-screen" id="rsViewerScreenV753"><div class="viewer-empty"><div class="spinner-border spinner-border-sm"></div><div class="mt-2">กำลังรอภาพหน้าจอจาก Agent...</div></div></div>
+          <aside class="viewer-side">
+            <div class="d-flex justify-content-between align-items-center gap-2 mb-2"><b><i class="bi bi-display"></i> Live Viewer</b>${phaseLabel}</div>
+            <div id="rsViewerStatusV753" class="viewer-meta mb-3">กำลังโหลดสถานะ...</div>
+            <div class="d-grid gap-2 mb-3">
+              <button class="btn btn-outline-primary" onclick="refreshRemoteFrameV753(true)"><i class="bi bi-arrow-clockwise"></i> รีเฟรชภาพ</button>
+              <button class="btn btn-warning" onclick="requestRemoteControlV753()"><i class="bi bi-shield-lock"></i> ขอควบคุมเครื่อง</button>
+              <button class="btn btn-outline-danger" onclick="stopRemoteControlV753()"><i class="bi bi-stop-circle"></i> หยุดควบคุม</button>
+            </div>
+            <div class="viewer-control-grid mb-3">
+              <button class="btn btn-outline-secondary" onclick="sendKeyV753('enter')">Enter</button>
+              <button class="btn btn-outline-secondary" onclick="sendKeyV753('tab')">Tab</button>
+              <button class="btn btn-outline-secondary" onclick="sendKeyV753('escape')">Esc</button>
+              <button class="btn btn-outline-secondary" onclick="sendRemoteCommandV753({type:'scroll',amount:-5})">Scroll</button>
+            </div>
+            <label class="small fw-bold">ส่งข้อความไปพิมพ์</label>
+            <textarea id="rsTypeTextV753" class="form-control mb-2" rows="3" placeholder="ข้อความจะถูกพิมพ์ที่เครื่องปลายทางหลังได้รับอนุญาต"></textarea>
+            <button class="btn btn-success w-100" onclick="sendTypeTextV753()"><i class="bi bi-keyboard"></i> ส่งข้อความ</button>
+            <hr>
+            <div class="viewer-meta">กดบนภาพหน้าจอเพื่อส่งคำสั่งคลิก เมื่อสถานะเป็น <b>Control Approved</b> เท่านั้น</div>
+          </aside>
+        </div>`;
+      }
+      loadConfig = window.loadConfig = async function(){
+        try{
+          const res=await api('getRemoteSupportConfigV753',[]);
+          remoteConfig=res||{enabled:true};
+          $('configBadge').innerHTML=remoteConfig.enabled?'<i class="bi bi-check-circle"></i> เปิดใช้งาน '+phaseLabel:'<i class="bi bi-pause-circle"></i> ปิดใช้งาน';
+          $('disabledAlert').classList.toggle('d-none',!!remoteConfig.enabled);
+        }catch(e){$('configBadge').innerHTML='<i class="bi bi-wifi-off"></i> ตรวจสถานะไม่ได้';}
+      };
+      createRemoteSession = window.createRemoteSession = async function(){
+        if(!remoteConfig.enabled)return Swal.fire('ปิดใช้งานอยู่','Remote Support ถูกปิดโดยผู้ดูแลระบบ','warning');
+        const btn=$('btnCreateSession');
+        const payload={requesterPhone:phoneOnly($('reqPhone').value),issueType:$('reqIssueType').value,subject:$('reqSubject').value.trim(),description:$('reqDescription').value.trim(),preferredMode:$('reqPreferredMode').value,ticketId:$('reqTicketId').value.trim()};
+        if(payload.requesterPhone.length!==10)return Swal.fire('ข้อมูลไม่ครบ','กรุณาระบุเบอร์ผู้ขอ 10 หลัก','warning');
+        if(!payload.subject)return Swal.fire('ข้อมูลไม่ครบ','กรุณาระบุหัวข้อปัญหา','warning');
+        setBusy(btn,true,'<span class="spinner-border spinner-border-sm"></span> กำลังสร้าง...');
+        try{
+          const res=await api('createRemoteSupportSessionV753',[payload,payload.requesterPhone]);
+          if(!res||!res.success)throw new Error(res?.message||'สร้าง session ไม่สำเร็จ');
+          const s=res.session;
+          $('sessionResult').innerHTML=`<h5 class="fw-bold text-success"><i class="bi bi-check-circle"></i> สร้าง Session แล้ว</h5><div class="text-center py-3"><div class="mini-muted">Session Code</div><div class="session-code">${esc(s.sessionCode)}</div></div><div class="link-box mb-3">${esc(s.joinUrl||'')}</div><div class="d-flex gap-2 flex-wrap"><button class="btn btn-outline-primary btn-sm" onclick="copyText('${esc(s.sessionCode)}')"><i class="bi bi-copy"></i> คัดลอก Code</button><button class="btn btn-outline-success btn-sm" onclick="copyText('${esc(s.joinUrl||'')}')"><i class="bi bi-link"></i> คัดลอกลิงก์</button></div><hr><div class="mini-muted">เปิด Portable Agent แล้วกรอก code นี้ เพื่อส่งภาพหน้าจอและรอการยินยอมก่อนควบคุม</div>`;
+          Swal.fire({icon:'success',title:'สร้างคำขอแล้ว',text:'ส่งแจ้งเตือนไปยังเจ้าหน้าที่ IT แล้ว'});
+        }catch(e){Swal.fire('ผิดพลาด',e.message||String(e),'error');}
+        finally{setBusy(btn,false,'<i class="bi bi-shield-plus"></i> สร้าง Session Code');}
+      };
+      loadStaffSessions = window.loadStaffSessions = async function(){
+        const phone=phoneOnly($('staffPhone').value);
+        if(phone.length!==10)return Swal.fire('กรุณาระบุเบอร์เจ้าหน้าที่','','warning');
+        $('staffSessions').innerHTML='<div class="col-12 text-center py-4"><span class="spinner-border spinner-border-sm"></span> กำลังโหลด...</div>';
+        try{
+          const res=await api('getRemoteSupportSessionsV753',[phone,'','',{status:$('staffStatus').value,query:$('staffQuery').value.trim()}]);
+          if(!res||!res.success)throw new Error(res?.message||'โหลดไม่สำเร็จ');
+          const list=res.sessions||[];
+          $('staffSessions').innerHTML=list.length?list.map(renderStaffCard).join(''):'<div class="col-12 text-center text-muted py-4">ยังไม่มีรายการ</div>';
+        }catch(e){$('staffSessions').innerHTML=`<div class="col-12 text-danger text-center py-4">${esc(e.message||String(e))}</div>`;}
+      };
+      renderStaffCard = window.renderStaffCard = function(s){
+        const control=sessionCanControl(s);
+        return `<div class="col-lg-6"><article class="support-card h-100"><div class="d-flex justify-content-between gap-2"><div><h6 class="fw-bold mb-1">${esc(s.subject||'-')}</h6><div class="mini-muted">${esc(s.requesterName||'-')} · ${esc(s.department||'-')}</div></div>${statusBadge(s.status)}</div><div class="mt-3 row g-2 mini-muted"><div class="col-6"><b>Code:</b> ${esc(s.sessionCode)}</div><div class="col-6"><b>ประเภท:</b> ${esc(s.issueType||'-')}</div><div class="col-6"><b>Consent:</b> ${esc(s.consentStatus||'-')}</div><div class="col-6"><b>Control:</b> <span class="${control?'text-success':'text-muted'} fw-bold">${esc(s.controlStatus||'-')}</span></div><div class="col-12"><b>รายละเอียด:</b> ${esc(s.description||'-')}</div><div class="col-12"><b>Agent:</b> ${esc(s.agentVersion||'ยังไม่ check-in')}</div></div><div class="d-flex flex-wrap gap-2 mt-3"><button class="btn btn-primary btn-sm" onclick="openRemoteViewerV753('${esc(s.sessionId)}')"><i class="bi bi-display"></i> เปิด Viewer</button><button class="btn btn-outline-primary btn-sm" onclick="sessionAction('${esc(s.sessionId)}','assign')"><i class="bi bi-person-check"></i> รับงาน</button><button class="btn btn-success btn-sm" onclick="sessionAction('${esc(s.sessionId)}','start')"><i class="bi bi-play-circle"></i> เริ่ม</button><button class="btn btn-warning btn-sm" onclick="requestRemoteControlForSessionV753('${esc(s.sessionId)}')"><i class="bi bi-shield-lock"></i> ขอควบคุม</button><button class="btn btn-outline-secondary btn-sm" onclick="sessionAction('${esc(s.sessionId)}','end')"><i class="bi bi-stop-circle"></i> จบงาน</button><button class="btn btn-outline-danger btn-sm" onclick="sessionAction('${esc(s.sessionId)}','cancel')"><i class="bi bi-x-circle"></i> ยกเลิก</button></div></article></div>`;
+      };
+      sessionAction = window.sessionAction = async function(id,action){
+        const phone=phoneOnly($('staffPhone').value);
+        let payload={};
+        if(action==='end'||action==='cancel'){
+          const r=await Swal.fire({title:'หมายเหตุ',input:'textarea',showCancelButton:true,confirmButtonText:'บันทึก'});
+          if(!r.isConfirmed)return;
+          payload.note=r.value||'';
+        }
+        try{
+          const res=await api('updateRemoteSupportSessionV753',[id,phone,action,payload]);
+          if(!res||!res.success)throw new Error(res?.message||'อัปเดตไม่สำเร็จ');
+          await loadStaffSessions();
+        }catch(e){Swal.fire('ผิดพลาด',e.message||String(e),'error');}
+      };
+      window.openRemoteViewerV753=async function(sessionId){
+        const phone=phoneOnly($('staffPhone').value);
+        if(phone.length!==10)return Swal.fire('กรุณาระบุเบอร์เจ้าหน้าที่ก่อน','','warning');
+        viewerState.sessionId=sessionId;viewerState.staffPhone=phone;viewerState.lastFrameId='';
+        await Swal.fire({title:'Remote Support Viewer',html:viewerHtml(),width:1180,showConfirmButton:false,showCloseButton:true,didOpen:()=>{refreshRemoteFrameV753(true);viewerState.timer=setInterval(()=>refreshRemoteFrameV753(false),2500);},willClose:()=>{if(viewerState.timer)clearInterval(viewerState.timer);viewerState.timer=null;}});
+      };
+      window.refreshRemoteFrameV753=async function(showToast){
+        try{
+          const res=await api('getRemoteSupportFrameV753',[viewerState.sessionId,viewerState.staffPhone]);
+          if(!res||!res.success)throw new Error(res?.message||'โหลดภาพไม่สำเร็จ');
+          viewerState.session=res.session||{};
+          const can=sessionCanControl(viewerState.session);
+          const statusEl=$('rsViewerStatusV753');
+          if(statusEl)statusEl.innerHTML=`สถานะ: <b>${esc(viewerState.session.status||'-')}</b><br>Consent: <b>${esc(viewerState.session.consentStatus||'-')}</b><br>Control: <b class="${can?'text-success':'text-warning'}">${esc(viewerState.session.controlStatus||'-')}</b><br>ล่าสุด: ${esc(fmtTime(res.frame&&res.frame.capturedAt))}`;
+          const screen=$('rsViewerScreenV753');
+          if(!screen)return;
+          if(!res.frame){
+            screen.innerHTML='<div class="viewer-empty"><i class="bi bi-hourglass-split fs-1"></i><div class="mt-2">ยังไม่มีภาพจาก Agent</div><div class="small">ให้ผู้ใช้เปิด Portable Agent และกด Start View-only</div></div>';
+            return;
+          }
+          if(res.frame.frameId!==viewerState.lastFrameId){
+            viewerState.lastFrameId=res.frame.frameId;
+            screen.innerHTML=`<img id="rsFrameImgV753" alt="Remote screen" src="${res.frame.dataUrl}">`;
+            const img=$('rsFrameImgV753');
+            img.onclick=function(ev){
+              if(!sessionCanControl(viewerState.session)){Swal.fire('ยังควบคุมไม่ได้','ต้องขออนุญาตและให้ผู้ใช้กดยินยอมก่อน','warning');return;}
+              const rect=img.getBoundingClientRect();
+              const xRatio=(ev.clientX-rect.left)/rect.width;
+              const yRatio=(ev.clientY-rect.top)/rect.height;
+              sendRemoteCommandV753({type:'click',xRatio:xRatio,yRatio:yRatio});
+            };
+          }
+        }catch(e){
+          const statusEl=$('rsViewerStatusV753');
+          if(statusEl)statusEl.innerHTML='<span class="text-danger">'+esc(e.message||String(e))+'</span>';
+        }
+      };
+      window.sendRemoteCommandV753=async function(command){
+        try{
+          const res=await api('enqueueRemoteSupportCommandV753',[viewerState.sessionId,viewerState.staffPhone,command]);
+          if(!res||!res.success)throw new Error(res?.message||'ส่งคำสั่งไม่สำเร็จ');
+        }catch(e){Swal.fire('ส่งคำสั่งไม่ได้',e.message||String(e),'error');}
+      };
+      window.requestRemoteControlForSessionV753=async function(sessionId){
+        viewerState.sessionId=sessionId;viewerState.staffPhone=phoneOnly($('staffPhone').value);
+        return requestRemoteControlV753();
+      };
+      window.requestRemoteControlV753=async function(){
+        try{
+          const phone=viewerState.staffPhone||phoneOnly($('staffPhone').value);
+          const res=await api('updateRemoteSupportSessionV753',[viewerState.sessionId,phone,'requestControl',{message:'เจ้าหน้าที่ขออนุญาตควบคุมเครื่องเพื่อช่วยแก้ไขปัญหา'}]);
+          if(!res||!res.success)throw new Error(res?.message||'ขอควบคุมไม่สำเร็จ');
+          Swal.fire({icon:'success',title:'ส่งคำขอควบคุมแล้ว',timer:1200,showConfirmButton:false});
+          await refreshRemoteFrameV753(false);
+        }catch(e){Swal.fire('ผิดพลาด',e.message||String(e),'error');}
+      };
+      window.stopRemoteControlV753=async function(){
+        try{
+          const res=await api('updateRemoteSupportSessionV753',[viewerState.sessionId,viewerState.staffPhone,'stopControl',{}]);
+          if(!res||!res.success)throw new Error(res?.message||'หยุดควบคุมไม่สำเร็จ');
+          await refreshRemoteFrameV753(false);
+        }catch(e){Swal.fire('ผิดพลาด',e.message||String(e),'error');}
+      };
+      window.sendKeyV753=function(key){sendRemoteCommandV753({type:'key',key:key});};
+      window.sendTypeTextV753=function(){const el=$('rsTypeTextV753');const text=(el&&el.value)||'';if(!text.trim())return;sendRemoteCommandV753({type:'typeText',text:text});if(el)el.value='';};
+      loadAgentSession = window.loadAgentSession = async function(){
+        const code=phoneOnly($('agentCode').value).slice(0,6);
+        if(code.length!==6)return Swal.fire('กรุณาระบุ Session Code 6 หลัก','','warning');
+        $('agentSessionBox').innerHTML='<span class="spinner-border spinner-border-sm"></span> กำลังตรวจ...';
+        try{
+          const res=await api('getRemoteSupportSessionV753',[code,'']);
+          if(!res||!res.success)throw new Error(res?.message||'ไม่พบ session');
+          const s=res.session;
+          $('agentSessionBox').innerHTML=`<h5 class="fw-bold">${esc(s.subject||'-')}</h5>${statusBadge(s.status)}<div class="mini-muted mt-3">ผู้ขอ: ${esc(s.requesterName||'-')}<br>กลุ่มงาน: ${esc(s.department||'-')}<br>Consent: ${esc(s.consentStatus||'-')}<br>Control: ${esc(s.controlStatus||'-')}</div><div class="d-flex gap-2 flex-wrap mt-3"><button class="btn btn-success btn-sm" onclick="sendConsent(true)"><i class="bi bi-eye"></i> ยินยอม View-only</button><button class="btn btn-warning btn-sm" onclick="sendControlConsentV753(true)"><i class="bi bi-mouse"></i> ยินยอมควบคุม</button><button class="btn btn-outline-danger btn-sm" onclick="sendControlConsentV753(false)"><i class="bi bi-shield-x"></i> ปฏิเสธควบคุม</button></div>`;
+        }catch(e){$('agentSessionBox').innerHTML=`<div class="text-danger">${esc(e.message||String(e))}</div>`;}
+      };
+      agentReady = window.agentReady = async function(){
+        const code=phoneOnly($('agentCode').value).slice(0,6);
+        if(code.length!==6)return Swal.fire('กรุณาระบุ Session Code 6 หลัก','','warning');
+        try{
+          const res=await api('agentRemoteSupportCheckInV753',[code,{agentVersion:$('agentVersion').value}]);
+          if(!res||!res.success)throw new Error(res?.message||'check-in ไม่สำเร็จ');
+          Swal.fire({icon:'success',title:'Agent พร้อมแล้ว',timer:1200,showConfirmButton:false});
+          await loadAgentSession();
+        }catch(e){Swal.fire('ผิดพลาด',e.message||String(e),'error');}
+      };
+      sendConsent = window.sendConsent = async function(approved){
+        const code=phoneOnly($('agentCode').value).slice(0,6);
+        if(code.length!==6)return Swal.fire('กรุณาระบุ Session Code 6 หลัก','','warning');
+        try{
+          const res=await api('updateRemoteSupportSessionV753',[code,'','consent',{approved:!!approved,controlStatus:'View Only Approved'}]);
+          if(!res||!res.success)throw new Error(res?.message||'บันทึก consent ไม่สำเร็จ');
+          Swal.fire({icon:'success',title:'บันทึก consent แล้ว',timer:1200,showConfirmButton:false});
+          await loadAgentSession();
+        }catch(e){Swal.fire('ผิดพลาด',e.message||String(e),'error');}
+      };
+      window.sendControlConsentV753=async function(approved){
+        const code=phoneOnly($('agentCode').value).slice(0,6);
+        if(code.length!==6)return Swal.fire('กรุณาระบุ Session Code 6 หลัก','','warning');
+        try{
+          const res=await api('updateRemoteSupportSessionV753',[code,'','controlConsent',{approved:!!approved}]);
+          if(!res||!res.success)throw new Error(res?.message||'บันทึกสิทธิ์ควบคุมไม่สำเร็จ');
+          Swal.fire({icon:approved?'success':'info',title:approved?'ยินยอมควบคุมแล้ว':'ปฏิเสธการควบคุมแล้ว',timer:1200,showConfirmButton:false});
+          await loadAgentSession();
+        }catch(e){Swal.fire('ผิดพลาด',e.message||String(e),'error');}
+      };
+      runRollback = window.runRollback = async function(dryRun){
+        const phone=phoneOnly($('rbPhone').value);
+        if(phone.length!==10)return Swal.fire('กรุณาระบุเบอร์ Super Admin','','warning');
+        $('rollbackResult').innerHTML='<div class="text-muted"><span class="spinner-border spinner-border-sm"></span> กำลังประมวลผล...</div>';
+        try{
+          const res=await api('cleanupRemoteSupportDatabaseV753',[phone,rollbackOptions(dryRun)]);
+          if(!res||!res.success)throw new Error(res?.message||'rollback ไม่สำเร็จ');
+          $('rollbackResult').innerHTML=`<div class="support-card"><h6 class="fw-bold ${dryRun?'text-primary':'text-danger'}">${esc(res.message||'')}</h6><div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>พื้นที่</th><th>จำนวน</th><th>action</th></tr></thead><tbody>${(res.items||[]).map(x=>`<tr><td>${esc(x.sheet)}</td><td>${esc(x.rows)}</td><td>${esc(x.action)}</td></tr>`).join('')}</tbody></table></div></div>`;
+          await loadConfig();
+        }catch(e){$('rollbackResult').innerHTML=`<div class="alert alert-danger">${esc(e.message||String(e))}</div>`;}
+      };
+      console.info('Remote Support v70.53 viewer/control loaded');
+    })();
   </script>
 </body>
 </html>

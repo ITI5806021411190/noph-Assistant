@@ -1,35 +1,70 @@
 # Health Assistant Remote Agent
 
-โฟลเดอร์นี้เตรียมไว้สำหรับ Portable Agent ระยะถัดไป
+Portable Agent สำหรับ Remote Support Phase 2-4 MVP
 
-สถานะปัจจุบัน:
+## สถานะปัจจุบัน
 
-- ยังไม่มีไฟล์ `.exe` จริง
-- `remote.html` ทำหน้าที่ Remote Support Hub ระยะที่ 1
-- Agent flow ที่มีตอนนี้เป็น check-in scaffold:
-  - กรอก session code
-  - แจ้งว่า Agent พร้อม
-  - บันทึก consent/view-only status
-  - บันทึก audit event
+- Phase 2: มี source สำหรับ Portable Agent แล้ว
+- Phase 3: Agent ส่งภาพหน้าจอแบบ view-only ผ่าน polling ไปยัง `remote.html`
+- Phase 4: เจ้าหน้าที่ส่งคำสั่ง mouse/keyboard ได้เฉพาะหลังผู้ใช้กดยินยอมควบคุม
+- ยังไม่มี unattended access และไม่ควรเปิดใช้ unattended access ในช่วงแรก
 
-## Agent ตัวจริงควรทำอะไร
+## ไฟล์ในโฟลเดอร์นี้
 
-1. เปิดเป็น portable `.exe` โดยไม่ต้องติดตั้ง
-2. ให้ผู้ใช้กรอก session code
-3. เรียก backend เพื่อ check-in session
-4. แสดงชื่อเจ้าหน้าที่และคำขออนุญาต
-5. เริ่มจาก view-only ก่อน
-6. เพิ่ม request control ทีหลัง โดยต้องให้ผู้ใช้กดยืนยันอีกครั้ง
-7. มีปุ่มหยุด session อยู่บนหน้าจอตลอดเวลา
+- `health_assistant_remote_agent.py` source ของ Agent
+- `requirements.txt` dependency สำหรับ screenshot/control/build exe
+- `build_portable.ps1` build เป็น `dist/HealthAssistantRemoteAgent.exe`
+- `dist/HealthAssistantRemoteAgent.exe` ไฟล์ portable ที่ build แล้วสำหรับเริ่มทดสอบ
 
-## Backend Functions
+## วิธีทดสอบแบบ source
 
-- `getRemoteSupportSessionV752`
-- `updateRemoteSupportSessionV752`
+1. เปิด PowerShell ในโฟลเดอร์ `agent`
+2. ติดตั้ง dependency:
+
+```powershell
+python -m pip install -r requirements.txt
+```
+
+3. รัน Agent:
+
+```powershell
+python health_assistant_remote_agent.py
+```
+
+4. เปิด `remote.html` แล้วสร้าง Session Code
+5. ใส่ Session Code ใน Agent แล้วกด `Connect`
+6. ผู้ใช้กด `Start View-only`
+7. เจ้าหน้าที่เปิด `Staff Dashboard` แล้วกด `เปิด Viewer`
+8. ถ้าต้องควบคุม ให้เจ้าหน้าที่กด `ขอควบคุมเครื่อง` และผู้ใช้ต้องกด `Approve Control`
+
+## วิธี build portable `.exe`
+
+```powershell
+.\build_portable.ps1
+```
+
+ไฟล์จะอยู่ที่:
+
+```text
+agent\dist\HealthAssistantRemoteAgent.exe
+```
 
 ## Security Rules
 
-- ห้าม unattended access ใน phase แรก
-- ห้ามเก็บรหัสผ่าน remote แบบถาวร
-- session code ต้องหมดอายุ
-- ทุก action ต้องบันทึก audit log
+- ห้าม unattended access
+- ผู้ใช้ปลายทางต้องกดยินยอม view-only และ remote control เองทุก session
+- คำสั่งควบคุมถูกจำกัดเฉพาะ click, key, type text, scroll และ hotkey allowlist ฝั่งระบบ
+- ทุก action สำคัญถูกบันทึกใน `RemoteSupportEvents`
+- ถ้าต้องหยุดฉุกเฉิน ให้ปิด Agent หรือเลื่อนเมาส์ไปมุมหน้าจอเพื่อ trigger pyautogui failsafe
+
+## Rollback
+
+ใช้หน้า `remote.html` แท็บ `Rollback` หรือเรียก `cleanupRemoteSupportDatabaseV753`
+
+ข้อมูลที่จะถูกล้างเมื่อ rollback:
+
+- `RemoteSupportSessions`
+- `RemoteSupportEvents`
+- `RemoteSupportSignals`
+- `RemoteSupportFrames`
+- remote support notifications ถ้าเลือก purge
