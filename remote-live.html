@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Realtime Remote Support - Health Assistant OS</title>
+  <script>
+    (function () {
+      if (window.google && window.google.script && window.google.script.run) return;
+      function makeRunner(successHandler, failureHandler) {
+        return new Proxy({}, { get: function (_target, prop) {
+          if (prop === 'withSuccessHandler') return function (cb) { return makeRunner(cb, failureHandler); };
+          if (prop === 'withFailureHandler') return function (cb) { return makeRunner(successHandler, cb); };
+          if (prop === 'toString') return function () { return '[google.script.run Vercel Bridge]'; };
+          return function () {
+            var args = Array.prototype.slice.call(arguments);
+            fetch('/api/gas', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fn: String(prop), args: args }) })
+              .then(function (response) { return response.text().then(function (text) { var data; try { data = text ? JSON.parse(text) : {}; } catch (err) { throw new Error(text || response.statusText || 'Invalid API response'); } if (!response.ok || data.__bridgeError) throw new Error(data.message || 'API request failed'); return data; }); })
+              .then(function (data) { if (typeof successHandler === 'function') successHandler(data); })
+              .catch(function (err) { if (typeof failureHandler === 'function') failureHandler(err); else alert(err.message || String(err)); });
+          };
+        }});
+      }
+      window.google = window.google || {}; window.google.script = window.google.script || {}; window.google.script.run = makeRunner(null, null);
+    })();
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.10.1/sweetalert2.all.min.js"></script>
+  <style>
+    :root{--blue:#2563eb;--sky:#0ea5e9;--green:#10b981;--ink:#0f172a;--muted:#64748b;--line:rgba(148,163,184,.28)}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;font-family:'Prompt',system-ui,sans-serif;background:#07111f;color:#e5edf8;overflow:hidden}
+    .live-app{height:100vh;display:grid;grid-template-rows:auto minmax(0,1fr)}
+    .live-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;background:linear-gradient(135deg,#0ea5e9,#2563eb 55%,#10b981);box-shadow:0 14px 40px rgba(0,0,0,.28)}
+    .live-title{display:flex;align-items:center;gap:12px;font-weight:900;font-size:1.15rem}
+    .badge-live{display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:.45rem .72rem;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);font-weight:900}
+    .live-body{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:12px;padding:12px;min-height:0}
+    .screen-wrap{border:1px solid rgba(148,163,184,.25);border-radius:20px;background:#020617;display:grid;place-items:center;overflow:hidden;position:relative}
+    .screen-wrap img{max-width:100%;max-height:100%;display:block;cursor:crosshair;image-rendering:auto}
+    .empty{color:#94a3b8;text-align:center}
+    .side{border:1px solid rgba(148,163,184,.22);border-radius:20px;background:#0f172a;padding:14px;overflow:auto}
+    .status-line{font-size:.88rem;color:#cbd5e1;line-height:1.6}
+    .btn{border-radius:14px;font-weight:900}
+    .form-control{border-radius:14px;background:#111827;color:#e5edf8;border-color:#334155}
+    .form-control:focus{background:#111827;color:#fff;border-color:#38bdf8;box-shadow:0 0 0 4px rgba(14,165,233,.16)}
+    .control-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .log{height:130px;overflow:auto;border-radius:14px;background:#020617;border:1px solid rgba(148,163,184,.2);padding:10px;font-size:.8rem;color:#cbd5e1}
+    .signal-dot{width:10px;height:10px;border-radius:50%;background:#ef4444;display:inline-block;box-shadow:0 0 0 5px rgba(239,68,68,.15)}
+    .signal-dot.on{background:#22c55e;box-shadow:0 0 0 5px rgba(34,197,94,.16)}
+    @media (max-width:960px){body{overflow:auto}.live-app{height:auto;min-height:100vh}.live-body{grid-template-columns:1fr}.screen-wrap{height:58vh}}
+  </style>
+</head>
+<body>
+  <main class="live-app">
+    <header class="live-top">
+      <div class="live-title"><i class="bi bi-display"></i><span>Realtime Remote Support</span><span class="badge-live"><span id="signalDot" class="signal-dot"></span><span id="signalText">offline</span></span></div>
+      <div class="d-flex gap-2 flex-wrap">
+        <button class="btn btn-light btn-sm" onclick="connectRelay()"><i class="bi bi-plug"></i> Connect</button>
+        <button class="btn btn-outline-light btn-sm" onclick="window.close()"><i class="bi bi-x-lg"></i> Close</button>
+      </div>
+    </header>
+    <section class="live-body">
+      <div class="screen-wrap" id="screenWrap">
+        <div class="empty"><i class="bi bi-hourglass-split fs-1"></i><div class="mt-2">รอภาพจาก Agent แบบ realtime...</div></div>
+      </div>
+      <aside class="side">
+        <h5 class="fw-bold mb-3"><i class="bi bi-router"></i> Realtime Session</h5>
+        <div class="row g-2 mb-3">
+          <div class="col-12"><label class="small fw-bold">Relay URL</label><input id="relayUrl" class="form-control" placeholder="wss://your-relay/ws"></div>
+          <div class="col-6"><label class="small fw-bold">Session Code</label><input id="sessionCode" class="form-control" maxlength="6"></div>
+          <div class="col-6"><label class="small fw-bold">Staff Phone</label><input id="staffPhone" class="form-control" maxlength="10"></div>
+        </div>
+        <div id="sessionStatus" class="status-line mb-3">ยังไม่ได้เชื่อมต่อ</div>
+        <div class="d-grid gap-2 mb-3">
+          <button class="btn btn-warning" onclick="requestControl()"><i class="bi bi-shield-lock"></i> ขอควบคุมเครื่อง</button>
+          <button class="btn btn-outline-danger" onclick="stopControl()"><i class="bi bi-stop-circle"></i> หยุดควบคุม</button>
+        </div>
+        <div class="control-grid mb-3">
+          <button class="btn btn-outline-light" onclick="sendKey('enter')">Enter</button>
+          <button class="btn btn-outline-light" onclick="sendKey('tab')">Tab</button>
+          <button class="btn btn-outline-light" onclick="sendKey('escape')">Esc</button>
+          <button class="btn btn-outline-light" onclick="sendCommand({type:'scroll',amount:-5})">Scroll</button>
+        </div>
+        <label class="small fw-bold">พิมพ์ข้อความที่เครื่องปลายทาง</label>
+        <textarea id="typeText" class="form-control mb-2" rows="3"></textarea>
+        <button class="btn btn-success w-100 mb-3" onclick="sendTypeText()"><i class="bi bi-keyboard"></i> ส่งข้อความ</button>
+        <div class="small text-secondary mb-2">กดบนภาพเพื่อส่งคำสั่งคลิก เฉพาะเมื่อผู้ใช้อนุญาต Control แล้วเท่านั้น</div>
+        <div id="log" class="log"></div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const qs = new URLSearchParams(location.search);
+    const $ = id => document.getElementById(id);
+    const phoneOnly = v => String(v || '').replace(/\D/g, '');
+    let ws = null;
+    let relaySecret = '';
+    let controlApproved = false;
+    let lastFrame = null;
+    function gas(fn,args){return new Promise((resolve,reject)=>{try{google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run,args||[]);}catch(e){reject(e);}});}
+    function log(msg){const el=$('log');el.innerHTML=(new Date().toLocaleTimeString('th-TH')+' '+String(msg)+'<br>')+el.innerHTML;}
+    function setOnline(on,text){$('signalDot').classList.toggle('on',!!on);$('signalText').textContent=text||'offline';}
+    function relayWsUrl(raw, code){
+      raw = String(raw || '').trim().replace(/\/+$/,'');
+      if (!raw) return '';
+      const base = raw.endsWith('/ws') ? raw : raw + '/ws';
+      const token = relaySecret ? '&token=' + encodeURIComponent(relaySecret) : '';
+      return base + '?role=staff&code=' + encodeURIComponent(code) + token;
+    }
+    async function init(){
+      $('sessionCode').value = phoneOnly(qs.get('code') || '').slice(0,6);
+      $('staffPhone').value = phoneOnly(qs.get('phone') || '').slice(0,10);
+      $('relayUrl').value = qs.get('relay') || localStorage.getItem('haosRemoteRelayUrl') || '';
+      try{
+        const cfg = await gas('getRemoteSupportConfigV755',[]);
+        if(cfg && cfg.relayUrl && !$('relayUrl').value) $('relayUrl').value = cfg.relayUrl;
+      }catch(e){}
+      if($('relayUrl').value && $('sessionCode').value) connectRelay();
+    }
+    function connectRelay(){
+      const code=phoneOnly($('sessionCode').value).slice(0,6);
+      const relay=$('relayUrl').value.trim();
+      if(code.length!==6)return Swal.fire('กรุณาระบุ Session Code','','warning');
+      if(!relay)return Swal.fire('ยังไม่ได้ตั้งค่า Relay URL','ต้อง deploy remote-relay ก่อน แล้วใส่ wss://.../ws','warning');
+      localStorage.setItem('haosRemoteRelayUrl',relay);
+      gas('getRemoteSupportRelayTokenV755',[phoneOnly($('staffPhone').value)]).then(tokenRes=>{
+        relaySecret = tokenRes && tokenRes.success ? String(tokenRes.relaySecret || '') : '';
+        openRelaySocket(relay, code);
+      }).catch(()=>openRelaySocket(relay, code));
+    }
+    function openRelaySocket(relay, code){
+      if(ws)try{ws.close();}catch(e){}
+      const url=relayWsUrl(relay,code);
+      ws=new WebSocket(url);
+      setOnline(false,'connecting');
+      ws.onopen=()=>{setOnline(true,'realtime');log('connected to relay');ws.send(JSON.stringify({type:'hello',role:'staff',phone:phoneOnly($('staffPhone').value)}));};
+      ws.onclose=()=>{setOnline(false,'offline');log('relay closed');};
+      ws.onerror=()=>{setOnline(false,'error');log('relay error');};
+      ws.onmessage=ev=>handleMessage(ev.data);
+    }
+    function handleMessage(raw){
+      let msg={};try{msg=JSON.parse(raw);}catch(e){return;}
+      if(msg.type==='frame'){renderFrame(msg);return;}
+      if(msg.type==='relayReady'){log('relay ready, agent '+(msg.hasAgent?'online':'offline'));return;}
+      if(msg.type==='agentStatus'){log('agent '+(msg.connected?'online':'offline'));return;}
+      if(msg.type==='controlConsent'){controlApproved=!!msg.approved;updateStatus();log(controlApproved?'control approved':'control stopped/denied');return;}
+      if(msg.type==='commandAck'){log('ack '+JSON.stringify(msg.result||{}));return;}
+      if(msg.type==='error'){log('error: '+(msg.message||''));return;}
+    }
+    function renderFrame(frame){
+      lastFrame=frame;
+      const wrap=$('screenWrap');
+      let img=$('remoteFrame');
+      if(!img){
+        wrap.innerHTML='<img id="remoteFrame" alt="remote screen">';
+        img=$('remoteFrame');
+        img.onclick=ev=>{
+          if(!controlApproved){Swal.fire('ยังควบคุมไม่ได้','ต้องกดขอควบคุมและให้ผู้ใช้ยินยอมก่อน','warning');return;}
+          const r=img.getBoundingClientRect();
+          sendCommand({type:'click',xRatio:(ev.clientX-r.left)/r.width,yRatio:(ev.clientY-r.top)/r.height});
+        };
+        img.ondblclick=ev=>{
+          if(!controlApproved)return;
+          const r=img.getBoundingClientRect();
+          sendCommand({type:'doubleClick',xRatio:(ev.clientX-r.left)/r.width,yRatio:(ev.clientY-r.top)/r.height});
+        };
+      }
+      img.src=frame.image;
+      updateStatus();
+    }
+    function updateStatus(){
+      $('sessionStatus').innerHTML = 'ภาพล่าสุด: <b>'+(lastFrame&&lastFrame.capturedAt?new Date(lastFrame.capturedAt).toLocaleTimeString('th-TH'):'-')+'</b><br>ขนาดภาพ: <b>'+((lastFrame&&lastFrame.width)||'-')+' x '+((lastFrame&&lastFrame.height)||'-')+'</b><br>Control: <b class="'+(controlApproved?'text-success':'text-warning')+'">'+(controlApproved?'Approved':'Not approved')+'</b>';
+    }
+    function sendRaw(payload){if(!ws||ws.readyState!==WebSocket.OPEN){log('not connected');return false;}ws.send(JSON.stringify(payload));return true;}
+    function requestControl(){sendRaw({type:'requestControl',requestedBy:phoneOnly($('staffPhone').value),message:'เจ้าหน้าที่ขออนุญาตควบคุมเครื่องเพื่อช่วยแก้ไขปัญหา'});}
+    function stopControl(){controlApproved=false;updateStatus();sendRaw({type:'stopControl'});}
+    function sendCommand(command){sendRaw({type:'command',command});}
+    function sendKey(key){sendCommand({type:'key',key});}
+    function sendTypeText(){const text=$('typeText').value;if(!text.trim())return;sendCommand({type:'typeText',text});$('typeText').value='';}
+    document.addEventListener('DOMContentLoaded',init,{once:true});
+  </script>
+</body>
+</html>
