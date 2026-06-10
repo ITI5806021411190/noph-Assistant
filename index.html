@@ -19065,6 +19065,10 @@ HAOS v68.6 FINISHING FIX
   .haos-v760-external-badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 10px;font-size:.78rem;font-weight:800}
   .haos-v760-external-badge.active{background:#dcfce7;color:#166534}
   .haos-v760-external-badge.inactive{background:#e5e7eb;color:#475569}
+  .haos-v760-external-form{border:1px solid rgba(16,185,129,.28);background:linear-gradient(135deg,#ffffff,#f0fdf4);border-radius:16px;padding:14px;margin-top:14px;box-shadow:0 10px 26px rgba(15,23,42,.06)}
+  .haos-v760-external-form .form-control{border-radius:12px;padding:12px 14px}
+  .haos-v760-external-form label{color:#0f766e}
+  .haos-v760-external-form-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:12px}
 </style>
 <script id="haos-v70-60-external-orgs-script">
 (function(){
@@ -19133,7 +19137,7 @@ HAOS v68.6 FINISHING FIX
       return `<div class="haos-v760-external-item ${active?'':'inactive'}">
         <div>
           <b><i class="bi bi-building-add"></i> ${esc(orgValue(org))}</b>
-          <div class="small text-muted">${esc(org.contact||'ไม่มีข้อมูลติดต่อ')}${org.note?' · '+esc(org.note):''}</div>
+          <div class="small text-muted">${esc(org.note||org.contact||'ไม่มีข้อมูลเพิ่มเติม')}</div>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap">${status}${action}</div>
       </div>`;
@@ -19211,6 +19215,82 @@ HAOS v68.6 FINISHING FIX
       syncExternalOrgOptionsV760();
       renderExternalOrgPanelV760();
       Swal.fire({icon:'success',title:'บันทึกแล้ว',text:'ผู้สมัครภายนอกสามารถเลือกหน่วยงานนี้ได้แล้ว',timer:1500,showConfirmButton:false});
+    }
+  };
+
+  function ensureExternalOrgInlineFormV760(){
+    const panel=$('haosExternalOrgPanelV760');
+    if(!panel)return null;
+    let form=$('haosExternalOrgFormV760');
+    if(!form){
+      const head=panel.querySelector('.haos-v760-external-head');
+      const html=`<div id="haosExternalOrgFormV760" class="haos-v760-external-form d-none">
+        <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap mb-2">
+          <div>
+            <div class="fw-bold text-success"><i class="bi bi-building-add"></i> เพิ่มหน่วยงานภายนอก</div>
+            <div class="small text-muted">เพิ่มเฉพาะชื่อหน่วยงานที่อนุญาตให้เจ้าหน้าที่ภายนอกเลือกตอนสมัคร ข้อมูลสมัครใช้งานยังใช้แบบเดียวกับเจ้าหน้าที่ภายใน</div>
+          </div>
+        </div>
+        <div class="row g-2">
+          <div class="col-md-5">
+            <label class="small fw-bold mb-1">ชื่อหน่วยงานภายนอก *</label>
+            <input id="extOrgNameV760" class="form-control" autocomplete="off" placeholder="เช่น รพ.สต.บ้าน..., เทศบาล..., โรงเรียน...">
+          </div>
+          <div class="col-md-7">
+            <label class="small fw-bold mb-1">ข้อมูลเพิ่มเติม</label>
+            <input id="extOrgNoteV760" class="form-control" autocomplete="off" placeholder="เช่น ผู้ประสานงาน เบอร์โทร หรือหมายเหตุสั้น ๆ">
+          </div>
+        </div>
+        <div class="haos-v760-external-form-actions">
+          <button type="button" class="btn btn-outline-secondary fw-bold" onclick="cancelExternalOrganizationFormV760()"><i class="bi bi-x-circle"></i> ยกเลิก</button>
+          <button id="haosExternalOrgSaveBtnV760" type="button" class="btn btn-success fw-bold" onclick="saveExternalOrganizationInlineV760()"><i class="bi bi-check-circle"></i> บันทึกหน่วยงาน</button>
+        </div>
+      </div>`;
+      if(head)head.insertAdjacentHTML('afterend',html);else panel.querySelector('.card-body')?.insertAdjacentHTML('afterbegin',html);
+      form=$('haosExternalOrgFormV760');
+    }
+    return form;
+  }
+
+  window.cancelExternalOrganizationFormV760=function(){
+    const form=$('haosExternalOrgFormV760');
+    if(form)form.classList.add('d-none');
+    if($('extOrgNameV760'))$('extOrgNameV760').value='';
+    if($('extOrgNoteV760'))$('extOrgNoteV760').value='';
+  };
+
+  window.openExternalOrganizationEditorV760=function(){
+    if(!canManageExternalOrgsV760())return Swal.fire('ไม่มีสิทธิ์','อนุญาตเฉพาะ Super Admin เพิ่มหน่วยงานภายนอก','warning');
+    const form=ensureExternalOrgInlineFormV760();
+    if(!form)return Swal.fire('ไม่พบพื้นที่ตั้งค่า','กรุณาปิดและเปิดหน้าจัดการผู้ใช้งานระบบใหม่อีกครั้ง','warning');
+    form.classList.remove('d-none');
+    form.scrollIntoView({behavior:'smooth',block:'center'});
+    setTimeout(()=>$('extOrgNameV760')?.focus(),120);
+  };
+
+  window.saveExternalOrganizationInlineV760=async function(){
+    if(!canManageExternalOrgsV760())return Swal.fire('ไม่มีสิทธิ์','อนุญาตเฉพาะ Super Admin','warning');
+    const name=clean($('extOrgNameV760')?.value||'');
+    const note=clean($('extOrgNoteV760')?.value||'');
+    if(!name){
+      $('extOrgNameV760')?.focus();
+      return Swal.fire('ข้อมูลยังไม่ครบ','กรุณาระบุชื่อหน่วยงานภายนอก','warning');
+    }
+    const btn=$('haosExternalOrgSaveBtnV760');
+    if(btn){btn.disabled=true;btn.innerHTML='<span class="spinner-border spinner-border-sm me-1"></span> กำลังบันทึก...';}
+    try{
+      const res=await gas('saveExternalOrganizationV760',[actorPhoneV760(),{name,contact:'',note,active:true}]);
+      if(!res||!res.success)throw new Error(res?.message||'บันทึกไม่สำเร็จ');
+      window.haosExternalOrganizationsV760=res.data||[];
+      window.haosExternalOrganizationsCanManageV760=true;
+      syncExternalOrgOptionsV760();
+      renderExternalOrgPanelV760();
+      cancelExternalOrganizationFormV760();
+      Swal.fire({icon:'success',title:'บันทึกแล้ว',text:'ผู้สมัครภายนอกสามารถเลือกหน่วยงานนี้ตอนสมัครสมาชิกได้แล้ว',timer:1500,showConfirmButton:false});
+    }catch(e){
+      Swal.fire('ผิดพลาด',e.message||String(e),'error');
+    }finally{
+      if(btn){btn.disabled=false;btn.innerHTML='<i class="bi bi-check-circle"></i> บันทึกหน่วยงาน';}
     }
   };
 
