@@ -65,6 +65,14 @@
     .copy-box{word-break:break-all;border:1px solid var(--rs-line);border-radius:14px;background:#f8fafc;padding:10px;font-size:.9rem}
     .role-note{border:1px solid rgba(16,185,129,.28);border-radius:18px;background:#ecfdf5;padding:14px}
     .empty-state{border:1px dashed rgba(148,163,184,.4);border-radius:18px;background:#f8fafc;padding:26px;text-align:center;color:#64748b}
+    .download-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
+    .history-list{display:grid;gap:10px}
+    .history-item{border:1px solid var(--rs-line);border-radius:16px;background:linear-gradient(90deg,#f8fafc,#fff);padding:12px;display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+    .history-item b{color:#0f172a}
+    .guide-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;text-align:left}
+    .guide-card{border:1px solid rgba(148,163,184,.28);border-radius:16px;background:#fff;padding:14px;box-shadow:0 10px 24px rgba(15,23,42,.04)}
+    .guide-card b{display:flex;align-items:center;gap:8px;margin-bottom:6px;color:#075985}
+    .guide-card .num{width:30px;height:30px;border-radius:11px;background:#2563eb;color:#fff;display:inline-grid;place-items:center;font-weight:900;margin-right:6px}
     body.remote-user-only #remoteTabs{display:none!important}
     body.remote-user-only .panel-head{justify-content:flex-end}
     @media (max-width:768px){.remote-shell{padding:14px 10px 34px}.remote-hero{border-radius:22px}.panel-body{padding:14px}.quick-steps{grid-template-columns:1fr}.anydesk-id{font-size:1.08rem}}
@@ -101,7 +109,12 @@
                   <h5 class="fw-bold mb-1"><i class="bi bi-lightning-charge text-primary"></i> ขอความช่วยเหลือแบบเร็ว</h5>
                   <div class="mini-muted">เปิด AnyDesk, กรอกเลข AnyDesk ID, แล้วรอเจ้าหน้าที่รับงานจากคิวกลาง</div>
                 </div>
-                <a class="btn btn-success" href="https://anydesk.com/en/downloads/windows" target="_blank" rel="noopener"><i class="bi bi-download"></i> ดาวน์โหลด AnyDesk</a>
+                <div class="download-actions">
+                  <a class="btn btn-success" href="https://anydesk.com/en/downloads/windows" target="_blank" rel="noopener"><i class="bi bi-globe2"></i> โหลดผ่านหน้าเว็บ</a>
+                  <a class="btn btn-outline-success" href="https://download.anydesk.com/AnyDesk.exe" download rel="noopener"><i class="bi bi-file-earmark-arrow-down"></i> โหลดไฟล์โดยตรง</a>
+                  <button type="button" class="btn btn-outline-primary" onclick="openAnyDeskGuide()"><i class="bi bi-info-circle"></i> คู่มือ AnyDesk</button>
+                  <button type="button" class="btn btn-outline-secondary" onclick="copyModuleLink()"><i class="bi bi-link-45deg"></i> คัดลอกลิงก์โมดูล</button>
+                </div>
               </div>
               <div class="quick-steps">
                 <div class="quick-step"><div class="num">1</div><b>เปิด AnyDesk</b><div class="mini-muted mt-1">ดาวน์โหลดจากหน้า official แล้วเปิดไฟล์แบบ portable ได้ทันที</div></div>
@@ -136,6 +149,16 @@
                 </div>
               </div>
             </div>
+            <div class="support-card mt-3" id="userHistoryCard">
+              <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+                <div>
+                  <h5 class="fw-bold mb-1"><i class="bi bi-clock-history text-primary"></i> ประวัติการขอช่วยเหลือของฉัน</h5>
+                  <div class="mini-muted">กรอกเบอร์ผู้ขอแล้วกดโหลด เพื่อดูงานที่เคยส่งคำขอไว้และผลการดำเนินการย้อนหลัง</div>
+                </div>
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="loadUserHistory()"><i class="bi bi-arrow-clockwise"></i> โหลดประวัติ</button>
+              </div>
+              <div id="userHistoryList" class="history-list mt-3"><div class="empty-state">ยังไม่ได้โหลดประวัติ</div></div>
+            </div>
           </div>
 
           <div class="tab-pane fade" id="staffPane">
@@ -155,6 +178,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
   <script>
     const ANYDESK_DOWNLOAD_URL = 'https://anydesk.com/en/downloads/windows';
+    const ANYDESK_DIRECT_DOWNLOAD_URL = 'https://download.anydesk.com/AnyDesk.exe';
     const qs = new URLSearchParams(location.search);
     const $ = id => document.getElementById(id);
     const esc = v => String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -168,6 +192,89 @@
     function statusBadge(s){return `<span class="status-badge ${statusClass(s)}"><i class="bi bi-circle-fill"></i>${esc(statusText(s))}</span>`;}
     function setBusy(btn,on,text){if(!btn)return;btn.disabled=!!on;if(text)btn.innerHTML=text;}
     function fmtDate(v){try{return v?new Date(v).toLocaleString('th-TH'):'';}catch(e){return String(v||'');}}
+    function moduleLink(){
+      const url=new URL(location.href);
+      url.pathname='/remote.html';
+      url.searchParams.set('mode','user');
+      url.searchParams.set('v','7059');
+      const phone=phoneOnly($('reqPhone')?.value||qs.get('phone')||'');
+      if(phone.length===10)url.searchParams.set('phone',phone); else url.searchParams.delete('phone');
+      return url.toString();
+    }
+    async function copyModuleLink(){
+      await copyText(moduleLink(), true);
+      Swal.fire({icon:'success',title:'คัดลอกลิงก์โมดูลแล้ว',html:`<div class="text-break small">${esc(moduleLink())}</div>`});
+    }
+    function openAnyDeskGuide(){
+      Swal.fire({
+        title:'คู่มือใช้งาน AnyDesk สำหรับขอความช่วยเหลือ',
+        width:980,
+        html:`<div class="guide-grid">
+          <div class="guide-card"><b><span class="num">1</span>ดาวน์โหลดโปรแกรม</b><div class="mini-muted">เลือก “โหลดผ่านหน้าเว็บ” เพื่อเปิดหน้าทางการของ AnyDesk หรือเลือก “โหลดไฟล์โดยตรง” เพื่อดาวน์โหลดไฟล์ AnyDesk.exe ทันที</div></div>
+          <div class="guide-card"><b><span class="num">2</span>เปิดไฟล์ AnyDesk.exe</b><div class="mini-muted">เป็นแบบ portable เปิดใช้งานได้เลย ไม่จำเป็นต้องติดตั้ง หาก Windows ถาม ให้เลือก Run/Open เพื่อเปิดโปรแกรม</div></div>
+          <div class="guide-card"><b><span class="num">3</span>ดูเลข AnyDesk ID</b><div class="mini-muted">เลข ID จะอยู่บนหน้าจอหลักของ AnyDesk เช่น 123 456 789 ให้คัดลอกหรือพิมพ์ลงในช่อง AnyDesk ID</div></div>
+          <div class="guide-card"><b><span class="num">4</span>ส่งคำขอ</b><div class="mini-muted">กรอกเบอร์ หัวข้อปัญหา และรายละเอียดสั้น ๆ แล้วกดส่ง เจ้าหน้าที่จะเห็นคำขอในคิวกลางทันที</div></div>
+          <div class="guide-card"><b><span class="num">5</span>ยอมรับการเชื่อมต่อ</b><div class="mini-muted">เมื่อเจ้าหน้าที่เชื่อมต่อ AnyDesk จะถามที่เครื่องผู้ใช้ ให้ตรวจชื่อก่อนกดยอมรับ และสามารถหยุดการเชื่อมต่อได้จาก AnyDesk เสมอ</div></div>
+          <div class="guide-card"><b><i class="bi bi-shield-check"></i>ความปลอดภัย</b><div class="mini-muted">Health Assistant OS เก็บเฉพาะประวัติคำขอและผลช่วยเหลือ ไม่เก็บรหัสควบคุมเครื่อง และไม่เปิด unattended access ให้ใครเข้ามาเอง</div></div>
+        </div>
+        <div class="d-flex gap-2 justify-content-center flex-wrap mt-3">
+          <a class="btn btn-success" href="${ANYDESK_DOWNLOAD_URL}" target="_blank" rel="noopener"><i class="bi bi-globe2"></i> เปิดหน้าเว็บ AnyDesk</a>
+          <a class="btn btn-outline-success" href="${ANYDESK_DIRECT_DOWNLOAD_URL}" download rel="noopener"><i class="bi bi-download"></i> ดาวน์โหลดไฟล์โดยตรง</a>
+        </div>`,
+        confirmButtonText:'เข้าใจแล้ว'
+      });
+    }
+    function showRegistrationGuidance(phone, detail){
+      Swal.fire({
+        icon:'info',
+        title:'ยังไม่พบเบอร์นี้ในระบบ',
+        width:760,
+        html:`<div class="text-start">
+          <div class="alert alert-warning small"><i class="bi bi-person-plus"></i> เบอร์ ${esc(phone||'-')} ยังไม่ได้ลงทะเบียน จึงยังสร้างคำขอช่วยเหลือไม่ได้</div>
+          <div class="guide-grid">
+            <div class="guide-card"><b><i class="bi bi-building"></i> เจ้าหน้าที่ใน สสจ.นครนายก</b><div class="mini-muted">กลับไปหน้าหลักแล้วสมัครสมาชิกด้วยเบอร์และอีเมลหน่วยงาน จากนั้นจึงกลับมาส่งคำขอ AnyDesk ได้</div></div>
+            <div class="guide-card"><b><i class="bi bi-person-vcard"></i> เจ้าหน้าที่ภายนอกหน่วยงาน</b><div class="mini-muted">แจ้ง Super Admin ให้เพิ่มหน่วยงานภายนอกในเมนู “จัดการผู้ใช้งานระบบ” ก่อน แล้วจึงสมัครใช้งานด้วยข้อมูลหน่วยงานนั้น</div></div>
+          </div>
+          ${detail?`<div class="small text-muted mt-3">รายละเอียดจากระบบ: ${esc(detail)}</div>`:''}
+        </div>`,
+        showCancelButton:true,
+        confirmButtonText:'กลับไปสมัครสมาชิก',
+        cancelButtonText:'อยู่หน้านี้ต่อ'
+      }).then(r=>{if(r.isConfirmed)location.href='/';});
+    }
+    function renderUserHistory(list){
+      const box=$('userHistoryList');
+      if(!box)return;
+      if(!list.length){
+        box.innerHTML='<div class="empty-state">ยังไม่มีประวัติคำขอช่วยเหลือของเบอร์นี้</div>';
+        return;
+      }
+      box.innerHTML=list.slice(0,20).map(s=>`<div class="history-item">
+        <div>
+          <b>${esc(s.subject||'-')}</b>
+          <div class="mini-muted">${esc(s.issueType||'-')} · ${esc(fmtDate(s.createdAt))}</div>
+          <div class="mini-muted">${esc(s.description||'').slice(0,180)}</div>
+        </div>
+        <div class="text-end">
+          ${statusBadge(s.status)}
+          <div class="mini-muted mt-1">ผู้รับงาน: ${esc(s.assignedToName||'-')}</div>
+          ${s.updatedAt?`<div class="mini-muted">อัปเดต: ${esc(fmtDate(s.updatedAt))}</div>`:''}
+        </div>
+      </div>`).join('');
+    }
+    async function loadUserHistory(){
+      const phone=phoneOnly($('reqPhone')?.value||'');
+      if(phone.length!==10)return Swal.fire('กรุณาระบุเบอร์ผู้ขอ','ใส่เบอร์ 10 หลักก่อนโหลดประวัติ','warning');
+      const box=$('userHistoryList');
+      if(box)box.innerHTML='<div class="empty-state"><span class="spinner-border spinner-border-sm"></span> กำลังโหลดประวัติ...</div>';
+      try{
+        const res=await gas('getRemoteSupportSessionsV752',[phone,'','',{status:'',query:''}]);
+        if(!res||!res.success)throw new Error(res?.message||'โหลดประวัติไม่สำเร็จ');
+        renderUserHistory(res.sessions||[]);
+      }catch(e){
+        if(box)box.innerHTML=`<div class="empty-state text-danger">${esc(e.message||String(e))}</div>`;
+      }
+    }
 
     async function loadConfig(){
       try{
@@ -232,7 +339,12 @@
           </div>
           <div class="alert alert-info mt-3 mb-0 small"><b>ขั้นตอนต่อไป:</b> เปิด AnyDesk ค้างไว้ และกดยอมรับเมื่อเจ้าหน้าที่เชื่อมต่อเข้ามา</div>`;
         Swal.fire({icon:'success',title:'ส่งคำขอแล้ว',text:'เปิด AnyDesk ค้างไว้เพื่อรอเจ้าหน้าที่'});
+        loadUserHistory();
       }catch(e){
+        if(/ไม่พบ|not\s*found|ไม่มี.*ผู้ใช้งาน|เบอร์.*ระบบ|phone/i.test(e.message||String(e))) {
+          showRegistrationGuidance(payload.requesterPhone,e.message||String(e));
+          return;
+        }
         Swal.fire('ผิดพลาด',e.message||String(e),'error');
       }finally{
         setBusy(btn,false,'<i class="bi bi-send-check"></i> ส่งคำขอให้เจ้าหน้าที่');
@@ -346,6 +458,11 @@
       await applyRoleMode();
       const status=$('staffStatus');
       if(status)status.addEventListener('change',()=>{if(phoneOnly($('staffPhone').value).length===10)loadStaffSessions();});
+      const reqPhone=$('reqPhone');
+      if(reqPhone){
+        reqPhone.addEventListener('blur',()=>{if(phoneOnly(reqPhone.value).length===10)loadUserHistory();});
+        if(phoneOnly(reqPhone.value).length===10)setTimeout(loadUserHistory,450);
+      }
     });
   </script>
 </body>
