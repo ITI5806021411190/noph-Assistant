@@ -3,10 +3,6 @@
   "trailingSlash": false,
   "rewrites": [
     {
-      "source": "/remote-live",
-      "destination": "/remote-live.html"
-    },
-    {
       "source": "/remote",
       "destination": "/remote.html"
     },

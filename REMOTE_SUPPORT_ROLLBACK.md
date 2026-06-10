@@ -1,150 +1,121 @@
-# Remote Support Rollback Plan
+# Remote Support Rollback / Cleanup Plan
 
-แผนนี้ใช้สำหรับถอดหรือปิดโมดูลช่วยเหลือทางไกลแบบ Portable Agent โดยไม่กระทบระบบหลักของ Health Assistant OS
+สถานะปัจจุบัน: โมดูลช่วยเหลือทางไกลเปลี่ยนมาใช้ AnyDesk เป็นเครื่องมือควบคุมหน้าจอหลักแล้ว
 
-## สิ่งที่เพิ่มเข้าระบบ
+Health Assistant OS ทำหน้าที่:
 
-- `remote.html`
-  - หน้า Remote Support Hub แยกจาก `index.html`
-  - ใช้สำหรับสร้าง session, staff dashboard, agent check-in และ rollback
+- สร้างคำขอช่วยเหลือ
+- เก็บ AnyDesk ID
+- แจ้งเจ้าหน้าที่
+- รับงาน / เริ่มงาน / บันทึกหมายเหตุ / จบงาน
+- เก็บ audit log และประวัติการช่วยเหลือ
+
+AnyDesk ทำหน้าที่:
+
+- ดูหน้าจอ
+- ควบคุมเครื่อง
+- ขอการยินยอมจากผู้ใช้ปลายทาง
+
+## ต้อง rollback database ไหม
+
+โดยปกติ **ไม่จำเป็นต้อง rollback database**
+
+เหตุผล:
+
+- `RemoteSupportSessions` ยังใช้ต่อเป็น ticket งานช่วยเหลือ AnyDesk ได้
+- `RemoteSupportEvents` ยังใช้เป็น audit log ได้
+- ข้อมูลเก่าไม่กระทบระบบหลัก
+- การ rollback จะลบประวัติที่อาจใช้ตรวจสอบย้อนหลัง
+
+ให้ rollback เฉพาะกรณี:
+
+- มีข้อมูลทดสอบจำนวนมาก
+- ต้องการล้างประวัติ Remote Support ทั้งหมด
+- ต้องการปิดโมดูลนี้ออกจากระบบจริง ๆ
+
+## ข้อมูลที่ยังใช้ต่อ
 
 - `RemoteSupportSessions`
-  - เก็บ session code, ผู้ขอรับบริการ, สถานะ, consent, agent version และ audit metadata
+  - เก็บคำขอช่วยเหลือ, ผู้ขอ, กลุ่มงาน, AnyDesk ID, สถานะ และผู้รับงาน
 
 - `RemoteSupportEvents`
-  - เก็บ audit log รายเหตุการณ์ของ remote session
-
-- `RemoteSupportSignals`
-  - เก็บ command queue ระหว่าง Staff Viewer กับ Portable Agent เช่น request control, click, key, type text
-
-- `RemoteSupportFrames`
-  - เก็บภาพหน้าจอล่าสุดแบบ base64 ขนาดเล็กสำหรับ view-only MVP
-  - ระบบเก็บเฉพาะเฟรมล่าสุดของแต่ละ session เพื่อลดภาระ database
+  - เก็บ audit log เช่น created, assign, start, note, end, cancel
 
 - `Settings.REMOTE_SUPPORT_ENABLED`
-  - ใช้เปิด/ปิดโมดูลทันที
+  - ใช้เปิด/ปิดโมดูล Remote Support
 
+## ข้อมูล legacy ที่ล้างได้ถ้าต้องการ
+
+ถ้าเคยทดสอบ Phase Realtime/Agent มาก่อน ข้อมูลเหล่านี้ไม่จำเป็นกับ AnyDesk แล้ว:
+
+- `RemoteSupportFrames`
+- `RemoteSupportSignals`
 - `Settings.REMOTE_SUPPORT_RELAY_URL`
-  - URL ของ WebSocket relay สำหรับโหมด realtime
-
 - `Settings.REMOTE_SUPPORT_RELAY_SECRET`
-  - shared secret สำหรับป้องกัน relay ถ้ามีการตั้งค่า
-
-- `remote-live.html`
-  - หน้าควบคุม realtime สำหรับเจ้าหน้าที่ ใช้ WebSocket relay ไม่ส่งภาพผ่าน Google Sheet
-
-- `remote-relay/`
-  - server แยกสำหรับส่งภาพและคำสั่งแบบ realtime ต้อง deploy บนบริการที่รองรับ WebSocket
-
-- `Notifications`
-  - อาจมีรายการประเภท `Remote Support` หรือ module `remoteSupport`
+- notification ทดสอบประเภท `Remote Support` ที่ไม่ต้องการเก็บ
 
 ## Rollback แบบไม่ลบข้อมูล
 
 เหมาะเมื่ออยากหยุดใช้งานชั่วคราว
 
-1. เปิด `remote.html`
-2. ไปแท็บ `Rollback`
-3. กรอกเบอร์ Super Admin
-4. กด `ปิดโมดูลอย่างเดียว`
+1. ตั้งค่า `REMOTE_SUPPORT_ENABLED=OFF`
+2. ไม่ต้องลบ sheet ใด ๆ
 
 ผลลัพธ์:
 
-- ระบบตั้งค่า `REMOTE_SUPPORT_ENABLED=OFF`
-- ผู้ใช้สร้าง session ใหม่ไม่ได้
-- ข้อมูลเดิมยังอยู่ครบ
+- ผู้ใช้สร้างคำขอใหม่ไม่ได้
+- ประวัติเดิมยังอยู่ครบ
 
-## Rollback แบบล้างข้อมูล แต่เก็บหัวตาราง
+## Cleanup แบบปลอดภัย
 
-เหมาะเมื่อต้องการเคลียร์ database ให้สะอาด แต่ยังเผื่อเปิดใช้ใหม่
+แนะนำให้ทำแบบนี้ก่อนลบจริง:
 
-1. เปิด `remote.html`
-2. ไปแท็บ `Rollback`
-3. เลือก `ล้างข้อมูล แต่เก็บหัวตาราง`
-4. เลือกว่าจะลบ `remote notifications` หรือไม่
-5. กด `Dry Run` เพื่อตรวจจำนวนแถวก่อน
-6. พิมพ์ `ROLLBACK_REMOTE_SUPPORT`
-7. กด `Apply Rollback`
+1. สำรองไฟล์ database ก่อน
+2. ตรวจจำนวนแถวใน `RemoteSupportSessions` และ `RemoteSupportEvents`
+3. ลบเฉพาะข้อมูลทดสอบที่มั่นใจว่าไม่ต้องใช้
+4. เก็บประวัติงานจริงไว้
 
-ผลลัพธ์:
+## Rollback แบบล้างโมดูล Remote Support ทั้งหมด
+
+ใช้เฉพาะเมื่อต้องการยกเลิกโมดูลนี้จริง ๆ
+
+ผลลัพธ์ที่คาดหวัง:
 
 - ลบข้อมูลใน `RemoteSupportSessions`
 - ลบข้อมูลใน `RemoteSupportEvents`
-- ลบข้อมูลใน `RemoteSupportSignals`
-- ลบข้อมูลใน `RemoteSupportFrames`
-- เก็บ header ของ sheet ไว้
-- ปิดโมดูลหลัง rollback โดยค่าเริ่มต้น
+- ลบข้อมูล legacy ใน `RemoteSupportSignals`
+- ลบข้อมูล legacy ใน `RemoteSupportFrames`
+- ปิด `REMOTE_SUPPORT_ENABLED`
 
-## Rollback แบบลบ sheet ทั้งชุด
+ไม่ควรแตะ:
 
-เหมาะเมื่อตัดสินใจยกเลิกโมดูลนี้จริงๆ
+- `Users`
+- `UserProfiles`
+- `Schedules`
+- `ITBookings`
+- `DailyReports`
+- `CollaborativeWorkspaces`
 
-1. เปิด `remote.html`
-2. ไปแท็บ `Rollback`
-3. เลือก `ลบ sheet remote ทั้งชุด`
-4. กด `Dry Run`
-5. พิมพ์ `ROLLBACK_REMOTE_SUPPORT`
-6. กด `Apply Rollback`
+## ไฟล์ legacy ที่ไม่ใช้แล้ว
 
-ผลลัพธ์:
+ลบออกจาก workspace แล้ว:
 
-- ลบ sheet `RemoteSupportSessions`
-- ลบ sheet `RemoteSupportEvents`
-- ลบ sheet `RemoteSupportSignals`
-- ลบ sheet `RemoteSupportFrames`
-- ปิดโมดูลหลัง rollback
-- ไม่แตะ `Users`, `Schedules`, `ITBookings`, `DailyReports`, `CollaborativeWorkspaces`
+- `remote-live.html`
+- `remote-relay/`
+- `agent/`
+- `REMOTE_SUPPORT_PHASE5.md`
 
-## Rollback โหมด Realtime Relay
+## ไฟล์ที่ยังต้อง deploy
 
-ถ้า relay ไม่เวิร์ก แต่ยังอยากเก็บ remote support แบบ fallback:
-
-1. ล้างค่า `REMOTE_SUPPORT_RELAY_URL`
-2. ล้างค่า `REMOTE_SUPPORT_RELAY_SECRET` ถ้ามี
-3. หยุด/ลบ deployment ของ `remote-relay`
-4. ใช้ `Fallback Viewer` ใน `remote.html` ได้เหมือน Phase 2-4
-
-ถ้าต้องการถอดทั้งหมด:
-
-1. ทำ rollback database จาก `remote.html`
-2. ลบ/ไม่ deploy `remote-live.html`
-3. ลบ/ไม่ deploy โฟลเดอร์ `remote-relay/`
-4. ใช้ `agent/build_portable.ps1` build Agent ใหม่หลังถอดโค้ด realtime ถ้าต้องการลดขนาดไฟล์
-
-## ฟังก์ชัน Apps Script ที่เกี่ยวข้อง
-
-- `getRemoteSupportConfigV752`
-- `setRemoteSupportEnabledV752`
-- `createRemoteSupportSessionV752`
-- `getRemoteSupportSessionV752`
-- `getRemoteSupportSessionsV752`
-- `updateRemoteSupportSessionV752`
-- `cleanupRemoteSupportDatabaseV752`
-- `bridgeWhitelistHealthCheckV752`
-- `getRemoteSupportConfigV753`
-- `createRemoteSupportSessionV753`
-- `getRemoteSupportSessionV753`
-- `getRemoteSupportSessionsV753`
-- `updateRemoteSupportSessionV753`
-- `agentRemoteSupportCheckInV753`
-- `pushRemoteSupportFrameV753`
-- `getRemoteSupportFrameV753`
-- `enqueueRemoteSupportCommandV753`
-- `pollRemoteSupportCommandsV753`
-- `ackRemoteSupportCommandV753`
-- `cleanupRemoteSupportDatabaseV753`
-- `bridgeWhitelistHealthCheckV753`
-- `getRemoteSupportPortalV754`
-- `bridgeWhitelistHealthCheckV754`
-- `getRemoteSupportConfigV755`
-- `getRemoteSupportRelayTokenV755`
-- `getRemoteSupportAgentConfigV755`
-- `setRemoteSupportRelayConfigV755`
-- `bridgeWhitelistHealthCheckV755`
+- `index.html`
+- `remote.html`
+- `Code.gs.txt`
+- `sw.js`
+- `vercel.json`
 
 ## หมายเหตุด้านความปลอดภัย
 
-- Phase 5 realtime relay รองรับ view-only และ remote control แบบลื่นขึ้น แต่ยังต้องยินยอม
-- Portable Agent ต้องให้ผู้ใช้กดยินยอมทุกครั้ง
-- ไม่ควรเปิด unattended access ในช่วงแรก
-- ควรเก็บ audit log ทุกครั้งที่เริ่ม ดูหน้าจอ ขอควบคุม และจบ session
+- ไม่เก็บรหัสผ่าน AnyDesk หรือ unattended access ใน Health Assistant OS
+- ผู้ใช้ต้องกดยอมรับจาก AnyDesk เองทุกครั้ง
+- เจ้าหน้าที่ควรบันทึกผลการช่วยเหลือก่อนจบงาน
+- หากใช้ AnyDesk ในหน่วยงาน ควรตรวจเรื่อง license ให้ถูกต้องตามการใช้งานจริง
