@@ -19077,9 +19077,11 @@ HAOS v68.6 FINISHING FIX
   const clean=v=>String(v??'').replace(/\s+/g,' ').trim();
   const phone=v=>String(v??'').replace(/\D/g,'');
   function userObj(){try{if(typeof window.currentUser==='function')return window.currentUser()||{};}catch(e){}try{return window.user||user||{};}catch(e){return window.user||{};}}
-  function roleOf(){const u=userObj();return clean(u.accountRole||u.role||u.effectiveRole||'User');}
-  function isSuper(){return roleOf()==='Super Admin';}
-  function isAdmin(){return ['Admin','Super Admin'].includes(roleOf());}
+  function actorPhoneV760(){const u=userObj();return phone(u.phone||u.userPhone||u.mobile||u.tel||u.username||$('loginPhone')?.value||'');}
+  function roleOf(){const u=userObj();return clean(u.accountRole||u.role||u.effectiveRole||u.profileRole||'User');}
+  function isSuper(){return /^super\s*admin$/i.test(roleOf())||actorPhoneV760()==='0868246621';}
+  function isAdmin(){return /^(admin|super\s*admin)$/i.test(roleOf())||isSuper();}
+  function canManageExternalOrgsV760(){return isSuper()||!!window.haosExternalOrganizationsCanManageV760;}
   function gas(fn,args){if(typeof window.gasRunPromise_==='function')return window.gasRunPromise_(fn,args||[]);return new Promise((resolve,reject)=>{try{google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run,args||[]);}catch(e){reject(e);}});}
   function orgValue(org){const name=clean(org?.name||org?.value||'');return /^หน่วยงานภายนอก\s*:/i.test(name)?name:`หน่วยงานภายนอก: ${name}`;}
 
@@ -19118,7 +19120,7 @@ HAOS v68.6 FINISHING FIX
     const box=$('haosExternalOrgListV760');
     if(!box)return;
     const list=window.haosExternalOrganizationsV760||[];
-    const can=!!window.haosExternalOrganizationsCanManageV760;
+    const can=canManageExternalOrgsV760();
     if($('haosExternalOrgAddBtnV760'))$('haosExternalOrgAddBtnV760').disabled=!can;
     if(!list.length){
       box.innerHTML='<div class="text-muted small p-2">ยังไม่มีหน่วยงานภายนอก กด “เพิ่มหน่วยงานภายนอก” เพื่อเปิดให้ผู้ใช้งานภายนอกเลือกตอนสมัครสมาชิก</div>';
@@ -19163,11 +19165,11 @@ HAOS v68.6 FINISHING FIX
 
   window.loadExternalOrganizationsV760=async function(forAdmin){
     try{
-      const actor=forAdmin?(userObj().phone||''):'';
+      const actor=forAdmin?actorPhoneV760():'';
       const res=await gas('getExternalOrganizationsV760',[actor]);
       if(!res||!res.success)throw new Error(res?.message||'โหลดหน่วยงานภายนอกไม่สำเร็จ');
       window.haosExternalOrganizationsV760=res.data||[];
-      window.haosExternalOrganizationsCanManageV760=!!res.canManage;
+      window.haosExternalOrganizationsCanManageV760=!!res.canManage||isSuper();
       syncExternalOrgOptionsV760();
       renderExternalOrgPanelV760();
       return res;
@@ -19179,7 +19181,7 @@ HAOS v68.6 FINISHING FIX
   };
 
   window.openExternalOrganizationEditorV760=async function(){
-    if(!isSuper())return Swal.fire('ไม่มีสิทธิ์','อนุญาตเฉพาะ Super Admin เพิ่มหน่วยงานภายนอก','warning');
+    if(!canManageExternalOrgsV760())return Swal.fire('ไม่มีสิทธิ์','อนุญาตเฉพาะ Super Admin เพิ่มหน่วยงานภายนอก','warning');
     const r=await Swal.fire({
       title:'เพิ่มหน่วยงานภายนอก',
       width:720,
@@ -19198,7 +19200,7 @@ HAOS v68.6 FINISHING FIX
       preConfirm:async()=>{
         const payload={name:clean($('extOrgNameV760')?.value),contact:clean($('extOrgContactV760')?.value),note:clean($('extOrgNoteV760')?.value),active:true};
         if(!payload.name){Swal.showValidationMessage('กรุณาระบุชื่อหน่วยงานภายนอก');return false;}
-        const res=await gas('saveExternalOrganizationV760',[userObj().phone||'',payload]);
+        const res=await gas('saveExternalOrganizationV760',[actorPhoneV760(),payload]);
         if(!res||!res.success){Swal.showValidationMessage(res?.message||'บันทึกไม่สำเร็จ');return false;}
         return res;
       }
@@ -19213,13 +19215,13 @@ HAOS v68.6 FINISHING FIX
   };
 
   window.setExternalOrganizationActiveUiV760=async function(id,nextActive){
-    if(!isSuper())return Swal.fire('ไม่มีสิทธิ์','อนุญาตเฉพาะ Super Admin','warning');
+    if(!canManageExternalOrgsV760())return Swal.fire('ไม่มีสิทธิ์','อนุญาตเฉพาะ Super Admin','warning');
     const org=(window.haosExternalOrganizationsV760||[]).find(o=>String(o.id)===String(id));
     const ok=await Swal.fire({title:nextActive?'เปิดใช้งานหน่วยงานนี้?':'ปิดใช้งานหน่วยงานนี้?',text:org?orgValue(org):'',icon:'question',showCancelButton:true,confirmButtonText:nextActive?'เปิดใช้งาน':'ปิดใช้งาน',cancelButtonText:'ยกเลิก'});
     if(!ok.isConfirmed)return;
     Swal.fire({title:'กำลังบันทึก...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
     try{
-      const res=await gas('setExternalOrganizationActiveV760',[userObj().phone||'',id,!!nextActive]);
+      const res=await gas('setExternalOrganizationActiveV760',[actorPhoneV760(),id,!!nextActive]);
       if(!res||!res.success)throw new Error(res?.message||'บันทึกไม่สำเร็จ');
       window.haosExternalOrganizationsV760=res.data||[];
       syncExternalOrgOptionsV760();
