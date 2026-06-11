@@ -1,22 +1,22 @@
 # Health Assistant OS Source Audit
 
-Generated: 2026-06-11T10:35:58.900Z
+Generated: 2026-06-11T11:44:33.930Z
 
 ## File sizes
 
 | File | Lines | Characters |
 | --- | ---: | ---: |
-| index.html | 18334 | 1470185 |
-| Code.gs.txt | 14054 | 718037 |
-| public.html | 2083 | 201720 |
+| index.html | 18489 | 1478774 |
+| Code.gs.txt | 14209 | 725093 |
+| public.html | 2141 | 204792 |
 | remote.html | 470 | 33770 |
 
 ## Frontend patch blocks
 
-- Script blocks: 76
+- Script blocks: 77
 - External script files: 14
-- Inline script blocks: 62
-- Style blocks: 47
+- Inline script blocks: 63
+- Style blocks: 48
 - Stylesheet links are not counted as style blocks.
 
 | Kind | ID/source | Line | Lines | Characters |
@@ -144,12 +144,14 @@ Generated: 2026-06-11T10:35:58.900Z
 | script | assets/js/modules/remote-support.js | 18327 | 1 | 59 |
 | script | assets/js/modules/meeting-minutes.js | 18329 | 1 | 60 |
 | script | assets/js/modules/external-organizations.js | 18331 | 1 | 67 |
+| style | haos-v70-66-workspace-branding-style | 18332 | 7 | 802 |
+| script | haos-v70-66-workspace-branding-script | 18339 | 148 | 7785 |
 
 ## Function pressure
 
-- Apps Script named functions: 776
-- Frontend inline named functions: 1071
-- Frontend window exports: 754
+- Apps Script named functions: 784
+- Frontend inline named functions: 1082
+- Frontend window exports: 761
 
 ### Duplicate backend function names
 

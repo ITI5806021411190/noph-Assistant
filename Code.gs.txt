@@ -14051,3 +14051,158 @@ getAllowedBridgeFunctions_ = function() {
   ].forEach(function(fn){ allowed[fn] = true; });
   return allowed;
 };
+
+// ========================= v70.66: per-workspace public branding =========================
+var HAOS_V766_WORKSPACE_BRANDING_HEADER_ = 'Workspace Branding JSON';
+
+function haosV766DefaultWorkspaceBranding_() {
+  return {
+    enabled:false,
+    appName:'Health Assistant OS',
+    organizationName:'สำนักงานสาธารณสุขจังหวัดนครนายก'
+  };
+}
+
+function haosV766CleanBrandText_(value, maxLen) {
+  return String(value == null ? '' : value).replace(/\s+/g, ' ').trim().slice(0, maxLen || 120);
+}
+
+function haosV766NormalizeWorkspaceBranding_(branding) {
+  branding = branding || {};
+  var enabled = branding.enabled === true || String(branding.enabled || '').toLowerCase() === 'true' || String(branding.enabled || '') === '1';
+  var appName = haosV766CleanBrandText_(branding.appName || branding.systemName || branding.productName || '', 120);
+  var organizationName = haosV766CleanBrandText_(branding.organizationName || branding.orgName || branding.departmentName || '', 160);
+  if (!enabled) return haosV766DefaultWorkspaceBranding_();
+  if (!appName) appName = 'Health Assistant OS';
+  if (!organizationName) organizationName = 'สำนักงานสาธารณสุขจังหวัดนครนายก';
+  return {enabled:true, appName:appName, organizationName:organizationName};
+}
+
+function haosV766ParseWorkspaceBranding_(raw) {
+  if (!raw) return haosV766DefaultWorkspaceBranding_();
+  if (typeof raw === 'object') return haosV766NormalizeWorkspaceBranding_(raw);
+  try {
+    return haosV766NormalizeWorkspaceBranding_(JSON.parse(String(raw)));
+  } catch (e) {
+    return haosV766DefaultWorkspaceBranding_();
+  }
+}
+
+function haosV766WorkspaceBrandingColumn_(sheet) {
+  var col = getColumnIndex_(sheet, HAOS_V766_WORKSPACE_BRANDING_HEADER_);
+  if (col < 1) {
+    col = sheet.getLastColumn() + 1;
+    sheet.getRange(1, col).setValue(HAOS_V766_WORKSPACE_BRANDING_HEADER_);
+    try { sheet.getRange(1, col).setBackground('#ccfbf1').setFontWeight('bold'); } catch (ignore) {}
+  }
+  return col;
+}
+
+var haosV766PrevWorkspaceSetup_ = typeof workspaceSetup_ === 'function' ? workspaceSetup_ : null;
+workspaceSetup_ = function() {
+  var headers = typeof haosV735WorkspaceHeaders_ === 'function' ? haosV735WorkspaceHeaders_() : [];
+  var sheet = haosV766PrevWorkspaceSetup_ ? haosV766PrevWorkspaceSetup_() : getOrCreateSheet_(SHEET_WORKSPACES, headers, '#ccfbf1');
+  haosV766WorkspaceBrandingColumn_(sheet);
+  return sheet;
+};
+
+var haosV766PrevWorkspaceToObject_ = typeof workspaceToObject_ === 'function' ? workspaceToObject_ : null;
+workspaceToObject_ = function(row) {
+  var ws = haosV766PrevWorkspaceToObject_ ? haosV766PrevWorkspaceToObject_(row) : {};
+  row = row || [];
+  ws.branding = haosV766ParseWorkspaceBranding_(row[24] || '');
+  return ws;
+};
+
+function haosV766WriteWorkspaceBranding_(sheet, workspaceId, branding) {
+  var found = findWorkspaceRow_(sheet, workspaceId);
+  if (!found) return;
+  var normalized = haosV766NormalizeWorkspaceBranding_(branding || {});
+  var col = haosV766WorkspaceBrandingColumn_(sheet);
+  sheet.getRange(found.row, col).setValue(normalized.enabled ? JSON.stringify(normalized) : '');
+}
+
+function haosV766ReadWorkspaceBranding_(workspaceId) {
+  var sheet = workspaceSetup_();
+  var found = findWorkspaceRow_(sheet, workspaceId);
+  if (!found) return haosV766DefaultWorkspaceBranding_();
+  var col = haosV766WorkspaceBrandingColumn_(sheet);
+  return haosV766ParseWorkspaceBranding_(found.values[col - 1] || '');
+}
+
+var haosV766PrevCreateSharedWorkspace_ = typeof createSharedWorkspace === 'function' ? createSharedWorkspace : null;
+createSharedWorkspace = function(data, actorPhone) {
+  data = data || {};
+  var res = haosV766PrevCreateSharedWorkspace_ ? haosV766PrevCreateSharedWorkspace_(data, actorPhone) : {success:false, message:'createSharedWorkspace is not available'};
+  try {
+    if (res && res.success && res.id) {
+      var branding = haosV766NormalizeWorkspaceBranding_(data.branding || {});
+      if (branding.enabled) {
+        haosV766WriteWorkspaceBranding_(workspaceSetup_(), res.id, branding);
+        res.branding = branding;
+      }
+    }
+  } catch (e) {
+    try { logError_(actorPhone || '', 'haosV766CreateSharedWorkspaceBranding', e, {workspaceId:res && res.id}); } catch (ignore) {}
+  }
+  return res;
+};
+
+var haosV766PrevUpdateSharedWorkspaceConfigV737_ = typeof updateSharedWorkspaceConfigV737 === 'function' ? updateSharedWorkspaceConfigV737 : null;
+updateSharedWorkspaceConfigV737 = function(workspaceId, actorPhone, data) {
+  data = data || {};
+  var res = haosV766PrevUpdateSharedWorkspaceConfigV737_ ? haosV766PrevUpdateSharedWorkspaceConfigV737_(workspaceId, actorPhone, data) : {success:false, message:'updateSharedWorkspaceConfigV737 is not available'};
+  try {
+    if (res && res.success && data.branding !== undefined) {
+      var branding = haosV766NormalizeWorkspaceBranding_(data.branding || {});
+      haosV766WriteWorkspaceBranding_(workspaceSetup_(), workspaceId, branding);
+      if (!res.data) res.data = {};
+      res.data.branding = branding;
+    }
+  } catch (e) {
+    try { logError_(actorPhone || '', 'haosV766UpdateWorkspaceBranding', e, {workspaceId:workspaceId}); } catch (ignore) {}
+  }
+  return res;
+};
+
+var haosV766PrevGetPublicWorkspace_ = typeof getPublicWorkspace === 'function' ? getPublicWorkspace : null;
+getPublicWorkspace = function(workspaceId, token) {
+  var res = haosV766PrevGetPublicWorkspace_ ? haosV766PrevGetPublicWorkspace_(workspaceId, token) : {success:false, message:'getPublicWorkspace is not available'};
+  if (res && res.success && res.data) {
+    res.data.branding = haosV766ReadWorkspaceBranding_(workspaceId);
+  }
+  return res;
+};
+
+var haosV766PrevGetMySharedWorkspaces_ = typeof getMySharedWorkspaces === 'function' ? getMySharedWorkspaces : null;
+getMySharedWorkspaces = function(actorPhone) {
+  var res = haosV766PrevGetMySharedWorkspaces_ ? haosV766PrevGetMySharedWorkspaces_(actorPhone) : {success:false, message:'getMySharedWorkspaces is not available'};
+  if (res && res.success && Array.isArray(res.data)) {
+    var brandingById = {};
+    try {
+      var sheet = workspaceSetup_();
+      var col = haosV766WorkspaceBrandingColumn_(sheet);
+      var rows = sheet.getDataRange().getValues();
+      for (var i = 1; i < rows.length; i++) {
+        brandingById[String(rows[i][0] || '')] = haosV766ParseWorkspaceBranding_(rows[i][col - 1] || '');
+      }
+    } catch (e) {
+      brandingById = {};
+    }
+    res.data.forEach(function(ws) {
+      if (ws && ws.id) ws.branding = brandingById[String(ws.id)] || haosV766DefaultWorkspaceBranding_();
+    });
+  }
+  return res;
+};
+
+function bridgeWhitelistHealthCheckV766() {
+  return {success:true, version:'v70.66-workspace-public-branding', column:HAOS_V766_WORKSPACE_BRANDING_HEADER_};
+}
+
+var haosV766PrevGetAllowedBridgeFunctions_ = typeof getAllowedBridgeFunctions_ === 'function' ? getAllowedBridgeFunctions_ : null;
+getAllowedBridgeFunctions_ = function() {
+  var allowed = haosV766PrevGetAllowedBridgeFunctions_ ? haosV766PrevGetAllowedBridgeFunctions_() : {};
+  allowed.bridgeWhitelistHealthCheckV766 = true;
+  return allowed;
+};

@@ -18329,5 +18329,160 @@ HAOS v68.6 FINISHING FIX
 <script src="assets/js/modules/meeting-minutes.js"></script>
 <link rel="stylesheet" href="assets/css/admin-external-organizations.css">
 <script src="assets/js/modules/external-organizations.js"></script>
+<style id="haos-v70-66-workspace-branding-style">
+  .haos-v766-branding-panel{border:1px solid rgba(14,165,233,.28);border-radius:8px;background:linear-gradient(180deg,#f0f9ff,#ffffff);padding:14px;margin:12px 0;text-align:left}
+  .haos-v766-branding-panel .haos-v766-title{display:flex;align-items:center;gap:8px;color:#075985;font-weight:950;margin-bottom:6px}
+  .haos-v766-branding-panel .haos-v766-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:10px}
+  .haos-v766-branding-preview{border:1px dashed rgba(37,99,235,.35);border-radius:8px;background:#fff;padding:10px;margin-top:10px;color:#334155;font-weight:800}
+  .haos-v766-branding-panel.is-off .haos-v766-fields,.haos-v766-branding-panel.is-off .haos-v766-branding-preview{opacity:.45}
+</style>
+<script id="haos-v70-66-workspace-branding-script">
+(function(){
+  const PATCH='v70.66-workspace-public-branding';
+  if(window.__HAOS_V766_WORKSPACE_BRANDING__)return;
+  window.__HAOS_V766_WORKSPACE_BRANDING__=true;
+  const $=id=>document.getElementById(id);
+  const qa=(sel,root=document)=>Array.from((root||document).querySelectorAll(sel));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const clean=(v,max)=>String(v??'').replace(/\s+/g,' ').trim().slice(0,max||140);
+  const defaultBrand=()=>({enabled:false,appName:'Health Assistant OS',organizationName:'สำนักงานสาธารณสุขจังหวัดนครนายก'});
+  function normalizeBranding(raw){
+    raw=raw||{};
+    const enabled=raw.enabled===true||String(raw.enabled||'').toLowerCase()==='true'||String(raw.enabled||'')==='1';
+    return {enabled,appName:clean(raw.appName||raw.systemName||raw.productName||'Nakhonnayok Assistant OS',120),organizationName:clean(raw.organizationName||raw.orgName||raw.departmentName||'สำนักงานจังหวัดนครนายก',160)};
+  }
+  function activeWorkspaceType(){
+    return $('wsWorkspaceType')?.value||'';
+  }
+  function brandTypeLabel(type){
+    if(type==='quiz')return 'แบบทดสอบออนไลน์';
+    if(type==='form')return 'แบบฟอร์มออนไลน์';
+    return 'พื้นที่ทำงานร่วมกัน';
+  }
+  function panelHtml(prefix,brand){
+    brand=normalizeBranding(brand);
+    return `<section id="${prefix}BrandingPanelV766" class="haos-v766-branding-panel ${brand.enabled?'':'is-off'}">
+      <div class="haos-v766-title"><i class="bi bi-brush"></i> Branding สำหรับลิงก์สาธารณะ</div>
+      <label class="form-check fw-bold mb-1">
+        <input id="${prefix}BrandingEnabledV766" class="form-check-input" type="checkbox" ${brand.enabled?'checked':''} onchange="haosV766SyncBrandingPanel('${prefix}')">
+        กำหนดชื่อระบบ/หน่วยงานเอง เฉพาะพื้นที่นี้
+      </label>
+      <div class="small text-muted">ใช้เวลาส่งลิงก์แบบฟอร์มให้หน่วยงานภายนอก เพื่อให้หัวฟอร์มและท้ายหน้าแสดงชื่อหน่วยงานที่ถูกต้อง</div>
+      <div class="haos-v766-fields">
+        <div><label class="small fw-bold text-muted">ชื่อระบบที่ต้องการแสดง</label><input id="${prefix}BrandingAppV766" class="form-control" value="${esc(brand.appName)}" placeholder="เช่น Nakhonnayok Assistant OS" oninput="haosV766SyncBrandingPanel('${prefix}')"></div>
+        <div><label class="small fw-bold text-muted">ชื่อหน่วยงานที่ต้องการแสดง</label><input id="${prefix}BrandingOrgV766" class="form-control" value="${esc(brand.organizationName)}" placeholder="เช่น สำนักงานจังหวัดนครนายก" oninput="haosV766SyncBrandingPanel('${prefix}')"></div>
+      </div>
+      <div id="${prefix}BrandingPreviewV766" class="haos-v766-branding-preview"></div>
+    </section>`;
+  }
+  window.haosV766SyncBrandingPanel=function(prefix){
+    const panel=$(prefix+'BrandingPanelV766');
+    if(!panel)return;
+    const enabled=!!$(prefix+'BrandingEnabledV766')?.checked;
+    const app=clean($(prefix+'BrandingAppV766')?.value||'Nakhonnayok Assistant OS',120)||'Nakhonnayok Assistant OS';
+    const org=clean($(prefix+'BrandingOrgV766')?.value||'สำนักงานจังหวัดนครนายก',160)||'สำนักงานจังหวัดนครนายก';
+    panel.classList.toggle('is-off',!enabled);
+    qa('input.form-control',panel).forEach(input=>{input.disabled=!enabled;});
+    const type=prefix==='wsCreate'?activeWorkspaceType():(panel.dataset.workspaceType||'form');
+    const preview=$(prefix+'BrandingPreviewV766');
+    if(preview)preview.innerHTML=enabled
+      ? `${esc(brandTypeLabel(type))} ${esc(app)} (${esc(org)})<br><span class="small text-muted">สร้างจาก ${esc(app)} • ${esc(org)}</span>`
+      : `ปิดอยู่: ใช้ชื่อเดิมของ Health Assistant OS`;
+  };
+  function collectBranding(prefix){
+    const enabled=!!$(prefix+'BrandingEnabledV766')?.checked;
+    return normalizeBranding({
+      enabled,
+      appName:$(prefix+'BrandingAppV766')?.value||'',
+      organizationName:$(prefix+'BrandingOrgV766')?.value||''
+    });
+  }
+  function shouldShowCreateBranding(){
+    const type=activeWorkspaceType();
+    return type==='form'||type==='quiz';
+  }
+  function ensureCreateBrandingPanel(){
+    if(!$('workspaceCreateModal')||!$('wsWorkspaceType'))return;
+    if(!$('wsCreateBrandingPanelV766')){
+      const anchor=$('wsWorkspaceType')?.closest('.row')||$('wsCreateDescription')?.closest('.mb-3')||$('workspaceCreateModal .modal-body');
+      if(anchor)anchor.insertAdjacentHTML('afterend',panelHtml('wsCreate',defaultBrand()));
+    }
+    const panel=$('wsCreateBrandingPanelV766');
+    if(panel){
+      panel.style.display=shouldShowCreateBranding()?'':'none';
+      panel.dataset.workspaceType=activeWorkspaceType();
+      haosV766SyncBrandingPanel('wsCreate');
+    }
+  }
+  const prevOpenCreate=window.openWorkspaceCreateModal;
+  if(typeof prevOpenCreate==='function')window.openWorkspaceCreateModal=function(){
+    const r=prevOpenCreate.apply(this,arguments);
+    setTimeout(ensureCreateBrandingPanel,160);
+    setTimeout(ensureCreateBrandingPanel,520);
+    return r;
+  };
+  const prevApplyTemplate=window.applyWorkspaceTypeTemplate;
+  if(typeof prevApplyTemplate==='function')window.applyWorkspaceTypeTemplate=function(){
+    const r=prevApplyTemplate.apply(this,arguments);
+    setTimeout(ensureCreateBrandingPanel,0);
+    return r;
+  };
+  const prevCreatePayload=window.getWorkspaceCreatePayload;
+  if(typeof prevCreatePayload==='function')window.getWorkspaceCreatePayload=function(){
+    const data=prevCreatePayload.apply(this,arguments)||{};
+    if(shouldShowCreateBranding())data.branding=collectBranding('wsCreate');
+    return data;
+  };
+  function workspaceList(){
+    try{if(Array.isArray(window.sharedWorkspacesGlobal))return window.sharedWorkspacesGlobal;}catch(e){}
+    try{if(Array.isArray(sharedWorkspacesGlobal))return sharedWorkspacesGlobal;}catch(e){}
+    return [];
+  }
+  function workspaceById(id){
+    let ws=workspaceList().find(x=>String(x.id||'')===String(id||''));
+    if(!ws){try{const cur=window.currentWorkspace||currentWorkspace;if(cur&&String(cur.id||'')===String(id||''))ws=cur;}catch(e){}}
+    return ws||{};
+  }
+  function ensureEditBrandingPanel(id){
+    const popup=document.querySelector('.haos-v741-workspace-edit-popup');
+    if(!popup||$('wsEditBrandingPanelV766'))return !!popup;
+    const ws=workspaceById(id);
+    const section=popup.querySelector('.haos-v741-edit-section')||popup;
+    const brand=normalizeBranding(ws.branding||{});
+    section.insertAdjacentHTML('beforeend',panelHtml('wsEdit',brand));
+    const panel=$('wsEditBrandingPanelV766');
+    if(panel)panel.dataset.workspaceType=ws.workspaceType||'form';
+    haosV766SyncBrandingPanel('wsEdit');
+    return true;
+  }
+  const prevOpenEdit=window.openWorkspaceConfigEditorV737;
+  if(typeof prevOpenEdit==='function')window.openWorkspaceConfigEditorV737=function(id){
+    const r=prevOpenEdit.apply(this,arguments);
+    let tries=0;
+    const timer=setInterval(()=>{tries++;if(ensureEditBrandingPanel(id)||tries>30)clearInterval(timer);},140);
+    return r;
+  };
+  function addEditBrandingPayload(argsLike){
+    const args=Array.from(argsLike||[]);
+    if(args[2]&&document.querySelector('.haos-v741-workspace-edit-popup')){
+      args[2]=Object.assign({},args[2],{branding:collectBranding('wsEdit')});
+    }
+    return args;
+  }
+  const prevGas=window.gas;
+  if(typeof prevGas==='function'&&!prevGas.__haosV766Wrapped){
+    window.gas=function(fn,args){
+      if(fn==='updateSharedWorkspaceConfigV737')args=addEditBrandingPayload(args);
+      return prevGas.call(this,fn,args);
+    };
+    window.gas.__haosV766Wrapped=true;
+  }
+  document.addEventListener('change',ev=>{
+    if(ev.target&&ev.target.id==='wsWorkspaceType')setTimeout(ensureCreateBrandingPanel,0);
+  },true);
+  setTimeout(ensureCreateBrandingPanel,1200);
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>

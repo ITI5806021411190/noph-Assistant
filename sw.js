@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-65-modular-program-guide';
+const CACHE_NAME = 'haos-v70-66-workspace-public-branding';
 const CORE = [
   '/',
   '/index.html',

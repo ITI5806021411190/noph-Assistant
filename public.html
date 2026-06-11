@@ -2078,5 +2078,63 @@ body{background:radial-gradient(circle at 12% 10%,rgba(14,165,233,.20),transpare
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<style id="haos-v70-66-public-workspace-branding-style">
+  .haos-v766-public-brand-sub{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(14,165,233,.24);border-radius:999px;background:#f0f9ff;color:#075985;padding:5px 10px;font-weight:800}
+</style>
+<script id="haos-v70-66-public-workspace-branding-script">
+(function(){
+  const PATCH='v70.66-public-workspace-branding';
+  if(window.__HAOS_V766_PUBLIC_WORKSPACE_BRANDING__)return;
+  window.__HAOS_V766_PUBLIC_WORKSPACE_BRANDING__=true;
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const clean=(v,max)=>String(v??'').replace(/\s+/g,' ').trim().slice(0,max||140);
+  function normalize(raw){
+    raw=raw||{};
+    const enabled=raw.enabled===true||String(raw.enabled||'').toLowerCase()==='true'||String(raw.enabled||'')==='1';
+    return {
+      enabled,
+      appName:clean(raw.appName||raw.systemName||raw.productName||'',120),
+      organizationName:clean(raw.organizationName||raw.orgName||raw.departmentName||'',160)
+    };
+  }
+  function typeLabel(type){
+    if(type==='quiz')return 'แบบทดสอบออนไลน์';
+    if(type==='form')return 'แบบฟอร์มออนไลน์';
+    return 'พื้นที่ทำงานร่วมกัน';
+  }
+  function applyBranding(branding){
+    branding=normalize(branding);
+    if(!branding.enabled||!branding.appName||!branding.organizationName)return;
+    const type=(window.workspaceState&&workspaceState.workspaceType)||'form';
+    const title=typeLabel(type)+' '+branding.appName+' ('+branding.organizationName+')';
+    const h4=document.querySelector('.card-header h4');
+    if(h4)h4.innerText=title;
+    const sub=document.querySelector('.card-header small');
+    if(sub){sub.classList.add('haos-v766-public-brand-sub');sub.innerHTML='<i class="bi bi-stars"></i> '+esc(branding.appName)+' ('+esc(branding.organizationName)+')';}
+    const footer=document.querySelector('.public-footer-note');
+    if(footer)footer.innerText='สร้างจาก '+branding.appName+' • '+branding.organizationName;
+    document.title=title;
+  }
+  function refreshWorkspaceBranding(workspaceId,token){
+    if(!workspaceId||!window.google||!google.script||!google.script.run)return;
+    google.script.run.withSuccessHandler(function(res){
+      if(res&&res.success&&res.data&&res.data.branding){
+        window.workspaceState=window.workspaceState||{};
+        workspaceState.branding=res.data.branding;
+        applyBranding(res.data.branding);
+        setTimeout(function(){applyBranding(res.data.branding);},700);
+      }
+    }).withFailureHandler(function(){}).getPublicWorkspace(workspaceId,token||'');
+  }
+  const oldLoad=window.loadPublicWorkspace;
+  if(typeof oldLoad==='function')window.loadPublicWorkspace=function(workspaceId,token){
+    const r=oldLoad.apply(this,arguments);
+    setTimeout(function(){refreshWorkspaceBranding(workspaceId,token);},900);
+    setTimeout(function(){if(window.workspaceState&&workspaceState.branding)applyBranding(workspaceState.branding);},1800);
+    return r;
+  };
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
