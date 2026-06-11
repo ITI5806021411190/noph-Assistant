@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-58-anydesk-remote-support';
+const CACHE_NAME = 'haos-v70-61-modular-external-orgs';
 const CORE = ['/', '/index.html', '/public.html', '/public', '/remote.html', '/remote', '/manifest.json', '/icon-192.png', '/icon-512.png', '/logo-moph.png'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(CORE)).catch(() => {}));

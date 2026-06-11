@@ -1,0 +1,17 @@
+/* Extracted from index.html: haos-v70-60-external-orgs-style */
+.haos-v760-external-card{border:1px solid rgba(14,165,233,.24);border-radius:18px;background:linear-gradient(135deg,#f8fbff,#ecfeff);box-shadow:0 12px 30px rgba(15,23,42,.06);margin-bottom:18px}
+  .haos-v760-external-card .card-body{padding:16px 18px}
+  .haos-v760-external-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .haos-v760-external-title{font-weight:800;color:#0f172a}
+  .haos-v760-external-sub{font-size:.88rem;color:#64748b}
+  .haos-v760-external-list{display:grid;gap:10px;margin-top:12px}
+  .haos-v760-external-item{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border:1px solid #dbeafe;background:#fff;border-radius:14px;padding:12px}
+  .haos-v760-external-item.inactive{opacity:.68;background:#f8fafc}
+  .haos-v760-external-item b{color:#075985}
+  .haos-v760-external-badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 10px;font-size:.78rem;font-weight:800}
+  .haos-v760-external-badge.active{background:#dcfce7;color:#166534}
+  .haos-v760-external-badge.inactive{background:#e5e7eb;color:#475569}
+  .haos-v760-external-form{border:1px solid rgba(16,185,129,.28);background:linear-gradient(135deg,#ffffff,#f0fdf4);border-radius:16px;padding:14px;margin-top:14px;box-shadow:0 10px 26px rgba(15,23,42,.06)}
+  .haos-v760-external-form .form-control{border-radius:12px;padding:12px 14px}
+  .haos-v760-external-form label{color:#0f766e}
+  .haos-v760-external-form-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:12px}

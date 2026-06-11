@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Local secrets and deployment state
+.env
+.env.*
+!.env.example
+.vercel/
+.clasp.json
+appsscript.local.json
+_local_private/
+
+# Real database exports / user data
+*.xlsx
+*.xls
+*.xlsm
+*.csv
+*.tsv
+*.ods
+!database/imports/.gitkeep
+
+# Generated database import/export artifacts
+database/imports/*.sql
+database/imports/*.csv
+database/imports/*.json
+
+# Runtime/cache files
+__pycache__/
+*.pyc
+*.log
+*.tmp
+*.bak
+*.zip
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
