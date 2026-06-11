@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-66-workspace-public-branding';
+const CACHE_NAME = 'haos-v70-67-workspace-xlsx-export';
 const CORE = [
   '/',
   '/index.html',

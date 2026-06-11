@@ -18484,5 +18484,173 @@ HAOS v68.6 FINISHING FIX
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<script id="haos-v70-67-workspace-xlsx-export-script">
+(function(){
+  const PATCH='v70.67-workspace-xlsx-export';
+  if(window.__HAOS_V767_WORKSPACE_XLSX_EXPORT__)return;
+  window.__HAOS_V767_WORKSPACE_XLSX_EXPORT__=true;
+  const XLSX_SRC='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+  const prevExport=window.exportWorkspaceResponsesV737;
+  const $=id=>document.getElementById(id);
+  function currentWs(){
+    try{return window.currentWorkspace||currentWorkspace||null;}catch(e){return window.currentWorkspace||null;}
+  }
+  function fileNameSafe(v){
+    return String(v||'haos').replace(/[\\/:*?"<>|]+/g,'_').replace(/\s+/g,'_').slice(0,80);
+  }
+  function fieldFromSpec(spec){
+    if(typeof window.parseWorkspaceFieldApp_==='function')return window.parseWorkspaceFieldApp_(spec);
+    const raw=String(spec||'').trim();
+    const opt=(raw.match(/\[(?:dropdown|select|radio|choice|checkbox):\s*([^\]]+)\]/i)||[])[1]||'';
+    const label=raw.replace(/\[[^\]]+\]/g,'').trim()||raw;
+    return {
+      label,
+      type:/radio|choice/i.test(raw)?'radio':/dropdown|select/i.test(raw)?'dropdown':/checkbox/i.test(raw)?'checkbox':/image|photo|รูปภาพ/i.test(raw)?'image':/textarea|paragraph/i.test(raw)?'textarea':'text',
+      options:opt.split(',').map(x=>x.trim()).filter(Boolean),
+      required:/required|จำเป็น|\*/i.test(raw)
+    };
+  }
+  function workspaceFields(ws){
+    return (ws?.columns||[]).map((c,i)=>Object.assign({index:i},fieldFromSpec(c),(ws.fieldConfig||[])[i]||{}));
+  }
+  function hasExplicitTimestamp(fields){
+    const f=fields.find(x=>x.index===0);
+    return !!(f&&/timestamp|submitted|created|datetime|date time|เวลาส่ง|เวลาบันทึก|วันที่ส่ง|วันที่บันทึก/i.test(String(f.label||'')));
+  }
+  function responseShowTime(ws){
+    try{return localStorage.getItem('haos_ws_show_time_v742_'+(ws?.id||'global'))!=='0';}catch(e){return true;}
+  }
+  function responseTime(ws,row,index,fields){
+    const meta=(ws.responseMeta||[])[index]||{};
+    if(meta.submittedAt||meta.timestamp||meta.createdAt)return meta.submittedAt||meta.timestamp||meta.createdAt;
+    if(hasExplicitTimestamp(fields)&&row&&row[0])return row[0];
+    return '';
+  }
+  function responseState(){
+    const s=Object.assign({},window.haosWorkspaceResponseStateV737||{});
+    ['question','answer','group','view'].forEach(k=>{
+      const el=$('wsResp'+k.charAt(0).toUpperCase()+k.slice(1)+'V737');
+      if(el)s[k]=el.value;
+    });
+    if(s.question==null)s.question='';
+    if(s.answer==null)s.answer='';
+    if(s.group==null)s.group='';
+    return s;
+  }
+  function cellText(v){
+    if(v==null)return '';
+    if(Array.isArray(v))return v.map(cellText).filter(Boolean).join(', ');
+    if(typeof v==='object'){
+      if(v.text!=null)return cellText(v.text);
+      if(v.url!=null)return cellText(v.url);
+      return JSON.stringify(v);
+    }
+    return String(v).replace(/\r?\n/g,'\n').trim();
+  }
+  function ensureXlsx(){
+    if(window.XLSX)return Promise.resolve(window.XLSX);
+    if(window.__HAOS_XLSX_LOADER__)return window.__HAOS_XLSX_LOADER__;
+    window.__HAOS_XLSX_LOADER__=new Promise((resolve,reject)=>{
+      const script=document.createElement('script');
+      script.src=XLSX_SRC;
+      script.async=true;
+      script.onload=()=>window.XLSX?resolve(window.XLSX):reject(new Error('XLSX library not available'));
+      script.onerror=()=>reject(new Error('โหลดไลบรารี Excel ไม่สำเร็จ'));
+      document.head.appendChild(script);
+    });
+    return window.__HAOS_XLSX_LOADER__;
+  }
+  function downloadArrayBuffer(name,mime,buffer){
+    const blob=new Blob([buffer],{type:mime});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},800);
+  }
+  function buildRows(ws){
+    const fields=workspaceFields(ws);
+    const explicitTime=hasExplicitTimestamp(fields);
+    const showTime=responseShowTime(ws);
+    const state=responseState();
+    const selectable=fields.filter(f=>!(explicitTime&&f.index===0));
+    let shown=selectable;
+    if(state.question!=='')shown=selectable.filter(f=>String(f.index)===String(state.question));
+    const q=String(state.answer||'').toLowerCase().trim();
+    const groupField=selectable.find(f=>String(f.index)===String(state.group));
+    let sourceRows=ws.rows||[];
+    try{if(typeof window.collectWorkspaceRowsApp==='function')sourceRows=window.collectWorkspaceRowsApp();}catch(e){sourceRows=ws.rows||[];}
+    const rows=(sourceRows||[]).map((row,index)=>({row:Array.isArray(row)?row:[],index,time:responseTime(ws,row,index,fields)}))
+      .filter(p=>!q||String([p.time].concat(p.row||[]).join(' ')).toLowerCase().includes(q));
+    const header=[];
+    if(groupField)header.push('กลุ่ม');
+    if(showTime)header.push('เวลาตอบ');
+    shown.forEach(f=>header.push(cellText(f.label||('ช่องข้อมูล '+(f.index+1)))));
+    const aoa=[
+      [cellText(ws.title||'รายงานคำตอบ')],
+      [cellText(ws.description||'')],
+      ['วันที่ส่งออก',new Date().toLocaleString('th-TH'),'จำนวนคำตอบ',String(rows.length)],
+      []
+    ];
+    aoa.push(header.length?header:['คำตอบ']);
+    rows.forEach(p=>{
+      const out=[];
+      if(groupField)out.push(cellText(p.row[groupField.index]||'ไม่ระบุ'));
+      if(showTime)out.push(cellText(p.time||''));
+      shown.forEach(f=>out.push(cellText(p.row[f.index])));
+      aoa.push(out);
+    });
+    return {aoa,header};
+  }
+  function forceTextCells(sheet){
+    const range=window.XLSX.utils.decode_range(sheet['!ref']||'A1:A1');
+    for(let r=range.s.r;r<=range.e.r;r++){
+      for(let c=range.s.c;c<=range.e.c;c++){
+        const addr=window.XLSX.utils.encode_cell({r,c});
+        if(!sheet[addr])sheet[addr]={t:'s',v:''};
+        sheet[addr].t='s';
+        sheet[addr].v=cellText(sheet[addr].v);
+        sheet[addr].z='@';
+      }
+    }
+  }
+  async function exportXlsx(){
+    const ws=currentWs();
+    if(!ws)return Swal.fire('แจ้งเตือน','ไม่พบข้อมูลพื้นที่ทำงานสำหรับส่งออก Excel','warning');
+    Swal.fire({title:'กำลังสร้าง Excel...',text:'ระบบกำลังสร้างไฟล์ .xlsx และคงเลข 0 นำหน้าให้ครบ',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+    try{
+      const XLSX=await ensureXlsx();
+      const {aoa,header}=buildRows(ws);
+      const sheet=XLSX.utils.aoa_to_sheet(aoa);
+      forceTextCells(sheet);
+      const colCount=Math.max(header.length,1);
+      sheet['!merges']=[
+        {s:{r:0,c:0},e:{r:0,c:Math.max(colCount-1,0)}},
+        {s:{r:1,c:0},e:{r:1,c:Math.max(colCount-1,0)}}
+      ];
+      const widths=[];
+      for(let c=0;c<colCount;c++){
+        let max=12;
+        aoa.forEach(row=>{max=Math.max(max,cellText(row[c]).length);});
+        widths.push({wch:Math.min(Math.max(max+2,12),42)});
+      }
+      sheet['!cols']=widths;
+      const wb=XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb,sheet,fileNameSafe(ws.title||'Responses').slice(0,31)||'Responses');
+      const out=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+      downloadArrayBuffer(fileNameSafe(ws.title||'workspace_responses')+'_'+Date.now()+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',out);
+      if(window.Swal&&Swal.isVisible())Swal.close();
+    }catch(err){
+      Swal.fire('ส่งออก Excel ไม่สำเร็จ',String(err&&err.message?err.message:err),'error');
+    }
+  }
+  window.exportWorkspaceResponsesV737=function(kind,orientation){
+    if(kind==='xls'||kind==='xlsx')return exportXlsx();
+    if(typeof prevExport==='function')return prevExport.apply(this,arguments);
+  };
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
