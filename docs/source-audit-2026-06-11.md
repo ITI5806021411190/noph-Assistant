@@ -1,12 +1,12 @@
 # Health Assistant OS Source Audit
 
-Generated: 2026-06-11T09:39:09.844Z
+Generated: 2026-06-11T10:07:17.032Z
 
 ## File sizes
 
 | File | Lines | Characters |
 | --- | ---: | ---: |
-| index.html | 19000 | 1522868 |
+| index.html | 18801 | 1499589 |
 | Code.gs.txt | 14054 | 718037 |
 | public.html | 2083 | 201720 |
 | remote.html | 470 | 33770 |
@@ -14,9 +14,9 @@ Generated: 2026-06-11T09:39:09.844Z
 ## Frontend patch blocks
 
 - Script blocks: 76
-- External script files: 10
-- Inline script blocks: 66
-- Style blocks: 51
+- External script files: 11
+- Inline script blocks: 65
+- Style blocks: 49
 - Stylesheet links are not counted as style blocks.
 
 | Kind | ID/source | Line | Lines | Characters |
@@ -144,16 +144,14 @@ Generated: 2026-06-11T09:39:09.844Z
 | style | haos-v70-51-stability-style | 18635 | 12 | 657 |
 | script | haos-v70-51-stability-script | 18647 | 146 | 10279 |
 | script | assets/js/modules/remote-support.js | 18794 | 1 | 59 |
-| style | haos-v70-59-remote-minutes-schedule-polish-style | 18795 | 14 | 1429 |
-| script | haos-v70-59-remote-minutes-schedule-polish-script | 18809 | 187 | 21971 |
-| style | - | 18985 | 1 | 239 |
-| script | assets/js/modules/external-organizations.js | 18997 | 1 | 67 |
+| script | assets/js/modules/meeting-minutes.js | 18796 | 1 | 60 |
+| script | assets/js/modules/external-organizations.js | 18798 | 1 | 67 |
 
 ## Function pressure
 
 - Apps Script named functions: 776
-- Frontend inline named functions: 1106
-- Frontend window exports: 801
+- Frontend inline named functions: 1092
+- Frontend window exports: 776
 
 ### Duplicate backend function names
 

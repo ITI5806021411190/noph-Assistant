@@ -1,0 +1,13 @@
+/* Extracted from index.html: haos-v70-59-remote-minutes-schedule-polish-style */
+.haos-v759-scope-click{cursor:pointer;user-select:none;transition:transform .15s ease,box-shadow .15s ease}
+  .haos-v759-scope-click:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(37,99,235,.14)!important}
+  .haos-v759-scope-click.active{outline:3px solid rgba(37,99,235,.18)}
+  .haos-v759-empty-note{border:1px solid rgba(14,165,233,.28);border-radius:14px;background:#f0f9ff;color:#075985;padding:12px;margin:12px 14px;font-weight:850}
+  .haos-v759-min-filter{display:none;border:1px solid rgba(14,165,233,.22);border-radius:18px;background:linear-gradient(180deg,#f0f9ff,#fff);padding:14px;margin:14px}
+  .haos-v759-min-filter.show{display:block}
+  .haos-v759-min-pager{display:flex;justify-content:flex-end;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 14px;color:#475569;font-weight:850}
+  .haos-v759-min-actions{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+  .haos-v759-min-detail{font-family:'Prompt',sans-serif;text-align:left}
+  .haos-v759-min-detail .hero{border-radius:18px;padding:16px;background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff;margin-bottom:12px}
+  .haos-v759-min-detail .box{border:1px solid rgba(148,163,184,.28);border-radius:14px;background:#f8fafc;padding:12px;margin-bottom:10px;white-space:pre-wrap}
+  .haos-v759-min-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}

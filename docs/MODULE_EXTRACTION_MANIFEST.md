@@ -8,6 +8,7 @@ Last updated: 2026-06-11
 | --- | --- | --- |
 | External Organizations | Extracted | `assets/js/modules/external-organizations.js`, `assets/css/admin-external-organizations.css` |
 | Remote Support AnyDesk entry | Extracted | `assets/js/modules/remote-support.js`, `assets/css/remote-support.css` |
+| Meeting Minutes / Schedule / IT Hub polish | Extracted | `assets/js/modules/meeting-minutes.js`, `assets/css/meeting-minutes.css` |
 
 This manifest controls the order for splitting `index.html` without changing production behavior.
 
@@ -21,7 +22,7 @@ Start with the smallest isolated modules. Keep every existing `window.*` public 
 | --- | --- | --- | --- |
 | External Organizations | `haos-v70-60-external-orgs-*` | `assets/js/modules/external-organizations.js` and `assets/css/admin-external-organizations.css` | Extracted first because it is small, recent, and isolated to Super Admin + registration dropdowns. |
 | Remote Support AnyDesk entry | `haos-v70-58-remote-support-anydesk-entry-*` and `remote.html` | `assets/js/modules/remote-support.js` and `assets/css/remote-support.css` | Extracted; keep `remote.html` as the standalone public/staff hub page. |
-| Meeting Minutes polish | `haos-v70-59-remote-minutes-schedule-polish-*` portions related to minutes | `assets/js/modules/meeting-minutes.js` | Has clear UI entry points and can be tested independently. |
+| Meeting Minutes / Schedule / IT Hub polish | `haos-v70-59-remote-minutes-schedule-polish-*` | `assets/js/modules/meeting-minutes.js` and `assets/css/meeting-minutes.css` | Extracted as one compatibility block because this patch also owns schedule default filters and IT Hub customization helpers. |
 
 ## Priority 2: Medium-risk UI modules
 
