@@ -7,6 +7,7 @@ Last updated: 2026-06-11
 | Module | Status | Files |
 | --- | --- | --- |
 | External Organizations | Extracted | `assets/js/modules/external-organizations.js`, `assets/css/admin-external-organizations.css` |
+| Remote Support AnyDesk entry | Extracted | `assets/js/modules/remote-support.js`, `assets/css/remote-support.css` |
 
 This manifest controls the order for splitting `index.html` without changing production behavior.
 
@@ -19,7 +20,7 @@ Start with the smallest isolated modules. Keep every existing `window.*` public 
 | Module | Current source area | Proposed file | Reason |
 | --- | --- | --- | --- |
 | External Organizations | `haos-v70-60-external-orgs-*` | `assets/js/modules/external-organizations.js` and `assets/css/admin-external-organizations.css` | Extracted first because it is small, recent, and isolated to Super Admin + registration dropdowns. |
-| Remote Support AnyDesk entry | `haos-v70-58-remote-support-anydesk-entry-*` and `remote.html` | `assets/js/modules/remote-support.js` and `assets/css/remote-support.css` | Already a mostly standalone flow. |
+| Remote Support AnyDesk entry | `haos-v70-58-remote-support-anydesk-entry-*` and `remote.html` | `assets/js/modules/remote-support.js` and `assets/css/remote-support.css` | Extracted; keep `remote.html` as the standalone public/staff hub page. |
 | Meeting Minutes polish | `haos-v70-59-remote-minutes-schedule-polish-*` portions related to minutes | `assets/js/modules/meeting-minutes.js` | Has clear UI entry points and can be tested independently. |
 
 ## Priority 2: Medium-risk UI modules

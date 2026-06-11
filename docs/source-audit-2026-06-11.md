@@ -1,12 +1,12 @@
 # Health Assistant OS Source Audit
 
-Generated: 2026-06-11T07:39:14.462Z
+Generated: 2026-06-11T09:39:09.844Z
 
 ## File sizes
 
 | File | Lines | Characters |
 | --- | ---: | ---: |
-| index.html | 19059 | 1526737 |
+| index.html | 19000 | 1522868 |
 | Code.gs.txt | 14054 | 718037 |
 | public.html | 2083 | 201720 |
 | remote.html | 470 | 33770 |
@@ -14,9 +14,9 @@ Generated: 2026-06-11T07:39:14.462Z
 ## Frontend patch blocks
 
 - Script blocks: 76
-- External script files: 9
-- Inline script blocks: 67
-- Style blocks: 52
+- External script files: 10
+- Inline script blocks: 66
+- Style blocks: 51
 - Stylesheet links are not counted as style blocks.
 
 | Kind | ID/source | Line | Lines | Characters |
@@ -143,18 +143,17 @@ Generated: 2026-06-11T07:39:14.462Z
 | script | haos-v70-50-admin-system-tools-script | 18419 | 216 | 18201 |
 | style | haos-v70-51-stability-style | 18635 | 12 | 657 |
 | script | haos-v70-51-stability-script | 18647 | 146 | 10279 |
-| style | haos-v70-58-remote-support-anydesk-entry-style | 18793 | 5 | 532 |
-| script | haos-v70-58-remote-support-anydesk-entry-script | 18798 | 56 | 3456 |
-| style | haos-v70-59-remote-minutes-schedule-polish-style | 18854 | 14 | 1429 |
-| script | haos-v70-59-remote-minutes-schedule-polish-script | 18868 | 187 | 21971 |
-| style | - | 19044 | 1 | 239 |
-| script | assets/js/modules/external-organizations.js | 19056 | 1 | 67 |
+| script | assets/js/modules/remote-support.js | 18794 | 1 | 59 |
+| style | haos-v70-59-remote-minutes-schedule-polish-style | 18795 | 14 | 1429 |
+| script | haos-v70-59-remote-minutes-schedule-polish-script | 18809 | 187 | 21971 |
+| style | - | 18985 | 1 | 239 |
+| script | assets/js/modules/external-organizations.js | 18997 | 1 | 67 |
 
 ## Function pressure
 
 - Apps Script named functions: 776
-- Frontend inline named functions: 1111
-- Frontend window exports: 805
+- Frontend inline named functions: 1106
+- Frontend window exports: 801
 
 ### Duplicate backend function names
 

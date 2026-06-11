@@ -1,5 +1,20 @@
-const CACHE_NAME = 'haos-v70-61-modular-external-orgs';
-const CORE = ['/', '/index.html', '/public.html', '/public', '/remote.html', '/remote', '/manifest.json', '/icon-192.png', '/icon-512.png', '/logo-moph.png'];
+const CACHE_NAME = 'haos-v70-62-modular-remote-support';
+const CORE = [
+  '/',
+  '/index.html',
+  '/public.html',
+  '/public',
+  '/remote.html',
+  '/remote',
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/logo-moph.png',
+  '/assets/css/admin-external-organizations.css',
+  '/assets/js/modules/external-organizations.js',
+  '/assets/css/remote-support.css',
+  '/assets/js/modules/remote-support.js'
+];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(CORE)).catch(() => {}));
   self.skipWaiting();
