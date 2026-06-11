@@ -1,0 +1,12 @@
+/* Extracted from index.html: haos-v70-33-guide-tabs-style */
+.haos-v733-tour-step{border-radius:8px;background:#f8fafc;border:1px solid rgba(37,99,235,.28);padding:18px;text-align:left}
+  .haos-v733-tour-step .icon{font-size:2.8rem;color:#2563eb;margin-bottom:10px}
+  .haos-v733-tour-step p{color:#334155;line-height:1.65;margin-bottom:0}
+  .haos-v733-tour-step .hint{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .haos-v733-tour-step .hint span{border-radius:999px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;padding:4px 9px;font-size:.8rem;font-weight:800}
+  .haos-v733-guide-hero{border-radius:8px;background:linear-gradient(135deg,#075985,#0f766e);color:#fff;padding:16px;margin-bottom:12px;text-align:left}
+  .haos-v733-guide-hero h5{font-weight:900;margin:0 0 4px}
+  .haos-v733-guide-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;text-align:left}
+  .haos-v733-guide-card{border:1px solid rgba(148,163,184,.28);border-radius:8px;background:#fff;padding:13px;min-height:126px}
+  .haos-v733-guide-card h6{font-weight:900;color:#075985;margin-bottom:6px}
+  .haos-v733-guide-card .badge{font-size:.72rem}

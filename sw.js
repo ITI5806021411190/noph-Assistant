@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-64-modular-notifications-core';
+const CACHE_NAME = 'haos-v70-65-modular-program-guide';
 const CORE = [
   '/',
   '/index.html',
@@ -18,6 +18,8 @@ const CORE = [
   '/assets/js/modules/meeting-minutes.js',
   '/assets/css/notifications.css',
   '/assets/js/modules/notifications.js',
+  '/assets/css/program-guide.css',
+  '/assets/js/modules/program-guide.js',
   '/assets/js/modules/notifications-action-fix.js'
 ];
 self.addEventListener('install', event => {
