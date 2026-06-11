@@ -1,12 +1,12 @@
 # Health Assistant OS Source Audit
 
-Generated: 2026-06-11T10:07:17.032Z
+Generated: 2026-06-11T10:20:47.273Z
 
 ## File sizes
 
 | File | Lines | Characters |
 | --- | ---: | ---: |
-| index.html | 18801 | 1499589 |
+| index.html | 18521 | 1483207 |
 | Code.gs.txt | 14054 | 718037 |
 | public.html | 2083 | 201720 |
 | remote.html | 470 | 33770 |
@@ -14,9 +14,9 @@ Generated: 2026-06-11T10:07:17.032Z
 ## Frontend patch blocks
 
 - Script blocks: 76
-- External script files: 11
-- Inline script blocks: 65
-- Style blocks: 49
+- External script files: 13
+- Inline script blocks: 63
+- Style blocks: 48
 - Stylesheet links are not counted as style blocks.
 
 | Kind | ID/source | Line | Lines | Characters |
@@ -114,44 +114,43 @@ Generated: 2026-06-11T10:07:17.032Z
 | script | haos-v70-30-db-repair-ui-script | 13859 | 119 | 7203 |
 | style | haos-v70-31-auto-login-style | 13978 | 8 | 567 |
 | script | haos-v70-31-auto-login-ui-script | 13986 | 352 | 18191 |
-| style | haos-v70-32-notification-style | 14338 | 10 | 892 |
-| script | haos-v70-32-notification-guide-ui-script | 14348 | 181 | 11649 |
-| style | haos-v70-33-guide-tabs-style | 14529 | 13 | 1158 |
-| script | haos-v70-33-current-guide-tabs-script | 14542 | 176 | 11981 |
-| script | haos-v70-34-notification-action-fix-script | 14718 | 92 | 4027 |
-| style | haos-v70-35-workspace-permissions-style | 14810 | 22 | 2828 |
-| script | haos-v70-35-workspace-permissions-script | 14832 | 406 | 26806 |
-| style | haos-v70-36-workspace-option-builder-style | 15238 | 11 | 1081 |
-| script | haos-v70-36-workspace-option-builder-script | 15249 | 135 | 5388 |
-| style | haos-v70-37-workspace-schedule-it-style | 15384 | 66 | 7373 |
-| script | haos-v70-37-workspace-schedule-it-script | 15450 | 762 | 65841 |
-| style | haos-v70-42-schedule-workspace-polish-style | 16212 | 24 | 2416 |
-| script | haos-v70-42-schedule-workspace-polish-script | 16236 | 325 | 22989 |
-| style | haos-v70-44-workspace-builder-quiz-style | 16561 | 30 | 3471 |
-| script | haos-v70-44-workspace-builder-quiz-script | 16591 | 376 | 24795 |
-| style | haos-v70-45-workspace-notif-calendar-style | 16967 | 15 | 1442 |
-| script | haos-v70-45-workspace-notif-calendar-script | 16982 | 450 | 31492 |
-| style | haos-v70-46-ui-polish-style | 17432 | 38 | 4357 |
-| script | haos-v70-46-ui-polish-script | 17470 | 222 | 16364 |
-| style | haos-v70-47-calendar-dept-cleanup-style | 17692 | 5 | 307 |
-| script | haos-v70-47-calendar-dept-cleanup-script | 17697 | 155 | 7317 |
-| style | haos-v70-48-booking-security-emeeting-style | 17852 | 30 | 3646 |
-| script | haos-v70-48-booking-security-emeeting-script | 17882 | 345 | 43687 |
-| style | haos-v70-49-final-polish-style | 18227 | 15 | 2030 |
-| script | haos-v70-49-final-polish-script | 18242 | 159 | 11947 |
-| style | haos-v70-50-admin-system-tools-style | 18401 | 18 | 1963 |
-| script | haos-v70-50-admin-system-tools-script | 18419 | 216 | 18201 |
-| style | haos-v70-51-stability-style | 18635 | 12 | 657 |
-| script | haos-v70-51-stability-script | 18647 | 146 | 10279 |
-| script | assets/js/modules/remote-support.js | 18794 | 1 | 59 |
-| script | assets/js/modules/meeting-minutes.js | 18796 | 1 | 60 |
-| script | assets/js/modules/external-organizations.js | 18798 | 1 | 67 |
+| script | assets/js/modules/notifications.js | 14339 | 1 | 58 |
+| style | haos-v70-33-guide-tabs-style | 14340 | 13 | 1158 |
+| script | haos-v70-33-current-guide-tabs-script | 14353 | 176 | 11981 |
+| script | assets/js/modules/notifications-action-fix.js | 14529 | 1 | 69 |
+| style | haos-v70-35-workspace-permissions-style | 14530 | 22 | 2828 |
+| script | haos-v70-35-workspace-permissions-script | 14552 | 406 | 26806 |
+| style | haos-v70-36-workspace-option-builder-style | 14958 | 11 | 1081 |
+| script | haos-v70-36-workspace-option-builder-script | 14969 | 135 | 5388 |
+| style | haos-v70-37-workspace-schedule-it-style | 15104 | 66 | 7373 |
+| script | haos-v70-37-workspace-schedule-it-script | 15170 | 762 | 65841 |
+| style | haos-v70-42-schedule-workspace-polish-style | 15932 | 24 | 2416 |
+| script | haos-v70-42-schedule-workspace-polish-script | 15956 | 325 | 22989 |
+| style | haos-v70-44-workspace-builder-quiz-style | 16281 | 30 | 3471 |
+| script | haos-v70-44-workspace-builder-quiz-script | 16311 | 376 | 24795 |
+| style | haos-v70-45-workspace-notif-calendar-style | 16687 | 15 | 1442 |
+| script | haos-v70-45-workspace-notif-calendar-script | 16702 | 450 | 31492 |
+| style | haos-v70-46-ui-polish-style | 17152 | 38 | 4357 |
+| script | haos-v70-46-ui-polish-script | 17190 | 222 | 16364 |
+| style | haos-v70-47-calendar-dept-cleanup-style | 17412 | 5 | 307 |
+| script | haos-v70-47-calendar-dept-cleanup-script | 17417 | 155 | 7317 |
+| style | haos-v70-48-booking-security-emeeting-style | 17572 | 30 | 3646 |
+| script | haos-v70-48-booking-security-emeeting-script | 17602 | 345 | 43687 |
+| style | haos-v70-49-final-polish-style | 17947 | 15 | 2030 |
+| script | haos-v70-49-final-polish-script | 17962 | 159 | 11947 |
+| style | haos-v70-50-admin-system-tools-style | 18121 | 18 | 1963 |
+| script | haos-v70-50-admin-system-tools-script | 18139 | 216 | 18201 |
+| style | haos-v70-51-stability-style | 18355 | 12 | 657 |
+| script | haos-v70-51-stability-script | 18367 | 146 | 10279 |
+| script | assets/js/modules/remote-support.js | 18514 | 1 | 59 |
+| script | assets/js/modules/meeting-minutes.js | 18516 | 1 | 60 |
+| script | assets/js/modules/external-organizations.js | 18518 | 1 | 67 |
 
 ## Function pressure
 
 - Apps Script named functions: 776
-- Frontend inline named functions: 1092
-- Frontend window exports: 776
+- Frontend inline named functions: 1078
+- Frontend window exports: 759
 
 ### Duplicate backend function names
 

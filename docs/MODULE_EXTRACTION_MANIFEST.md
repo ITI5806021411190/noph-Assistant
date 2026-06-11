@@ -9,6 +9,7 @@ Last updated: 2026-06-11
 | External Organizations | Extracted | `assets/js/modules/external-organizations.js`, `assets/css/admin-external-organizations.css` |
 | Remote Support AnyDesk entry | Extracted | `assets/js/modules/remote-support.js`, `assets/css/remote-support.css` |
 | Meeting Minutes / Schedule / IT Hub polish | Extracted | `assets/js/modules/meeting-minutes.js`, `assets/css/meeting-minutes.css` |
+| Notification Center core/action routing | Extracted | `assets/js/modules/notifications.js`, `assets/js/modules/notifications-action-fix.js`, `assets/css/notifications.css` |
 
 This manifest controls the order for splitting `index.html` without changing production behavior.
 
@@ -28,7 +29,7 @@ Start with the smallest isolated modules. Keep every existing `window.*` public 
 
 | Module | Proposed file | Notes |
 | --- | --- | --- |
-| Notification Center | `assets/js/modules/notifications.js` | Preserve existing `openNotificationCenter`, action handlers, pagination, and filters. |
+| Notification Center | `assets/js/modules/notifications.js` | Core/action routing extracted. Advanced filter/card/today-highlight patches remain inline until the next notification pass because they share code with workspace/calendar and later UI polish blocks. |
 | Schedule view controls | `assets/js/modules/schedules.js` | Needs careful testing because many dashboard buttons call schedule functions. |
 | Shared Workspace builder/viewer | `assets/js/modules/shared-workspace.js` | Large and feature-rich; extract after core helpers are stable. |
 

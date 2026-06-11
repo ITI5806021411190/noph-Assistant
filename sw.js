@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-63-modular-meeting-minutes';
+const CACHE_NAME = 'haos-v70-64-modular-notifications-core';
 const CORE = [
   '/',
   '/index.html',
@@ -15,7 +15,10 @@ const CORE = [
   '/assets/css/remote-support.css',
   '/assets/js/modules/remote-support.js',
   '/assets/css/meeting-minutes.css',
-  '/assets/js/modules/meeting-minutes.js'
+  '/assets/js/modules/meeting-minutes.js',
+  '/assets/css/notifications.css',
+  '/assets/js/modules/notifications.js',
+  '/assets/js/modules/notifications-action-fix.js'
 ];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(CORE)).catch(() => {}));

@@ -1,0 +1,9 @@
+/* Extracted from index.html: haos-v70-32-notification-style */
+.haos-v732-notif-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:4px}
+  .haos-v732-module-pill{border:1px solid rgba(37,99,235,.18);background:#eff6ff;color:#1d4ed8;border-radius:999px;padding:2px 8px;font-size:.72rem;font-weight:800}
+  .haos-v732-coverage{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;text-align:left}
+  .haos-v732-coverage .item{border:1px solid rgba(148,163,184,.3);border-radius:8px;background:#fff;padding:12px}
+  .haos-v732-coverage .item b{display:block;color:#0f172a}
+  .haos-v732-guide-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;text-align:left}
+  .haos-v732-guide-card{border:1px solid rgba(148,163,184,.28);border-radius:8px;background:#fff;padding:12px}
+  .haos-v732-guide-card h6{font-weight:900;color:#075985}
