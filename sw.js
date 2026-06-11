@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-67-workspace-xlsx-export';
+const CACHE_NAME = 'haos-v70-68-shared-workspace-flow';
 const CORE = [
   '/',
   '/index.html',
@@ -20,6 +20,8 @@ const CORE = [
   '/assets/js/modules/notifications.js',
   '/assets/css/program-guide.css',
   '/assets/js/modules/program-guide.js',
+  '/assets/css/shared-workspace-flow.css',
+  '/assets/js/modules/shared-workspace-flow.js',
   '/assets/js/modules/notifications-action-fix.js'
 ];
 self.addEventListener('install', event => {

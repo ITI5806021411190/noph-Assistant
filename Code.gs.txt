@@ -14206,3 +14206,285 @@ getAllowedBridgeFunctions_ = function() {
   allowed.bridgeWhitelistHealthCheckV766 = true;
   return allowed;
 };
+
+// ========================= v70.68: shared workspace section flow =========================
+var HAOS_V768_WORKSPACE_FLOW_HEADER_ = 'Workspace Flow JSON';
+
+function haosV768Bool_(value, defaultValue) {
+  if (value === true || value === false) return value;
+  if (value == null || value === '') return !!defaultValue;
+  var s = String(value).trim().toLowerCase();
+  if (/^(true|yes|y|1|on|active)$/i.test(s)) return true;
+  if (/^(false|no|n|0|off|inactive)$/i.test(s)) return false;
+  return !!defaultValue;
+}
+
+function haosV768SplitOptions_(value) {
+  if (typeof haosV744SplitOptions_ === 'function') return haosV744SplitOptions_(value);
+  if (Array.isArray(value)) return value.map(function(x) { return String(x || '').trim(); }).filter(Boolean);
+  return String(value || '').split(/[,|]/).map(function(x) { return x.trim(); }).filter(Boolean);
+}
+
+function haosV768DefaultWorkspaceFlow_() {
+  return {
+    enabled: false,
+    version: 'v1',
+    mode: 'sections',
+    sections: [{ id: 's1', title: 'Section 1' }],
+    logicRules: []
+  };
+}
+
+function haosV768ParseWorkspaceFlow_(raw) {
+  if (!raw) return haosV768DefaultWorkspaceFlow_();
+  if (typeof raw === 'object') return haosV768NormalizeWorkspaceFlow_(raw);
+  try {
+    return haosV768NormalizeWorkspaceFlow_(JSON.parse(String(raw)));
+  } catch (e) {
+    return haosV768DefaultWorkspaceFlow_();
+  }
+}
+
+function haosV768NormalizeWorkspaceFlow_(flow) {
+  flow = flow && typeof flow === 'object' ? flow : {};
+  var sourceSections = Array.isArray(flow.sections) && flow.sections.length ? flow.sections : [{ id:'s1', title:'Section 1' }];
+  var sections = [];
+  var ids = {};
+  sourceSections.forEach(function(section, index) {
+    section = section || {};
+    var id = String(section.id || ('s' + (index + 1))).replace(/[^\w-]/g, '').trim() || ('s' + (index + 1));
+    if (ids[id]) id = id + '_' + (index + 1);
+    ids[id] = true;
+    sections.push({
+      id: id,
+      title: String(section.title || ('Section ' + (index + 1))).replace(/\s+/g, ' ').trim() || ('Section ' + (index + 1))
+    });
+  });
+  if (!sections.length) sections = [{ id:'s1', title:'Section 1' }];
+
+  var logicRules = [];
+  (Array.isArray(flow.logicRules) ? flow.logicRules : []).forEach(function(rule) {
+    rule = rule || {};
+    var fieldIndex = Number(rule.fieldIndex);
+    var option = String(rule.option || '').trim();
+    if (!isFinite(fieldIndex) || !option) return;
+    var action = String(rule.action || 'next').trim();
+    if (['next', 'section', 'submit'].indexOf(action) < 0) action = 'next';
+    var targetSectionId = String(rule.targetSectionId || '').trim();
+    if (action !== 'section' || !ids[targetSectionId]) targetSectionId = '';
+    logicRules.push({
+      fieldIndex: fieldIndex,
+      option: option,
+      action: action,
+      targetSectionId: targetSectionId
+    });
+  });
+
+  return {
+    enabled: haosV768Bool_(flow.enabled, false),
+    version: 'v1',
+    mode: 'sections',
+    sections: sections.slice(0, 40),
+    logicRules: logicRules.slice(0, 400)
+  };
+}
+
+function haosV768WorkspaceFlowColumn_(sheet) {
+  var col = getColumnIndex_(sheet, HAOS_V768_WORKSPACE_FLOW_HEADER_);
+  if (col < 1) {
+    col = sheet.getLastColumn() + 1;
+    sheet.getRange(1, col).setValue(HAOS_V768_WORKSPACE_FLOW_HEADER_);
+    try { sheet.getRange(1, col).setBackground('#bfdbfe').setFontWeight('bold'); } catch (ignore) {}
+  }
+  return col;
+}
+
+var haosV768PrevWorkspaceSetup_ = typeof workspaceSetup_ === 'function' ? workspaceSetup_ : null;
+workspaceSetup_ = function() {
+  var sheet = haosV768PrevWorkspaceSetup_ ? haosV768PrevWorkspaceSetup_() : getOrCreateSheet_(SHEET_WORKSPACES, [], '#ccfbf1');
+  haosV768WorkspaceFlowColumn_(sheet);
+  return sheet;
+};
+
+var haosV768PrevNormalizeFieldConfig_ = typeof haosV735NormalizeFieldConfig_ === 'function' ? haosV735NormalizeFieldConfig_ : null;
+haosV735NormalizeFieldConfig_ = function(columns, config) {
+  var out = haosV768PrevNormalizeFieldConfig_ ? haosV768PrevNormalizeFieldConfig_(columns, config) : [];
+  config = Array.isArray(config) ? config : [];
+  out.forEach(function(field, index) {
+    var item = config[index] || {};
+    if (!item && field && field.label) {
+      for (var i = 0; i < config.length; i++) {
+        if (String(config[i] && config[i].label || '').trim() === String(field.label || '').trim()) {
+          item = config[i];
+          break;
+        }
+      }
+    }
+    var sectionId = String(item.sectionId || item.section || item.flowSection || '').replace(/[^\w-]/g, '').trim();
+    if (sectionId) field.sectionId = sectionId;
+  });
+  return out;
+};
+
+var haosV768PrevWorkspaceToObject_ = typeof workspaceToObject_ === 'function' ? workspaceToObject_ : null;
+workspaceToObject_ = function(row) {
+  var ws = haosV768PrevWorkspaceToObject_ ? haosV768PrevWorkspaceToObject_(row) : {};
+  row = row || [];
+  ws.workspaceFlow = haosV768ParseWorkspaceFlow_(row[25] || '');
+  return ws;
+};
+
+function haosV768WriteWorkspaceFlow_(sheet, workspaceId, flow) {
+  var found = findWorkspaceRow_(sheet, workspaceId);
+  if (!found) return;
+  var normalized = haosV768NormalizeWorkspaceFlow_(flow || {});
+  var col = haosV768WorkspaceFlowColumn_(sheet);
+  sheet.getRange(found.row, col).setValue(JSON.stringify(normalized));
+}
+
+function haosV768ReadWorkspaceFlow_(workspaceId) {
+  try {
+    var sheet = workspaceSetup_();
+    var found = findWorkspaceRow_(sheet, workspaceId);
+    if (!found) return haosV768DefaultWorkspaceFlow_();
+    var col = haosV768WorkspaceFlowColumn_(sheet);
+    return haosV768ParseWorkspaceFlow_(found.values[col - 1] || '');
+  } catch (e) {
+    return haosV768DefaultWorkspaceFlow_();
+  }
+}
+
+var haosV768PrevCreateSharedWorkspace_ = typeof createSharedWorkspace === 'function' ? createSharedWorkspace : null;
+createSharedWorkspace = function(data, actorPhone) {
+  data = data || {};
+  var res = haosV768PrevCreateSharedWorkspace_ ? haosV768PrevCreateSharedWorkspace_(data, actorPhone) : {success:false, message:'createSharedWorkspace is not available'};
+  try {
+    if (res && res.success && res.id && data.workspaceFlow !== undefined) {
+      haosV768WriteWorkspaceFlow_(workspaceSetup_(), res.id, data.workspaceFlow);
+      res.workspaceFlow = haosV768NormalizeWorkspaceFlow_(data.workspaceFlow);
+    }
+  } catch (e) {
+    try { logError_(actorPhone || '', 'haosV768CreateWorkspaceFlow', e, {workspaceId:res && res.id}); } catch (ignore) {}
+  }
+  return res;
+};
+
+var haosV768PrevUpdateSharedWorkspaceConfigV737_ = typeof updateSharedWorkspaceConfigV737 === 'function' ? updateSharedWorkspaceConfigV737 : null;
+updateSharedWorkspaceConfigV737 = function(workspaceId, actorPhone, data) {
+  data = data || {};
+  var res = haosV768PrevUpdateSharedWorkspaceConfigV737_ ? haosV768PrevUpdateSharedWorkspaceConfigV737_(workspaceId, actorPhone, data) : {success:false, message:'updateSharedWorkspaceConfigV737 is not available'};
+  try {
+    if (res && res.success && data.workspaceFlow !== undefined) {
+      var flow = haosV768NormalizeWorkspaceFlow_(data.workspaceFlow);
+      haosV768WriteWorkspaceFlow_(workspaceSetup_(), workspaceId, flow);
+      if (!res.data) res.data = {};
+      res.data.workspaceFlow = flow;
+    }
+  } catch (e) {
+    try { logError_(actorPhone || '', 'haosV768UpdateWorkspaceFlow', e, {workspaceId:workspaceId}); } catch (ignore) {}
+  }
+  return res;
+};
+
+var haosV768PrevGetPublicWorkspace_ = typeof getPublicWorkspace === 'function' ? getPublicWorkspace : null;
+getPublicWorkspace = function(workspaceId, token) {
+  var res = haosV768PrevGetPublicWorkspace_ ? haosV768PrevGetPublicWorkspace_(workspaceId, token) : {success:false, message:'getPublicWorkspace is not available'};
+  if (res && res.success && res.data) {
+    res.data.workspaceFlow = haosV768ReadWorkspaceFlow_(workspaceId);
+  }
+  return res;
+};
+
+var haosV768PrevGetMySharedWorkspaces_ = typeof getMySharedWorkspaces === 'function' ? getMySharedWorkspaces : null;
+getMySharedWorkspaces = function(actorPhone) {
+  var res = haosV768PrevGetMySharedWorkspaces_ ? haosV768PrevGetMySharedWorkspaces_(actorPhone) : {success:false, message:'getMySharedWorkspaces is not available'};
+  if (res && res.success && Array.isArray(res.data)) {
+    var flowById = {};
+    try {
+      var sheet = workspaceSetup_();
+      var col = haosV768WorkspaceFlowColumn_(sheet);
+      var rows = sheet.getDataRange().getValues();
+      for (var i = 1; i < rows.length; i++) {
+        flowById[String(rows[i][0] || '')] = haosV768ParseWorkspaceFlow_(rows[i][col - 1] || '');
+      }
+    } catch (e) {
+      flowById = {};
+    }
+    res.data.forEach(function(ws) {
+      if (!ws || !ws.id) return;
+      var flow = flowById[String(ws.id)] || haosV768DefaultWorkspaceFlow_();
+      ws.workspaceFlow = flow;
+      ws.workspaceFlowEnabled = !!flow.enabled;
+      ws.workspaceFlowSections = flow.sections.length;
+    });
+  }
+  return res;
+};
+
+function haosV768FieldRequiredEmpty_(field, value) {
+  field = field || {};
+  if (field.type === 'checkbox') {
+    if (haosV768SplitOptions_(field.options).length) return !haosV768SplitOptions_(value).length;
+    return !/^(true|1|yes|y|on|done|checked|\u2713|\u2714)$/i.test(String(value || '').trim());
+  }
+  return String(value == null ? '' : value).trim() === '';
+}
+
+function haosV768RequiredMissingForVisible_(ws, row, visibleIndexes) {
+  var visible = {};
+  (Array.isArray(visibleIndexes) ? visibleIndexes : []).forEach(function(index) {
+    visible[String(Number(index))] = true;
+  });
+  var fields = Array.isArray(ws && ws.fieldConfig) && ws.fieldConfig.length ? ws.fieldConfig : haosV735NormalizeFieldConfig_((ws && ws.columns) || [], []);
+  var missing = [];
+  fields.forEach(function(field, fallbackIndex) {
+    var index = Number(field.index != null ? field.index : fallbackIndex);
+    if (!visible[String(index)]) return;
+    if (!haosV768Bool_(field.required, false)) return;
+    var label = String(field.label || '').trim();
+    if (index === 0 && /timestamp/i.test(label)) return;
+    if (haosV768FieldRequiredEmpty_(field, row[index])) missing.push(label || ('Field ' + (index + 1)));
+  });
+  return missing;
+}
+
+var haosV768PrevSubmitPublicWorkspaceForm_ = typeof submitPublicWorkspaceForm === 'function' ? submitPublicWorkspaceForm : null;
+submitPublicWorkspaceForm = function(workspaceId, token, row) {
+  var visibleIndexes = null;
+  if (row && typeof row === 'object' && !Array.isArray(row)) {
+    visibleIndexes = Array.isArray(row.visibleIndexes) ? row.visibleIndexes : null;
+    row = Array.isArray(row.values) ? row.values : [];
+  }
+  if (!visibleIndexes || !visibleIndexes.length || !haosV768PrevSubmitPublicWorkspaceForm_) {
+    return haosV768PrevSubmitPublicWorkspaceForm_ ? haosV768PrevSubmitPublicWorkspaceForm_(workspaceId, token, row) : {success:false, message:'submitPublicWorkspaceForm is not available'};
+  }
+  var prevRequired = typeof haosV735RequiredMissingLabels_ === 'function' ? haosV735RequiredMissingLabels_ : null;
+  if (prevRequired) {
+    haosV735RequiredMissingLabels_ = function(ws, values) {
+      var flow = haosV768NormalizeWorkspaceFlow_(ws && ws.workspaceFlow);
+      if (!flow.enabled) return prevRequired(ws, values);
+      return haosV768RequiredMissingForVisible_(ws, values, visibleIndexes);
+    };
+  }
+  try {
+    return haosV768PrevSubmitPublicWorkspaceForm_(workspaceId, token, row);
+  } finally {
+    if (prevRequired) haosV735RequiredMissingLabels_ = prevRequired;
+  }
+};
+
+function bridgeWhitelistHealthCheckV768() {
+  return {
+    success: true,
+    version: 'v70.68-shared-workspace-flow',
+    column: HAOS_V768_WORKSPACE_FLOW_HEADER_,
+    functions: ['createSharedWorkspace', 'updateSharedWorkspaceConfigV737', 'getPublicWorkspace', 'submitPublicWorkspaceForm']
+  };
+}
+
+var haosV768PrevGetAllowedBridgeFunctions_ = typeof getAllowedBridgeFunctions_ === 'function' ? getAllowedBridgeFunctions_ : null;
+getAllowedBridgeFunctions_ = function() {
+  var allowed = haosV768PrevGetAllowedBridgeFunctions_ ? haosV768PrevGetAllowedBridgeFunctions_() : {};
+  allowed.bridgeWhitelistHealthCheckV768 = true;
+  return allowed;
+};

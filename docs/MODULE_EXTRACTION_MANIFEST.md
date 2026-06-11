@@ -1,6 +1,6 @@
 # Health Assistant OS Module Extraction Manifest
 
-Last updated: 2026-06-11
+Last updated: 2026-06-12
 
 ## Current Extraction Status
 
@@ -11,6 +11,7 @@ Last updated: 2026-06-11
 | Meeting Minutes / Schedule / IT Hub polish | Extracted | `assets/js/modules/meeting-minutes.js`, `assets/css/meeting-minutes.css` |
 | Notification Center core/action routing | Extracted | `assets/js/modules/notifications.js`, `assets/js/modules/notifications-action-fix.js`, `assets/css/notifications.css` |
 | Program Guide / Onboarding / Default Tabs | Extracted | `assets/js/modules/program-guide.js`, `assets/css/program-guide.css` |
+| Shared Workspace Flow / Section Logic | Extracted | `assets/js/modules/shared-workspace-flow.js`, `assets/css/shared-workspace-flow.css` |
 
 This manifest controls the order for splitting `index.html` without changing production behavior.
 
@@ -33,7 +34,7 @@ Start with the smallest isolated modules. Keep every existing `window.*` public 
 | Notification Center | `assets/js/modules/notifications.js` | Core/action routing extracted. Advanced filter/card/today-highlight patches remain inline until the next notification pass because they share code with workspace/calendar and later UI polish blocks. |
 | Program Guide / Onboarding | `assets/js/modules/program-guide.js` | Extracted. It keeps default IT Services tab ordering and the updated guide/onboarding popups compatible with existing global callers. |
 | Schedule view controls | `assets/js/modules/schedules.js` | Needs careful testing because many dashboard buttons call schedule functions. |
-| Shared Workspace builder/viewer | `assets/js/modules/shared-workspace.js` | Large and feature-rich; extract after core helpers are stable. |
+| Shared Workspace builder/viewer | `assets/js/modules/shared-workspace.js` | Section flow foundation extracted first in `shared-workspace-flow.js`; move the remaining builder/viewer code after this foundation is stable in production. |
 
 ## Priority 3: Backend-facing admin modules
 

@@ -1,20 +1,20 @@
 # Health Assistant OS Source Audit
 
-Generated: 2026-06-11T12:19:53.267Z
+Generated: 2026-06-11T18:12:03.555Z
 
 ## File sizes
 
 | File | Lines | Characters |
 | --- | ---: | ---: |
-| index.html | 18657 | 1486364 |
-| Code.gs.txt | 14209 | 725093 |
-| public.html | 2141 | 204792 |
+| index.html | 18659 | 1486499 |
+| Code.gs.txt | 14491 | 737081 |
+| public.html | 2143 | 204927 |
 | remote.html | 470 | 33770 |
 
 ## Frontend patch blocks
 
-- Script blocks: 78
-- External script files: 14
+- Script blocks: 79
+- External script files: 15
 - Inline script blocks: 64
 - Style blocks: 48
 - Stylesheet links are not counted as style blocks.
@@ -147,10 +147,11 @@ Generated: 2026-06-11T12:19:53.267Z
 | style | haos-v70-66-workspace-branding-style | 18332 | 7 | 802 |
 | script | haos-v70-66-workspace-branding-script | 18339 | 148 | 7785 |
 | script | haos-v70-67-workspace-xlsx-export-script | 18487 | 168 | 7589 |
+| script | assets/js/modules/shared-workspace-flow.js | 18656 | 1 | 66 |
 
 ## Function pressure
 
-- Apps Script named functions: 784
+- Apps Script named functions: 795
 - Frontend inline named functions: 1096
 - Frontend window exports: 766
 
