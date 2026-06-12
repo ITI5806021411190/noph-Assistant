@@ -200,6 +200,20 @@ Rollback for v70.73:
 3. Remove the `v70.73 schedule public link performance override` block from `Code.gs.txt`.
 4. No database rollback is required because this change only writes the same public-link fields as the previous implementation.
 
+Completed in v70.74:
+
+- Upgraded schedule public-link handling with `getSchedulePublicLinkStatus(scheduleId, ownerPhone)`.
+- The schedule detail popup now gets a `ดูลิงก์สาธารณะ` action that can show/copy/open the current public URL and verify its enabled/expired status when Apps Script responds.
+- `getSchedulePublicUrlServer` now uses a `TextFinder` row lookup and skips audit logging during the hot path to reduce timeout risk.
+- Frontend timeout was raised to 45 seconds and now falls back to showing the deterministic public URL instead of blocking the user.
+
+Rollback for v70.74:
+
+1. Restore `assets/js/modules/schedule-public-link.js` to the previous v70.73 version, or remove it to return to the inline implementation.
+2. Remove the `v70.74 schedule public link status + faster TextFinder path` block from `Code.gs.txt`.
+3. Remove `getSchedulePublicLinkStatus` from bridge whitelist if rolling back manually.
+4. No database rollback is required.
+
 ## Phase 2: Extract CSS First
 
 Purpose: reduce `index.html` size with the lowest runtime risk.

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-73-schedule-public-link-core';
+const CACHE_NAME = 'haos-v70-74-schedule-public-link-status';
 const CORE = [
   '/',
   '/index.html',

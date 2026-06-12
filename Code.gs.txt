@@ -14600,3 +14600,137 @@ function bridgeWhitelistHealthCheckV773() {
     publicBaseUrl: getPublicAppBaseUrl_()
   };
 }
+
+// ==========================================
+// v70.74 schedule public link status + faster TextFinder path
+// ==========================================
+function haosV774FindSchedulePublicRow_(sheet, scheduleId) {
+  scheduleId = String(scheduleId || '').trim();
+  if (!sheet || !scheduleId || sheet.getLastRow() < 2) return null;
+  var map = haosV773EnsureSchedulePublicHeaders_(sheet);
+  var idCol = map['ID'] || 1;
+  var found = sheet.getRange(2, idCol, sheet.getLastRow() - 1, 1)
+    .createTextFinder(scheduleId)
+    .matchEntireCell(true)
+    .findNext();
+  if (!found) return null;
+  return { row: found.getRow(), map: map };
+}
+
+function haosV774SchedulePublicUrl_(scheduleId) {
+  return buildPublicPageUrl_({ publicId: String(scheduleId || '').trim() });
+}
+
+getSchedulePublicUrlServer = function(scheduleId, ownerPhone, expiryDays) {
+  try {
+    scheduleId = String(scheduleId || '').trim();
+    if (!scheduleId) return { success: false, message: 'ไม่พบรหัสรายการที่ต้องการสร้างลิงก์' };
+
+    var sheet = getDB().getSheetByName(SHEET_NAME);
+    if (!sheet) return { success: false, message: 'ไม่พบชีตตารางงาน' };
+
+    var found = haosV774FindSchedulePublicRow_(sheet, scheduleId);
+    if (!found) return { success: false, message: 'ไม่พบรายการที่ต้องการสร้างลิงก์' };
+
+    var map = found.map;
+    var row = found.row;
+    var targetPhone = ownerPhone ? String(ownerPhone).replace(/'/g, '').trim() : '';
+    var rowPhone = String(sheet.getRange(row, map['Owner Phone'] || 11).getValue() || '').replace(/'/g, '').trim();
+    if (targetPhone && rowPhone !== targetPhone) {
+      return { success: false, message: 'คุณไม่มีสิทธิ์สร้างลิงก์สาธารณะของรายการนี้' };
+    }
+
+    var days = Number(expiryDays);
+    if (isNaN(days)) days = Number(getSetting_('PUBLIC_LINK_EXPIRY_DAYS', 30));
+    if (isNaN(days)) days = 30;
+
+    var expiresAt = '';
+    if (days > 0) expiresAt = new Date(new Date().getTime() + days * 24 * 60 * 60 * 1000);
+
+    sheet.getRange(row, map['Public Enabled']).setValue('TRUE');
+    sheet.getRange(row, map['Public Expires At']).setValue(expiresAt || '');
+    sheet.getRange(row, map['Public Created At']).setValue(new Date());
+
+    return {
+      success: true,
+      url: haosV774SchedulePublicUrl_(scheduleId),
+      expiresAt: expiresAt ? formatDateTime_(expiresAt, 'dd/MM/yyyy HH:mm') : 'ไม่หมดอายุ',
+      enabled: true,
+      patch: 'v70.74'
+    };
+  } catch (e) {
+    try { logError_(ownerPhone || '', 'getSchedulePublicUrlServer.v70.74', e, { scheduleId: scheduleId }); } catch (ignore) {}
+    return { success: false, message: e.toString() };
+  }
+};
+
+function getSchedulePublicLinkStatus(scheduleId, ownerPhone) {
+  try {
+    scheduleId = String(scheduleId || '').trim();
+    if (!scheduleId) return { success: false, message: 'ไม่พบรหัสรายการ' };
+
+    var sheet = getDB().getSheetByName(SHEET_NAME);
+    if (!sheet) return { success: false, message: 'ไม่พบชีตตารางงาน' };
+
+    var found = haosV774FindSchedulePublicRow_(sheet, scheduleId);
+    if (!found) return { success: false, message: 'ไม่พบรายการตารางงาน' };
+
+    var map = found.map;
+    var row = found.row;
+    var targetPhone = ownerPhone ? String(ownerPhone).replace(/'/g, '').trim() : '';
+    var rowPhone = String(sheet.getRange(row, map['Owner Phone'] || 11).getValue() || '').replace(/'/g, '').trim();
+    if (targetPhone && rowPhone !== targetPhone) {
+      return { success: false, message: 'คุณไม่มีสิทธิ์ดูสถานะลิงก์ของรายการนี้' };
+    }
+
+    var enabledRaw = sheet.getRange(row, map['Public Enabled']).getValue();
+    var enabledText = String(enabledRaw || '').trim().toUpperCase();
+    var enabled = enabledText === 'TRUE' || enabledText === 'ON' || enabledText === 'YES' || enabledText === 'PUBLIC';
+    var expValue = sheet.getRange(row, map['Public Expires At']).getValue();
+    var createdValue = sheet.getRange(row, map['Public Created At']).getValue();
+    var expiresAt = '';
+    if (expValue) expiresAt = formatDateTime_(expValue, 'dd/MM/yyyy HH:mm');
+    var createdAt = createdValue ? formatDateTime_(createdValue, 'dd/MM/yyyy HH:mm') : '';
+    var expired = false;
+    if (expValue) {
+      var expDate = expValue instanceof Date ? expValue : new Date(expValue);
+      expired = !isNaN(expDate.getTime()) && new Date() > expDate;
+    }
+
+    return {
+      success: true,
+      data: {
+        publicId: scheduleId,
+        url: haosV774SchedulePublicUrl_(scheduleId),
+        enabled: enabled && !expired,
+        rawEnabled: enabledRaw,
+        expired: expired,
+        expiresAt: expiresAt || (enabled ? 'ไม่หมดอายุ' : '-'),
+        createdAt: createdAt,
+        patch: 'v70.74'
+      }
+    };
+  } catch (e) {
+    try { logError_(ownerPhone || '', 'getSchedulePublicLinkStatus.v70.74', e, { scheduleId: scheduleId }); } catch (ignore) {}
+    return { success: false, message: e.toString() };
+  }
+}
+
+var haosV774PrevGetAllowedBridgeFunctions_ = typeof getAllowedBridgeFunctions_ === 'function' ? getAllowedBridgeFunctions_ : null;
+getAllowedBridgeFunctions_ = function() {
+  var allowed = haosV774PrevGetAllowedBridgeFunctions_ ? haosV774PrevGetAllowedBridgeFunctions_() : {};
+  allowed.getSchedulePublicUrlServer = true;
+  allowed.getSchedulePublicLinkStatus = true;
+  allowed.revokePublicScheduleLink = true;
+  allowed.bridgeWhitelistHealthCheckV774 = true;
+  return allowed;
+};
+
+function bridgeWhitelistHealthCheckV774() {
+  return {
+    success: true,
+    version: 'v70.74-schedule-public-link-status',
+    functions: ['getSchedulePublicUrlServer', 'getSchedulePublicLinkStatus', 'revokePublicScheduleLink'],
+    publicBaseUrl: getPublicAppBaseUrl_()
+  };
+}

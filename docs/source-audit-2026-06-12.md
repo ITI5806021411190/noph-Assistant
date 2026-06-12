@@ -1,13 +1,13 @@
 # Health Assistant OS Source Audit
 
-Generated: 2026-06-12T08:48:12.119Z
+Generated: 2026-06-12T10:01:49.945Z
 
 ## File sizes
 
 | File | Lines | Characters |
 | --- | ---: | ---: |
 | index.html | 18665 | 1486889 |
-| Code.gs.txt | 14603 | 741721 |
+| Code.gs.txt | 14737 | 747306 |
 | public.html | 2144 | 204994 |
 | remote.html | 470 | 33770 |
 
@@ -157,7 +157,7 @@ Generated: 2026-06-12T08:48:12.119Z
 
 ## Function pressure
 
-- Apps Script named functions: 798
+- Apps Script named functions: 802
 - Frontend inline named functions: 1096
 - Frontend window exports: 766
 

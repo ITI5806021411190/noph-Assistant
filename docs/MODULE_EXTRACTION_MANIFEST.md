@@ -40,7 +40,7 @@ Start with the smallest isolated modules. Keep every existing `window.*` public 
 | Notification Center | `assets/js/modules/notifications.js` | Core/action routing extracted. Advanced filter/card/today-highlight patches remain inline until the next notification pass because they share code with workspace/calendar and later UI polish blocks. |
 | Program Guide / Onboarding | `assets/js/modules/program-guide.js` | Extracted. It keeps default IT Services tab ordering and the updated guide/onboarding popups compatible with existing global callers. |
 | Schedule view controls | `assets/js/modules/schedule-view.js` | Extracted as a final compatibility renderer that uses `HAOS.schedule.query` while keeping `renderUnifiedScheduleV702`, `setUnifiedScheduleViewV702`, `setSchedulePageV739`, and `toggleSchedulePinV737` callable. |
-| Schedule public links | `assets/js/modules/schedule-public-link.js` | Extracted. It wraps `createPublicScheduleLink` with timeout/failure handling and keeps `getPublicScheduleUrl` compatible. |
+| Schedule public links | `assets/js/modules/schedule-public-link.js` | Extracted. It wraps `createPublicScheduleLink` with timeout/failure handling, adds public-link status viewing, and keeps `getPublicScheduleUrl` compatible. |
 | Shared Workspace builder/viewer | `assets/js/modules/shared-workspace.js` | Core schema/export helpers now live in `shared-workspace-core.js`; Excel response export lives in `shared-workspace-export.js`; section flow foundation lives in `shared-workspace-flow.js`; builder payload/create/edit stabilization lives in `shared-workspace-builder.js`; move the remaining viewer code after these foundations are stable. |
 
 ## Priority 3: Backend-facing admin modules
