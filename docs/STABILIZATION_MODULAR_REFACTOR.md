@@ -26,6 +26,7 @@ First module extraction:
   - `assets/js/modules/shared-workspace-core.js`
   - `assets/js/modules/shared-workspace-export.js`
   - `assets/js/modules/shared-workspace-flow.js`
+  - `assets/js/modules/shared-workspace-builder.js`
   - `assets/css/shared-workspace-flow.css`
 
 Key findings:
@@ -162,6 +163,26 @@ Rollback for v70.71:
 1. Remove `assets/js/modules/shared-workspace-export.js` from `index.html`.
 2. Remove `assets/js/modules/shared-workspace-export.js` from `sw.js` and bump the cache name.
 3. The older inline `haos-v70-67-workspace-xlsx-export` block will resume handling Excel export.
+4. No database rollback is required.
+
+Completed in v70.72:
+
+- Added `assets/js/modules/shared-workspace-builder.js` as the final shared workspace create/edit builder compatibility layer.
+- The builder now normalizes `fieldConfig`, `columns`, choice options, required flags, quiz scoring metadata, and Smart Flow metadata before create/edit requests are sent.
+- Dropdown, Radio, and Checkbox labels are reinforced as Thai labels with English terms in parentheses, while existing duplicate-field and answer-pick controls remain compatible.
+- Existing global callers remain compatible:
+  - `getWorkspaceCreatePayload()`
+  - `openWorkspaceCreateModal()`
+  - `syncWorkspaceBuilderV728()`
+  - `openWorkspaceConfigEditorV737(id)`
+  - `updateSharedWorkspaceConfigV737`
+- Google Apps Script and database structure are unchanged in this step.
+
+Rollback for v70.72:
+
+1. Remove `assets/js/modules/shared-workspace-builder.js` from `index.html`.
+2. Remove `assets/js/modules/shared-workspace-builder.js` from `sw.js` and bump the cache name.
+3. The older inline builder/quiz/flow patch blocks will resume handling create/edit payloads.
 4. No database rollback is required.
 
 ## Phase 2: Extract CSS First
