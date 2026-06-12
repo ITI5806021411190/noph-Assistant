@@ -1,20 +1,20 @@
 # Health Assistant OS Source Audit
 
-Generated: 2026-06-12T08:32:36.940Z
+Generated: 2026-06-12T08:48:12.119Z
 
 ## File sizes
 
 | File | Lines | Characters |
 | --- | ---: | ---: |
-| index.html | 18664 | 1486823 |
-| Code.gs.txt | 14491 | 737095 |
+| index.html | 18665 | 1486889 |
+| Code.gs.txt | 14603 | 741721 |
 | public.html | 2144 | 204994 |
 | remote.html | 470 | 33770 |
 
 ## Frontend patch blocks
 
-- Script blocks: 84
-- External script files: 20
+- Script blocks: 85
+- External script files: 21
 - Inline script blocks: 64
 - Style blocks: 48
 - Stylesheet links are not counted as style blocks.
@@ -149,14 +149,15 @@ Generated: 2026-06-12T08:32:36.940Z
 | script | haos-v70-67-workspace-xlsx-export-script | 18487 | 168 | 7589 |
 | script | assets/js/modules/schedule-core.js | 18655 | 1 | 58 |
 | script | assets/js/modules/schedule-view.js | 18656 | 1 | 58 |
-| script | assets/js/modules/shared-workspace-core.js | 18657 | 1 | 66 |
-| script | assets/js/modules/shared-workspace-export.js | 18658 | 1 | 68 |
-| script | assets/js/modules/shared-workspace-flow.js | 18660 | 1 | 66 |
-| script | assets/js/modules/shared-workspace-builder.js | 18661 | 1 | 69 |
+| script | assets/js/modules/schedule-public-link.js | 18657 | 1 | 65 |
+| script | assets/js/modules/shared-workspace-core.js | 18658 | 1 | 66 |
+| script | assets/js/modules/shared-workspace-export.js | 18659 | 1 | 68 |
+| script | assets/js/modules/shared-workspace-flow.js | 18661 | 1 | 66 |
+| script | assets/js/modules/shared-workspace-builder.js | 18662 | 1 | 69 |
 
 ## Function pressure
 
-- Apps Script named functions: 795
+- Apps Script named functions: 798
 - Frontend inline named functions: 1096
 - Frontend window exports: 766
 

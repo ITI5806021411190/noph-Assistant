@@ -23,6 +23,7 @@ First module extraction:
 - Schedule/workspace stabilization foundations added:
   - `assets/js/modules/schedule-core.js`
   - `assets/js/modules/schedule-view.js`
+  - `assets/js/modules/schedule-public-link.js`
   - `assets/js/modules/shared-workspace-core.js`
   - `assets/js/modules/shared-workspace-export.js`
   - `assets/js/modules/shared-workspace-flow.js`
@@ -184,6 +185,20 @@ Rollback for v70.72:
 2. Remove `assets/js/modules/shared-workspace-builder.js` from `sw.js` and bump the cache name.
 3. The older inline builder/quiz/flow patch blocks will resume handling create/edit payloads.
 4. No database rollback is required.
+
+Completed in v70.73:
+
+- Added `assets/js/modules/schedule-public-link.js` to stabilize public schedule link creation.
+- `createPublicScheduleLink(callback)` now has a 25-second timeout, failure handler, and a clear error message instead of an endless loading popup.
+- Added a lighter Apps Script override for `getSchedulePublicUrlServer`, which reads only the schedule ID column before writing public-link metadata.
+- The returned public URL now points directly to `/public?publicId=...` instead of relying on an extra redirect through `/api/share`.
+
+Rollback for v70.73:
+
+1. Remove `assets/js/modules/schedule-public-link.js` from `index.html`.
+2. Remove `assets/js/modules/schedule-public-link.js` from `sw.js` and bump the cache name.
+3. Remove the `v70.73 schedule public link performance override` block from `Code.gs.txt`.
+4. No database rollback is required because this change only writes the same public-link fields as the previous implementation.
 
 ## Phase 2: Extract CSS First
 

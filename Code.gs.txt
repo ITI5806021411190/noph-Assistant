@@ -14488,3 +14488,115 @@ getAllowedBridgeFunctions_ = function() {
   allowed.bridgeWhitelistHealthCheckV768 = true;
   return allowed;
 };
+
+// ==========================================
+// v70.73 schedule public link performance override
+// ==========================================
+function haosV773ScheduleHeaderMap_(sheet) {
+  var headers = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getValues()[0];
+  var map = {};
+  for (var i = 0; i < headers.length; i++) {
+    var key = String(headers[i] || '').trim();
+    if (key && !map[key]) map[key] = i + 1;
+  }
+  return map;
+}
+
+function haosV773EnsureSchedulePublicHeaders_(sheet) {
+  var required = [
+    'ID', 'Event Name', 'Start Time', 'End Time', 'Meeting Link', 'Visibility',
+    'User Email', 'Telegram Chat ID', 'Notify Lead Time', 'Status', 'Owner Phone',
+    'Resource ID', 'Approval Status', 'Approver Phone', 'File URL', 'Details',
+    'Location', 'Public Enabled', 'Public Expires At', 'Public Created At',
+    'Schedule Scope', 'Owner Department', 'Priority', 'Tags',
+    'Google Calendar Event ID', 'Google Calendar Sync', 'Last Calendar Sync'
+  ];
+  var map = haosV773ScheduleHeaderMap_(sheet);
+  var missing = [];
+  required.forEach(function(header) {
+    if (!map[header]) missing.push(header);
+  });
+  if (missing.length) {
+    var startCol = Math.max(sheet.getLastColumn(), 1) + 1;
+    sheet.getRange(1, startCol, 1, missing.length).setValues([missing]);
+    sheet.getRange(1, startCol, 1, missing.length).setFontWeight('bold').setBackground('#e8f0fe');
+    map = haosV773ScheduleHeaderMap_(sheet);
+  }
+  return map;
+}
+
+var haosV773PrevGetSchedulePublicUrlServer_ = typeof getSchedulePublicUrlServer === 'function' ? getSchedulePublicUrlServer : null;
+getSchedulePublicUrlServer = function(scheduleId, ownerPhone, expiryDays) {
+  try {
+    scheduleId = String(scheduleId || '').trim();
+    if (!scheduleId) return { success: false, message: 'ไม่พบรหัสรายการที่ต้องการสร้างลิงก์' };
+
+    var sheet = getDB().getSheetByName(SHEET_NAME);
+    if (!sheet) return { success: false, message: 'ไม่พบชีตตารางงาน' };
+
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) return { success: false, message: 'ยังไม่มีรายการตารางงาน' };
+
+    var map = haosV773EnsureSchedulePublicHeaders_(sheet);
+    var idCol = map['ID'] || 1;
+    var ids = sheet.getRange(2, idCol, lastRow - 1, 1).getValues();
+    var rowIndex = -1;
+    for (var i = 0; i < ids.length; i++) {
+      if (String(ids[i][0]) === scheduleId) {
+        rowIndex = i + 2;
+        break;
+      }
+    }
+    if (rowIndex < 0) return { success: false, message: 'ไม่พบรายการที่ต้องการสร้างลิงก์' };
+
+    var ownerCol = map['Owner Phone'] || 11;
+    var targetPhone = ownerPhone ? String(ownerPhone).replace(/'/g, '').trim() : '';
+    var rowPhone = String(sheet.getRange(rowIndex, ownerCol).getValue() || '').replace(/'/g, '').trim();
+    if (targetPhone && rowPhone !== targetPhone) {
+      return { success: false, message: 'คุณไม่มีสิทธิ์สร้างลิงก์สาธารณะของรายการนี้' };
+    }
+
+    var days = Number(expiryDays);
+    if (isNaN(days)) days = Number(getSetting_('PUBLIC_LINK_EXPIRY_DAYS', 30));
+    if (isNaN(days)) days = 30;
+
+    var expiresAt = '';
+    if (days > 0) expiresAt = new Date(new Date().getTime() + days * 24 * 60 * 60 * 1000);
+
+    sheet.getRange(rowIndex, map['Public Enabled']).setValue('TRUE');
+    sheet.getRange(rowIndex, map['Public Expires At']).setValue(expiresAt || '');
+    sheet.getRange(rowIndex, map['Public Created At']).setValue(new Date());
+
+    var url = buildPublicPageUrl_({ publicId: scheduleId });
+    try {
+      logAudit_(targetPhone, '', 'CREATE_PUBLIC_LINK', 'Schedule', scheduleId, 'สร้าง/เปิดลิงก์สาธารณะ', null, { url: url, expiryDays: days, patch: 'v70.73' });
+    } catch (ignoreAudit) {}
+
+    return {
+      success: true,
+      url: url,
+      expiresAt: expiresAt ? formatDateTime_(expiresAt, 'dd/MM/yyyy HH:mm') : 'ไม่หมดอายุ',
+      patch: 'v70.73'
+    };
+  } catch (e) {
+    try { logError_(ownerPhone || '', 'getSchedulePublicUrlServer.v70.73', e, { scheduleId: scheduleId }); } catch (ignore) {}
+    return { success: false, message: e.toString() };
+  }
+};
+
+var haosV773PrevGetAllowedBridgeFunctions_ = typeof getAllowedBridgeFunctions_ === 'function' ? getAllowedBridgeFunctions_ : null;
+getAllowedBridgeFunctions_ = function() {
+  var allowed = haosV773PrevGetAllowedBridgeFunctions_ ? haosV773PrevGetAllowedBridgeFunctions_() : {};
+  allowed.getSchedulePublicUrlServer = true;
+  allowed.bridgeWhitelistHealthCheckV773 = true;
+  return allowed;
+};
+
+function bridgeWhitelistHealthCheckV773() {
+  return {
+    success: true,
+    version: 'v70.73-schedule-public-link-timeout',
+    functions: ['getSchedulePublicUrlServer'],
+    publicBaseUrl: getPublicAppBaseUrl_()
+  };
+}
