@@ -22,6 +22,7 @@ First module extraction:
   - `assets/css/admin-external-organizations.css`
 - Schedule/workspace stabilization foundations added:
   - `assets/js/modules/schedule-core.js`
+  - `assets/js/modules/schedule-view.js`
   - `assets/js/modules/shared-workspace-core.js`
   - `assets/js/modules/shared-workspace-flow.js`
   - `assets/css/shared-workspace-flow.css`
@@ -128,6 +129,24 @@ Rollback for v70.69:
 2. Remove `assets/js/modules/shared-workspace-core.js` from `public.html`.
 3. Remove both new paths from `sw.js` and bump the cache name.
 4. No database rollback is required for the v70.69 core facade because it does not write data.
+
+Completed in v70.70:
+
+- Added `assets/js/modules/schedule-view.js` as the final schedule renderer compatibility layer.
+- The unified schedule list/card/calendar now reads through `HAOS.schedule.query`, so filtering, sorting, pagination, scope legend buttons, pinning, and calendar events share the same data path.
+- Existing global callers remain compatible:
+  - `renderUnifiedScheduleV702()`
+  - `setUnifiedScheduleViewV702(mode)`
+  - `setSchedulePageV739(page)`
+  - `toggleSchedulePinV737(id)`
+- Google Apps Script and database structure are unchanged in this step.
+
+Rollback for v70.70:
+
+1. Remove `assets/js/modules/schedule-view.js` from `index.html`.
+2. Remove `assets/js/modules/schedule-view.js` from `sw.js` and bump the cache name.
+3. Keep `schedule-core.js` if v70.69 was already tested successfully; remove it only if rolling back the whole stabilization foundation.
+4. No database rollback is required.
 
 ## Phase 2: Extract CSS First
 
