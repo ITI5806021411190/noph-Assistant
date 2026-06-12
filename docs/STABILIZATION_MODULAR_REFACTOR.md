@@ -1,6 +1,6 @@
 # Health Assistant OS Stabilization + Modular Refactor
 
-Last updated: 2026-06-11
+Last updated: 2026-06-12
 
 ## Goal
 
@@ -20,6 +20,11 @@ First module extraction:
 - External Organizations moved from inline `index.html` patch block to:
   - `assets/js/modules/external-organizations.js`
   - `assets/css/admin-external-organizations.css`
+- Schedule/workspace stabilization foundations added:
+  - `assets/js/modules/schedule-core.js`
+  - `assets/js/modules/shared-workspace-core.js`
+  - `assets/js/modules/shared-workspace-flow.js`
+  - `assets/css/shared-workspace-flow.css`
 
 Key findings:
 
@@ -81,11 +86,25 @@ How to rerun:
 
 Purpose: reduce risk before splitting files.
 
+Status: in progress.
+
+Completed in v70.69:
+
+- Added `HAOS.schedule` / `HAOSScheduleCore` as a central read/query facade for schedule data.
+- Added `HAOS.workspace` / `HAOSWorkspaceCore` as a central schema, field, flow, response, and export facade for shared workspace data.
+- Kept old global UI functions untouched. The new core modules are additive and can be disabled by removing their script tags.
+- Added diagnostics:
+  - `haosScheduleDiagnosticsV769()`
+  - `haosWorkspaceDiagnosticsV769()`
+- Added `Workspace Flow JSON` metadata in Apps Script during the previous v70.68 flow step; it is additive and does not alter existing rows unless a form uses Smart Flow.
+
 Tasks:
 
 - Create a module extraction manifest from the audit results.
 - Identify function names that are duplicated in backend and confirm which latest definition wins.
 - Add one central frontend utility shim for safe `user`, `gas`, `esc`, `cleanPhone`, and `toast` helpers.
+- Move schedule list filtering/sorting/pagination callers to `HAOS.schedule.query`.
+- Move shared workspace field parsing/export callers to `HAOS.workspace`.
 - Add one backend read helper strategy for high-use sheets:
   - Users
   - UserProfiles
@@ -100,6 +119,15 @@ Do not:
 - Delete old functions.
 - Rename sheet columns.
 - Move large blocks out of `index.html` yet.
+
+Rollback for v70.69:
+
+1. Remove these script tags from `index.html`:
+   - `assets/js/modules/schedule-core.js`
+   - `assets/js/modules/shared-workspace-core.js`
+2. Remove `assets/js/modules/shared-workspace-core.js` from `public.html`.
+3. Remove both new paths from `sw.js` and bump the cache name.
+4. No database rollback is required for the v70.69 core facade because it does not write data.
 
 ## Phase 2: Extract CSS First
 

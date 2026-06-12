@@ -1,20 +1,20 @@
 # Health Assistant OS Source Audit
 
-Generated: 2026-06-11T18:12:03.555Z
+Generated: 2026-06-12T07:40:02.690Z
 
 ## File sizes
 
 | File | Lines | Characters |
 | --- | ---: | ---: |
-| index.html | 18659 | 1486499 |
-| Code.gs.txt | 14491 | 737081 |
-| public.html | 2143 | 204927 |
+| index.html | 18661 | 1486625 |
+| Code.gs.txt | 14491 | 737095 |
+| public.html | 2144 | 204994 |
 | remote.html | 470 | 33770 |
 
 ## Frontend patch blocks
 
-- Script blocks: 79
-- External script files: 15
+- Script blocks: 81
+- External script files: 17
 - Inline script blocks: 64
 - Style blocks: 48
 - Stylesheet links are not counted as style blocks.
@@ -147,7 +147,9 @@ Generated: 2026-06-11T18:12:03.555Z
 | style | haos-v70-66-workspace-branding-style | 18332 | 7 | 802 |
 | script | haos-v70-66-workspace-branding-script | 18339 | 148 | 7785 |
 | script | haos-v70-67-workspace-xlsx-export-script | 18487 | 168 | 7589 |
-| script | assets/js/modules/shared-workspace-flow.js | 18656 | 1 | 66 |
+| script | assets/js/modules/schedule-core.js | 18655 | 1 | 58 |
+| script | assets/js/modules/shared-workspace-core.js | 18656 | 1 | 66 |
+| script | assets/js/modules/shared-workspace-flow.js | 18658 | 1 | 66 |
 
 ## Function pressure
 

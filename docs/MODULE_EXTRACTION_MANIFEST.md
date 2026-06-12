@@ -11,6 +11,8 @@ Last updated: 2026-06-12
 | Meeting Minutes / Schedule / IT Hub polish | Extracted | `assets/js/modules/meeting-minutes.js`, `assets/css/meeting-minutes.css` |
 | Notification Center core/action routing | Extracted | `assets/js/modules/notifications.js`, `assets/js/modules/notifications-action-fix.js`, `assets/css/notifications.css` |
 | Program Guide / Onboarding / Default Tabs | Extracted | `assets/js/modules/program-guide.js`, `assets/css/program-guide.css` |
+| Schedule Core Stabilizer | Extracted | `assets/js/modules/schedule-core.js` |
+| Shared Workspace Core Stabilizer | Extracted | `assets/js/modules/shared-workspace-core.js` |
 | Shared Workspace Flow / Section Logic | Extracted | `assets/js/modules/shared-workspace-flow.js`, `assets/css/shared-workspace-flow.css` |
 
 This manifest controls the order for splitting `index.html` without changing production behavior.
@@ -33,8 +35,8 @@ Start with the smallest isolated modules. Keep every existing `window.*` public 
 | --- | --- | --- |
 | Notification Center | `assets/js/modules/notifications.js` | Core/action routing extracted. Advanced filter/card/today-highlight patches remain inline until the next notification pass because they share code with workspace/calendar and later UI polish blocks. |
 | Program Guide / Onboarding | `assets/js/modules/program-guide.js` | Extracted. It keeps default IT Services tab ordering and the updated guide/onboarding popups compatible with existing global callers. |
-| Schedule view controls | `assets/js/modules/schedules.js` | Needs careful testing because many dashboard buttons call schedule functions. |
-| Shared Workspace builder/viewer | `assets/js/modules/shared-workspace.js` | Section flow foundation extracted first in `shared-workspace-flow.js`; move the remaining builder/viewer code after this foundation is stable in production. |
+| Schedule view controls | `assets/js/modules/schedules.js` | Core query/state helpers now live in `schedule-core.js`; move renderers to this module after one production test cycle. |
+| Shared Workspace builder/viewer | `assets/js/modules/shared-workspace.js` | Core schema/export helpers now live in `shared-workspace-core.js`; section flow foundation lives in `shared-workspace-flow.js`; move the remaining builder/viewer code after these foundations are stable. |
 
 ## Priority 3: Backend-facing admin modules
 
