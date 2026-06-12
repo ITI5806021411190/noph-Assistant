@@ -1,0 +1,68 @@
+.haos-public-main-link {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 1030;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  max-width: min(360px, calc(100vw - 32px));
+  padding: 10px 16px;
+  border: 1px solid rgba(255, 255, 255, .58);
+  border-radius: 999px;
+  background: linear-gradient(135deg, #0ea5e9, #2563eb 58%, #10b981);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 900;
+  line-height: 1.15;
+  box-shadow: 0 18px 42px rgba(37, 99, 235, .24);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: transform .16s ease, box-shadow .16s ease, filter .16s ease;
+}
+
+.haos-public-main-link:hover,
+.haos-public-main-link:focus {
+  color: #fff;
+  text-decoration: none;
+  transform: translateY(-1px);
+  filter: saturate(1.05);
+  box-shadow: 0 22px 52px rgba(37, 99, 235, .30);
+}
+
+.haos-public-main-link:focus-visible {
+  outline: 3px solid rgba(14, 165, 233, .34);
+  outline-offset: 3px;
+}
+
+.haos-public-main-link i {
+  font-size: 1.05rem;
+}
+
+.haos-public-main-link-label {
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .haos-public-main-link {
+    top: auto;
+    right: 14px;
+    bottom: 14px;
+    min-width: 46px;
+    width: 46px;
+    height: 46px;
+    padding: 0;
+  }
+
+  .haos-public-main-link-label {
+    display: none;
+  }
+}
+
+@media print {
+  .haos-public-main-link {
+    display: none !important;
+  }
+}

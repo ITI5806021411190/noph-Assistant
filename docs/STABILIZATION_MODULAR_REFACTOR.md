@@ -214,6 +214,20 @@ Rollback for v70.74:
 3. Remove `getSchedulePublicLinkStatus` from bridge whitelist if rolling back manually.
 4. No database rollback is required.
 
+Completed in v70.75:
+
+- Added a shared `กลับเข้าสู่ระบบหลัก` action for every `public.html` route.
+- The button is loaded from `assets/js/modules/public-portal.js` and styled by `assets/css/public-portal.css`.
+- The module watches for public pages that replace `document.body.innerHTML` and re-adds the button automatically.
+- No Apps Script or database changes are required.
+
+Rollback for v70.75:
+
+1. Remove `assets/js/modules/public-portal.js` and `assets/css/public-portal.css`.
+2. Remove their includes from `public.html`.
+3. Remove both files from `sw.js` and bump the cache name.
+4. No database rollback is required.
+
 ## Phase 2: Extract CSS First
 
 Purpose: reduce `index.html` size with the lowest runtime risk.

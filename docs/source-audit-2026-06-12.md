@@ -1,6 +1,6 @@
 # Health Assistant OS Source Audit
 
-Generated: 2026-06-12T10:01:49.945Z
+Generated: 2026-06-12T10:31:03.234Z
 
 ## File sizes
 
@@ -8,7 +8,7 @@ Generated: 2026-06-12T10:01:49.945Z
 | --- | ---: | ---: |
 | index.html | 18665 | 1486889 |
 | Code.gs.txt | 14737 | 747306 |
-| public.html | 2144 | 204994 |
+| public.html | 2146 | 205115 |
 | remote.html | 470 | 33770 |
 
 ## Frontend patch blocks

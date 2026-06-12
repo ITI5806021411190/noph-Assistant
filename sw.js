@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-74-schedule-public-link-status';
+const CACHE_NAME = 'haos-v70-75-public-main-link';
 const CORE = [
   '/',
   '/index.html',
@@ -19,7 +19,9 @@ const CORE = [
   '/assets/css/notifications.css',
   '/assets/js/modules/notifications.js',
   '/assets/css/program-guide.css',
+  '/assets/css/public-portal.css',
   '/assets/js/modules/program-guide.js',
+  '/assets/js/modules/public-portal.js',
   '/assets/js/modules/schedule-core.js',
   '/assets/js/modules/schedule-view.js',
   '/assets/js/modules/schedule-public-link.js',

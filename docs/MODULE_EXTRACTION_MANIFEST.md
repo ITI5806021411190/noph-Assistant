@@ -11,6 +11,7 @@ Last updated: 2026-06-12
 | Meeting Minutes / Schedule / IT Hub polish | Extracted | `assets/js/modules/meeting-minutes.js`, `assets/css/meeting-minutes.css` |
 | Notification Center core/action routing | Extracted | `assets/js/modules/notifications.js`, `assets/js/modules/notifications-action-fix.js`, `assets/css/notifications.css` |
 | Program Guide / Onboarding / Default Tabs | Extracted | `assets/js/modules/program-guide.js`, `assets/css/program-guide.css` |
+| Public Link Main Navigation | Extracted | `assets/js/modules/public-portal.js`, `assets/css/public-portal.css` |
 | Schedule Core Stabilizer | Extracted | `assets/js/modules/schedule-core.js` |
 | Schedule View Renderer | Extracted | `assets/js/modules/schedule-view.js` |
 | Schedule Public Link Stabilizer | Extracted | `assets/js/modules/schedule-public-link.js` |
@@ -39,6 +40,7 @@ Start with the smallest isolated modules. Keep every existing `window.*` public 
 | --- | --- | --- |
 | Notification Center | `assets/js/modules/notifications.js` | Core/action routing extracted. Advanced filter/card/today-highlight patches remain inline until the next notification pass because they share code with workspace/calendar and later UI polish blocks. |
 | Program Guide / Onboarding | `assets/js/modules/program-guide.js` | Extracted. It keeps default IT Services tab ordering and the updated guide/onboarding popups compatible with existing global callers. |
+| Public link shell | `assets/js/modules/public-portal.js`, `assets/css/public-portal.css` | Extracted. Adds the shared return-to-main-system action across every `public.html` route and re-adds it when a public module replaces the page body. |
 | Schedule view controls | `assets/js/modules/schedule-view.js` | Extracted as a final compatibility renderer that uses `HAOS.schedule.query` while keeping `renderUnifiedScheduleV702`, `setUnifiedScheduleViewV702`, `setSchedulePageV739`, and `toggleSchedulePinV737` callable. |
 | Schedule public links | `assets/js/modules/schedule-public-link.js` | Extracted. It wraps `createPublicScheduleLink` with timeout/failure handling, adds public-link status viewing, and keeps `getPublicScheduleUrl` compatible. |
 | Shared Workspace builder/viewer | `assets/js/modules/shared-workspace.js` | Core schema/export helpers now live in `shared-workspace-core.js`; Excel response export lives in `shared-workspace-export.js`; section flow foundation lives in `shared-workspace-flow.js`; builder payload/create/edit stabilization lives in `shared-workspace-builder.js`; move the remaining viewer code after these foundations are stable. |
