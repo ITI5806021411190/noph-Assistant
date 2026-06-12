@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-70-schedule-view-core';
+const CACHE_NAME = 'haos-v70-71-workspace-export-core';
 const CORE = [
   '/',
   '/index.html',
@@ -23,6 +23,7 @@ const CORE = [
   '/assets/js/modules/schedule-core.js',
   '/assets/js/modules/schedule-view.js',
   '/assets/js/modules/shared-workspace-core.js',
+  '/assets/js/modules/shared-workspace-export.js',
   '/assets/css/shared-workspace-flow.css',
   '/assets/js/modules/shared-workspace-flow.js',
   '/assets/js/modules/notifications-action-fix.js'

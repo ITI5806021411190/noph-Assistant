@@ -14,6 +14,7 @@ Last updated: 2026-06-12
 | Schedule Core Stabilizer | Extracted | `assets/js/modules/schedule-core.js` |
 | Schedule View Renderer | Extracted | `assets/js/modules/schedule-view.js` |
 | Shared Workspace Core Stabilizer | Extracted | `assets/js/modules/shared-workspace-core.js` |
+| Shared Workspace Response Export | Extracted | `assets/js/modules/shared-workspace-export.js` |
 | Shared Workspace Flow / Section Logic | Extracted | `assets/js/modules/shared-workspace-flow.js`, `assets/css/shared-workspace-flow.css` |
 
 This manifest controls the order for splitting `index.html` without changing production behavior.
@@ -37,7 +38,7 @@ Start with the smallest isolated modules. Keep every existing `window.*` public 
 | Notification Center | `assets/js/modules/notifications.js` | Core/action routing extracted. Advanced filter/card/today-highlight patches remain inline until the next notification pass because they share code with workspace/calendar and later UI polish blocks. |
 | Program Guide / Onboarding | `assets/js/modules/program-guide.js` | Extracted. It keeps default IT Services tab ordering and the updated guide/onboarding popups compatible with existing global callers. |
 | Schedule view controls | `assets/js/modules/schedule-view.js` | Extracted as a final compatibility renderer that uses `HAOS.schedule.query` while keeping `renderUnifiedScheduleV702`, `setUnifiedScheduleViewV702`, `setSchedulePageV739`, and `toggleSchedulePinV737` callable. |
-| Shared Workspace builder/viewer | `assets/js/modules/shared-workspace.js` | Core schema/export helpers now live in `shared-workspace-core.js`; section flow foundation lives in `shared-workspace-flow.js`; move the remaining builder/viewer code after these foundations are stable. |
+| Shared Workspace builder/viewer | `assets/js/modules/shared-workspace.js` | Core schema/export helpers now live in `shared-workspace-core.js`; Excel response export lives in `shared-workspace-export.js`; section flow foundation lives in `shared-workspace-flow.js`; move the remaining builder/viewer code after these foundations are stable. |
 
 ## Priority 3: Backend-facing admin modules
 

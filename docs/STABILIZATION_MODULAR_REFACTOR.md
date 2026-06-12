@@ -24,6 +24,7 @@ First module extraction:
   - `assets/js/modules/schedule-core.js`
   - `assets/js/modules/schedule-view.js`
   - `assets/js/modules/shared-workspace-core.js`
+  - `assets/js/modules/shared-workspace-export.js`
   - `assets/js/modules/shared-workspace-flow.js`
   - `assets/css/shared-workspace-flow.css`
 
@@ -146,6 +147,21 @@ Rollback for v70.70:
 1. Remove `assets/js/modules/schedule-view.js` from `index.html`.
 2. Remove `assets/js/modules/schedule-view.js` from `sw.js` and bump the cache name.
 3. Keep `schedule-core.js` if v70.69 was already tested successfully; remove it only if rolling back the whole stabilization foundation.
+4. No database rollback is required.
+
+Completed in v70.71:
+
+- Added `assets/js/modules/shared-workspace-export.js` as the final response export compatibility layer.
+- Excel export now uses `HAOS.workspace` field/row helpers where available and keeps every exported cell as text, preserving leading zeroes in phone numbers, IDs, and codes.
+- Existing export buttons remain compatible through `exportWorkspaceResponsesV737(kind, orientation)`.
+- Non-Excel exports still fall back to the existing inline PDF/PNG exporter.
+- Google Apps Script and database structure are unchanged in this step.
+
+Rollback for v70.71:
+
+1. Remove `assets/js/modules/shared-workspace-export.js` from `index.html`.
+2. Remove `assets/js/modules/shared-workspace-export.js` from `sw.js` and bump the cache name.
+3. The older inline `haos-v70-67-workspace-xlsx-export` block will resume handling Excel export.
 4. No database rollback is required.
 
 ## Phase 2: Extract CSS First
