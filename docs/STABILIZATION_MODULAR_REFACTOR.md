@@ -257,6 +257,22 @@ Rollback for v70.78-v70.79:
 4. Remove the v70.78 Meeting minutes audio guard block from the end of `Code.gs.txt` and redeploy Apps Script.
 5. No database rollback is required.
 
+Extended in v70.81:
+
+- Added `assets/js/modules/meeting-minutes-ai-modes.js` after the audio-safe layer.
+- The meeting-minutes raw text analyzer now shows three user-selectable modes: Auto, Concise, and Detailed.
+- Apps Script `analyzeMeetingMinutesText` now accepts an optional mode argument and uses a stronger meeting-minutes prompt that preserves the original JSON schema while allowing longer official-style summaries.
+- The Gemini payload wrapper raises text output tokens only for the meeting-minutes AI mode markers, so unrelated AI features keep their existing limits.
+- Bumped `sw.js` cache to `haos-v70-81-meeting-minutes-ai-modes`.
+
+Rollback for v70.81:
+
+1. Remove the `meeting-minutes-ai-modes.js` script include from `index.html`.
+2. Remove `assets/js/modules/meeting-minutes-ai-modes.js`.
+3. Remove the file from `sw.js` and bump the cache name.
+4. Remove the v70.81 Meeting minutes text analysis modes block from the end of `Code.gs.txt` and redeploy Apps Script.
+5. No database rollback is required.
+
 ## Phase 2: Extract CSS First
 
 Purpose: reduce `index.html` size with the lowest runtime risk.

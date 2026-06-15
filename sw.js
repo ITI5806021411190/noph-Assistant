@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-80-meeting-minutes-qr-download';
+const CACHE_NAME = 'haos-v70-81-meeting-minutes-ai-modes';
 const CORE = [
   '/',
   '/index.html',
@@ -17,6 +17,7 @@ const CORE = [
   '/assets/css/meeting-minutes.css',
   '/assets/js/modules/meeting-minutes.js',
   '/assets/js/modules/meeting-minutes-audio-safe.js',
+  '/assets/js/modules/meeting-minutes-ai-modes.js',
   '/assets/css/notifications.css',
   '/assets/js/modules/notifications.js',
   '/assets/css/program-guide.css',

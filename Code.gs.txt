@@ -14801,3 +14801,166 @@ function bridgeWhitelistHealthCheckV778() {
     functions:['analyzeMeetingAudio']
   };
 }
+
+// v70.81: Meeting minutes text analysis modes.
+// Adds Auto / Concise / Detailed output styles while keeping the original response schema.
+var haosV781PrevAnalyzeMeetingMinutesText_ = typeof analyzeMeetingMinutesText === 'function' ? analyzeMeetingMinutesText : null;
+var haosV781PrevBuildGeminiPayload_ = typeof buildGeminiPayload_ === 'function' ? buildGeminiPayload_ : null;
+
+function haosV781NormalizeMeetingMinutesTextMode_(mode) {
+  var raw = String(mode || 'auto').toLowerCase();
+  if (/detail|long|ยาว|ละเอียด/.test(raw)) return 'detailed';
+  if (/concise|short|สั้น|กระชับ/.test(raw)) return 'concise';
+  return 'auto';
+}
+
+function haosV781MeetingMinutesModeLabel_(mode) {
+  var normalized = haosV781NormalizeMeetingMinutesTextMode_(mode);
+  if (normalized === 'detailed') return 'แบบยาวและละเอียด';
+  if (normalized === 'concise') return 'แบบสั้นและกระชับแต่ได้ใจความ';
+  return 'รูปแบบอัตโนมัติ';
+}
+
+function haosV781MeetingMinutesMarker_(mode) {
+  var normalized = haosV781NormalizeMeetingMinutesTextMode_(mode);
+  if (normalized === 'detailed') return 'HAOS_MEETING_MINUTES_DETAILED';
+  if (normalized === 'concise') return 'HAOS_MEETING_MINUTES_CONCISE';
+  return 'HAOS_MEETING_MINUTES_AUTO';
+}
+
+function haosV781MeetingMinutesStyleInstruction_(mode, text) {
+  var normalized = haosV781NormalizeMeetingMinutesTextMode_(mode);
+  var textLength = String(text || '').length;
+  if (normalized === 'concise') {
+    return [
+      'โหมดสั้นและกระชับ:',
+      '- สรุปให้กระชับแต่ต้องได้ใจความครบ ไม่ตัดมติหรือข้อสั่งการสำคัญ',
+      '- ช่อง agenda ให้มีประมาณ 5-8 bullet/บรรทัด ครอบคลุมวัตถุประสงค์ ประเด็นหลัก และข้อมูลที่ใช้ตัดสินใจ',
+      '- ช่อง conclusion ให้มีประมาณ 4-8 bullet/บรรทัด เน้นมติ ข้อสั่งการ ผู้รับผิดชอบ และงานติดตาม',
+      '- หลีกเลี่ยงการเขียนยาวแบบบทความ'
+    ].join('\n');
+  }
+  if (normalized === 'detailed') {
+    return [
+      'โหมดแบบยาวและละเอียด:',
+      '- เขียนให้ใกล้เคียงรายงานประชุมทางการ ไม่ใช่สรุปสั้น',
+      '- ช่อง agenda ให้จัดเป็นหัวข้อย่อยมีเลขลำดับ เช่น 1. วัตถุประสงค์การประชุม, 2. ประเด็นสำคัญ, 3. เกณฑ์/แนวทาง, 4. การอภิปรายหรือสถานการณ์จำลอง, 5. บทบาทหน่วยงาน, 6. ปัญหา/ข้อสังเกต, 7. ข้อเสนอแนะ',
+      '- แต่ละหัวข้อควรมีคำอธิบาย 2-5 ประโยค หากข้อมูลในข้อความมีเพียงพอ',
+      '- ช่อง conclusion ให้แยก มติที่ประชุม, ข้อสั่งการ, ผู้รับผิดชอบ, กำหนดติดตาม, ข้อเสนอแนะ และประเด็นที่ต้องปรับปรุง',
+      '- ถ้าข้อความต้นฉบับยาว ให้ดึงรายละเอียดสำคัญให้มากที่สุด อย่าเหลือเพียงรายการคั่นด้วยจุลภาค',
+      '- เขียนภาษาไทยสุภาพ อ่านเป็นรายงานได้ทันที'
+    ].join('\n');
+  }
+  return [
+    'โหมดอัตโนมัติ:',
+    '- ถ้าข้อความสั้นหรือเป็นงานทั่วไป ให้ใช้รูปแบบสั้นและกระชับ',
+    '- ถ้าข้อความยาวกว่า 4,000 ตัวอักษร หรือมีหลายวาระ/หลายประเด็น ให้ใช้รูปแบบยาวและละเอียด',
+    '- ความยาวข้อความต้นฉบับประมาณ ' + textLength + ' ตัวอักษร',
+    '- เป้าหมายคือให้รายงานไม่สั้นเกินไปเมื่อข้อมูลต้นฉบับมีรายละเอียดมาก'
+  ].join('\n');
+}
+
+function haosV781BuildMeetingMinutesTextPrompt_(text, mode) {
+  var normalized = haosV781NormalizeMeetingMinutesTextMode_(mode);
+  var marker = haosV781MeetingMinutesMarker_(normalized);
+  var modeLabel = haosV781MeetingMinutesModeLabel_(normalized);
+  var inputLimit = normalized === 'detailed' ? 20500 : 18500;
+  var sourceText = String(text || '').substring(0, inputLimit);
+  return marker + '\n' +
+    'คุณคือเลขานุการการประชุมและนักสรุปรายงานประชุมของหน่วยงานราชการด้านสาธารณสุขไทย\n' +
+    'งานของคุณคืออ่านข้อความดิบจากการประชุม/ข้อความถอดเสียง แล้วจัดทำข้อมูลสำหรับรายงานการประชุมในระบบ Health Assistant OS\n' +
+    'โหมดที่ผู้ใช้เลือก: ' + modeLabel + '\n\n' +
+    haosV781MeetingMinutesStyleInstruction_(normalized, sourceText) + '\n\n' +
+    'กติกาสำคัญ:\n' +
+    '- ตอบเป็น JSON object เท่านั้น ห้ามมี markdown, code fence, หรือข้อความอื่นปน\n' +
+    '- ใช้ข้อมูลจากข้อความเท่านั้น ห้ามแต่งชื่อคน วันที่ สถานที่ หรือมติที่ไม่มีในต้นฉบับ\n' +
+    '- ถ้าข้อมูลใดไม่พบ ให้ใส่ \"ไม่ระบุ\" หรือ \"-\" ตามความเหมาะสม\n' +
+    '- ถ้าพบวันที่ พ.ศ. ให้แปลงเป็น ค.ศ. ในรูปแบบ YYYY-MM-DD เช่น 12 มิถุนายน 2569 = 2026-06-12 ห้ามแปลงผิดเป็นปีอื่น\n' +
+    '- attendees ให้แยกรายชื่อหรือกลุ่มผู้เข้าร่วมคนละบรรทัด ถ้าไม่มีชื่อชัดเจนให้สรุปเป็นกลุ่มผู้เข้าร่วม\n' +
+    '- agenda และ conclusion ต้องขึ้นบรรทัดใหม่ให้อ่านง่าย ห้ามรวมทุกประเด็นเป็นประโยคเดียวคั่นด้วยจุลภาคยาว ๆ\n' +
+    '- ถ้ามีคำศัพท์เฉพาะ เช่น PHEOC, PM2.5, BCP, Incident Command System ให้คงคำศัพท์ไว้และอธิบายตามบริบทที่พบ\n\n' +
+    'schema ที่ต้องส่งกลับ:\n' +
+    '{"title":"หัวข้อการประชุม","date":"YYYY-MM-DD ถ้าพบ ไม่พบให้ว่างหรือ -","location":"สถานที่","chairman":"ประธาน","attendees":"รายชื่อ/กลุ่มผู้เข้าร่วม แยกบรรทัด","agenda":"วาระ/สาระสำคัญแบบจัดหัวข้อ","conclusion":"สรุปผล/มติ/ข้อสั่งการ/งานติดตามแบบจัดหัวข้อ"}\n\n' +
+    'ข้อความต้นฉบับ:\n' + sourceText;
+}
+
+function haosV781NormalizeMeetingMinutesResult_(data, mode) {
+  var out = data || {};
+  var keys = ['title', 'date', 'location', 'chairman', 'attendees', 'agenda', 'conclusion'];
+  for (var i = 0; i < keys.length; i++) {
+    var key = keys[i];
+    if (out[key] == null || out[key] === '') out[key] = key === 'date' ? '' : '-';
+    out[key] = String(out[key]);
+  }
+  out.analysisMode = haosV781NormalizeMeetingMinutesTextMode_(mode);
+  out.analysisModeLabel = haosV781MeetingMinutesModeLabel_(mode);
+  return out;
+}
+
+analyzeMeetingMinutesText = function(text, mode) {
+  try {
+    if (!text) return { success:false, message:'ไม่พบข้อความสำหรับวิเคราะห์' };
+    var normalized = haosV781NormalizeMeetingMinutesTextMode_(mode);
+    var prompt = haosV781BuildMeetingMinutesTextPrompt_(text, normalized);
+    var ai = fetchGeminiAI(prompt, null, null);
+    if (!ai.success) return { success:false, message:ai.message };
+    var parsed = parseGeminiJson_(ai.text);
+    return {
+      success:true,
+      data:haosV781NormalizeMeetingMinutesResult_(parsed, normalized),
+      raw:ai.text,
+      modelUsed:ai.model,
+      analysisMode:normalized,
+      patch:'v70.81'
+    };
+  } catch(e) {
+    if (haosV781PrevAnalyzeMeetingMinutesText_) {
+      try {
+        var fallback = haosV781PrevAnalyzeMeetingMinutesText_(text);
+        if (fallback && fallback.success) {
+          fallback.patch = 'v70.81-fallback';
+          fallback.analysisMode = haosV781NormalizeMeetingMinutesTextMode_(mode);
+          return fallback;
+        }
+      } catch (inner) {}
+    }
+    return { success:false, message:'AI วิเคราะห์ข้อความประชุมไม่สำเร็จ: ' + e.toString(), patch:'v70.81' };
+  }
+};
+
+buildGeminiPayload_ = function(prompt, base64Data, mimeType) {
+  var payload = haosV781PrevBuildGeminiPayload_ ? haosV781PrevBuildGeminiPayload_(prompt, base64Data, mimeType) : {
+    contents:[{ role:'user', parts:[{ text:String(prompt || '') }] }],
+    generationConfig:{ temperature:0.15, topP:0.8, maxOutputTokens:4096 }
+  };
+  try {
+    if (!base64Data && payload && payload.generationConfig) {
+      var rawPrompt = String(prompt || '');
+      if (rawPrompt.indexOf('HAOS_MEETING_MINUTES_DETAILED') >= 0) {
+        payload.generationConfig.maxOutputTokens = 8192;
+      } else if (rawPrompt.indexOf('HAOS_MEETING_MINUTES_CONCISE') >= 0) {
+        payload.generationConfig.maxOutputTokens = 3072;
+      } else if (rawPrompt.indexOf('HAOS_MEETING_MINUTES_AUTO') >= 0) {
+        payload.generationConfig.maxOutputTokens = 6144;
+      }
+    }
+  } catch (e) {}
+  return payload;
+};
+
+var haosV781PrevGetAllowedBridgeFunctions_ = typeof getAllowedBridgeFunctions_ === 'function' ? getAllowedBridgeFunctions_ : null;
+getAllowedBridgeFunctions_ = function() {
+  var allowed = haosV781PrevGetAllowedBridgeFunctions_ ? haosV781PrevGetAllowedBridgeFunctions_() : {};
+  allowed.analyzeMeetingMinutesText = true;
+  allowed.bridgeWhitelistHealthCheckV781 = true;
+  return allowed;
+};
+
+function bridgeWhitelistHealthCheckV781() {
+  return {
+    success:true,
+    version:'v70.81-meeting-minutes-ai-modes',
+    functions:['analyzeMeetingMinutesText'],
+    modes:['auto', 'concise', 'detailed']
+  };
+}
