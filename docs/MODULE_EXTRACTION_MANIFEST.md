@@ -32,7 +32,7 @@ Start with the smallest isolated modules. Keep every existing `window.*` public 
 | --- | --- | --- | --- |
 | External Organizations | `haos-v70-60-external-orgs-*` | `assets/js/modules/external-organizations.js` and `assets/css/admin-external-organizations.css` | Extracted first because it is small, recent, and isolated to Super Admin + registration dropdowns. |
 | Remote Support AnyDesk entry | `haos-v70-58-remote-support-anydesk-entry-*` and `remote.html` | `assets/js/modules/remote-support.js` and `assets/css/remote-support.css` | Extracted; keep `remote.html` as the standalone public/staff hub page. |
-| Meeting Minutes / Schedule / IT Hub polish | `haos-v70-59-remote-minutes-schedule-polish-*`, `v70.78-meeting-minutes-audio-safe` | `assets/js/modules/meeting-minutes.js`, `assets/js/modules/meeting-minutes-audio-safe.js`, and `assets/css/meeting-minutes.css` | Extracted as compatibility blocks. The audio-safe layer is loaded last so old inline audio analysis calls are guarded before they reach Apps Script/Gemini. |
+| Meeting Minutes / Schedule / IT Hub polish | `haos-v70-59-remote-minutes-schedule-polish-*`, `v70.79-meeting-minutes-audio-queue` | `assets/js/modules/meeting-minutes.js`, `assets/js/modules/meeting-minutes-audio-safe.js`, and `assets/css/meeting-minutes.css` | Extracted as compatibility blocks. The audio-safe layer is loaded last so old inline audio analysis calls are guarded before they reach Apps Script/Gemini, and the audio splitter can queue parts directly into the meeting-minutes AI workflow. |
 
 ## Priority 2: Medium-risk UI modules
 

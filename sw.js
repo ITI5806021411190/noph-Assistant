@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-78-meeting-minutes-audio-safe';
+const CACHE_NAME = 'haos-v70-80-meeting-minutes-qr-download';
 const CORE = [
   '/',
   '/index.html',

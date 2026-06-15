@@ -242,7 +242,14 @@ Added in v70.78:
 - Added an Apps Script guard around `analyzeMeetingAudio` in `Code.gs.txt` so old cached clients cannot send oversized audio payloads directly to Gemini.
 - Bumped `sw.js` cache to `haos-v70-78-meeting-minutes-audio-safe`.
 
-Rollback for v70.78:
+Extended in v70.79:
+
+- Large meeting-minutes audio over 28 MB now enters the browser splitter/analyzer flow automatically from the create-meeting-minutes popup; users can wait in the same popup instead of opening the splitter tool manually.
+- The standalone audio splitter adds "queue part", "queue all", "open meeting form", and "clear results" actions.
+- Time-based splitting asks whether the value is seconds or minutes before processing.
+- Bumped `sw.js` cache to `haos-v70-79-meeting-minutes-audio-queue`.
+
+Rollback for v70.78-v70.79:
 
 1. Remove the `meeting-minutes-audio-safe.js` script include from `index.html`.
 2. Remove `assets/js/modules/meeting-minutes-audio-safe.js`.
