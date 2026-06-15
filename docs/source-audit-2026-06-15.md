@@ -1,20 +1,20 @@
 # Health Assistant OS Source Audit
 
-Generated: 2026-06-15T04:37:30.855Z
+Generated: 2026-06-15T04:58:31.088Z
 
 ## File sizes
 
 | File | Lines | Characters |
 | --- | ---: | ---: |
-| index.html | 18665 | 1486889 |
-| Code.gs.txt | 14737 | 747306 |
+| index.html | 18666 | 1486961 |
+| Code.gs.txt | 14804 | 750296 |
 | public.html | 2146 | 205115 |
 | remote.html | 470 | 33770 |
 
 ## Frontend patch blocks
 
-- Script blocks: 85
-- External script files: 21
+- Script blocks: 86
+- External script files: 22
 - Inline script blocks: 64
 - Style blocks: 48
 - Stylesheet links are not counted as style blocks.
@@ -143,21 +143,22 @@ Generated: 2026-06-15T04:37:30.855Z
 | script | haos-v70-51-stability-script | 18180 | 146 | 10279 |
 | script | assets/js/modules/remote-support.js | 18327 | 1 | 59 |
 | script | assets/js/modules/meeting-minutes.js | 18329 | 1 | 60 |
-| script | assets/js/modules/external-organizations.js | 18331 | 1 | 67 |
-| style | haos-v70-66-workspace-branding-style | 18332 | 7 | 802 |
-| script | haos-v70-66-workspace-branding-script | 18339 | 148 | 7785 |
-| script | haos-v70-67-workspace-xlsx-export-script | 18487 | 168 | 7589 |
-| script | assets/js/modules/schedule-core.js | 18655 | 1 | 58 |
-| script | assets/js/modules/schedule-view.js | 18656 | 1 | 58 |
-| script | assets/js/modules/schedule-public-link.js | 18657 | 1 | 65 |
-| script | assets/js/modules/shared-workspace-core.js | 18658 | 1 | 66 |
-| script | assets/js/modules/shared-workspace-export.js | 18659 | 1 | 68 |
-| script | assets/js/modules/shared-workspace-flow.js | 18661 | 1 | 66 |
-| script | assets/js/modules/shared-workspace-builder.js | 18662 | 1 | 69 |
+| script | assets/js/modules/meeting-minutes-audio-safe.js | 18330 | 1 | 71 |
+| script | assets/js/modules/external-organizations.js | 18332 | 1 | 67 |
+| style | haos-v70-66-workspace-branding-style | 18333 | 7 | 802 |
+| script | haos-v70-66-workspace-branding-script | 18340 | 148 | 7785 |
+| script | haos-v70-67-workspace-xlsx-export-script | 18488 | 168 | 7589 |
+| script | assets/js/modules/schedule-core.js | 18656 | 1 | 58 |
+| script | assets/js/modules/schedule-view.js | 18657 | 1 | 58 |
+| script | assets/js/modules/schedule-public-link.js | 18658 | 1 | 65 |
+| script | assets/js/modules/shared-workspace-core.js | 18659 | 1 | 66 |
+| script | assets/js/modules/shared-workspace-export.js | 18660 | 1 | 68 |
+| script | assets/js/modules/shared-workspace-flow.js | 18662 | 1 | 66 |
+| script | assets/js/modules/shared-workspace-builder.js | 18663 | 1 | 69 |
 
 ## Function pressure
 
-- Apps Script named functions: 802
+- Apps Script named functions: 805
 - Frontend inline named functions: 1096
 - Frontend window exports: 766
 

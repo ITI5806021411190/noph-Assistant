@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-77-auto-login-fast-rollback';
+const CACHE_NAME = 'haos-v70-78-meeting-minutes-audio-safe';
 const CORE = [
   '/',
   '/index.html',
@@ -16,6 +16,7 @@ const CORE = [
   '/assets/js/modules/remote-support.js',
   '/assets/css/meeting-minutes.css',
   '/assets/js/modules/meeting-minutes.js',
+  '/assets/js/modules/meeting-minutes-audio-safe.js',
   '/assets/css/notifications.css',
   '/assets/js/modules/notifications.js',
   '/assets/css/program-guide.css',

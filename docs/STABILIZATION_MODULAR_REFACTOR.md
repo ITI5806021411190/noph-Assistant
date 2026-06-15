@@ -235,6 +235,21 @@ Rolled back in v70.77:
 - Removed the file from `sw.js` and bumped the service worker cache to `haos-v70-77-auto-login-fast-rollback` so browsers drop the old cached module.
 - No Apps Script or database rollback is required.
 
+Added in v70.78:
+
+- Added `assets/js/modules/meeting-minutes-audio-safe.js` after `meeting-minutes.js`.
+- The module guards every `analyzeMeetingAudio` call, checks audio duration before direct AI upload, splits longer audio into short browser-side WAV chunks, and translates Out of Memory failures into user-facing guidance.
+- Added an Apps Script guard around `analyzeMeetingAudio` in `Code.gs.txt` so old cached clients cannot send oversized audio payloads directly to Gemini.
+- Bumped `sw.js` cache to `haos-v70-78-meeting-minutes-audio-safe`.
+
+Rollback for v70.78:
+
+1. Remove the `meeting-minutes-audio-safe.js` script include from `index.html`.
+2. Remove `assets/js/modules/meeting-minutes-audio-safe.js`.
+3. Remove the file from `sw.js` and bump the cache name.
+4. Remove the v70.78 Meeting minutes audio guard block from the end of `Code.gs.txt` and redeploy Apps Script.
+5. No database rollback is required.
+
 ## Phase 2: Extract CSS First
 
 Purpose: reduce `index.html` size with the lowest runtime risk.

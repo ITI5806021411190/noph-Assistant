@@ -1,6 +1,6 @@
 # Health Assistant OS Module Extraction Manifest
 
-Last updated: 2026-06-12
+Last updated: 2026-06-15
 
 ## Current Extraction Status
 
@@ -8,7 +8,7 @@ Last updated: 2026-06-12
 | --- | --- | --- |
 | External Organizations | Extracted | `assets/js/modules/external-organizations.js`, `assets/css/admin-external-organizations.css` |
 | Remote Support AnyDesk entry | Extracted | `assets/js/modules/remote-support.js`, `assets/css/remote-support.css` |
-| Meeting Minutes / Schedule / IT Hub polish | Extracted | `assets/js/modules/meeting-minutes.js`, `assets/css/meeting-minutes.css` |
+| Meeting Minutes / Schedule / IT Hub polish | Extracted | `assets/js/modules/meeting-minutes.js`, `assets/js/modules/meeting-minutes-audio-safe.js`, `assets/css/meeting-minutes.css` |
 | Notification Center core/action routing | Extracted | `assets/js/modules/notifications.js`, `assets/js/modules/notifications-action-fix.js`, `assets/css/notifications.css` |
 | Program Guide / Onboarding / Default Tabs | Extracted | `assets/js/modules/program-guide.js`, `assets/css/program-guide.css` |
 | Public Link Main Navigation | Extracted | `assets/js/modules/public-portal.js`, `assets/css/public-portal.css` |
@@ -32,7 +32,7 @@ Start with the smallest isolated modules. Keep every existing `window.*` public 
 | --- | --- | --- | --- |
 | External Organizations | `haos-v70-60-external-orgs-*` | `assets/js/modules/external-organizations.js` and `assets/css/admin-external-organizations.css` | Extracted first because it is small, recent, and isolated to Super Admin + registration dropdowns. |
 | Remote Support AnyDesk entry | `haos-v70-58-remote-support-anydesk-entry-*` and `remote.html` | `assets/js/modules/remote-support.js` and `assets/css/remote-support.css` | Extracted; keep `remote.html` as the standalone public/staff hub page. |
-| Meeting Minutes / Schedule / IT Hub polish | `haos-v70-59-remote-minutes-schedule-polish-*` | `assets/js/modules/meeting-minutes.js` and `assets/css/meeting-minutes.css` | Extracted as one compatibility block because this patch also owns schedule default filters and IT Hub customization helpers. |
+| Meeting Minutes / Schedule / IT Hub polish | `haos-v70-59-remote-minutes-schedule-polish-*`, `v70.78-meeting-minutes-audio-safe` | `assets/js/modules/meeting-minutes.js`, `assets/js/modules/meeting-minutes-audio-safe.js`, and `assets/css/meeting-minutes.css` | Extracted as compatibility blocks. The audio-safe layer is loaded last so old inline audio analysis calls are guarded before they reach Apps Script/Gemini. |
 
 ## Priority 2: Medium-risk UI modules
 

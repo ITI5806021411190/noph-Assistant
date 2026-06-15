@@ -14734,3 +14734,70 @@ function bridgeWhitelistHealthCheckV774() {
     publicBaseUrl: getPublicAppBaseUrl_()
   };
 }
+
+// v70.78: Meeting minutes audio guard.
+// Prevent old clients from sending oversized inline audio payloads to Gemini and crashing with Out of Memory.
+var haosV778PrevAnalyzeMeetingAudio_ = typeof analyzeMeetingAudio === 'function' ? analyzeMeetingAudio : null;
+var HAOS_V778_MEETING_AUDIO_MAX_BASE64_CHARS = 3.1 * 1024 * 1024;
+
+function haosV778MeetingAudioMemoryMessage_() {
+  return 'ไฟล์เสียงยาวหรือใหญ่เกินกว่าที่ Apps Script/Gemini จะวิเคราะห์ได้ในครั้งเดียว ระบบหยุดก่อนเพื่อไม่ให้โปรแกรมค้าง กรุณาแบ่งไฟล์เสียงเป็นช่วงสั้นลงประมาณ 5-10 นาที หรือวางข้อความถอดเสียงแล้วกด AI วิเคราะห์ข้อความแทน';
+}
+
+function haosV778IsMemoryError_(value) {
+  return /out\s*of\s*memory|memory limit|maximum execution memory|exceeded memory/i.test(String(value || ''));
+}
+
+analyzeMeetingAudio = function(base64Data, fileName, mimeType) {
+  try {
+    if (!base64Data) return { success:false, message:'ไม่พบไฟล์เสียงสำหรับวิเคราะห์' };
+    var cleanBase64 = String(base64Data || '');
+    if (cleanBase64.indexOf(',') >= 0) cleanBase64 = cleanBase64.split(',').pop();
+    var mt = String(mimeType || '').toLowerCase();
+    if (mt.indexOf('audio/') !== 0) return { success:false, message:'รองรับเฉพาะไฟล์เสียงเท่านั้น' };
+    if (cleanBase64.length > HAOS_V778_MEETING_AUDIO_MAX_BASE64_CHARS) {
+      return {
+        success:false,
+        message:haosV778MeetingAudioMemoryMessage_(),
+        reason:'AUDIO_PAYLOAD_TOO_LARGE',
+        fileName:fileName || '',
+        base64Chars:cleanBase64.length,
+        maxBase64Chars:HAOS_V778_MEETING_AUDIO_MAX_BASE64_CHARS,
+        patch:'v70.78'
+      };
+    }
+    if (!haosV778PrevAnalyzeMeetingAudio_) return { success:false, message:'ไม่พบฟังก์ชันวิเคราะห์เสียงเดิม' };
+    var res = haosV778PrevAnalyzeMeetingAudio_(cleanBase64, fileName, mimeType);
+    if (res && res.success === false && haosV778IsMemoryError_(res.message)) {
+      res.message = haosV778MeetingAudioMemoryMessage_();
+      res.reason = 'AUDIO_AI_OUT_OF_MEMORY';
+      res.patch = 'v70.78';
+    }
+    return res;
+  } catch (e) {
+    var msg = e && e.toString ? e.toString() : String(e);
+    return {
+      success:false,
+      message:haosV778IsMemoryError_(msg) ? haosV778MeetingAudioMemoryMessage_() : ('AI วิเคราะห์เสียงประชุมไม่สำเร็จ: ' + msg),
+      reason:haosV778IsMemoryError_(msg) ? 'AUDIO_AI_OUT_OF_MEMORY' : 'AUDIO_AI_ERROR',
+      patch:'v70.78'
+    };
+  }
+};
+
+var haosV778PrevGetAllowedBridgeFunctions_ = typeof getAllowedBridgeFunctions_ === 'function' ? getAllowedBridgeFunctions_ : null;
+getAllowedBridgeFunctions_ = function() {
+  var allowed = haosV778PrevGetAllowedBridgeFunctions_ ? haosV778PrevGetAllowedBridgeFunctions_() : {};
+  allowed.analyzeMeetingAudio = true;
+  allowed.bridgeWhitelistHealthCheckV778 = true;
+  return allowed;
+};
+
+function bridgeWhitelistHealthCheckV778() {
+  return {
+    success:true,
+    version:'v70.78-meeting-minutes-audio-safe',
+    maxBase64Chars:HAOS_V778_MEETING_AUDIO_MAX_BASE64_CHARS,
+    functions:['analyzeMeetingAudio']
+  };
+}
