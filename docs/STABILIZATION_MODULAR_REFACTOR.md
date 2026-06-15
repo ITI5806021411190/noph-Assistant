@@ -273,6 +273,21 @@ Rollback for v70.81:
 4. Remove the v70.81 Meeting minutes text analysis modes block from the end of `Code.gs.txt` and redeploy Apps Script.
 5. No database rollback is required.
 
+Extended in v70.82:
+
+- Added `assets/js/modules/schedule-thai-list.js` and `assets/css/schedule-thai-list.css` after the schedule view stabilizer.
+- The unified schedule list now uses a cleaner booking-style row layout: white rows, one left color rail for scope/urgency, compact chips, and full details without heavy column backgrounds.
+- Schedule dates now render as Thai short-month dates such as `16/มิ.ย./2569`; times render in 24-hour text such as `08.30 น.`.
+- The same schedule date/time formatter is used in the unified list, card view, calendar view, calendar popup, and schedule detail modal/popup.
+- Bumped `sw.js` cache to `haos-v70-82-schedule-thai-list`.
+
+Rollback for v70.82:
+
+1. Remove `assets/css/schedule-thai-list.css` and `assets/js/modules/schedule-thai-list.js`.
+2. Remove both includes from `index.html`.
+3. Remove both files from `sw.js` and bump the cache name.
+4. No Apps Script or database rollback is required.
+
 ## Phase 2: Extract CSS First
 
 Purpose: reduce `index.html` size with the lowest runtime risk.

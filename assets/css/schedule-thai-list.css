@@ -1,0 +1,299 @@
+/* v70.82: clean Thai schedule list view */
+#unifiedScheduleListV702 .haos-v782-schedule-table {
+  border-collapse: separate;
+  border-spacing: 0 10px;
+}
+
+#unifiedScheduleListV702 .haos-v782-schedule-table thead th {
+  background: #eef6ff !important;
+  color: #334155;
+  border: 0 !important;
+  font-weight: 900;
+  padding: 12px 14px;
+}
+
+#unifiedScheduleListV702 .haos-v782-schedule-table tbody tr > td {
+  background: #ffffff !important;
+  border-top: 1px solid rgba(148, 163, 184, .18) !important;
+  border-bottom: 1px solid rgba(148, 163, 184, .18) !important;
+  padding: 14px;
+  vertical-align: middle;
+}
+
+#unifiedScheduleListV702 .haos-v782-schedule-table tbody tr > td:first-child {
+  border-left: 6px solid #2563eb !important;
+  border-radius: 16px 0 0 16px;
+}
+
+#unifiedScheduleListV702 .haos-v782-schedule-table tbody tr > td:last-child {
+  border-right: 1px solid rgba(148, 163, 184, .18) !important;
+  border-radius: 0 16px 16px 0;
+}
+
+#unifiedScheduleListV702 .haos-v782-schedule-table tbody tr {
+  box-shadow: 0 12px 28px rgba(15, 23, 42, .06);
+}
+
+#unifiedScheduleListV702 .haos-v782-row-dept > td:first-child {
+  border-left-color: #059669 !important;
+}
+
+#unifiedScheduleListV702 .haos-v782-row-urgent > td:first-child {
+  border-left-color: #f59e0b !important;
+}
+
+#unifiedScheduleListV702 .haos-v782-row-critical > td:first-child {
+  border-left-color: #dc2626 !important;
+}
+
+#unifiedScheduleListV702 .haos-v782-row-today > td {
+  background: linear-gradient(90deg, #fff7ed, #ffffff 42%) !important;
+}
+
+#unifiedScheduleListV702 .haos-v782-row-pinned > td {
+  box-shadow: inset 0 0 0 999px rgba(255, 251, 235, .34);
+}
+
+.haos-v782-title {
+  color: #0f4fd6;
+  font-weight: 950;
+  line-height: 1.36;
+}
+
+.haos-v782-subline {
+  color: #64748b;
+  font-size: .86rem;
+  margin-top: 4px;
+}
+
+.haos-v782-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.haos-v782-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: .78rem;
+  font-weight: 900;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.haos-v782-chip.scope-my {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
+.haos-v782-chip.scope-dept {
+  background: #d1fae5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+.haos-v782-chip.priority-normal {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #bbf7d0;
+}
+
+.haos-v782-chip.priority-urgent {
+  background: #ffedd5;
+  color: #c2410c;
+  border-color: #fdba74;
+}
+
+.haos-v782-chip.priority-critical {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #fca5a5;
+}
+
+.haos-v782-chip.tag {
+  background: #eef2ff;
+  color: #4338ca;
+  border-color: #c7d2fe;
+}
+
+.haos-v782-date {
+  color: #0f172a;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.haos-v782-time {
+  color: #334155;
+  font-weight: 850;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+.haos-v782-end {
+  color: #64748b;
+  font-size: .86rem;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+.haos-v782-location {
+  color: #334155;
+  font-weight: 800;
+}
+
+.haos-v782-owner {
+  color: #0f172a;
+  font-weight: 850;
+}
+
+.haos-v782-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.haos-v782-actions .btn {
+  border-radius: 14px;
+  min-width: 44px;
+  min-height: 42px;
+  font-weight: 900;
+}
+
+.haos-v782-status {
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-weight: 950;
+}
+
+.haos-v782-card {
+  background: #fff;
+  border: 1px solid rgba(148, 163, 184, .2);
+  border-left: 6px solid #2563eb;
+  border-radius: 18px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, .08);
+}
+
+.haos-v782-card.is-dept {
+  border-left-color: #059669;
+}
+
+.haos-v782-card.is-urgent {
+  border-left-color: #f59e0b;
+}
+
+.haos-v782-card.is-critical {
+  border-left-color: #dc2626;
+}
+
+.haos-v782-card-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.haos-v782-card-meta > div {
+  background: #f8fafc;
+  border: 1px solid rgba(148, 163, 184, .18);
+  border-radius: 14px;
+  padding: 10px;
+}
+
+.haos-v782-card-meta small {
+  display: block;
+  color: #64748b;
+  font-weight: 800;
+  margin-bottom: 3px;
+}
+
+.haos-v782-detail-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30000;
+  background: rgba(15, 23, 42, .42);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+.haos-v782-detail {
+  width: min(780px, 96vw);
+  max-height: 86vh;
+  overflow: auto;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 30px 90px rgba(15, 23, 42, .35);
+  border: 1px solid rgba(148, 163, 184, .22);
+}
+
+.haos-v782-detail-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 18px 20px;
+  background: linear-gradient(135deg, #0ea5e9, #2563eb);
+  color: #fff;
+}
+
+.haos-v782-detail-head h5 {
+  font-weight: 950;
+  margin: 0;
+  line-height: 1.35;
+}
+
+.haos-v782-detail-close {
+  border: 0;
+  background: rgba(255, 255, 255, .18);
+  color: #fff;
+  border-radius: 12px;
+  width: 38px;
+  height: 38px;
+  font-size: 1.3rem;
+}
+
+.haos-v782-detail-body {
+  padding: 18px 20px;
+  text-align: left;
+}
+
+.haos-v782-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.haos-v782-detail-grid > div {
+  border: 1px solid rgba(148, 163, 184, .22);
+  border-radius: 16px;
+  background: #f8fafc;
+  padding: 10px;
+  font-weight: 850;
+  color: #334155;
+}
+
+.haos-v782-detail-grid small {
+  display: block;
+  color: #64748b;
+  font-weight: 800;
+  margin-bottom: 3px;
+}
+
+@media (max-width: 900px) {
+  #unifiedScheduleListV702 .haos-v782-schedule-table {
+    min-width: 960px;
+  }
+  .haos-v782-actions {
+    flex-wrap: wrap;
+  }
+}

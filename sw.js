@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-81-meeting-minutes-ai-modes';
+const CACHE_NAME = 'haos-v70-82-schedule-thai-list';
 const CORE = [
   '/',
   '/index.html',
@@ -15,6 +15,7 @@ const CORE = [
   '/assets/css/remote-support.css',
   '/assets/js/modules/remote-support.js',
   '/assets/css/meeting-minutes.css',
+  '/assets/css/schedule-thai-list.css',
   '/assets/js/modules/meeting-minutes.js',
   '/assets/js/modules/meeting-minutes-audio-safe.js',
   '/assets/js/modules/meeting-minutes-ai-modes.js',
@@ -26,6 +27,7 @@ const CORE = [
   '/assets/js/modules/public-portal.js',
   '/assets/js/modules/schedule-core.js',
   '/assets/js/modules/schedule-view.js',
+  '/assets/js/modules/schedule-thai-list.js',
   '/assets/js/modules/schedule-public-link.js',
   '/assets/js/modules/shared-workspace-core.js',
   '/assets/js/modules/shared-workspace-export.js',
