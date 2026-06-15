@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-75-public-main-link';
+const CACHE_NAME = 'haos-v70-76-session-restore';
 const CORE = [
   '/',
   '/index.html',
@@ -30,6 +30,7 @@ const CORE = [
   '/assets/css/shared-workspace-flow.css',
   '/assets/js/modules/shared-workspace-flow.js',
   '/assets/js/modules/shared-workspace-builder.js',
+  '/assets/js/modules/session-restore.js',
   '/assets/js/modules/notifications-action-fix.js'
 ];
 self.addEventListener('install', event => {

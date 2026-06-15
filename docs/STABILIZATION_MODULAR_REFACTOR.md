@@ -228,6 +228,21 @@ Rollback for v70.75:
 3. Remove both files from `sw.js` and bump the cache name.
 4. No database rollback is required.
 
+Completed in v70.76:
+
+- Added `assets/js/modules/session-restore.js` to remember the user's last working context.
+- The module stores the active main tab, selected module/panel, schedule view, safe schedule filters, and scroll position in browser `localStorage`.
+- After login or auto-login reaches `appSection`, it restores the saved tab/module instead of always leaving the user at the default dashboard.
+- Added a profile setting card so users can turn "กลับไปหน้าล่าสุดอัตโนมัติ" on/off, restore immediately, or clear the saved position.
+- No Apps Script or database changes are required.
+
+Rollback for v70.76:
+
+1. Remove `assets/js/modules/session-restore.js`.
+2. Remove the script include from `index.html`.
+3. Remove the file from `sw.js` and bump the cache name.
+4. No database rollback is required. Saved browser state can be cleared by removing `haos_last_workspace_state_v776_*` and `haos_restore_last_view_enabled_v776_*` from localStorage.
+
 ## Phase 2: Extract CSS First
 
 Purpose: reduce `index.html` size with the lowest runtime risk.

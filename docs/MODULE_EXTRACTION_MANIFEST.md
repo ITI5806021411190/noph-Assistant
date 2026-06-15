@@ -19,6 +19,7 @@ Last updated: 2026-06-12
 | Shared Workspace Response Export | Extracted | `assets/js/modules/shared-workspace-export.js` |
 | Shared Workspace Flow / Section Logic | Extracted | `assets/js/modules/shared-workspace-flow.js`, `assets/css/shared-workspace-flow.css` |
 | Shared Workspace Builder Stabilizer | Extracted | `assets/js/modules/shared-workspace-builder.js` |
+| Session Restore / Last Workspace | Extracted | `assets/js/modules/session-restore.js` |
 
 This manifest controls the order for splitting `index.html` without changing production behavior.
 
@@ -43,6 +44,7 @@ Start with the smallest isolated modules. Keep every existing `window.*` public 
 | Public link shell | `assets/js/modules/public-portal.js`, `assets/css/public-portal.css` | Extracted. Adds the shared return-to-main-system action across every `public.html` route and re-adds it when a public module replaces the page body. |
 | Schedule view controls | `assets/js/modules/schedule-view.js` | Extracted as a final compatibility renderer that uses `HAOS.schedule.query` while keeping `renderUnifiedScheduleV702`, `setUnifiedScheduleViewV702`, `setSchedulePageV739`, and `toggleSchedulePinV737` callable. |
 | Schedule public links | `assets/js/modules/schedule-public-link.js` | Extracted. It wraps `createPublicScheduleLink` with timeout/failure handling, adds public-link status viewing, and keeps `getPublicScheduleUrl` compatible. |
+| Session restore | `assets/js/modules/session-restore.js` | Extracted. Saves the last active main tab, selected module, schedule view, safe filters, and scroll position in localStorage, then restores it after auto-login or normal login reaches `appSection`. |
 | Shared Workspace builder/viewer | `assets/js/modules/shared-workspace.js` | Core schema/export helpers now live in `shared-workspace-core.js`; Excel response export lives in `shared-workspace-export.js`; section flow foundation lives in `shared-workspace-flow.js`; builder payload/create/edit stabilization lives in `shared-workspace-builder.js`; move the remaining viewer code after these foundations are stable. |
 
 ## Priority 3: Backend-facing admin modules
