@@ -1,4 +1,4 @@
-/* v70.82: clean Thai schedule list view */
+/* v70.83: clean Thai schedule list view */
 #unifiedScheduleListV702 .haos-v782-schedule-table {
   border-collapse: separate;
   border-spacing: 0 10px;
@@ -21,7 +21,7 @@
 }
 
 #unifiedScheduleListV702 .haos-v782-schedule-table tbody tr > td:first-child {
-  border-left: 6px solid #2563eb !important;
+  border-left: 6px solid #1d4ed8 !important;
   border-radius: 16px 0 0 16px;
 }
 
@@ -39,11 +39,11 @@
 }
 
 #unifiedScheduleListV702 .haos-v782-row-urgent > td:first-child {
-  border-left-color: #f59e0b !important;
+  box-shadow: inset 0 0 0 999px rgba(255, 247, 237, .42);
 }
 
 #unifiedScheduleListV702 .haos-v782-row-critical > td:first-child {
-  border-left-color: #dc2626 !important;
+  box-shadow: inset 0 0 0 999px rgba(254, 242, 242, .55);
 }
 
 #unifiedScheduleListV702 .haos-v782-row-today > td {
@@ -64,6 +64,10 @@
   color: #64748b;
   font-size: .86rem;
   margin-top: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .haos-v782-chip-row {
@@ -174,7 +178,7 @@
 .haos-v782-card {
   background: #fff;
   border: 1px solid rgba(148, 163, 184, .2);
-  border-left: 6px solid #2563eb;
+  border-left: 6px solid #1d4ed8;
   border-radius: 18px;
   padding: 16px;
   margin-bottom: 12px;
@@ -186,11 +190,11 @@
 }
 
 .haos-v782-card.is-urgent {
-  border-left-color: #f59e0b;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, .08), inset 0 0 0 999px rgba(255, 247, 237, .26);
 }
 
 .haos-v782-card.is-critical {
-  border-left-color: #dc2626;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, .08), inset 0 0 0 999px rgba(254, 242, 242, .34);
 }
 
 .haos-v782-card-meta {

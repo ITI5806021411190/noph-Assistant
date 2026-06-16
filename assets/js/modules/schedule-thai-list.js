@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  const PATCH = 'v70.82-schedule-thai-list';
+  const PATCH = 'v70.83-schedule-thai-list-public-booking-fix';
   if (window.__HAOS_V782_SCHEDULE_THAI_LIST__) return;
   window.__HAOS_V782_SCHEDULE_THAI_LIST__ = true;
 
@@ -12,10 +12,13 @@
   const clean = (value) => String(value ?? '').replace(/\s+/g, ' ').trim();
   const phone = (value) => String(value || '').replace(/'/g, '').replace(/\D/g, '').trim();
   const jsArg = (value) => JSON.stringify(String(value ?? '')).replace(/</g, '\\u003c');
-  const thaiMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-  const thaiMonthMap = thaiMonths.reduce((out, month, index) => {
-    out[month.replace(/\./g, '')] = index;
-    out[month] = index;
+  const thaiMonthsShort = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+  const thaiMonthsFull = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+  const thaiMonths = thaiMonthsShort;
+  const thaiMonthMap = thaiMonthsShort.concat(thaiMonthsFull).reduce((out, month, index) => {
+    const monthIndex = index % 12;
+    out[month.replace(/\./g, '')] = monthIndex;
+    out[month] = monthIndex;
     return out;
   }, {});
 
@@ -41,7 +44,7 @@
     const text = clean(value);
     if (!text) return null;
 
-    const thaiMatch = text.match(/^(\d{1,2})\/([ก-ฮ.]+)\/(\d{4})(?:\s+(\d{1,2})[:.](\d{2}))?/);
+    const thaiMatch = text.match(/^(\d{1,2})(?:\/|\s*•\s*)([ก-ฮ.]+)(?:\/|\s*•\s*)(\d{4})(?:\s+(\d{1,2})[:.](\d{2}))?/);
     if (thaiMatch) {
       const key = thaiMatch[2].replace(/\./g, '');
       const month = thaiMonthMap[key] ?? thaiMonthMap[thaiMatch[2]];
@@ -98,7 +101,7 @@
   function formatThaiDate(value) {
     const d = parseDate(value);
     if (!d) return clean(value) || '-';
-    return `${String(d.getDate()).padStart(2, '0')}/${thaiMonths[d.getMonth()]}/${d.getFullYear() + 543}`;
+    return `${d.getDate()} • ${thaiMonthsFull[d.getMonth()]} • ${d.getFullYear() + 543}`;
   }
 
   function formatThaiTime(value, raw) {
@@ -173,6 +176,14 @@
     return String(raw || '').split(/\n|,/).map(clean).filter(Boolean);
   }
 
+  function stripDeptPrefix(value) {
+    try {
+      if (typeof window.stripDepartmentPrefixV749 === 'function') return window.stripDepartmentPrefixV749(value);
+      if (typeof window.stripDepartmentPrefixV748 === 'function') return window.stripDepartmentPrefixV748(value);
+    } catch (e) {}
+    return clean(String(value ?? '').replace(/(^|[\s([,|•])\d{1,3}[\s\u00a0]+(?=(?:กลุ่มงาน|สำนักงาน|นพ\.?\s*สสจ\.?\s*นย\.?|นพ\.สสจ\.นย\.|รอง|ผู้ช่วย))/gu, '$1').replace(/^\s*\d{1,3}[\s\u00a0]+/u, ''));
+  }
+
   function badgeClass(status) {
     try {
       if (typeof window.getScheduleBadgeClass === 'function') return window.getScheduleBadgeClass(status);
@@ -210,12 +221,18 @@
     return `<div class="haos-v782-chip-row">${scopeChip}${priorityChip}${tagChips}</div>`;
   }
 
-  function titleHtml(item) {
+  function ellipsis(text, limit) {
+    const value = clean(text);
+    if (!value || value.length <= limit) return value;
+    return value.slice(0, Math.max(0, limit - 1)).trimEnd() + '...';
+  }
+
+  function titleHtml(item, options = {}) {
     const title = item.__title || item.eventName || item.title || item.name || '-';
-    const details = clean(item.details || item.detail || item.description || '');
+    const details = ellipsis(item.details || item.detail || item.description || '', options.compact ? 68 : 130);
     const fileIcon = item.fileUrl ? '<i class="bi bi-paperclip text-primary ms-1" title="มีไฟล์แนบ"></i>' : '';
     const todayBadge = sameDay(dateOf(item), new Date()) ? '<span class="badge bg-primary ms-2">วันนี้</span>' : '';
-    return `<div class="haos-v782-title">${esc(title)}${fileIcon}${todayBadge}</div>${details ? `<div class="haos-v782-subline">${esc(details).slice(0, 130)}</div>` : ''}${chipHtml(item)}`;
+    return `<div class="haos-v782-title">${esc(title)}${fileIcon}${todayBadge}</div>${details ? `<div class="haos-v782-subline">${esc(details)}</div>` : ''}${chipHtml(item)}`;
   }
 
   function timeHtml(item) {
@@ -234,9 +251,9 @@
       sameDay(dateOf(item), new Date()) ? 'haos-v782-row-today' : '',
       pins().has(id) ? 'haos-v782-row-pinned' : ''
     ].filter(Boolean).join(' ');
-    const location = item.__location || item.location || item.eventLocation || '-';
+    const location = stripDeptPrefix(item.__location || item.location || item.eventLocation || '-');
     const owner = item.__ownerName || item.ownerName || item.createdBy || item.assigneeName || '-';
-    const dept = item.department || item.ownerDepartment || '';
+    const dept = stripDeptPrefix(item.department || item.ownerDepartment || '');
     const status = item.__status || item.workStatus || item.status || '-';
     return `<tr class="${rowClasses}">
       <td>${titleHtml(item)}</td>
@@ -252,12 +269,12 @@
     const scope = scopeOf(item);
     const tone = priorityTone(item);
     const status = item.__status || item.workStatus || item.status || '-';
-    const location = item.__location || item.location || item.eventLocation || '-';
+    const location = stripDeptPrefix(item.__location || item.location || item.eventLocation || '-');
     const owner = item.__ownerName || item.ownerName || item.createdBy || item.assigneeName || '-';
     const classes = ['haos-v782-card', scope === 'dept' ? 'is-dept' : '', tone === 'urgent' ? 'is-urgent' : '', tone === 'critical' ? 'is-critical' : ''].filter(Boolean).join(' ');
     return `<article class="${classes}">
       <div class="d-flex justify-content-between align-items-start gap-2">
-        <div>${titleHtml(item)}</div>
+        <div>${titleHtml(item, { compact: true })}</div>
         <span class="badge haos-v782-status ${badgeClass(status)}">${esc(status)}</span>
       </div>
       <div class="haos-v782-card-meta">
@@ -400,7 +417,18 @@
 
   function state() {
     if (core().applyDomDefaults) core().applyDomDefaults();
-    return core().stateFromDom ? core().stateFromDom() : { view: window.haosUnifiedScheduleModeV702 || 'list', page: window.haosSchedulePageV739 || 1, pageSize: 20 };
+    const s = core().stateFromDom ? core().stateFromDom() : { view: window.haosUnifiedScheduleModeV702 || 'list', page: window.haosSchedulePageV739 || 1, pageSize: 20 };
+    const statusEl = $('unifiedScheduleStatusV702');
+    if (statusEl) s.status = statusEl.value;
+    const scopeEl = $('unifiedScheduleScopeV702');
+    if (scopeEl) s.scope = scopeEl.value;
+    const sortEl = $('unifiedScheduleSortV702');
+    if (sortEl) s.sort = sortEl.value || 'dateDesc';
+    const priorityEl = $('unifiedSchedulePriorityV706');
+    if (priorityEl) s.priority = priorityEl.value || '';
+    const tagEl = $('unifiedScheduleTagV706');
+    if (tagEl) s.tag = tagEl.value || '';
+    return s;
   }
 
   function render() {
@@ -454,7 +482,7 @@
     $('haosScheduleDetailBackdropV782')?.remove();
     const title = item.__title || item.eventName || item.title || '-';
     const status = item.__status || item.workStatus || item.status || '-';
-    const location = item.__location || item.location || item.eventLocation || '-';
+    const location = stripDeptPrefix(item.__location || item.location || item.eventLocation || '-');
     const details = item.details || item.detail || item.description || '-';
     const html = `<div id="haosScheduleDetailBackdropV782" class="haos-v782-detail-backdrop" onclick="if(event.target.id==='haosScheduleDetailBackdropV782')this.remove()">
       <article class="haos-v782-detail">

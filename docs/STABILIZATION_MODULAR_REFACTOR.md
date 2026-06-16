@@ -288,6 +288,23 @@ Rollback for v70.82:
 3. Remove both files from `sw.js` and bump the cache name.
 4. No Apps Script or database rollback is required.
 
+Extended in v70.83:
+
+- Updated `assets/js/modules/schedule-thai-list.js` to render schedule dates as full Thai dates such as `16 • มิถุนายน • 2569`.
+- The unified schedule state now preserves an explicit empty status filter, so choosing "ทั้งหมด" no longer falls back to "อยู่ระหว่างการดำเนินการ".
+- Department names are stripped before schedule rows/cards are rendered, preventing numeric department prefixes from flickering back into the owner column.
+- Card view now truncates long detail text and the left rail keeps scope colors: personal is blue and department is green.
+- Restored the public booking link for meeting room/Zoom as `/public?booking=1` and added a member/guest gate in `public.html` before showing the public booking form.
+- Bumped `sw.js` cache to `haos-v70-83-schedule-booking-polish`.
+
+Rollback for v70.83:
+
+1. Revert `assets/js/modules/schedule-thai-list.js` and `assets/css/schedule-thai-list.css` to the v70.82 versions.
+2. Revert the `openItBookingDirectLinkInfo`/toolbar button changes in `index.html`.
+3. Revert the public booking gate additions in `public.html`.
+4. Revert `sw.js` cache name to the previous cache or bump it again after rollback.
+5. No Apps Script or database rollback is required.
+
 ## Phase 2: Extract CSS First
 
 Purpose: reduce `index.html` size with the lowest runtime risk.

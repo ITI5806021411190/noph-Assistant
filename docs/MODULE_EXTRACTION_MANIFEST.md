@@ -1,6 +1,6 @@
 # Health Assistant OS Module Extraction Manifest
 
-Last updated: 2026-06-15
+Last updated: 2026-06-16
 
 ## Current Extraction Status
 
@@ -41,9 +41,9 @@ Start with the smallest isolated modules. Keep every existing `window.*` public 
 | --- | --- | --- |
 | Notification Center | `assets/js/modules/notifications.js` | Core/action routing extracted. Advanced filter/card/today-highlight patches remain inline until the next notification pass because they share code with workspace/calendar and later UI polish blocks. |
 | Program Guide / Onboarding | `assets/js/modules/program-guide.js` | Extracted. It keeps default IT Services tab ordering and the updated guide/onboarding popups compatible with existing global callers. |
-| Public link shell | `assets/js/modules/public-portal.js`, `assets/css/public-portal.css` | Extracted. Adds the shared return-to-main-system action across every `public.html` route and re-adds it when a public module replaces the page body. |
+| Public link shell | `assets/js/modules/public-portal.js`, `assets/css/public-portal.css` | Extracted. Adds the shared return-to-main-system action across every `public.html` route and re-adds it when a public module replaces the page body. Public booking remains inline in `public.html` for now, with a member/guest gate before the booking form. |
 | Schedule view controls | `assets/js/modules/schedule-view.js` | Extracted as a final compatibility renderer that uses `HAOS.schedule.query` while keeping `renderUnifiedScheduleV702`, `setUnifiedScheduleViewV702`, `setSchedulePageV739`, and `toggleSchedulePinV737` callable. |
-| Schedule Thai list display | `assets/js/modules/schedule-thai-list.js`, `assets/css/schedule-thai-list.css` | Loaded after `schedule-view.js` to simplify the list/card/calendar display, keep schedule detail actions compatible, and format schedule dates as Thai short-month dates such as `16/มิ.ย./2569` with 24-hour time text. |
+| Schedule Thai list display | `assets/js/modules/schedule-thai-list.js`, `assets/css/schedule-thai-list.css` | Loaded after `schedule-view.js` to simplify the list/card/calendar display, keep schedule detail actions compatible, and format schedule dates as full Thai dates such as `16 • มิถุนายน • 2569` with 24-hour time text. |
 | Schedule public links | `assets/js/modules/schedule-public-link.js` | Extracted. It wraps `createPublicScheduleLink` with timeout/failure handling, adds public-link status viewing, and keeps `getPublicScheduleUrl` compatible. |
 | Shared Workspace builder/viewer | `assets/js/modules/shared-workspace.js` | Core schema/export helpers now live in `shared-workspace-core.js`; Excel response export lives in `shared-workspace-export.js`; section flow foundation lives in `shared-workspace-flow.js`; builder payload/create/edit stabilization lives in `shared-workspace-builder.js`; move the remaining viewer code after these foundations are stable. |
 

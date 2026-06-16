@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-82-schedule-thai-list';
+const CACHE_NAME = 'haos-v70-83-schedule-booking-polish';
 const CORE = [
   '/',
   '/index.html',
