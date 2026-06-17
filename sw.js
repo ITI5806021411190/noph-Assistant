@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-86-date-coverage-multirange';
+const CACHE_NAME = 'haos-v70-87-upcoming-agenda';
 const CORE = [
   '/',
   '/index.html',
@@ -31,6 +31,7 @@ const CORE = [
   '/assets/js/modules/schedule-view.js',
   '/assets/js/modules/schedule-thai-list.js',
   '/assets/js/modules/schedule-multi-ranges.js',
+  '/assets/js/modules/upcoming-agenda.js',
   '/assets/js/modules/schedule-public-link.js',
   '/assets/js/modules/shared-workspace-core.js',
   '/assets/js/modules/shared-workspace-export.js',
