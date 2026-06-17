@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  const PATCH = 'v70.85-date-display-standard';
+  const PATCH = 'v70.86-date-display-standard';
   if (window.__HAOS_V785_DATE_DISPLAY__) return;
   window.__HAOS_V785_DATE_DISPLAY__ = true;
 
@@ -121,9 +121,10 @@
     const d = parseDate(value);
     if (!d) {
       const fallback = clean(value) || '-';
-      return { day: '-', my: fallback, full: fallback };
+      return { d: '-', day: '-', my: fallback, full: fallback };
     }
     return {
+      d: String(d.getDate()).padStart(2, '0'),
       day: String(d.getDate()).padStart(2, '0'),
       my: `• ${monthsFull[d.getMonth()]} • ${d.getFullYear() + 543}`,
       full: date(d)

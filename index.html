@@ -3804,6 +3804,7 @@ label,.form-label{font-weight:800;color:#334155;margin-bottom:6px;}
                  document.getElementById('startTime').value = res.data.date_time.substring(0, 16); 
                } catch(err) {}
             }
+            try { window.HAOSScheduleMultiRanges?.autoParseFromText?.(txt); } catch(err) {}
             
             Swal.fire({ icon: 'success', title: 'วิเคราะห์สำเร็จ', text: 'AI เติมข้อมูลลงฟอร์มให้แล้วครับ', timer: 1500, showConfirmButton: false });
          } else {
@@ -3827,6 +3828,7 @@ label,.form-label{font-weight:800;color:#334155;margin-bottom:6px;}
       if (data.date_time && data.date_time !== "") {
         try { document.getElementById('startTime').value = data.date_time.substring(0, 16); } catch(err) {}
       }
+      try { window.HAOSScheduleMultiRanges?.autoParseFromText?.(document.getElementById('lineTextPaste')?.value || document.getElementById('scheduleMultiRangeTextV786')?.value || ''); } catch(err) {}
       if ((data.end_datetime || data.end_time) && document.getElementById('endTime')) {
         try { document.getElementById('endTime').value = String(data.end_datetime || data.end_time).substring(0, 16); } catch(err) {}
       }
@@ -18720,6 +18722,8 @@ HAOS v68.6 FINISHING FIX
 <link rel="stylesheet" href="assets/css/shared-workspace-flow.css">
 <script src="assets/js/modules/shared-workspace-flow.js"></script>
 <script src="assets/js/modules/shared-workspace-builder.js"></script>
+<script src="assets/js/modules/date-coverage.js"></script>
+<script src="assets/js/modules/schedule-multi-ranges.js"></script>
 <script>window.HAOSDateDisplay&&window.HAOSDateDisplay.installCompatibilityGlobals&&window.HAOSDateDisplay.installCompatibilityGlobals();</script>
 </body>
 </html>

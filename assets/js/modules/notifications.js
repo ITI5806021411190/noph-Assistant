@@ -6,6 +6,11 @@
   const $=id=>document.getElementById(id);
   const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const clean=v=>String(v||'').replace(/'/g,'').trim();
+  const fmtDateTime=v=>{
+    const D=window.HAOSDateDisplay;
+    if(D&&typeof D.dateTime==='function')return D.dateTime(v,{forceTime:true});
+    return String(v||'-');
+  };
   const userObj=()=>{try{return window.user||user||{};}catch(e){return window.user||{};}};
   const gas=(fn,args)=>new Promise((resolve,reject)=>{try{google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run,args||[]);}catch(e){reject(e);}});
   const adminLike=()=>/^(Admin|Super Admin|Head)$/i.test(String(userObj().role||''))||/^(Admin|Super Admin)$/i.test(String(userObj().accountRole||''));
@@ -72,7 +77,7 @@
           <div class="fw-bold">${esc(n.message||'-')}</div>
           <div class="haos-v732-notif-meta">
             <span class="haos-v732-module-pill"><i class="bi ${moduleIcon(n.module)}"></i> ${esc(moduleLabel(n.module))}</span>
-            <small class="text-muted">${esc(n.time||'-')} • ${esc(n.type||'ทั่วไป')} • ${esc(n.priority||'ปกติ')}</small>
+            <small class="text-muted">${esc(fmtDateTime(n.time||n.createdAt||n.timestamp||n.date||'-'))} • ${esc(n.type||'ทั่วไป')} • ${esc(n.priority||'ปกติ')}</small>
           </div>
         </div>
         <div class="text-nowrap">

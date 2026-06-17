@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-85-date-display-standard';
+const CACHE_NAME = 'haos-v70-86-date-coverage-multirange';
 const CORE = [
   '/',
   '/index.html',
@@ -17,6 +17,7 @@ const CORE = [
   '/assets/css/meeting-minutes.css',
   '/assets/css/schedule-thai-list.css',
   '/assets/js/modules/date-display.js',
+  '/assets/js/modules/date-coverage.js',
   '/assets/js/modules/meeting-minutes.js',
   '/assets/js/modules/meeting-minutes-audio-safe.js',
   '/assets/js/modules/meeting-minutes-ai-modes.js',
@@ -29,6 +30,7 @@ const CORE = [
   '/assets/js/modules/schedule-core.js',
   '/assets/js/modules/schedule-view.js',
   '/assets/js/modules/schedule-thai-list.js',
+  '/assets/js/modules/schedule-multi-ranges.js',
   '/assets/js/modules/schedule-public-link.js',
   '/assets/js/modules/shared-workspace-core.js',
   '/assets/js/modules/shared-workspace-export.js',
