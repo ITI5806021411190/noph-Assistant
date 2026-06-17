@@ -176,6 +176,7 @@
   </main>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/js/modules/date-display.js"></script>
   <script>
     const ANYDESK_DOWNLOAD_URL = 'https://anydesk.com/en/downloads/windows';
     const ANYDESK_DIRECT_DOWNLOAD_URL = 'https://download.anydesk.com/AnyDesk.exe';
@@ -191,7 +192,12 @@
     function statusText(s){return ({Waiting:'รอรับงาน',Assigned:'รับงานแล้ว','In Session':'กำลังช่วยเหลือ',Closed:'จบงานแล้ว',Canceled:'ยกเลิก'})[String(s||'Waiting')] || String(s||'Waiting');}
     function statusBadge(s){return `<span class="status-badge ${statusClass(s)}"><i class="bi bi-circle-fill"></i>${esc(statusText(s))}</span>`;}
     function setBusy(btn,on,text){if(!btn)return;btn.disabled=!!on;if(text)btn.innerHTML=text;}
-    function fmtDate(v){try{return v?new Date(v).toLocaleString('th-TH'):'';}catch(e){return String(v||'');}}
+    function fmtDate(v){
+      try {
+        if (window.HAOSDateDisplay && window.HAOSDateDisplay.dateTime) return window.HAOSDateDisplay.dateTime(v, { forceTime: true });
+        return v ? new Date(v).toLocaleString('th-TH') : '';
+      } catch(e) { return String(v||''); }
+    }
     function moduleLink(){
       return new URL('/remote.html?v=7059&mode=user&phone', location.origin).toString();
     }

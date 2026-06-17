@@ -42,6 +42,7 @@
 
   function formatDateTime(item) {
     const raw = item && (item.startTime || item.start || item.rawStartTime || item.startDate || item.eventDate || item.date);
+    if (window.HAOSDateDisplay && window.HAOSDateDisplay.dateTime) return window.HAOSDateDisplay.dateTime(raw || dateOf(item), { forceTime: true });
     const text = clean(raw);
     if (text && hasClock(text)) return text;
     const d = dateOf(item);
@@ -55,6 +56,7 @@
   }
 
   function timeOnly(item) {
+    if (window.HAOSDateDisplay && window.HAOSDateDisplay.time) return (window.HAOSDateDisplay.time(item && (item.startTime || item.start || item.rawStartTime || item.startDate || item.eventDate || item.date), item && (item.startTime || item.start || item.rawStartTime || item.startDate || item.eventDate || item.date)) || '').replace(/\s*น\.$/, '');
     const text = formatDateTime(item);
     const match = text.match(/(?:[01]?\d|2[0-3])[:.][0-5]\d/);
     return match ? match[0].replace('.', ':') : '';

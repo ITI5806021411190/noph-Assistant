@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-84-upcoming-sort-reminder-remote';
+const CACHE_NAME = 'haos-v70-85-date-display-standard';
 const CORE = [
   '/',
   '/index.html',
@@ -16,6 +16,7 @@ const CORE = [
   '/assets/js/modules/remote-support.js',
   '/assets/css/meeting-minutes.css',
   '/assets/css/schedule-thai-list.css',
+  '/assets/js/modules/date-display.js',
   '/assets/js/modules/meeting-minutes.js',
   '/assets/js/modules/meeting-minutes-audio-safe.js',
   '/assets/js/modules/meeting-minutes-ai-modes.js',

@@ -99,12 +99,14 @@
   }
 
   function formatThaiDate(value) {
+    if (window.HAOSDateDisplay && window.HAOSDateDisplay.date) return window.HAOSDateDisplay.date(value);
     const d = parseDate(value);
     if (!d) return clean(value) || '-';
     return `${d.getDate()} • ${thaiMonthsFull[d.getMonth()]} • ${d.getFullYear() + 543}`;
   }
 
   function formatThaiTime(value, raw) {
+    if (window.HAOSDateDisplay && window.HAOSDateDisplay.time) return window.HAOSDateDisplay.time(value, raw || value);
     const d = parseDate(value);
     if (!d) return '';
     if (!hasTime(raw || value)) return '';

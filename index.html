@@ -264,6 +264,7 @@
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="assets/js/modules/date-display.js"></script>
 
   <style>
     body { 
@@ -2349,6 +2350,7 @@ label,.form-label{font-weight:800;color:#334155;margin-bottom:6px;}
 
 
     function formatThaiDateLong(dateObj) {
+      if (window.HAOSDateDisplay && window.HAOSDateDisplay.date) return window.HAOSDateDisplay.date(dateObj);
       try { return dateObj.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); }
       catch (e) { return dateObj.toISOString().split('T')[0]; }
     }
@@ -2675,7 +2677,7 @@ label,.form-label{font-weight:800;color:#334155;margin-bottom:6px;}
       fields.forEach(id => { const el = document.getElementById(id); if (el) data[id] = el.value; });
       localStorage.setItem(key, JSON.stringify(data));
       const hint = document.getElementById(hintId);
-      if (hint) hint.innerText = 'บันทึกแบบร่างล่าสุด ' + new Date().toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'});
+      if (hint) hint.innerText = 'บันทึกแบบร่างล่าสุด ' + (window.HAOSDateDisplay ? window.HAOSDateDisplay.time(new Date(), new Date()) : new Date().toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'}));
     }
 
     function restoreDraft_(key, fields) {
@@ -6472,12 +6474,14 @@ function clearItBookingCanvas_(canvasId) {
   };
 
   window.formatThaiDateTime24_ = function(value) {
+    if (window.HAOSDateDisplay && window.HAOSDateDisplay.dateTime) return window.HAOSDateDisplay.dateTime(value, { forceTime: true });
     if (!value) return '-';
     const d = value instanceof Date ? value : new Date(String(value).replace(' ', 'T'));
     if (isNaN(d.getTime())) return String(value || '-');
     return d.toLocaleString('th-TH', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false });
   };
   window.itBookingTimeOnly_ = function(value) {
+    if (window.HAOSDateDisplay && window.HAOSDateDisplay.time) return (window.HAOSDateDisplay.time(value, value) || '-').replace(/\s*น\.$/, '');
     if (!value) return '-';
     const s = String(value);
     const m = s.match(/(\d{1,2}):(\d{2})/);
@@ -9269,7 +9273,7 @@ HAOS v68.6 FINISHING FIX
   }
   function buildOnePageSummaryHtmlV69(data){
     const due=(data.dueSoon||[]).map(x=>'<div class="border rounded-4 p-2 mb-2"><b>'+esc(x.name||'-')+'</b><div class="small text-muted">'+esc(x.time||'')+' • '+esc(x.location||'-')+'</div><span class="badge text-bg-light">'+esc(x.status||'-')+'</span></div>').join('')||'<div class="text-muted small">ไม่มีงานใกล้ถึงกำหนดใน 7 วัน</div>';
-    return '<div id="onePageSummaryCapture" class="haos-v69-summary"><div class="haos-v69-summary-hero"><h4 class="fw-bold mb-1">One-page Summary</h4><div>Health Assistant OS • สร้างเมื่อ '+esc(data.generatedAt||new Date().toLocaleString('th-TH'))+'</div></div><div class="haos-v69-summary-kpis"><div class="haos-v69-summary-kpi"><small>ตารางงานทั้งหมด</small><b>'+esc(data.totalSchedules??0)+'</b></div><div class="haos-v69-summary-kpi"><small>รายงานวันนี้</small><b>'+esc(data.todayReports??0)+'</b></div></div><div class="haos-v69-summary-section"><div class="row g-3"><div class="col-md-6"><h6 class="fw-bold">สถานะงาน</h6>'+rowsTable(data.statusCount)+'</div><div class="col-md-6"><h6 class="fw-bold">สถานะอนุมัติ</h6>'+rowsTable(data.approvalCount)+'</div></div><h6 class="fw-bold mt-3">งานใกล้ถึงกำหนด 7 วัน</h6>'+due+'</div></div>';
+    return '<div id="onePageSummaryCapture" class="haos-v69-summary"><div class="haos-v69-summary-hero"><h4 class="fw-bold mb-1">One-page Summary</h4><div>Health Assistant OS • สร้างเมื่อ '+esc(data.generatedAt||(window.HAOSDateDisplay?window.HAOSDateDisplay.dateTime(new Date(),{forceTime:true}):new Date().toLocaleString('th-TH')))+'</div></div><div class="haos-v69-summary-kpis"><div class="haos-v69-summary-kpi"><small>ตารางงานทั้งหมด</small><b>'+esc(data.totalSchedules??0)+'</b></div><div class="haos-v69-summary-kpi"><small>รายงานวันนี้</small><b>'+esc(data.todayReports??0)+'</b></div></div><div class="haos-v69-summary-section"><div class="row g-3"><div class="col-md-6"><h6 class="fw-bold">สถานะงาน</h6>'+rowsTable(data.statusCount)+'</div><div class="col-md-6"><h6 class="fw-bold">สถานะอนุมัติ</h6>'+rowsTable(data.approvalCount)+'</div></div><h6 class="fw-bold mt-3">งานใกล้ถึงกำหนด 7 วัน</h6>'+due+'</div></div>';
   }
   window.haosOpenOnePageDigitalViewV69=function(){
     const html=window.haosLastOnePageHtmlV69||$('onePageSummaryCapture')?.outerHTML||'';
@@ -9458,7 +9462,7 @@ HAOS v68.6 FINISHING FIX
     if(!rows.length){pane.innerHTML='<div class="empty-state"><i class="bi bi-journal-x"></i><div class="fw-bold">ยังไม่มีข้อมูลรายงาน</div></div>'; return;}
     pane.innerHTML='<div class="haos-v691-report-card-grid">'+rows.map(r=>{
       const d=reportDate(r);
-      const dateText=d?d.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'numeric'}):(r.date||'-');
+      const dateText=d?(window.HAOSDateDisplay?window.HAOSDateDisplay.date(d):d.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'numeric'})):(r.date||'-');
       return '<div class="haos-v691-report-card"><div class="name">'+esc(reportTitle(r,kind))+'</div><div class="meta"><i class="bi bi-calendar3"></i> '+esc(dateText)+' '+esc(r.time||r.reportTime||'')+'</div><div class="detail">'+esc(plain(r.details||r.workDetails||r.detail||'-')).slice(0,220)+'</div></div>';
     }).join('')+'</div>';
   }
@@ -9646,6 +9650,7 @@ HAOS v68.6 FINISHING FIX
   function dateParts(r){
     const d=parseDate(r.rawDate||r.date||r.reportDate||r.workDate||r.createdAt);
     if(!d)return {day:'--',my:esc(String(r.date||'ไม่ระบุวันที่'))};
+    if(window.HAOSDateDisplay){const p=window.HAOSDateDisplay.dateParts(d);return {day:p.day,my:p.my,date:d};}
     return {day:String(d.getDate()).padStart(2,'0'),my:d.toLocaleDateString('th-TH',{month:'short',year:'numeric'}),date:d};
   }
   function reportTitle(r,kind){return (kind==='team'?(r.name||r.userName||'ไม่ระบุชื่อ')+' - ':'')+(r.leaveType||r.status||'รายงาน');}
@@ -10043,7 +10048,7 @@ HAOS v68.6 FINISHING FIX
   function phoneKey(v){return String(v||'').replace(/'/g,'').trim();}
   function gasV702(fn,args){return new Promise((resolve,reject)=>{try{google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run,args||[]);}catch(e){reject(e);}});}
   function dateObj(v){if(!v)return null;if(v instanceof Date&&!isNaN(v))return v;let d=new Date(v);if(!isNaN(d))return d;const m=String(v).match(/(\d{1,2})[\/\-. ](\d{1,2})[\/\-. ](\d{4})/);if(m){let y=+m[3];if(y>2400)y-=543;d=new Date(y,+m[2]-1,+m[1]);if(!isNaN(d))return d;}return null;}
-  function thDate(v){const d=dateObj(v);return d?d.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'numeric'}):esc(v||'-');}
+  function thDate(v){const d=dateObj(v);return d?(window.HAOSDateDisplay?window.HAOSDateDisplay.date(d):d.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'numeric'})):esc(v||'-');}
   function badgeCls(status){try{return window.getScheduleBadgeClass?window.getScheduleBadgeClass(status):'bg-info text-dark';}catch(e){return 'bg-info text-dark';}}
 
   function cleanBookingLinkButton(){
@@ -10575,7 +10580,7 @@ HAOS v68.6 FINISHING FIX
   function visible(kind){const a=reports(kind), n=pageSize(kind);return n==='all'?a:a.slice(0,n);}
   function parseDate(v){if(v instanceof Date&&!isNaN(v))return v;const s=String(v||'').trim();if(!s)return null;let m=s.match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);if(m){let y=+m[1];if(y>2400)y-=543;return new Date(y,+m[2]-1,+m[3]);}m=s.match(/(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);if(m){let y=+m[3];if(y>2400)y-=543;return new Date(y,+m[2]-1,+m[1]);}const d=new Date(s);return isNaN(d)?null:d;}
   function dateOf(r){return parseDate(r.rawDate||r.reportDate||r.workDate||r.date||r.createdAt||r.timestamp);}
-  function dateParts(r){const d=dateOf(r);if(!d)return{day:'--',my:r.date||r.reportDate||'-',full:r.date||r.reportDate||'-'};return{day:d.toLocaleDateString('th-TH',{day:'2-digit'}),my:d.toLocaleDateString('th-TH',{month:'short',year:'numeric'}),full:d.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'numeric'})};}
+  function dateParts(r){const d=dateOf(r);if(!d)return{day:'--',my:r.date||r.reportDate||'-',full:r.date||r.reportDate||'-'};if(window.HAOSDateDisplay){const p=window.HAOSDateDisplay.dateParts(d);return{day:p.day,my:p.my,full:p.full};}return{day:d.toLocaleDateString('th-TH',{day:'2-digit'}),my:d.toLocaleDateString('th-TH',{month:'short',year:'numeric'}),full:d.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'numeric'})};}
   function title(r,kind){return (kind==='team'&&(r.name||r.userName||r.reporterName)?String(r.name||r.userName||r.reporterName)+' - ':'')+(r.leaveType||r.status||'รายงานการปฏิบัติงาน');}
   function detail(r){return clean(r.details||r.workDetails||r.detail||r.description||'-');}
   function fileBtns(r){const raw=String(r.fileUrl||r.files||'').trim();if(!raw)return '';return raw.split(/\n|,/).filter(Boolean).slice(0,3).map((u,i)=>'<a class="btn btn-sm btn-light border text-primary" target="_blank" href="'+esc(u.trim())+'"><i class="bi bi-paperclip"></i> '+(i+1)+'</a>').join(' ');}
@@ -11341,7 +11346,7 @@ HAOS v68.6 FINISHING FIX
       catch(e){reject(e);}
     });
   }
-  function dtV713(v){const d=v instanceof Date?v:new Date(v);if(isNaN(d))return '-';return d.toLocaleString('th-TH',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}
+  function dtV713(v){const d=v instanceof Date?v:new Date(v);if(isNaN(d))return '-';return window.HAOSDateDisplay?window.HAOSDateDisplay.dateTime(d,{forceTime:true}):d.toLocaleString('th-TH',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}
   function splitTokensV713(v){return String(v||'').split(/\n|,/).map(clean).filter(Boolean);}
   function dateObjV713(v){
     if(!v)return null;
@@ -15437,7 +15442,7 @@ HAOS v68.6 FINISHING FIX
         <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="exportWorkspaceResponsesV737('png','p')"><i class="bi bi-file-image"></i> รูป A4 แนวตั้ง</button>
       </div>
       <div id="workspaceResponseReportV737" class="haos-v737-report">
-        <div class="haos-v737-report-head"><div><h5>${esc(ws.title||'รายงานคำตอบ')}</h5><small>${esc(ws.description||'')} • จำนวน ${rows.length} คำตอบ</small></div><small>${new Date().toLocaleString('th-TH')}</small></div>
+        <div class="haos-v737-report-head"><div><h5>${esc(ws.title||'รายงานคำตอบ')}</h5><small>${esc(ws.description||'')} • จำนวน ${rows.length} คำตอบ</small></div><small>${window.HAOSDateDisplay?window.HAOSDateDisplay.dateTime(new Date(),{forceTime:true}):new Date().toLocaleString('th-TH')}</small></div>
         ${body}
       </div>
     </section></td></tr></tbody>`;
@@ -15492,7 +15497,7 @@ HAOS v68.6 FINISHING FIX
         <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="exportWorkspaceResponsesV737('png','p')"><i class="bi bi-file-image"></i> รูป A4 แนวตั้ง</button>
       </div>
       <div id="workspaceResponseReportV737" class="haos-v737-report">
-        <div class="haos-v737-report-head"><div><h5>${esc(ws.title||'รายงานคำตอบ')}</h5><small>${esc(ws.description||'')} • จำนวน ${rows.length} คำตอบ</small></div><small>${new Date().toLocaleString('th-TH')}</small></div>
+        <div class="haos-v737-report-head"><div><h5>${esc(ws.title||'รายงานคำตอบ')}</h5><small>${esc(ws.description||'')} • จำนวน ${rows.length} คำตอบ</small></div><small>${window.HAOSDateDisplay?window.HAOSDateDisplay.dateTime(new Date(),{forceTime:true}):new Date().toLocaleString('th-TH')}</small></div>
         ${body}
       </div>
     </section></td></tr></tbody>`;
@@ -16074,7 +16079,7 @@ HAOS v68.6 FINISHING FIX
         <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="exportWorkspaceResponsesV737('png','p')"><i class="bi bi-file-image"></i> รูป A4 แนวตั้ง</button>
       </div>
       <div id="workspaceResponseReportV737" class="haos-v737-report">
-        <div class="haos-v737-report-head"><div><h5>${esc(ws.title||'รายงานคำตอบ')}</h5><small>${esc(ws.description||'')} • จำนวน ${pairs.length} คำตอบ</small></div><small>${new Date().toLocaleString('th-TH')}</small></div>
+        <div class="haos-v737-report-head"><div><h5>${esc(ws.title||'รายงานคำตอบ')}</h5><small>${esc(ws.description||'')} • จำนวน ${pairs.length} คำตอบ</small></div><small>${window.HAOSDateDisplay?window.HAOSDateDisplay.dateTime(new Date(),{forceTime:true}):new Date().toLocaleString('th-TH')}</small></div>
         ${body}
       </div>
     </section></td></tr></tbody>`;
@@ -16115,7 +16120,7 @@ HAOS v68.6 FINISHING FIX
     }
     ws.rows.push(row);
     ws.responseMeta=Array.isArray(ws.responseMeta)?ws.responseMeta:[];
-    ws.responseMeta.push({submittedAt:new Date().toLocaleString('th-TH'),submittedBy:getUser().fullName||getUser().name||'editor'});
+    ws.responseMeta.push({submittedAt:window.HAOSDateDisplay?window.HAOSDateDisplay.dateTime(new Date(),{forceTime:true}):new Date().toLocaleString('th-TH'),submittedBy:getUser().fullName||getUser().name||'editor'});
     renderWorkspaceEditorTable();
   };
   window.addChecklistItemApp=function(){return window.addWorkspaceRowApp();};
@@ -17062,8 +17067,8 @@ HAOS v68.6 FINISHING FIX
 
   function thaiDateWithTime(){
     const now=new Date();
-    const date=now.toLocaleDateString('th-TH',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-    const time=now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',hour12:false});
+    const date=window.HAOSDateDisplay?window.HAOSDateDisplay.date(now):now.toLocaleDateString('th-TH',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    const time=window.HAOSDateDisplay?(window.HAOSDateDisplay.time(now,now)||'').replace(/\s*น\.$/,''):now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',hour12:false});
     return {date,time};
   }
   function updateHeroDateTimeV746(){
@@ -17323,6 +17328,7 @@ HAOS v68.6 FINISHING FIX
   }
   function dateOnlyText(item){
     const d=scheduleDate(item);
+    if(window.HAOSDateDisplay)return window.HAOSDateDisplay.date(d);
     return d?d.toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'}):'-';
   }
   function cleanDisplay(v){return stripDeptPrefixV747(v);}
@@ -17506,10 +17512,12 @@ HAOS v68.6 FINISHING FIX
   function fmtDateTime(v){
     const d=parseDate(v);
     if(!d)return esc(v||'-');
+    if(window.HAOSDateDisplay)return window.HAOSDateDisplay.dateTime(d,{forceTime:true});
     return d.toLocaleString('th-TH',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
   }
   function fmtTimeRange(item){
     const s=parseDate(item.rawStartTime||item.startTime), e=parseDate(item.rawEndTime||item.endTime);
+    if(window.HAOSDateDisplay)return window.HAOSDateDisplay.timeRange(s,e)||'-';
     const st=s?s.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',hour12:false}):'';
     const et=e?e.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',hour12:false}):'';
     if(st&&et)return `${st} - ${et}`;
@@ -17885,11 +17893,12 @@ HAOS v68.6 FINISHING FIX
   function scheduleEnd(item){return parseDate(item.rawEndTime||item.endTime||item.end);}
   function timeRange(item){
     const s=scheduleDate(item),e=scheduleEnd(item);
+    if(window.HAOSDateDisplay)return window.HAOSDateDisplay.timeRange(s,e)||'';
     const fmt=d=>d?d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',hour12:false}):'';
     const a=fmt(s),b=fmt(e);
     return a&&b?`${a} - ${b}`:(a||b||'');
   }
-  function dateTimeText(v){const d=parseDate(v);return d?d.toLocaleString('th-TH',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}):esc(v||'-');}
+  function dateTimeText(v){const d=parseDate(v);return d?(window.HAOSDateDisplay?window.HAOSDateDisplay.dateTime(d,{forceTime:true}):d.toLocaleString('th-TH',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false})):esc(v||'-');}
   function itemById(id){return allSchedules().find(x=>String(x.id||x.publicId||'')===String(id));}
   window.showSchedulePopupDetailV749=function(id){
     const item=itemById(id); if(!item)return;
@@ -18640,7 +18649,7 @@ HAOS v68.6 FINISHING FIX
     const aoa=[
       [cellText(ws.title||'รายงานคำตอบ')],
       [cellText(ws.description||'')],
-      ['วันที่ส่งออก',new Date().toLocaleString('th-TH'),'จำนวนคำตอบ',String(rows.length)],
+      ['วันที่ส่งออก',window.HAOSDateDisplay?window.HAOSDateDisplay.dateTime(new Date(),{forceTime:true}):new Date().toLocaleString('th-TH'),'จำนวนคำตอบ',String(rows.length)],
       []
     ];
     aoa.push(header.length?header:['คำตอบ']);
@@ -18711,5 +18720,6 @@ HAOS v68.6 FINISHING FIX
 <link rel="stylesheet" href="assets/css/shared-workspace-flow.css">
 <script src="assets/js/modules/shared-workspace-flow.js"></script>
 <script src="assets/js/modules/shared-workspace-builder.js"></script>
+<script>window.HAOSDateDisplay&&window.HAOSDateDisplay.installCompatibilityGlobals&&window.HAOSDateDisplay.installCompatibilityGlobals();</script>
 </body>
 </html>

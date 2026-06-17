@@ -12,6 +12,7 @@ Last updated: 2026-06-16
 | Notification Center core/action routing | Extracted | `assets/js/modules/notifications.js`, `assets/js/modules/notifications-action-fix.js`, `assets/css/notifications.css` |
 | Program Guide / Onboarding / Default Tabs | Extracted | `assets/js/modules/program-guide.js`, `assets/css/program-guide.css` |
 | Public Link Main Navigation | Extracted | `assets/js/modules/public-portal.js`, `assets/css/public-portal.css` |
+| Date / Time Display Standard | Extracted | `assets/js/modules/date-display.js` |
 | Schedule Core Stabilizer | Extracted | `assets/js/modules/schedule-core.js` |
 | Schedule View Renderer | Extracted | `assets/js/modules/schedule-view.js` |
 | Schedule Thai List Display | Extracted | `assets/js/modules/schedule-thai-list.js`, `assets/css/schedule-thai-list.css` |
@@ -39,6 +40,7 @@ Start with the smallest isolated modules. Keep every existing `window.*` public 
 
 | Module | Proposed file | Notes |
 | --- | --- | --- |
+| Date/time display standard | `assets/js/modules/date-display.js` | Shared display-only formatter loaded before UI modules. It standardizes dates as `16 • มิถุนายน • 2569` and times as `08.30 น.` while keeping legacy global formatter names compatible. |
 | Notification Center | `assets/js/modules/notifications.js` | Core/action routing extracted. Advanced filter/card/today-highlight patches remain inline until the next notification pass because they share code with workspace/calendar and later UI polish blocks. |
 | Program Guide / Onboarding | `assets/js/modules/program-guide.js` | Extracted. It keeps default IT Services tab ordering and the updated guide/onboarding popups compatible with existing global callers. |
 | Public link shell | `assets/js/modules/public-portal.js`, `assets/css/public-portal.css` | Extracted. Adds the shared return-to-main-system action across every `public.html` route and re-adds it when a public module replaces the page body. Public booking remains inline in `public.html` for now, with a member/guest gate before the booking form. |

@@ -98,7 +98,7 @@
     const aoa = [
       [answerText(workspace.title || 'รายงานคำตอบ')],
       [answerText(workspace.description || '')],
-      ['วันที่ส่งออก', new Date().toLocaleString('th-TH'), 'จำนวนคำตอบ', String(rows.length)],
+      ['วันที่ส่งออก', window.HAOSDateDisplay ? window.HAOSDateDisplay.dateTime(new Date(), { forceTime: true }) : new Date().toLocaleString('th-TH'), 'จำนวนคำตอบ', String(rows.length)],
       [],
       header.length ? header : ['คำตอบ']
     ];

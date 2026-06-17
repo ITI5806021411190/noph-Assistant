@@ -485,3 +485,21 @@ Rollback:
 - Frontend: revert `upcoming` defaults in `assets/js/modules/schedule-core.js`, `assets/js/modules/schedule-view.js`, `assets/js/modules/schedule-thai-list.js`, `assets/js/modules/meeting-minutes.js`, and the small compatibility blocks in `index.html` back to `dateDesc`/`newest`.
 - Backend: remove `normalizeScheduleCalendarReminderMinutes_` and `applyScheduleCalendarReminder_`, then restore `syncToGoogleCalendar` to create/update events without explicit reminders.
 - No database rows are deleted or migrated in this change. Existing `Notify Lead Time` values are reused.
+
+## 2026-06-17 v70.85 Date Display Standard
+
+Scope:
+
+- Added a shared frontend date/time formatter in `assets/js/modules/date-display.js`.
+- Standard display date is `16 • มิถุนายน • 2569`.
+- Standard display time is 24-hour `HH.mm น.` such as `08.30 น.` and `23.30 น.`.
+- Main app, public routes, remote support, schedule views, workspace exports, IT Booking, report cards, and help-chat timestamps now prefer the shared formatter.
+- `sw.js` cache name was bumped so browsers fetch the new formatter after deployment.
+
+Rollback:
+
+- Remove `assets/js/modules/date-display.js`.
+- Remove its `<script src="assets/js/modules/date-display.js"></script>` include from `index.html`, `public.html`, and `remote.html`.
+- Revert helper-first formatter calls in `index.html`, `assets/js/modules/schedule-view.js`, `assets/js/modules/schedule-thai-list.js`, and `assets/js/modules/shared-workspace-export.js`.
+- Restore the previous `sw.js` cache name if browser cache behavior needs to match the prior release.
+- No Google Sheet data, Apps Script database rows, or backend schema are changed in this release.
