@@ -82,3 +82,9 @@ External Organizations was used as the first real extraction because it is small
 3. Confirm it appears in registration department dropdown.
 4. Toggle active/inactive.
 5. Confirm non-Super Admin cannot manage it.
+
+## v70.84 Notes
+
+- `assets/js/modules/schedule-core.js` owns the `upcoming` sort mode used by schedule list/card/calendar queries.
+- `assets/js/modules/schedule-view.js` installs the visible `วันที่ที่จะถึง` option and resets to it by default.
+- Google Calendar reminder persistence remains in `Code.gs.txt` because Calendar writes must run in Apps Script.

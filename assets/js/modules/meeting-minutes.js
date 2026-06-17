@@ -23,7 +23,7 @@
       }
     }
     const sort=$('unifiedScheduleSortV702');
-    if(sort && !sort.value) sort.value='dateDesc';
+    if(sort && !sort.value) sort.value='upcoming';
     return changed;
   }
   function decorateScheduleLegendV759(){
@@ -66,7 +66,7 @@
   window.resetUnifiedScheduleFiltersV702=function(){
     ['unifiedScheduleSearchV702','unifiedScheduleScopeV702','unifiedSchedulePeriodV702','unifiedSchedulePriorityV706','unifiedScheduleTagV706'].forEach(id=>{const el=$(id);if(el)el.value='';});
     if($('unifiedScheduleStatusV702')){$('unifiedScheduleStatusV702').value=inProgress;$('unifiedScheduleStatusV702').dataset.v759Defaulted='1';}
-    if($('unifiedScheduleSortV702'))$('unifiedScheduleSortV702').value='dateDesc';
+    if($('unifiedScheduleSortV702'))$('unifiedScheduleSortV702').value='upcoming';
     window.haosSchedulePageV739=1;
     renderUnifiedScheduleV702();
   };

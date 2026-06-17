@@ -1,5 +1,5 @@
 (function(){
-  const PATCH = 'v70.69-schedule-core-stabilizer';
+  const PATCH = 'v70.84-schedule-upcoming-sort';
   if (window.__HAOS_V769_SCHEDULE_CORE__) return;
   window.__HAOS_V769_SCHEDULE_CORE__ = true;
 
@@ -20,7 +20,7 @@
     period: '',
     priority: '',
     tag: '',
-    sort: 'dateDesc',
+    sort: 'upcoming',
     page: 1,
     pageSize: 20,
     view: 'list'
@@ -173,6 +173,7 @@
     state = normalizeState(state);
     const pinned = pins();
     const today = new Date();
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
     return (Array.isArray(list) ? list.slice() : []).sort((a, b) => {
       const pa = pinned.has(String(a.id || a.publicId || '')) ? 1 : 0;
       const pb = pinned.has(String(b.id || b.publicId || '')) ? 1 : 0;
@@ -183,6 +184,13 @@
       if (state.sort === 'name') return titleOf(a).localeCompare(titleOf(b), 'th');
       const da = (a.__date || dateValue(a) || 0).getTime ? (a.__date || dateValue(a)).getTime() : 0;
       const db = (b.__date || dateValue(b) || 0).getTime ? (b.__date || dateValue(b)).getTime() : 0;
+      if (state.sort === 'upcoming' || state.sort === 'soon') {
+        const au = da && da >= todayStart ? 0 : 1;
+        const bu = db && db >= todayStart ? 0 : 1;
+        if (au !== bu) return au - bu;
+        if (au === 0) return da - db;
+        return db - da;
+      }
       if (state.sort === 'dateAsc' || state.sort === 'oldest') return da - db;
       return db - da;
     });
@@ -207,7 +215,7 @@
       period: byId('unifiedSchedulePeriodV702')?.value || byId('schedulePeriodFilter')?.value || '',
       priority: byId('unifiedSchedulePriorityV706')?.value || '',
       tag: byId('unifiedScheduleTagV706')?.value || '',
-      sort: byId('unifiedScheduleSortV702')?.value || byId('scheduleSort')?.value || 'dateDesc',
+      sort: byId('unifiedScheduleSortV702')?.value || byId('scheduleSort')?.value || 'upcoming',
       page: window.haosSchedulePageV739 || 1,
       view: window.haosUnifiedScheduleModeV702 || 'list'
     });
@@ -229,7 +237,7 @@
     }
     ['unifiedScheduleSortV702', 'scheduleSort'].forEach(id => {
       const el = document.getElementById(id);
-      if (el && !el.value) el.value = 'dateDesc';
+      if (el && !el.value) el.value = 'upcoming';
     });
   }
 

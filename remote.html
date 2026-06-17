@@ -193,13 +193,7 @@
     function setBusy(btn,on,text){if(!btn)return;btn.disabled=!!on;if(text)btn.innerHTML=text;}
     function fmtDate(v){try{return v?new Date(v).toLocaleString('th-TH'):'';}catch(e){return String(v||'');}}
     function moduleLink(){
-      const url=new URL(location.href);
-      url.pathname='/remote.html';
-      url.searchParams.set('mode','user');
-      url.searchParams.set('v','7059');
-      const phone=phoneOnly($('reqPhone')?.value||qs.get('phone')||'');
-      if(phone.length===10)url.searchParams.set('phone',phone); else url.searchParams.delete('phone');
-      return url.toString();
+      return new URL('/remote.html?v=7059&mode=user&phone', location.origin).toString();
     }
     async function copyModuleLink(){
       await copyText(moduleLink(), true);

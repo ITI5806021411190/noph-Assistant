@@ -470,3 +470,18 @@ Every step must include:
 - Super Admin user management still works.
 - The touched module works.
 - Rollback path is written down if database or deployment changes are involved.
+
+## 2026-06-17 v70.84 Upcoming Sort / Calendar Reminder
+
+Scope:
+
+- Schedule default sort now uses `upcoming`: today and future items first, nearest date first; past items fall to the bottom newest-first.
+- Visible date-sort filters in schedule, IT Booking, and e-Meeting now align with the upcoming-first behavior.
+- Schedule Google Calendar sync now applies `Notify Lead Time`/`leadTime` to the Calendar event reminder instead of relying on the Google Calendar account default.
+- Remote AnyDesk module-copy link no longer includes the current user's phone number by default.
+
+Rollback:
+
+- Frontend: revert `upcoming` defaults in `assets/js/modules/schedule-core.js`, `assets/js/modules/schedule-view.js`, `assets/js/modules/schedule-thai-list.js`, `assets/js/modules/meeting-minutes.js`, and the small compatibility blocks in `index.html` back to `dateDesc`/`newest`.
+- Backend: remove `normalizeScheduleCalendarReminderMinutes_` and `applyScheduleCalendarReminder_`, then restore `syncToGoogleCalendar` to create/update events without explicit reminders.
+- No database rows are deleted or migrated in this change. Existing `Notify Lead Time` values are reused.

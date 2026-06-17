@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-83-schedule-booking-polish';
+const CACHE_NAME = 'haos-v70-84-upcoming-sort-reminder-remote';
 const CORE = [
   '/',
   '/index.html',

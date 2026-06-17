@@ -1268,6 +1268,33 @@ function deleteSchedule(id, ownerPhone) {
   }
 }
 
+function normalizeScheduleCalendarReminderMinutes_(value, fallbackMinutes) {
+  var fallback = Number(fallbackMinutes == null ? 15 : fallbackMinutes);
+  if (isNaN(fallback) || fallback < 0) fallback = 15;
+  var raw = String(value == null || value === '' ? fallback : value).trim();
+  if (!raw) raw = String(fallback);
+  if (/^(0|none|no|off|false|ไม่เตือน|ไม่แจ้งเตือน)$/i.test(raw)) return 0;
+  var numMatch = raw.match(/-?\d+(\.\d+)?/);
+  var minutes = numMatch ? Number(numMatch[0]) : fallback;
+  if (isNaN(minutes) || minutes < 0) minutes = fallback;
+  if (/ชั่วโมง|hour|hr\b|hrs\b/i.test(raw)) minutes = minutes * 60;
+  else if (/วัน|day\b|days\b/i.test(raw)) minutes = minutes * 1440;
+  minutes = Math.round(minutes);
+  if (minutes > 0 && minutes < 5) minutes = 5;
+  if (minutes > 40320) minutes = 40320;
+  return minutes;
+}
+
+function applyScheduleCalendarReminder_(event, leadTime) {
+  if (!event) return 0;
+  var minutes = normalizeScheduleCalendarReminderMinutes_(leadTime, 15);
+  try { event.removeAllReminders(); } catch(ignore) {}
+  if (minutes > 0) {
+    try { event.addPopupReminder(minutes); } catch(ignore2) {}
+  }
+  return minutes;
+}
+
 function syncToGoogleCalendar(data, existingEventId) {
   try {
     var cal = CalendarApp.getDefaultCalendar();
@@ -1277,10 +1304,13 @@ function syncToGoogleCalendar(data, existingEventId) {
     var title = data.eventName || data.topic || 'Health Assistant OS Event';
     var desc = 'รายละเอียด: ' + (data.details || data.otherLocation || '-') + '\nสถานะ: ' + (data.workStatus || data.status || '-') + '\nสร้าง/ซิงก์ผ่าน Health Assistant OS';
     var loc = data.location || data.meetingLink || data.roomName || data.otherLocation || '';
+    var leadTime = data.leadTime || data.notifyLeadTime || data.notifyLeadMinutes || data.reminderMinutes || 15;
     var ev = null;
     if (existingEventId && existingEventId !== 'Error') { try { ev = cal.getEventById(existingEventId); } catch(ignore) {} }
-    if (ev) { ev.setTitle(title); ev.setTime(start,end); ev.setLocation(loc); ev.setDescription(desc); return ev.getId(); }
-    return cal.createEvent(title, start, end, { location: loc, description: desc }).getId();
+    if (ev) { ev.setTitle(title); ev.setTime(start,end); ev.setLocation(loc); ev.setDescription(desc); applyScheduleCalendarReminder_(ev, leadTime); return ev.getId(); }
+    ev = cal.createEvent(title, start, end, { location: loc, description: desc });
+    applyScheduleCalendarReminder_(ev, leadTime);
+    return ev.getId();
   } catch (e) {
     try { logError_('', 'syncToGoogleCalendar', e, {data:data, existingEventId:existingEventId}); } catch(ignore) {}
     return 'Error';
@@ -3825,7 +3855,7 @@ function syncITBookingToGoogleCalendarV66_(item, existingEventId) {
 }
 function resyncAllGoogleCalendarV66(phone) {
   try { ensureCalendarIntegrationV66_(); var role = (getUserProfileByPhone_(phone)||{}).role || ''; if (role !== 'Super Admin' && role !== 'Admin') return {success:false,message:'ไม่มีสิทธิ์'};
-    var count = 0; var ss=getDB(); var sh=ss.getSheetByName(SHEET_NAME); if (sh) { var data=sh.getDataRange().getValues(); var calCol=getColumnIndex_(sh,'Google Calendar Event ID'), syncCol=getColumnIndex_(sh,'Google Calendar Sync'), lastCol=getColumnIndex_(sh,'Last Calendar Sync'); for (var i=1;i<data.length;i++){ var obj={eventName:data[i][1],startTime:data[i][2],endTime:data[i][3],meetingLink:data[i][4],workStatus:data[i][9],details:data[i][15],location:data[i][16]}; var id=syncToGoogleCalendar(obj, calCol?data[i][calCol-1]:''); if(calCol&&id&&id!=='Error') sh.getRange(i+1,calCol).setValue(id); if(syncCol) sh.getRange(i+1,syncCol).setValue(id&&id!=='Error'?'Synced':'Error'); if(lastCol) sh.getRange(i+1,lastCol).setValue(new Date()); count++; }}
+    var count = 0; var ss=getDB(); var sh=ss.getSheetByName(SHEET_NAME); if (sh) { var data=sh.getDataRange().getValues(); var calCol=getColumnIndex_(sh,'Google Calendar Event ID'), syncCol=getColumnIndex_(sh,'Google Calendar Sync'), lastCol=getColumnIndex_(sh,'Last Calendar Sync'); for (var i=1;i<data.length;i++){ var obj={eventName:data[i][1],startTime:data[i][2],endTime:data[i][3],meetingLink:data[i][4],leadTime:data[i][8],notifyLeadTime:data[i][8],workStatus:data[i][9],details:data[i][15],location:data[i][16]}; var id=syncToGoogleCalendar(obj, calCol?data[i][calCol-1]:''); if(calCol&&id&&id!=='Error') sh.getRange(i+1,calCol).setValue(id); if(syncCol) sh.getRange(i+1,syncCol).setValue(id&&id!=='Error'?'Synced':'Error'); if(lastCol) sh.getRange(i+1,lastCol).setValue(new Date()); count++; }}
     var it=getITBookingSheet_(); var itData=it.getDataRange().getValues(); var c=getColumnIndex_(it,'Google Calendar Event ID'), cs=getColumnIndex_(it,'Google Calendar Sync'), cl=getColumnIndex_(it,'Last Calendar Sync'); for (var r=1;r<itData.length;r++){ var item=itBookingRowToObject_(itData[r]); var id2=syncITBookingToGoogleCalendarV66_(item, c?itData[r][c-1]:''); if(c&&id2&&id2!=='Error') it.getRange(r+1,c).setValue(id2); if(cs) it.getRange(r+1,cs).setValue(id2&&id2!=='Error'?'Synced':'Error'); if(cl) it.getRange(r+1,cl).setValue(new Date()); count++; }
     try { createNotificationV732_(phone, 'ซิงก์ Google Calendar สำเร็จ ' + count + ' รายการ', 'System Calendar', 'GoogleCalendarV66', 'ปกติ', {module:'systemTools', action:'openSystemTools', createdBy:phone}); } catch(ignore) {}
     return {success:true,message:'ซิงก์ Google Calendar สำเร็จ ' + count + ' รายการ'};
@@ -4704,7 +4734,7 @@ function syncITBookingToGoogleCalendarV66_(item, existingEventId) {
 }
 function resyncAllGoogleCalendarV66(phone) {
   try { ensureCalendarIntegrationV66_(); var role = (getUserProfileByPhone_(phone)||{}).role || ''; if (role !== 'Super Admin' && role !== 'Admin') return {success:false,message:'ไม่มีสิทธิ์'};
-    var count = 0; var ss=getDB(); var sh=ss.getSheetByName(SHEET_NAME); if (sh) { var data=sh.getDataRange().getValues(); var calCol=getColumnIndex_(sh,'Google Calendar Event ID'), syncCol=getColumnIndex_(sh,'Google Calendar Sync'), lastCol=getColumnIndex_(sh,'Last Calendar Sync'); for (var i=1;i<data.length;i++){ var obj={eventName:data[i][1],startTime:data[i][2],endTime:data[i][3],meetingLink:data[i][4],workStatus:data[i][9],details:data[i][15],location:data[i][16]}; var id=syncToGoogleCalendar(obj, calCol?data[i][calCol-1]:''); if(calCol&&id&&id!=='Error') sh.getRange(i+1,calCol).setValue(id); if(syncCol) sh.getRange(i+1,syncCol).setValue(id&&id!=='Error'?'Synced':'Error'); if(lastCol) sh.getRange(i+1,lastCol).setValue(new Date()); count++; }}
+    var count = 0; var ss=getDB(); var sh=ss.getSheetByName(SHEET_NAME); if (sh) { var data=sh.getDataRange().getValues(); var calCol=getColumnIndex_(sh,'Google Calendar Event ID'), syncCol=getColumnIndex_(sh,'Google Calendar Sync'), lastCol=getColumnIndex_(sh,'Last Calendar Sync'); for (var i=1;i<data.length;i++){ var obj={eventName:data[i][1],startTime:data[i][2],endTime:data[i][3],meetingLink:data[i][4],leadTime:data[i][8],notifyLeadTime:data[i][8],workStatus:data[i][9],details:data[i][15],location:data[i][16]}; var id=syncToGoogleCalendar(obj, calCol?data[i][calCol-1]:''); if(calCol&&id&&id!=='Error') sh.getRange(i+1,calCol).setValue(id); if(syncCol) sh.getRange(i+1,syncCol).setValue(id&&id!=='Error'?'Synced':'Error'); if(lastCol) sh.getRange(i+1,lastCol).setValue(new Date()); count++; }}
     var it=getITBookingSheet_(); var itData=it.getDataRange().getValues(); var c=getColumnIndex_(it,'Google Calendar Event ID'), cs=getColumnIndex_(it,'Google Calendar Sync'), cl=getColumnIndex_(it,'Last Calendar Sync'); for (var r=1;r<itData.length;r++){ var item=itBookingRowToObject_(itData[r]); var id2=syncITBookingToGoogleCalendarV66_(item, c?itData[r][c-1]:''); if(c&&id2&&id2!=='Error') it.getRange(r+1,c).setValue(id2); if(cs) it.getRange(r+1,cs).setValue(id2&&id2!=='Error'?'Synced':'Error'); if(cl) it.getRange(r+1,cl).setValue(new Date()); count++; }
     try { createNotificationV732_(phone, 'ซิงก์ Google Calendar สำเร็จ ' + count + ' รายการ', 'System Calendar', 'GoogleCalendarV66', 'ปกติ', {module:'systemTools', action:'openSystemTools', createdBy:phone}); } catch(ignore) {}
     return {success:true,message:'ซิงก์ Google Calendar สำเร็จ ' + count + ' รายการ'};
@@ -5198,7 +5228,7 @@ function syncITBookingToGoogleCalendarV66_(item, existingEventId) {
 }
 function resyncAllGoogleCalendarV66(phone) {
   try { ensureCalendarIntegrationV66_(); var role = (getUserProfileByPhone_(phone)||{}).role || ''; if (role !== 'Super Admin' && role !== 'Admin') return {success:false,message:'ไม่มีสิทธิ์'};
-    var count = 0; var ss=getDB(); var sh=ss.getSheetByName(SHEET_NAME); if (sh) { var data=sh.getDataRange().getValues(); var calCol=getColumnIndex_(sh,'Google Calendar Event ID'), syncCol=getColumnIndex_(sh,'Google Calendar Sync'), lastCol=getColumnIndex_(sh,'Last Calendar Sync'); for (var i=1;i<data.length;i++){ var obj={eventName:data[i][1],startTime:data[i][2],endTime:data[i][3],meetingLink:data[i][4],workStatus:data[i][9],details:data[i][15],location:data[i][16]}; var id=syncToGoogleCalendar(obj, calCol?data[i][calCol-1]:''); if(calCol&&id&&id!=='Error') sh.getRange(i+1,calCol).setValue(id); if(syncCol) sh.getRange(i+1,syncCol).setValue(id&&id!=='Error'?'Synced':'Error'); if(lastCol) sh.getRange(i+1,lastCol).setValue(new Date()); count++; }}
+    var count = 0; var ss=getDB(); var sh=ss.getSheetByName(SHEET_NAME); if (sh) { var data=sh.getDataRange().getValues(); var calCol=getColumnIndex_(sh,'Google Calendar Event ID'), syncCol=getColumnIndex_(sh,'Google Calendar Sync'), lastCol=getColumnIndex_(sh,'Last Calendar Sync'); for (var i=1;i<data.length;i++){ var obj={eventName:data[i][1],startTime:data[i][2],endTime:data[i][3],meetingLink:data[i][4],leadTime:data[i][8],notifyLeadTime:data[i][8],workStatus:data[i][9],details:data[i][15],location:data[i][16]}; var id=syncToGoogleCalendar(obj, calCol?data[i][calCol-1]:''); if(calCol&&id&&id!=='Error') sh.getRange(i+1,calCol).setValue(id); if(syncCol) sh.getRange(i+1,syncCol).setValue(id&&id!=='Error'?'Synced':'Error'); if(lastCol) sh.getRange(i+1,lastCol).setValue(new Date()); count++; }}
     var it=getITBookingSheet_(); var itData=it.getDataRange().getValues(); var c=getColumnIndex_(it,'Google Calendar Event ID'), cs=getColumnIndex_(it,'Google Calendar Sync'), cl=getColumnIndex_(it,'Last Calendar Sync'); for (var r=1;r<itData.length;r++){ var item=itBookingRowToObject_(itData[r]); var id2=syncITBookingToGoogleCalendarV66_(item, c?itData[r][c-1]:''); if(c&&id2&&id2!=='Error') it.getRange(r+1,c).setValue(id2); if(cs) it.getRange(r+1,cs).setValue(id2&&id2!=='Error'?'Synced':'Error'); if(cl) it.getRange(r+1,cl).setValue(new Date()); count++; }
     return {success:true,message:'ซิงก์ Google Calendar สำเร็จ ' + count + ' รายการ'};
   } catch(e){ return {success:false,message:e.toString()}; }

@@ -1,5 +1,5 @@
 (function(){
-  const PATCH = 'v70.70-schedule-view-stabilizer';
+  const PATCH = 'v70.84-schedule-upcoming-sort';
   if (window.__HAOS_V770_SCHEDULE_VIEW__) return;
   window.__HAOS_V770_SCHEDULE_VIEW__ = true;
 
@@ -115,6 +115,7 @@
 
   function ensureSortOptions() {
     const labels = [
+      ['upcoming', 'วันที่ที่จะถึง'],
       ['dateDesc', 'วันที่มากไปน้อย'],
       ['dateAsc', 'วันที่น้อยไปมาก'],
       ['newest', 'ล่าสุดก่อน'],
@@ -128,7 +129,7 @@
         el.innerHTML = labels.map(([v, t]) => `<option value="${v}">${t}</option>`).join('');
         el.dataset.haosV770SortOptions = '1';
       }
-      if (!el.dataset.haosV770UserTouched && el.value !== 'dateDesc') el.value = 'dateDesc';
+      if (!el.dataset.haosV770UserTouched && el.value !== 'upcoming') el.value = 'upcoming';
       if (!el.dataset.haosV770TouchHook) {
         el.dataset.haosV770TouchHook = '1';
         el.addEventListener('change', () => { el.dataset.haosV770UserTouched = '1'; });
@@ -434,7 +435,7 @@
     }
     const sort = $('unifiedScheduleSortV702');
     if (sort) {
-      sort.value = 'dateDesc';
+      sort.value = 'upcoming';
       delete sort.dataset.haosV770UserTouched;
     }
     window.haosSchedulePageV739 = 1;

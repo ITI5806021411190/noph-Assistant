@@ -423,7 +423,7 @@
     const scopeEl = $('unifiedScheduleScopeV702');
     if (scopeEl) s.scope = scopeEl.value;
     const sortEl = $('unifiedScheduleSortV702');
-    if (sortEl) s.sort = sortEl.value || 'dateDesc';
+    if (sortEl) s.sort = sortEl.value || 'upcoming';
     const priorityEl = $('unifiedSchedulePriorityV706');
     if (priorityEl) s.priority = priorityEl.value || '';
     const tagEl = $('unifiedScheduleTagV706');

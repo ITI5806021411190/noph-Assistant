@@ -1377,7 +1377,21 @@ label,.form-label{font-weight:800;color:#334155;margin-bottom:6px;}
                       </div>
                       <div class="col-sm-2">
                         <label class="small fw-bold text-muted">เตือนก่อน</label>
-                        <input type="number" id="leadTime" class="form-control" value="15" required>
+                        <input type="text" id="leadTime" class="form-control" value="15" list="leadTimePresetV784" placeholder="เช่น 45 หรือ 2 ชั่วโมง" required>
+                        <datalist id="leadTimePresetV784">
+                          <option value="0">
+                          <option value="5">
+                          <option value="10">
+                          <option value="15">
+                          <option value="30">
+                          <option value="45">
+                          <option value="60">
+                          <option value="120">
+                          <option value="1 ชั่วโมง">
+                          <option value="2 ชั่วโมง">
+                          <option value="1 วัน">
+                        </datalist>
+                        <small class="text-muted">นาที / ชั่วโมง / วัน · ใส่ 0 หากไม่ต้องการเตือน</small>
                       </div>
                     </div>
                     
@@ -1533,6 +1547,7 @@ label,.form-label{font-weight:800;color:#334155;margin-bottom:6px;}
                       <div class="col-md-2">
                         <label class="small fw-bold text-muted">เรียงลำดับ</label>
                         <select id="scheduleSort" class="form-select" onchange="applyScheduleFilters()">
+                          <option value="upcoming">วันที่ที่จะถึง</option>
                           <option value="newest">ล่าสุดก่อน</option>
                           <option value="oldest">เก่าสุดก่อน</option>
                           <option value="name">ชื่องาน</option>
@@ -4208,6 +4223,13 @@ label,.form-label{font-weight:800;color:#334155;margin-bottom:6px;}
         if (sort === 'name') return (a.eventName || '').localeCompare(b.eventName || '', 'th');
         const da = a.rawStartTime ? new Date(a.rawStartTime) : new Date(0);
         const db = b.rawStartTime ? new Date(b.rawStartTime) : new Date(0);
+        if (sort === 'upcoming' || sort === 'soon') {
+          const today = new Date(); today.setHours(0,0,0,0);
+          const au = da && da >= today ? 0 : 1;
+          const bu = db && db >= today ? 0 : 1;
+          if (au !== bu) return au - bu;
+          return au === 0 ? da - db : db - da;
+        }
         return sort === 'oldest' ? da - db : db - da;
       });
       return list;
@@ -4217,7 +4239,7 @@ label,.form-label{font-weight:800;color:#334155;margin-bottom:6px;}
       const q = (document.getElementById('scheduleSearch')?.value || '').toLowerCase().trim();
       const status = document.getElementById('scheduleStatusFilter')?.value || '';
       const period = document.getElementById('schedulePeriodFilter')?.value || '';
-      const sort = document.getElementById('scheduleSort')?.value || 'newest';
+      const sort = document.getElementById('scheduleSort')?.value || 'upcoming';
 
       filteredSchedulesGlobal = (mySchedulesGlobal || []).filter(item => schedulePassesSearchFilters_(item, q, status, period));
       sortScheduleList_(filteredSchedulesGlobal, sort);
@@ -4231,7 +4253,7 @@ label,.form-label{font-weight:800;color:#334155;margin-bottom:6px;}
 
     function resetScheduleFilters() {
       ['scheduleSearch','scheduleStatusFilter','schedulePeriodFilter'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-      const sort = document.getElementById('scheduleSort'); if (sort) sort.value = 'newest';
+      const sort = document.getElementById('scheduleSort'); if (sort) sort.value = 'upcoming';
       applyScheduleFilters();
     }
 
@@ -6807,8 +6829,9 @@ function clearItBookingCanvas_(canvasId) {
   window.downloadQrV49_=function(){if(!window.qrCanvasV49)return Swal.fire('ยังไม่มี QR','กรุณากดสร้าง QR ก่อน','warning');const a=document.createElement('a');a.href=window.qrCanvasV49.toDataURL('image/png');a.download='qr-code-logo.png';a.click();};
 
   window.ensureScheduleGlobalFilterV49_=function(){ const first=document.querySelector('#schedule-pane .card.border-primary'); if(first)first.classList.add('schedule-table-personal'); document.querySelector('#schedule-pane .card.border-info')?.classList.add('schedule-table-dept'); document.querySelector('#schedule-pane .card.border-success')?.classList.add('workspace-table-card'); if(q('globalScheduleFilterV49'))return; const pane=q('schedule-pane'); if(!pane||!first)return; first.insertAdjacentHTML('beforebegin',`<div id="globalScheduleFilterV49" class="filter-panel border-primary mb-3"><div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2"><div><b><i class="bi bi-funnel"></i> ตัวกรองรวม ตารางงาน & พื้นที่ทำงานร่วมกัน</b><div class="small text-muted">กรองพร้อมกันทั้งตารางงานส่วนตัว ตารางงานกลุ่มงาน และพื้นที่ทำงานร่วมกัน</div></div><button class="btn btn-sm btn-outline-secondary" onclick="resetScheduleFilters();applyWorkspaceFiltersV49_();">ล้างตัวกรอง</button></div><div class="row g-2"><div class="col-md-5"><input id="globalScheduleSearchV49" class="form-control" placeholder="ค้นหาชื่องาน สถานที่ รายละเอียด หรือชื่อพื้นที่ทำงาน" oninput="syncGlobalScheduleFiltersV49_()"></div><div class="col-md-3"><select id="globalScheduleStatusV49" class="form-select" onchange="syncGlobalScheduleFiltersV49_()"><option value="">ทุกสถานะ</option><option>อยู่ระหว่างการดำเนินการ</option><option>ดำเนินการแล้ว</option><option>ยกเลิกสถานะ</option><option>เสร็จสิ้นแต่ยังไม่สมบูรณ์</option></select></div><div class="col-md-2"><select id="globalSchedulePeriodV49" class="form-select" onchange="syncGlobalScheduleFiltersV49_()"><option value="">ทุกช่วงเวลา</option><option value="today">วันนี้</option><option value="week">7 วัน</option><option value="month">30 วัน</option></select></div><div class="col-md-2"><select id="globalScheduleSortV49" class="form-select" onchange="syncGlobalScheduleFiltersV49_()"><option value="newest">ล่าสุดก่อน</option><option value="oldest">เก่าสุดก่อน</option><option value="name">ชื่องาน</option></select></div></div></div>`); };
-  window.syncGlobalScheduleFiltersV49_=function(){ if(q('scheduleSearch'))q('scheduleSearch').value=q('globalScheduleSearchV49')?.value||''; if(q('scheduleStatusFilter'))q('scheduleStatusFilter').value=q('globalScheduleStatusV49')?.value||''; if(q('schedulePeriodFilter'))q('schedulePeriodFilter').value=q('globalSchedulePeriodV49')?.value||''; if(q('scheduleSort'))q('scheduleSort').value=q('globalScheduleSortV49')?.value||'newest'; if(typeof applyScheduleFilters==='function')applyScheduleFilters(); applyWorkspaceFiltersV49_(); };
-  const oldInitDash=window.initDashboard; window.initDashboard=function(){oldInitDash&&oldInitDash();setTimeout(ensureScheduleGlobalFilterV49_,600);}; const oldLoadShared=window.loadSharedWorkspaces; window.loadSharedWorkspaces=function(){oldLoadShared&&oldLoadShared();setTimeout(applyWorkspaceFiltersV49_,800);};
+  function ensureGlobalScheduleSortV784_(){const sel=q('globalScheduleSortV49');if(!sel)return;if(!sel.querySelector('option[value="upcoming"]'))sel.insertAdjacentHTML('afterbegin','<option value="upcoming">วันที่ที่จะถึง</option>');if(!sel.dataset.v784Touched){sel.value='upcoming';sel.dataset.v784Touched='1';}}
+  window.syncGlobalScheduleFiltersV49_=function(){ ensureGlobalScheduleSortV784_(); if(q('scheduleSearch'))q('scheduleSearch').value=q('globalScheduleSearchV49')?.value||''; if(q('scheduleStatusFilter'))q('scheduleStatusFilter').value=q('globalScheduleStatusV49')?.value||''; if(q('schedulePeriodFilter'))q('schedulePeriodFilter').value=q('globalSchedulePeriodV49')?.value||''; if(q('scheduleSort'))q('scheduleSort').value=q('globalScheduleSortV49')?.value||'upcoming'; if(typeof applyScheduleFilters==='function')applyScheduleFilters(); applyWorkspaceFiltersV49_(); };
+  const oldInitDash=window.initDashboard; window.initDashboard=function(){oldInitDash&&oldInitDash();setTimeout(()=>{ensureScheduleGlobalFilterV49_();ensureGlobalScheduleSortV784_();},600);}; const oldLoadShared=window.loadSharedWorkspaces; window.loadSharedWorkspaces=function(){oldLoadShared&&oldLoadShared();setTimeout(applyWorkspaceFiltersV49_,800);};
   window.applyWorkspaceFiltersV49_=function(){const qv=(q('globalScheduleSearchV49')?.value||q('scheduleSearch')?.value||'').toLowerCase().trim();document.querySelectorAll('#workspaceTableBody tr').forEach(r=>{r.style.display=!qv||r.innerText.toLowerCase().includes(qv)?'':'none';});};
 
   window.ensureScheduleAttachmentInputsV49_=function(){ const box=q('scheduleAiFileBox'); if(!box||q('scheduleAttachmentsV49'))return; box.insertAdjacentHTML('afterend',`<div class="mb-3 p-2 bg-white border rounded" id="scheduleAttachmentsV49"><label class="small fw-bold text-primary"><i class="bi bi-paperclip"></i> ไฟล์แนบประกอบเรื่อง (ไม่ใช่ไฟล์วิเคราะห์ AI)</label><div class="small text-muted mb-2">แนบได้สูงสุด 10 ไฟล์ต่อ 1 เรื่อง เพื่อเก็บไว้กับตารางงาน/นัดหมาย</div><div id="scheduleAttachmentListV49"></div><button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="addScheduleAttachmentInputV49_()"><i class="bi bi-plus-circle"></i> เพิ่มไฟล์แนบ</button></div>`);addScheduleAttachmentInputV49_(); };
@@ -7628,7 +7651,7 @@ HAOS v68.2 FRONTEND STABILITY PATCH
       if(typeof window.applyScheduleFilters==='function'){ window.applyScheduleFilters(); return; }
       const controls=qsa('input,select',global);
       const kw=(controls.find(c=>c.type==='text'||c.tagName==='INPUT')?.value||'').toLowerCase().trim();
-      const selects=controls.filter(c=>c.tagName==='SELECT'&&!/sort|เรียง/i.test((c.id||'')+' '+txt(c.closest('.mb-2,.mb-3,.col-md-6,.col-md-4,div')||''))).map(c=>String(c.value||'').toLowerCase()).filter(v=>v&&v!=='ทั้งหมด'&&v!=='all'&&!['newest','oldest','name','today','week','month'].includes(v));
+      const selects=controls.filter(c=>c.tagName==='SELECT'&&!/sort|เรียง/i.test((c.id||'')+' '+txt(c.closest('.mb-2,.mb-3,.col-md-6,.col-md-4,div')||''))).map(c=>String(c.value||'').toLowerCase()).filter(v=>v&&v!=='ทั้งหมด'&&v!=='all'&&!['upcoming','soon','dateasc','datedesc','newest','oldest','name','today','week','month'].includes(v));
       qsa('tbody tr,.workspace-row,.schedule-row,.list-group-item',pane).forEach(row=>{const t=txt(row).toLowerCase(); row.style.display=(!kw||t.includes(kw))&&selects.every(v=>t.includes(v))?'':'none';});
     };
     global.addEventListener('input',apply); global.addEventListener('change',apply);
@@ -7847,6 +7870,13 @@ HAOS v68.2 FRONTEND STABILITY PATCH
       if (sort === 'name') return String(a.eventName || '').localeCompare(String(b.eventName || ''), 'th');
       const da = a.rawStartTime ? new Date(a.rawStartTime) : new Date(0);
       const db = b.rawStartTime ? new Date(b.rawStartTime) : new Date(0);
+      if (sort === 'upcoming' || sort === 'soon') {
+        const today = new Date(); today.setHours(0,0,0,0);
+        const au = da && da >= today ? 0 : 1;
+        const bu = db && db >= today ? 0 : 1;
+        if (au !== bu) return au - bu;
+        return au === 0 ? da - db : db - da;
+      }
       return sort === 'oldest' ? da - db : db - da;
     });
     return out;
@@ -7856,7 +7886,7 @@ HAOS v68.2 FRONTEND STABILITY PATCH
     const q = ($('scheduleSearch')?.value || '').toLowerCase().trim();
     const status = $('scheduleStatusFilter')?.value || '';
     const period = $('schedulePeriodFilter')?.value || '';
-    const sort = $('scheduleSort')?.value || 'newest';
+    const sort = $('scheduleSort')?.value || 'upcoming';
     let personal = [];
     let deptForCalendar = [];
     try { personal = Array.isArray(mySchedulesGlobal) ? mySchedulesGlobal : (window.mySchedulesGlobal || []); } catch(e) { personal = window.mySchedulesGlobal || []; }
@@ -7993,6 +8023,13 @@ HAOS v68.2 FRONTEND STABILITY PATCH
     if (sort === 'name') return String(a.eventName || a.title || '').localeCompare(String(b.eventName || b.title || ''),'th');
     const da = new Date(a.rawStartTime || a.startTime || a.createdAt || 0);
     const db = new Date(b.rawStartTime || b.startTime || b.createdAt || 0);
+    if (sort === 'upcoming' || sort === 'soon') {
+      const today = new Date(); today.setHours(0,0,0,0);
+      const au = da && da >= today ? 0 : 1;
+      const bu = db && db >= today ? 0 : 1;
+      if (au !== bu) return au - bu;
+      return au === 0 ? da - db : db - da;
+    }
     return sort === 'oldest' ? da - db : db - da;
   });
   function getUser(){ try { return window.user || user || {}; } catch(e){ return window.user || {}; } }
@@ -8224,7 +8261,7 @@ HAOS v68.2 FRONTEND STABILITY PATCH
     const q = ($('deptScheduleSearch')?.value || '').toLowerCase().trim();
     const status = $('deptScheduleStatusFilter')?.value || '';
     const period = $('deptSchedulePeriodFilter')?.value || '';
-    const sort = $('deptScheduleSort')?.value || 'newest';
+    const sort = $('deptScheduleSort')?.value || 'upcoming';
     const list = sortList((window.departmentSchedulesGlobal || []).filter(item => passSchedule(item,q,status,period)), sort);
     const tbody = $('departmentScheduleTable');
     const mobile = $('departmentScheduleMobileCards');
@@ -8241,7 +8278,7 @@ HAOS v68.2 FRONTEND STABILITY PATCH
     });
     ensureScheduleButtonsDoNotSubmit();
   };
-  window.resetDepartmentScheduleFiltersV684 = function(){ ['deptScheduleSearch','deptScheduleStatusFilter','deptSchedulePeriodFilter'].forEach(id => { const el=$(id); if(el) el.value=''; }); if($('deptScheduleSort')) $('deptScheduleSort').value='newest'; window.applyDepartmentScheduleFiltersV684(); };
+  window.resetDepartmentScheduleFiltersV684 = function(){ ['deptScheduleSearch','deptScheduleStatusFilter','deptSchedulePeriodFilter'].forEach(id => { const el=$(id); if(el) el.value=''; }); if($('deptScheduleSort')) $('deptScheduleSort').value='upcoming'; window.applyDepartmentScheduleFiltersV684(); };
 
   const oldLoadWorkspaces = window.loadSharedWorkspaces;
   window.loadSharedWorkspaces = function(){
@@ -10045,12 +10082,13 @@ HAOS v68.6 FINISHING FIX
     const scope=$('unifiedScheduleScopeV702')?.value||'';
     const status=$('unifiedScheduleStatusV702')?.value||'';
     const period=$('unifiedSchedulePeriodV702')?.value||'';
-    const sort=$('unifiedScheduleSortV702')?.value||'newest';
+    const sort=$('unifiedScheduleSortV702')?.value||'upcoming';
     let list=allSchedules().filter(x=>(!scope||x.__scope===scope)&&(!status||String(x.workStatus||x.status||'')===status)&&passPeriod(x,period)&&(!q||clean(Object.values(x).join(' ')).toLowerCase().includes(q)));
     list.sort((a,b)=>{
       if(sort==='name')return clean(a.eventName||a.title).localeCompare(clean(b.eventName||b.title),'th');
       const da=dateObj(a.rawStartTime||a.startTime||a.start||a.date)?.getTime()||0;
       const db=dateObj(b.rawStartTime||b.startTime||b.start||b.date)?.getTime()||0;
+      if(sort==='upcoming'||sort==='soon'){const today=new Date();today.setHours(0,0,0,0);const au=da&&da>=today.getTime()?0:1,bu=db&&db>=today.getTime()?0:1;if(au!==bu)return au-bu;return au===0?da-db:db-da;}
       return sort==='oldest'?da-db:db-da;
     });
     return list;
@@ -10809,7 +10847,7 @@ HAOS v68.6 FINISHING FIX
     const scope=$('unifiedScheduleScopeV702')?.value||'';
     const status=$('unifiedScheduleStatusV702')?.value||'';
     const period=$('unifiedSchedulePeriodV702')?.value||'';
-    const sort=$('unifiedScheduleSortV702')?.value||'newest';
+    const sort=$('unifiedScheduleSortV702')?.value||'upcoming';
     const priority=$('unifiedSchedulePriorityV706')?.value||'';
     const tag=$('unifiedScheduleTagV706')?.value||'';
     let list=allSchedules().filter(item=>{
@@ -10825,6 +10863,7 @@ HAOS v68.6 FINISHING FIX
       if(sort==='name')return clean(a.eventName||a.title).localeCompare(clean(b.eventName||b.title),'th');
       const da=dateObj(a.rawStartTime||a.startTime||a.start||a.date)?.getTime()||0;
       const db=dateObj(b.rawStartTime||b.startTime||b.start||b.date)?.getTime()||0;
+      if(sort==='upcoming'||sort==='soon'){const today=new Date();today.setHours(0,0,0,0);const au=da&&da>=today.getTime()?0:1,bu=db&&db>=today.getTime()?0:1;if(au!==bu)return au-bu;return au===0?da-db:db-da;}
       return sort==='oldest'?da-db:db-da;
     });
     return list;
@@ -11364,7 +11403,7 @@ HAOS v68.6 FINISHING FIX
     const scope=$('unifiedScheduleScopeV702')?.value||'';
     const status=$('unifiedScheduleStatusV702')?.value||'';
     const period=$('unifiedSchedulePeriodV702')?.value||'';
-    const sort=$('unifiedScheduleSortV702')?.value||'newest';
+    const sort=$('unifiedScheduleSortV702')?.value||'upcoming';
     const priority=$('unifiedSchedulePriorityV706')?.value||'';
     const tag=$('unifiedScheduleTagV706')?.value||'';
     let list=allSchedulesV713().filter(item=>{
@@ -11380,6 +11419,7 @@ HAOS v68.6 FINISHING FIX
       if(sort==='name')return clean(a.eventName||a.title).localeCompare(clean(b.eventName||b.title),'th');
       const da=dateObjV713(a.rawStartTime||a.startTime||a.start||a.date)?.getTime()||0;
       const db=dateObjV713(b.rawStartTime||b.startTime||b.start||b.date)?.getTime()||0;
+      if(sort==='upcoming'||sort==='soon'){const today=new Date();today.setHours(0,0,0,0);const au=da&&da>=today.getTime()?0:1,bu=db&&db>=today.getTime()?0:1;if(au!==bu)return au-bu;return au===0?da-db:db-da;}
       return sort==='oldest'?da-db:db-da;
     });
     return list;
@@ -11837,7 +11877,12 @@ HAOS v68.6 FINISHING FIX
     flow.innerHTML=[['ร่าง',d.draft||0,'bi-pencil-square'],['เตรียม/เปิดตอบรับ',d.planned||0,'bi-person-check'],['กำลังประชุม',d.inMeeting||0,'bi-broadcast'],['สรุปแล้ว',d.completed||0,'bi-check-circle']].map(x=>'<div class="haos-v715-flow-step"><i class="bi '+x[2]+'"></i><div><b>'+x[0]+'</b><small>'+x[1]+' รายการ</small></div></div>').join('');
   }
   function filteredV715(){
-    const u=userV715(),q=clean($('eMeetingSearchV715')?.value).toLowerCase(),st=$('eMeetingStatusV715')?.value||'',focus=$('eMeetingFocusV715')?.value||'',sort=$('eMeetingSortV715')?.value||'newest';
+    const sortElV715=$('eMeetingSortV715');
+    if(sortElV715&&!sortElV715.dataset.haosV784Touched){
+      if(sortElV715.value==='newest')sortElV715.value='soon';
+      if(!sortElV715.dataset.haosV784Hook){sortElV715.dataset.haosV784Hook='1';sortElV715.addEventListener('change',()=>{sortElV715.dataset.haosV784Touched='1';});}
+    }
+    const u=userV715(),q=clean($('eMeetingSearchV715')?.value).toLowerCase(),st=$('eMeetingStatusV715')?.value||'',focus=$('eMeetingFocusV715')?.value||'',sort=$('eMeetingSortV715')?.value||'soon';
     let list=state.meetings.filter(m=>{
       if(st&&m.status!==st)return false;
       if(focus==='upcoming'&&!(Number(m.daysToStart)>=0&&Number(m.daysToStart)<=7))return false;
@@ -11869,7 +11914,7 @@ HAOS v68.6 FINISHING FIX
       return '<tr><td><div class="haos-v715-title">'+esc(m.title||'-')+'</div><div class="haos-v715-sub"><i class="bi bi-diagram-3"></i> '+esc(m.committee||m.meetingType||'-')+' · '+esc(m.department||'-')+'</div>'+daysPillV715(m)+'</td><td><b><i class="bi bi-clock"></i> '+esc(m.startTime||'-')+'</b><div class="haos-v715-sub"><i class="bi bi-geo-alt"></i> '+esc(m.location||m.meetingLink||'-')+'</div></td><td><span class="haos-v715-pill info"><i class="bi bi-list-check"></i>'+esc(m.agendaCount||0)+' วาระ</span><span class="haos-v715-pill ok"><i class="bi bi-folder2-open"></i>'+esc(m.documentCount||0)+' เอกสาร</span></td><td><span class="haos-v715-pill ok"><i class="bi bi-person-check"></i>'+esc(m.acceptedCount||0)+'/'+esc(m.participantCount||0)+'</span>'+(pending?'<span class="haos-v715-pill warn">รอ '+pending+'</span>':'')+'</td><td><span class="haos-v715-pill '+(m.openActionCount?'warn':'ok')+'"><i class="bi bi-list-task"></i>'+esc(m.openActionCount||0)+'</span></td><td><span class="haos-v715-pill '+toneV715(m.status)+'">'+esc(m.status||'-')+'</span></td><td>'+actionButtonsV715(m)+'</td></tr>';
     }).join('');
   };
-  window.resetEMeetingFiltersV715=function(){['eMeetingSearchV715','eMeetingStatusV715','eMeetingFocusV715','eMeetingSortV715'].forEach(id=>{const el=$(id);if(el)el.value=id==='eMeetingSortV715'?'newest':'';});renderEMeetingsV715();};
+  window.resetEMeetingFiltersV715=function(){['eMeetingSearchV715','eMeetingStatusV715','eMeetingFocusV715','eMeetingSortV715'].forEach(id=>{const el=$(id);if(el)el.value=id==='eMeetingSortV715'?'soon':'';});renderEMeetingsV715();};
   function renderDocsV715(docs){
     docs=docs||[];
     if(!docs.length)return '<div class="text-muted small">ยังไม่มีเอกสารในวาระนี้</div>';
@@ -15606,7 +15651,7 @@ HAOS v68.6 FINISHING FIX
   function tagsOfV737(item){return String(item.tags||item.eventTags||item.workTags||'').split(/\n|,/).map(x=>x.trim()).filter(Boolean);}
   function scheduleActionsV737(item){const id=String(item.id||item.publicId||item.eventId||'');const pins=schedulePinsV737();let html=`<button class="btn btn-sm ${pins.has(id)?'btn-warning':'btn-outline-warning'} me-1" onclick="toggleSchedulePinV737('${esc(id)}')" title="ปักหมุดงาน"><i class="bi ${pins.has(id)?'bi-star-fill':'bi-star'}"></i></button><button class="btn btn-outline-info btn-sm text-dark me-1" onclick="viewScheduleDetail('${esc(id)}')"><i class="bi bi-eye"></i></button>`;if(item.__scope==='my'||cleanPhone(item.ownerPhone||item.createdByPhone)===userKey())html+=`<button class="btn btn-outline-warning btn-sm text-dark me-1" onclick="editSchedule('${esc(id)}')"><i class="bi bi-pencil"></i></button><button class="btn btn-outline-danger btn-sm" onclick="handleDelete('${esc(id)}')"><i class="bi bi-trash"></i></button>`;return html;}
   function scheduleListV737(){
-    const q=String($('unifiedScheduleSearchV702')?.value||'').toLowerCase().trim(), scope=$('unifiedScheduleScopeV702')?.value||'', status=$('unifiedScheduleStatusV702')?.value||'', period=$('unifiedSchedulePeriodV702')?.value||'', sort=$('unifiedScheduleSortV702')?.value||'dateDesc';
+    const q=String($('unifiedScheduleSearchV702')?.value||'').toLowerCase().trim(), scope=$('unifiedScheduleScopeV702')?.value||'', status=$('unifiedScheduleStatusV702')?.value||'', period=$('unifiedSchedulePeriodV702')?.value||'', sort=$('unifiedScheduleSortV702')?.value||'upcoming';
     const priorityFilter=$('unifiedSchedulePriorityV706')?.value||'', tagFilter=$('unifiedScheduleTagV706')?.value||'';
     const pins=schedulePinsV737(), today=new Date();
     let list=allSchedulesV737().filter(x=>(!scope||x.__scope===scope)&&(!status||String(x.workStatus||x.status||'')===status)&&(!priorityFilter||priorityOfV737(x)===priorityFilter)&&(!tagFilter||tagsOfV737(x).includes(tagFilter))&&passPeriodV737(x,period)&&(!q||String(Object.values(x).join(' ')).toLowerCase().includes(q)));
@@ -15615,13 +15660,14 @@ HAOS v68.6 FINISHING FIX
       const ta=sameDay(scheduleDateV737(a),today)?1:0,tb=sameDay(scheduleDateV737(b),today)?1:0;if(ta!==tb)return tb-ta;
       if(sort==='name')return String(a.eventName||a.title||'').localeCompare(String(b.eventName||b.title||''),'th');
       const da=scheduleDateV737(a)?.getTime()||0, db=scheduleDateV737(b)?.getTime()||0;
+      if(sort==='upcoming'||sort==='soon'){const now=new Date();now.setHours(0,0,0,0);const au=da&&da>=now.getTime()?0:1,bu=db&&db>=now.getTime()?0:1;if(au!==bu)return au-bu;return au===0?da-db:db-da;}
       if(sort==='dateDesc'||sort==='newest')return db-da;
       return da-db;
     });
     return list;
   }
   function ensureScheduleSortOptionsV737(){
-    [['unifiedScheduleSortV702',true],['scheduleSort',false]].forEach(([id,unified])=>{const sel=$(id);if(!sel||sel.dataset.v737)return;sel.dataset.v737='1';sel.innerHTML=unified?'<option value="dateAsc">วันที่น้อยไปมาก</option><option value="dateDesc">วันที่มากไปน้อย</option><option value="newest">ล่าสุดก่อน</option><option value="oldest">เก่าสุดก่อน</option><option value="name">ชื่องาน</option>':'<option value="dateAsc">วันที่น้อยไปมาก</option><option value="dateDesc">วันที่มากไปน้อย</option><option value="newest">ล่าสุดก่อน</option><option value="oldest">เก่าสุดก่อน</option><option value="name">ชื่องาน</option>';sel.value='dateDesc';});
+    [['unifiedScheduleSortV702',true],['scheduleSort',false]].forEach(([id,unified])=>{const sel=$(id);if(!sel||sel.dataset.v737)return;sel.dataset.v737='1';sel.innerHTML=unified?'<option value="upcoming">วันที่ที่จะถึง</option><option value="dateAsc">วันที่น้อยไปมาก</option><option value="dateDesc">วันที่มากไปน้อย</option><option value="newest">ล่าสุดก่อน</option><option value="oldest">เก่าสุดก่อน</option><option value="name">ชื่องาน</option>':'<option value="upcoming">วันที่ที่จะถึง</option><option value="dateAsc">วันที่น้อยไปมาก</option><option value="dateDesc">วันที่มากไปน้อย</option><option value="newest">ล่าสุดก่อน</option><option value="oldest">เก่าสุดก่อน</option><option value="name">ชื่องาน</option>';sel.value='upcoming';});
   }
   function populateScheduleSelectV739(id,values,label){
     const el=$(id); if(!el)return;
@@ -15864,7 +15910,7 @@ HAOS v68.6 FINISHING FIX
     let changed=false;
     ['unifiedScheduleSortV702','scheduleSort'].forEach(id=>{
       const sel=$(id); if(!sel||sel.dataset.v742Default)return;
-      if(!sel.value||sel.value==='dateAsc'){sel.value='dateDesc';changed=true;}
+      if(!sel.value||sel.value==='dateAsc'||sel.value==='dateDesc'){sel.value='upcoming';changed=true;}
       sel.dataset.v742Default='1';
     });
     return changed;
@@ -15872,7 +15918,7 @@ HAOS v68.6 FINISHING FIX
   const prevResetUnifiedV742=window.resetUnifiedScheduleFiltersV702;
   window.resetUnifiedScheduleFiltersV702=function(){
     if(prevResetUnifiedV742)prevResetUnifiedV742.apply(this,arguments);
-    ['unifiedScheduleSortV702','scheduleSort'].forEach(id=>{const sel=$(id);if(sel)sel.value='dateDesc';});
+    ['unifiedScheduleSortV702','scheduleSort'].forEach(id=>{const sel=$(id);if(sel)sel.value='upcoming';});
     try{window.haosSchedulePageV739=1;renderUnifiedScheduleV702();}catch(e){}
   };
   const prevRenderUnifiedV742=window.renderUnifiedScheduleV702;
@@ -16926,7 +16972,7 @@ HAOS v68.6 FINISHING FIX
     ['unifiedScheduleSortV702','scheduleSort'].forEach(id=>{
       const sel=$(id); if(!sel)return;
       if(!sel.dataset.v745SortHook){sel.dataset.v745SortHook='1';sel.addEventListener('change',()=>{sel.dataset.v745Touched='1';});}
-      if(!sel.dataset.v745Touched&&(!sel.value||sel.value==='dateAsc'))sel.value='dateDesc';
+      if(!sel.dataset.v745Touched&&(!sel.value||sel.value==='dateAsc'||sel.value==='dateDesc'))sel.value='upcoming';
     });
   }
   const oldRenderUnifiedV745=window.renderUnifiedScheduleV702;
@@ -17507,7 +17553,7 @@ HAOS v68.6 FINISHING FIX
     box.innerHTML=`<div class="d-flex justify-content-between gap-2 flex-wrap"><div><div class="fw-bold text-primary">${esc(stripDeptPrefixV748(item.eventName||item.title||'-'))}</div><div class="small text-muted"><i class="bi bi-calendar3"></i> ${fmtDateTime(item.rawStartTime||item.startTime)} ${item.endTime?'ถึง '+fmtDateTime(item.rawEndTime||item.endTime):''}</div><div class="small text-muted"><i class="bi bi-geo-alt"></i> ${esc(stripDeptPrefixV748(item.location||'-'))}</div></div><button type="button" class="btn btn-sm btn-outline-primary" onclick="viewScheduleDetail&&viewScheduleDetail('${esc(id)}')"><i class="bi bi-eye"></i> เปิดรายละเอียด</button></div>`;
   };
 
-  const bookingState={view:'table',filtersOpen:false,search:'',status:'',type:'',sort:'desc',page:1,pageSize:20};
+  const bookingState={view:'table',filtersOpen:false,search:'',status:'',type:'',sort:'upcoming',page:1,pageSize:20};
   const pinKey='haosV748PinnedBookings';
   function getBookings(){try{if(Array.isArray(itBookingsGlobal))return itBookingsGlobal;}catch(e){} return Array.isArray(window.itBookingsGlobal)?window.itBookingsGlobal:[];}
   function setBookings(list){window.itBookingsGlobal=list||[];try{itBookingsGlobal=list||[];}catch(e){}}
@@ -17526,7 +17572,7 @@ HAOS v68.6 FINISHING FIX
     if(q)list=list.filter(x=>[x.topic,x.ownerName,x.department,x.roomName,x.otherLocation,x.meetingId].some(v=>String(v||'').toLowerCase().includes(q)));
     if(bookingState.status)list=list.filter(x=>String(x.status||'')===bookingState.status);
     if(bookingState.type)list=list.filter(x=>String(x.bookingType||'Host').toLowerCase()===bookingState.type.toLowerCase());
-    list.sort((a,b)=>{const ad=parseDate(a.rawStartTime||a.startTime)||new Date(0),bd=parseDate(b.rawStartTime||b.startTime)||new Date(0);return bookingState.sort==='asc'?ad-bd:bd-ad;});
+    list.sort((a,b)=>{const ad=parseDate(a.rawStartTime||a.startTime)||new Date(0),bd=parseDate(b.rawStartTime||b.startTime)||new Date(0);if(bookingState.sort==='upcoming'||bookingState.sort==='soon'){const today=new Date();today.setHours(0,0,0,0);const au=ad&&ad>=today?0:1,bu=bd&&bd>=today?0:1;if(au!==bu)return au-bu;return au===0?ad-bd:bd-ad;}return bookingState.sort==='asc'?ad-bd:bd-ad;});
     list.sort((a,b)=>(pins.has(String(b.id))-pins.has(String(a.id))));
     return list;
   }
@@ -17552,7 +17598,7 @@ HAOS v68.6 FINISHING FIX
             <div class="col-md-4"><label class="small fw-bold">ค้นหา</label><input id="itBookSearchV748" class="form-control" placeholder="เรื่อง ผู้ขอ กลุ่มงาน ห้อง..." oninput="updateItBookingFilterV748()"></div>
             <div class="col-md-2"><label class="small fw-bold">สถานะ</label><select id="itBookStatusV748" class="form-select" onchange="updateItBookingFilterV748()"><option value="">ทั้งหมด</option><option>รอเจ้าหน้าที่</option><option>อนุมัติ</option><option>ไม่อนุญาต</option><option>ยกเลิก</option></select></div>
             <div class="col-md-2"><label class="small fw-bold">ประเภท</label><select id="itBookTypeV748" class="form-select" onchange="updateItBookingFilterV748()"><option value="">ทั้งหมด</option><option value="Host">Host</option><option value="Join">Join</option></select></div>
-            <div class="col-md-3"><label class="small fw-bold">เรียงวันที่</label><select id="itBookSortV748" class="form-select" onchange="updateItBookingFilterV748()"><option value="desc">วันที่มากไปน้อย</option><option value="asc">วันที่น้อยไปมาก</option></select></div>
+            <div class="col-md-3"><label class="small fw-bold">เรียงวันที่</label><select id="itBookSortV748" class="form-select" onchange="updateItBookingFilterV748()"><option value="upcoming">วันที่ที่จะถึง</option><option value="desc">วันที่มากไปน้อย</option><option value="asc">วันที่น้อยไปมาก</option></select></div>
             <div class="col-md-1 d-grid"><button type="button" class="btn btn-outline-secondary" onclick="resetItBookingFilterV748()"><i class="bi bi-arrow-counterclockwise"></i></button></div>
           </div>
         </div>
@@ -17564,8 +17610,8 @@ HAOS v68.6 FINISHING FIX
   }
   window.toggleItBookingFiltersV748=function(){bookingState.filtersOpen=!bookingState.filtersOpen;installBookingShell();};
   window.setItBookingViewV748=function(view){bookingState.view=view;bookingState.page=1;renderItBookings();};
-  window.updateItBookingFilterV748=function(){bookingState.search=$('itBookSearchV748')?.value||'';bookingState.status=$('itBookStatusV748')?.value||'';bookingState.type=$('itBookTypeV748')?.value||'';bookingState.sort=$('itBookSortV748')?.value||'desc';bookingState.page=1;renderItBookings();};
-  window.resetItBookingFilterV748=function(){bookingState.search='';bookingState.status='';bookingState.type='';bookingState.sort='desc';bookingState.page=1;['itBookSearchV748','itBookStatusV748','itBookTypeV748'].forEach(id=>{const el=$(id);if(el)el.value='';});if($('itBookSortV748'))$('itBookSortV748').value='desc';renderItBookings();};
+  window.updateItBookingFilterV748=function(){bookingState.search=$('itBookSearchV748')?.value||'';bookingState.status=$('itBookStatusV748')?.value||'';bookingState.type=$('itBookTypeV748')?.value||'';bookingState.sort=$('itBookSortV748')?.value||'upcoming';bookingState.page=1;renderItBookings();};
+  window.resetItBookingFilterV748=function(){bookingState.search='';bookingState.status='';bookingState.type='';bookingState.sort='upcoming';bookingState.page=1;['itBookSearchV748','itBookStatusV748','itBookTypeV748'].forEach(id=>{const el=$(id);if(el)el.value='';});if($('itBookSortV748'))$('itBookSortV748').value='upcoming';renderItBookings();};
   window.setItBookingPageV748=function(page){bookingState.page=Math.max(1,page);renderItBookings();};
   window.loadItBookings=async function(){
     installBookingShell();
