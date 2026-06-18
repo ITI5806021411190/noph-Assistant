@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-87-upcoming-agenda';
+const CACHE_NAME = 'haos-v70-88-ai-document-summary';
 const CORE = [
   '/',
   '/index.html',
@@ -38,6 +38,8 @@ const CORE = [
   '/assets/css/shared-workspace-flow.css',
   '/assets/js/modules/shared-workspace-flow.js',
   '/assets/js/modules/shared-workspace-builder.js',
+  '/assets/css/ai-document-summary.css',
+  '/assets/js/modules/ai-document-summary.js',
   '/assets/js/modules/notifications-action-fix.js'
 ];
 self.addEventListener('install', event => {

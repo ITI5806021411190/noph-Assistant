@@ -1,0 +1,158 @@
+.haos-ai-doc-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 12050;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, .58);
+  backdrop-filter: blur(6px);
+}
+
+.haos-ai-doc-overlay.show {
+  display: flex;
+}
+
+.haos-ai-doc-shell {
+  width: min(1280px, 100%);
+  max-height: min(92vh, 920px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 22px;
+  background: #f8fbff;
+  box-shadow: 0 28px 80px rgba(15, 23, 42, .28);
+}
+
+.haos-ai-doc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px;
+  color: #fff;
+  background: linear-gradient(135deg, #0ea5e9, #2563eb 58%, #10b981);
+}
+
+.haos-ai-doc-header h4 {
+  margin: 0;
+  font-weight: 900;
+}
+
+.haos-ai-doc-body {
+  overflow: auto;
+  padding: 20px 24px 24px;
+}
+
+.haos-ai-doc-card {
+  border: 1px solid rgba(148, 163, 184, .28);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 16px 42px rgba(15, 23, 42, .07);
+}
+
+.haos-ai-doc-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  color: #0f766e;
+  font-weight: 900;
+}
+
+.haos-ai-doc-mode {
+  min-height: 72px;
+  border-radius: 16px;
+  font-weight: 900;
+}
+
+.haos-ai-doc-mode.active {
+  color: #fff;
+  background: linear-gradient(135deg, #0ea5e9, #2563eb);
+  border-color: transparent;
+  box-shadow: 0 14px 32px rgba(37, 99, 235, .22);
+}
+
+.haos-ai-doc-result-hero {
+  border-radius: 20px;
+  padding: 18px;
+  color: #fff;
+  background: linear-gradient(135deg, #0f766e, #2563eb);
+}
+
+.haos-ai-doc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 3px;
+  padding: 7px 10px;
+  border: 1px solid rgba(37, 99, 235, .2);
+  border-radius: 999px;
+  color: #1e40af;
+  background: #eff6ff;
+  font-weight: 800;
+  font-size: .82rem;
+}
+
+.haos-ai-doc-box {
+  border: 1px solid rgba(148, 163, 184, .26);
+  border-radius: 16px;
+  padding: 12px;
+  background: #f8fafc;
+  white-space: pre-wrap;
+}
+
+.haos-ai-doc-action-table th {
+  color: #334155;
+  background: #eef6ff;
+}
+
+.haos-ai-doc-history-item {
+  cursor: pointer;
+  border: 1px solid rgba(148, 163, 184, .24);
+  border-left: 5px solid #0ea5e9;
+  border-radius: 16px;
+  padding: 12px;
+  background: #fff;
+  transition: transform .16s ease, box-shadow .16s ease;
+}
+
+.haos-ai-doc-history-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, .09);
+}
+
+.haos-ai-doc-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #2563eb;
+  font-weight: 900;
+}
+
+.haos-ai-doc-empty {
+  border: 1px dashed rgba(14, 165, 233, .35);
+  border-radius: 18px;
+  padding: 24px;
+  color: #64748b;
+  background: #f0f9ff;
+  text-align: center;
+  font-weight: 800;
+}
+
+@media (max-width: 768px) {
+  .haos-ai-doc-overlay {
+    padding: 8px;
+  }
+
+  .haos-ai-doc-shell {
+    max-height: 96vh;
+    border-radius: 16px;
+  }
+
+  .haos-ai-doc-header,
+  .haos-ai-doc-body {
+    padding: 16px;
+  }
+}

@@ -22,6 +22,7 @@ const SHEET_IT_BOOKINGS = 'ITBookings';
 const SHEET_MEETING_MINUTES = 'MeetingMinutes';
 const SHEET_BACKUP_LOGS = 'BackupLogs';
 const SHEET_PERMISSION_MATRIX = 'PermissionMatrix';
+const SHEET_AI_DOCUMENT_SUMMARIES = 'AIDocumentSummaries';
 const FALLBACK_BOT_TOKEN = ''; // ตั้งค่าจริงใน Script Properties: BOT_TOKEN
 const FALLBACK_GEMINI_API_KEY = ''; // ตั้งค่าจริงใน Script Properties: GEMINI_API_KEY
 const FALLBACK_VERCEL_API_SECRET = 'HAOS_1777448392812_5f154d07d5ca59a27854741941470dc3'; // ตั้งค่าเดียวกันใน Vercel env: GAS_API_SECRET และ Script Properties: VERCEL_API_SECRET
@@ -2441,6 +2442,323 @@ function processDocument(base64Data, fileName, mimeType) {
     return { success: false, message: result && result.message ? result.message : 'AI ไม่สามารถวิเคราะห์ไฟล์นี้ได้' };
   }
   return result;
+}
+
+// ========================= v70.88: AI Document Summary =========================
+function getAIDocumentSummarySheetV788_() {
+  return getOrCreateSheet_(SHEET_AI_DOCUMENT_SUMMARIES, [
+    'Summary ID','User Phone','User Name','Department','Source Type','File Name','Mime Type','Summary Mode',
+    'Document Type','Title','Origin Agency','Document No','Document Date','Meeting Link',
+    'Extracted JSON','Summary Text','Action Items JSON','Drafts JSON','Schedule Drafts JSON',
+    'Input Preview','Model Used','Google Doc URL','PDF URL','Created At','Updated At'
+  ], '#fef3c7');
+}
+
+function aiDocCleanV788_(value) {
+  return String(value === null || value === undefined ? '' : value).replace(/\r/g, '\n').trim();
+}
+
+function aiDocSafeJsonV788_(value) {
+  try {
+    return JSON.stringify(value || {});
+  } catch (e) {
+    return '{}';
+  }
+}
+
+function aiDocParseJsonV788_(value, fallback) {
+  try {
+    if (value === null || value === undefined || value === '') return fallback;
+    return JSON.parse(String(value));
+  } catch (e) {
+    return fallback;
+  }
+}
+
+function aiDocArrayV788_(value) {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  return [value];
+}
+
+function aiDocModeLabelV788_(mode) {
+  mode = String(mode || 'auto');
+  var map = {
+    auto: 'อัตโนมัติ',
+    short: 'สั้นและกระชับ',
+    detailed: 'ยาวและละเอียด',
+    executive: 'สำหรับผู้บริหาร',
+    officer: 'สำหรับเจ้าหน้าที่ปฏิบัติ'
+  };
+  return map[mode] || map.auto;
+}
+
+function aiDocNormalizeResultV788_(parsed, fallbackText) {
+  parsed = parsed && typeof parsed === 'object' ? parsed : {};
+  var extracted = parsed.extracted || {};
+  var drafts = parsed.drafts || {};
+  return {
+    documentType: aiDocCleanV788_(parsed.document_type || parsed.documentType || 'เอกสารทั่วไป'),
+    title: aiDocCleanV788_(parsed.title || parsed.subject || extracted.subject || 'สรุปเอกสารด้วย AI'),
+    summary: aiDocCleanV788_(parsed.summary || fallbackText || ''),
+    executiveSummary: aiDocCleanV788_(parsed.executive_summary || parsed.executiveSummary || ''),
+    officerSummary: aiDocCleanV788_(parsed.officer_summary || parsed.officerSummary || ''),
+    keyPoints: aiDocArrayV788_(parsed.key_points || parsed.keyPoints).map(function(x){ return aiDocCleanV788_(x); }).filter(Boolean),
+    actionItems: aiDocArrayV788_(parsed.action_items || parsed.actionItems).map(function(x) {
+      if (typeof x === 'string') return { task: aiDocCleanV788_(x), owner: '', deadline: '', priority: '' };
+      return {
+        task: aiDocCleanV788_(x.task || x.detail || x.action),
+        owner: aiDocCleanV788_(x.owner || x.responsible || x.person),
+        deadline: aiDocCleanV788_(x.deadline || x.due_date || x.date),
+        priority: aiDocCleanV788_(x.priority || '')
+      };
+    }).filter(function(x){ return x.task; }),
+    deadlines: aiDocArrayV788_(parsed.deadlines).map(function(x) {
+      if (typeof x === 'string') return { date: aiDocCleanV788_(x), time: '', title: '', note: '' };
+      return {
+        date: aiDocCleanV788_(x.date || x.deadline),
+        time: aiDocCleanV788_(x.time || ''),
+        title: aiDocCleanV788_(x.title || x.subject || ''),
+        note: aiDocCleanV788_(x.note || x.detail || '')
+      };
+    }),
+    stakeholders: aiDocArrayV788_(parsed.stakeholders || parsed.people || parsed.related_people).map(function(x){ return aiDocCleanV788_(x); }).filter(Boolean),
+    extracted: {
+      documentNo: aiDocCleanV788_(extracted.document_no || extracted.documentNo || parsed.document_no || ''),
+      documentDate: aiDocCleanV788_(extracted.document_date || extracted.documentDate || parsed.document_date || ''),
+      originAgency: aiDocCleanV788_(extracted.origin_agency || extracted.originAgency || parsed.origin_agency || ''),
+      subject: aiDocCleanV788_(extracted.subject || parsed.subject || parsed.title || ''),
+      meetingLink: aiDocCleanV788_(extracted.meeting_link || extracted.meetingLink || parsed.meeting_link || ''),
+      otherLinks: aiDocArrayV788_(extracted.other_links || extracted.otherLinks || parsed.links).map(function(x){ return aiDocCleanV788_(x); }).filter(Boolean)
+    },
+    drafts: {
+      circulation: aiDocCleanV788_(drafts.circulation || drafts.notice || parsed.draft_circulation || ''),
+      memo: aiDocCleanV788_(drafts.memo || parsed.draft_memo || ''),
+      line: aiDocCleanV788_(drafts.line || parsed.draft_line || '')
+    },
+    scheduleDrafts: aiDocArrayV788_(parsed.schedule_drafts || parsed.scheduleDrafts).map(function(x) {
+      return {
+        eventName: aiDocCleanV788_(x.eventName || x.event_name || x.title || ''),
+        startTime: aiDocCleanV788_(x.startTime || x.start_time || x.date_time || ''),
+        endTime: aiDocCleanV788_(x.endTime || x.end_time || ''),
+        location: aiDocCleanV788_(x.location || ''),
+        details: aiDocCleanV788_(x.details || x.summary || ''),
+        meetingLink: aiDocCleanV788_(x.meetingLink || x.meeting_link || ''),
+        priority: aiDocCleanV788_(x.priority || 'ปกติ'),
+        tags: aiDocArrayV788_(x.tags).map(function(t){ return aiDocCleanV788_(t); }).filter(Boolean)
+      };
+    }).filter(function(x){ return x.eventName || x.startTime; }),
+    raw: parsed
+  };
+}
+
+function aiDocBuildPromptV788_(mode, fileName, sourceText) {
+  var modeLabel = aiDocModeLabelV788_(mode);
+  var text = aiDocCleanV788_(sourceText);
+  if (text.length > 22000) {
+    text = text.substring(0, 22000) + '\n\n[ตัดข้อความส่วนเกินเพื่อควบคุมโควต้า AI]';
+  }
+  var sourceBlock = text ? ('\n\nข้อความจากเอกสาร/ผู้ใช้:\n' + text) : '\n\nโปรดอ่านไฟล์แนบที่ส่งมาพร้อมคำสั่งนี้';
+  return [
+    'คุณคือผู้ช่วยเลขานุการสำนักงานสาธารณสุขไทย มีหน้าที่อ่านเอกสารราชการ หนังสือเวียน ประกาศ รายงาน หรือรูปภาพเอกสาร แล้วสรุปให้ใช้งานต่อได้ทันที',
+    'โหมดสรุปที่ผู้ใช้เลือก: ' + modeLabel,
+    'ชื่อไฟล์/แหล่งข้อมูล: ' + (fileName || '-'),
+    '',
+    'ข้อกำหนด:',
+    '- ตอบกลับเป็น JSON object เท่านั้น ห้ามมี markdown ห้ามใส่ข้อความนอก JSON',
+    '- ภาษาไทยสุภาพ อ่านง่าย ใช้ถ้อยคำแบบสำนักงาน',
+    '- ถ้าไม่พบข้อมูลให้ใส่ค่าว่างหรือ array ว่าง ห้ามแต่งข้อมูลเอง',
+    '- ถ้าพบวันเวลา ให้พยายามแปลง schedule_drafts.startTime/endTime เป็น YYYY-MM-DDTHH:MM',
+    '- action_items ต้องเป็นสิ่งที่ต้องดำเนินการจริง ไม่ใช่สรุปทั่วไป',
+    '- draft LINE ให้สั้น กระชับ ส่งต่อได้ทันที',
+    '',
+    'schema ที่ต้องตอบ:',
+    '{',
+    '  "document_type": "หนังสือเวียน/ประชุม/อบรม/ประกาศ/รายงาน/อื่นๆ",',
+    '  "title": "ชื่อเรื่องแบบกระชับ",',
+    '  "summary": "สรุปสาระสำคัญตามโหมดที่เลือก",',
+    '  "executive_summary": "สรุปสำหรับผู้บริหารอ่าน 1 นาที",',
+    '  "officer_summary": "เจ้าหน้าที่ต้องทำอะไรต่อ",',
+    '  "key_points": ["ประเด็นสำคัญ"],',
+    '  "action_items": [{"task":"งานที่ต้องทำ","owner":"ผู้รับผิดชอบถ้าพบ","deadline":"กำหนดเวลา","priority":"ปกติ/ด่วน/ด่วนมาก"}],',
+    '  "deadlines": [{"date":"YYYY-MM-DD หรือข้อความวันที่","time":"HH:MM ถ้าพบ","title":"หัวข้อ","note":"หมายเหตุ"}],',
+    '  "stakeholders": ["ผู้เกี่ยวข้อง/หน่วยงานที่เกี่ยวข้อง"],',
+    '  "extracted": {"document_no":"เลขที่หนังสือ","document_date":"วันที่หนังสือ","origin_agency":"หน่วยงานต้นเรื่อง","subject":"เรื่อง","meeting_link":"ลิงก์ประชุมถ้าพบ","other_links":["ลิงก์อื่น"]},',
+    '  "drafts": {"circulation":"ร่างแจ้งเวียน","memo":"ร่างบันทึกเสนอ","line":"ร่างข้อความ LINE"},',
+    '  "schedule_drafts": [{"eventName":"ชื่อกำหนดการ","startTime":"YYYY-MM-DDTHH:MM","endTime":"YYYY-MM-DDTHH:MM","location":"สถานที่","details":"รายละเอียด","meetingLink":"URL ถ้ามี","priority":"ปกติ/ด่วน/ด่วนมาก","tags":["ประชุม","อบรม"]}]',
+    '}',
+    sourceBlock
+  ].join('\n');
+}
+
+function analyzeAIDocumentSummaryV788(payload) {
+  try {
+    payload = payload || {};
+    var actorPhone = String(payload.actorPhone || payload.userPhone || '').replace(/'/g, '');
+    var profile = {};
+    try { profile = getUserProfileByPhone_(actorPhone) || {}; } catch(ignore) {}
+    var actorName = aiDocCleanV788_(payload.actorName || profile.fullName || getUserNameByPhone_(actorPhone) || '');
+    var department = aiDocCleanV788_(payload.department || profile.department || '');
+    var mode = aiDocCleanV788_(payload.summaryMode || payload.mode || 'auto') || 'auto';
+    var sourceText = aiDocCleanV788_(payload.inputText || payload.text || '');
+    var fileName = aiDocCleanV788_(payload.fileName || '');
+    var mimeType = aiDocCleanV788_(payload.mimeType || '');
+    var base64Data = aiDocCleanV788_(payload.base64Data || '');
+    var sourceType = sourceText ? 'text' : 'file';
+
+    if (!sourceText && !base64Data) return { success:false, message:'กรุณาแนบไฟล์หรือวางข้อความก่อนให้ AI สรุป' };
+    if (base64Data && mimeType && mimeType !== 'application/pdf' && mimeType.indexOf('image/') !== 0) {
+      return { success:false, message:'รองรับเฉพาะ PDF และรูปภาพ PNG/JPG/WebP ในเวอร์ชันนี้' };
+    }
+
+    var useFile = !!(base64Data && mimeType && (!sourceText || sourceText.length < 80 || mimeType.indexOf('image/') === 0));
+    var prompt = aiDocBuildPromptV788_(mode, fileName, sourceText);
+    var ai = fetchGeminiAI(prompt, useFile ? base64Data : null, useFile ? mimeType : null);
+    if (!ai.success) return ai;
+
+    var parsed;
+    try {
+      parsed = parseGeminiJson_(ai.text);
+    } catch(parseErr) {
+      parsed = { title: fileName || 'สรุปเอกสารด้วย AI', summary: ai.text, key_points: [], action_items: [], deadlines: [], stakeholders: [], extracted: {}, drafts: {}, schedule_drafts: [] };
+    }
+    var data = aiDocNormalizeResultV788_(parsed, ai.text);
+    data.summaryMode = mode;
+    data.summaryModeLabel = aiDocModeLabelV788_(mode);
+    data.sourceType = sourceType;
+    data.fileName = fileName;
+    data.mimeType = mimeType;
+    data.modelUsed = ai.model || '';
+
+    var id = 'AIS-' + Utilities.getUuid().substring(0, 8).toUpperCase();
+    var now = new Date();
+    var sh = getAIDocumentSummarySheetV788_();
+    sh.appendRow([
+      id, "'" + actorPhone, actorName, department, sourceType, fileName, mimeType, mode,
+      data.documentType, data.title, data.extracted.originAgency, data.extracted.documentNo,
+      data.extracted.documentDate, data.extracted.meetingLink, aiDocSafeJsonV788_(data.extracted),
+      data.summary, aiDocSafeJsonV788_(data.actionItems), aiDocSafeJsonV788_(data.drafts),
+      aiDocSafeJsonV788_(data.scheduleDrafts), sourceText.substring(0, 500), data.modelUsed, '', '', now, now
+    ]);
+    data.summaryId = id;
+    try {
+      logAudit_(actorPhone, actorName, 'AI_DOCUMENT_SUMMARY', 'AIDocumentSummary', id, 'สรุปเอกสารด้วย AI: ' + data.title, null, {mode: mode, fileName: fileName, documentType: data.documentType});
+    } catch(ignore2) {}
+
+    return { success:true, data:data, historyId:id, message:'AI สรุปเอกสารสำเร็จ' };
+  } catch(e) {
+    return { success:false, message:e.toString() };
+  }
+}
+
+function aiDocRowToObjectV788_(row) {
+  return {
+    summaryId: row[0],
+    userPhone: String(row[1] || '').replace(/'/g, ''),
+    userName: row[2],
+    department: row[3],
+    sourceType: row[4],
+    fileName: row[5],
+    mimeType: row[6],
+    summaryMode: row[7],
+    documentType: row[8],
+    title: row[9],
+    originAgency: row[10],
+    documentNo: row[11],
+    documentDate: row[12],
+    meetingLink: row[13],
+    extracted: aiDocParseJsonV788_(row[14], {}),
+    summary: row[15],
+    actionItems: aiDocParseJsonV788_(row[16], []),
+    drafts: aiDocParseJsonV788_(row[17], {}),
+    scheduleDrafts: aiDocParseJsonV788_(row[18], []),
+    inputPreview: row[19],
+    modelUsed: row[20],
+    docUrl: row[21],
+    pdfUrl: row[22],
+    createdAt: row[23],
+    updatedAt: row[24]
+  };
+}
+
+function getAIDocumentSummaryHistoryV788(phone, role, department, query, limit) {
+  try {
+    var sh = getAIDocumentSummarySheetV788_();
+    var values = sh.getDataRange().getValues();
+    var targetPhone = String(phone || '').replace(/'/g, '');
+    var isAdminRole = String(role || '').toLowerCase().indexOf('admin') !== -1 || String(role || '') === 'Super Admin';
+    var q = String(query || '').toLowerCase().trim();
+    var max = Math.max(1, Math.min(Number(limit) || 30, 100));
+    var out = [];
+    for (var i = values.length - 1; i >= 1; i--) {
+      var item = aiDocRowToObjectV788_(values[i]);
+      if (!isAdminRole && item.userPhone !== targetPhone) continue;
+      if (q) {
+        var hay = [item.title, item.summary, item.fileName, item.documentType, item.originAgency, item.documentNo, item.department, item.userName].join(' ').toLowerCase();
+        if (hay.indexOf(q) === -1) continue;
+      }
+      out.push(item);
+      if (out.length >= max) break;
+    }
+    return { success:true, data:out };
+  } catch(e) {
+    return { success:false, message:e.toString(), data:[] };
+  }
+}
+
+function createAIDocumentSummaryDocV788(summaryId, actorPhone) {
+  try {
+    var sh = getAIDocumentSummarySheetV788_();
+    var values = sh.getDataRange().getValues();
+    var rowIndex = -1;
+    var item = null;
+    for (var i = 1; i < values.length; i++) {
+      if (String(values[i][0]) === String(summaryId)) {
+        rowIndex = i + 1;
+        item = aiDocRowToObjectV788_(values[i]);
+        break;
+      }
+    }
+    if (!item) return { success:false, message:'ไม่พบประวัติสรุปเอกสาร' };
+    var doc = DocumentApp.create('สรุปเอกสาร AI - ' + (item.title || summaryId));
+    var body = doc.getBody();
+    body.appendParagraph(item.title || 'สรุปเอกสารด้วย AI').setHeading(DocumentApp.ParagraphHeading.HEADING1);
+    body.appendParagraph('ประเภทเอกสาร: ' + (item.documentType || '-'));
+    body.appendParagraph('ผู้สรุป: ' + (item.userName || '-') + ' / ' + (item.department || '-'));
+    body.appendParagraph('วันที่สรุป: ' + Utilities.formatDate(new Date(item.createdAt || new Date()), 'GMT+7', 'dd/MM/yyyy HH:mm'));
+    body.appendParagraph('สรุปสาระสำคัญ').setHeading(DocumentApp.ParagraphHeading.HEADING2);
+    body.appendParagraph(item.summary || '-');
+    body.appendParagraph('ข้อมูลที่สกัดได้').setHeading(DocumentApp.ParagraphHeading.HEADING2);
+    body.appendParagraph('เลขที่หนังสือ: ' + (item.documentNo || '-'));
+    body.appendParagraph('วันที่หนังสือ: ' + (item.documentDate || '-'));
+    body.appendParagraph('หน่วยงานต้นเรื่อง: ' + (item.originAgency || '-'));
+    body.appendParagraph('ลิงก์ประชุม: ' + (item.meetingLink || '-'));
+    body.appendParagraph('สิ่งที่ต้องดำเนินการ').setHeading(DocumentApp.ParagraphHeading.HEADING2);
+    (item.actionItems || []).forEach(function(x, idx) {
+      body.appendListItem((idx + 1) + '. ' + (x.task || '-') + (x.owner ? ' | ผู้รับผิดชอบ: ' + x.owner : '') + (x.deadline ? ' | กำหนด: ' + x.deadline : ''));
+    });
+    body.appendParagraph('ร่างข้อความ LINE').setHeading(DocumentApp.ParagraphHeading.HEADING2);
+    body.appendParagraph((item.drafts && item.drafts.line) || '-');
+    doc.saveAndClose();
+    var file = DriveApp.getFileById(doc.getId());
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    var pdf = DriveApp.createFile(file.getAs(MimeType.PDF).setName('สรุปเอกสาร AI - ' + (item.title || summaryId) + '.pdf'));
+    pdf.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    var docUrl = doc.getUrl();
+    var pdfUrl = pdf.getUrl();
+    var docCol = getColumnIndex_(sh, 'Google Doc URL');
+    var pdfCol = getColumnIndex_(sh, 'PDF URL');
+    var updatedCol = getColumnIndex_(sh, 'Updated At');
+    if (docCol) sh.getRange(rowIndex, docCol).setValue(docUrl);
+    if (pdfCol) sh.getRange(rowIndex, pdfCol).setValue(pdfUrl);
+    if (updatedCol) sh.getRange(rowIndex, updatedCol).setValue(new Date());
+    try {
+      logAudit_(actorPhone, getUserNameByPhone_(actorPhone), 'AI_DOCUMENT_EXPORT', 'AIDocumentSummary', summaryId, 'สร้าง Google Doc/PDF จากผลสรุปเอกสาร', null, {docUrl:docUrl, pdfUrl:pdfUrl});
+    } catch(ignore) {}
+    return { success:true, docUrl:docUrl, pdfUrl:pdfUrl, message:'สร้าง Google Doc และ PDF แล้ว' };
+  } catch(e) {
+    return { success:false, message:e.toString() };
+  }
 }
 
 function testListGeminiModels() {
@@ -5768,6 +6086,7 @@ function getAllowedBridgeFunctions_() {
     getUserSchedules:true, getDepartmentSchedules:true, saveScheduleV2:true, updateScheduleV2:true, deleteSchedule:true, syncToGoogleCalendar:true,
     getPendingApprovals:true, updateApprovalStatus:true,
     analyzeLineMessage:true, analyzeDailyReportText:true, processDailyReportDocument:true, processDocument:true, analyzeDocumentText:true, analyzeImageWithAI:true, chatWithAI:true,
+    analyzeAIDocumentSummaryV788:true, getAIDocumentSummaryHistoryV788:true, createAIDocumentSummaryDocV788:true,
     analyzeWorkspaceText:true, processWorkspaceDocument:true, createSharedWorkspace:true, getMySharedWorkspaces:true, getSharedWorkspacePublicUrl:true, deleteSharedWorkspace:true, getPublicWorkspace:true, updatePublicWorkspaceRows:true, submitPublicWorkspaceForm:true, updateSharedWorkspaceRows:true, createGoogleSheetWorkspace:true, createGoogleFormWorkspace:true,
     generateHeadSummaryAI:true, generateExecutiveSummaryAI:true,
     getSchedulePublicUrlServer:true, revokePublicScheduleLink:true, getPublicSchedule:true,
@@ -6213,6 +6532,7 @@ function getAllowedBridgeFunctions_() {
     getUserSchedules:true, getDepartmentSchedules:true, saveScheduleV2:true, updateScheduleV2:true, deleteSchedule:true, syncToGoogleCalendar:true,
     getPendingApprovals:true, updateApprovalStatus:true,
     analyzeLineMessage:true, analyzeDailyReportText:true, processDailyReportDocument:true, processDocument:true, analyzeDocumentText:true, analyzeImageWithAI:true, chatWithAI:true,
+    analyzeAIDocumentSummaryV788:true, getAIDocumentSummaryHistoryV788:true, createAIDocumentSummaryDocV788:true,
     analyzeWorkspaceText:true, processWorkspaceDocument:true, createSharedWorkspace:true, getMySharedWorkspaces:true, getSharedWorkspacePublicUrl:true, deleteSharedWorkspace:true, getPublicWorkspace:true, updatePublicWorkspaceRows:true, submitPublicWorkspaceForm:true, updateSharedWorkspaceRows:true, createGoogleSheetWorkspace:true, createGoogleFormWorkspace:true,
     generateHeadSummaryAI:true, generateExecutiveSummaryAI:true,
     getSchedulePublicUrlServer:true, revokePublicScheduleLink:true, getPublicSchedule:true,
