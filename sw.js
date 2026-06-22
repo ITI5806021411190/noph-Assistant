@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-89-ai-doc-eoffice';
+const CACHE_NAME = 'haos-v70-89-ai-doc-eoffice-zfix';
 const CORE = [
   '/',
   '/index.html',
