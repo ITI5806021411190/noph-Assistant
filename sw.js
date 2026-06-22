@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-91-user-notes';
+const CACHE_NAME = 'haos-v70-92-user-notes-fixes';
 const CORE = [
   '/',
   '/index.html',

@@ -1022,7 +1022,7 @@ label,.form-label{font-weight:800;color:#334155;margin-bottom:6px;}
               <button class="btn btn-sm fw-bold" onclick="openNotificationCenterModal()"><i class="bi bi-bell me-1"></i>แจ้งเตือน</button>
               <button class="btn btn-sm fw-bold" onclick="document.getElementById('schedule-tab').click(); setTimeout(() => toggleCalendarView('calendar'), 120);"><i class="bi bi-calendar3 me-1"></i>ปฏิทิน</button>
               <button class="btn btn-sm fw-bold" onclick="openProgramGuide(true)"><i class="bi bi-compass me-1"></i>แนะนำโปรแกรม</button>
-              <button class="btn btn-sm fw-bold" onclick="window.HAOSNotes?.quickNote?.()"><i class="bi bi-journal-plus me-1"></i>บันทึก Note</button>
+              <button class="btn btn-sm fw-bold" onclick="window.openQuickNoteHeroV790 ? window.openQuickNoteHeroV790() : (window.__haosPendingQuickNoteV790 = true)"><i class="bi bi-journal-plus me-1"></i>บันทึก Note</button>
             </div>
           </div>
           <div class="col-lg-5"><div class="row g-3">
@@ -18731,6 +18731,27 @@ HAOS v68.6 FINISHING FIX
 <link rel="stylesheet" href="assets/css/e-office.css">
 <script src="assets/js/modules/e-office.js"></script>
 <link rel="stylesheet" href="assets/css/notes.css">
+<script>
+window.openQuickNoteHeroV790 = window.openQuickNoteHeroV790 || function(){
+  var tries = 0;
+  function run(){
+    if (window.HAOSNotes && typeof window.HAOSNotes.quickNote === 'function') {
+      window.HAOSNotes.quickNote();
+      return;
+    }
+    if (tries === 0) {
+      try { document.getElementById('itservices-tab')?.click(); } catch(e) {}
+    }
+    tries += 1;
+    if (tries < 30) {
+      setTimeout(run, 100);
+    } else if (window.Swal) {
+      Swal.fire('กำลังโหลดสมุด Note', 'กรุณารอสักครู่แล้วกดอีกครั้ง หากเพิ่งอัปเดตระบบให้รีเฟรชหน้า 1 ครั้ง', 'info');
+    }
+  }
+  run();
+};
+</script>
 <script src="assets/js/modules/notes.js"></script>
 <script>window.HAOSDateDisplay&&window.HAOSDateDisplay.installCompatibilityGlobals&&window.HAOSDateDisplay.installCompatibilityGlobals();</script>
 </body>

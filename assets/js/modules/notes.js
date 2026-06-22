@@ -8,7 +8,9 @@
   const state = {
     notes: [],
     editing: null,
-    busy: false
+    busy: false,
+    tagOptions: [],
+    loadingTags: null
   };
 
   const $ = id => document.getElementById(id);
@@ -16,6 +18,8 @@
   const esc = value => String(value ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
   const clean = value => String(value ?? '').trim();
   const compact = value => String(value ?? '').replace(/\s+/g, ' ').trim();
+  const splitTokens = value => String(value || '').split(/\n|,/).map(v => compact(v)).filter(Boolean);
+  const unique = list => Array.from(new Set((list || []).map(compact).filter(Boolean)));
 
   function getUser() {
     try {
@@ -45,6 +49,43 @@
     return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleString('th-TH');
   }
 
+  function mergeUrls() {
+    return unique(Array.from(arguments).flatMap(splitTokens)).join('\n');
+  }
+
+  function renderFileButtons(value) {
+    const urls = splitTokens(value);
+    if (!urls.length) return '';
+    return `<div class="haos-notes-file-links">${urls.map((url, index) => `<a class="btn btn-sm btn-outline-primary" href="${esc(url)}" target="_blank" rel="noopener"><i class="bi bi-paperclip"></i> ไฟล์แนบ ${index + 1}</a>`).join('')}</div>`;
+  }
+
+  function readFileBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || '').split(',')[1] || '');
+      reader.onerror = () => reject(reader.error || new Error('อ่านไฟล์แนบไม่สำเร็จ'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function uploadFile(file) {
+    const b64 = await readFileBase64(file);
+    const res = await gas('uploadFileToDrive', [b64, file.name, file.type || 'application/octet-stream']);
+    if (!res || !res.success) throw new Error(res?.message || `อัปโหลด ${file.name} ไม่สำเร็จ`);
+    return res.url || '';
+  }
+
+  async function uploadSelectedFiles() {
+    const input = $('haosNotesFileUploadV790');
+    const files = Array.from(input?.files || []);
+    if (!files.length) return [];
+    const urls = [];
+    for (const file of files) {
+      urls.push(await uploadFile(file));
+    }
+    return urls.filter(Boolean);
+  }
+
   function noteScopeLabel(scope) {
     return String(scope || 'personal').toLowerCase() === 'department' ? 'กลุ่มงาน' : 'ส่วนตัว';
   }
@@ -65,6 +106,68 @@
       pinnedOnly: !!$('haosNotesPinnedFilterV790')?.checked,
       includeArchived: !!$('haosNotesArchiveFilterV790')?.checked
     };
+  }
+
+  async function loadTagOptions() {
+    if (state.tagOptions.length) {
+      populateTagOptions();
+      return state.tagOptions;
+    }
+    if (state.loadingTags) return state.loadingTags;
+    state.loadingTags = (async () => {
+      try {
+        let options = [];
+        try {
+          const res = await gas('getWorkTags', [false]);
+          if (res && res.success) options = res.data || [];
+        } catch (err) {}
+        if (!options.length && Array.isArray(window.workTagOptionsGlobal)) options = window.workTagOptionsGlobal;
+        state.tagOptions = unique(options.map(item => item && (item.name || item.tagName || item.title || item)).filter(Boolean)).sort((a, b) => a.localeCompare(b, 'th'));
+        populateTagOptions();
+      } finally {
+        state.loadingTags = null;
+      }
+      return state.tagOptions;
+    })();
+    return state.loadingTags;
+  }
+
+  function populateTagOptions() {
+    const sel = $('haosNotesTagsSelectV790');
+    if (!sel) return;
+    const current = selectedTags();
+    sel.innerHTML = state.tagOptions.map(tag => `<option value="${esc(tag)}">${esc(tag)}</option>`).join('');
+    Array.from(sel.options).forEach(opt => {
+      opt.selected = current.includes(opt.value);
+    });
+  }
+
+  function selectedTags() {
+    const sel = $('haosNotesTagsSelectV790');
+    const selected = sel ? Array.from(sel.selectedOptions).map(opt => opt.value) : [];
+    const custom = splitTokens($('haosNotesTagsInputV790')?.value || '');
+    return unique(selected.concat(custom));
+  }
+
+  function setTagsValue(value) {
+    const tags = splitTokens(value);
+    const sel = $('haosNotesTagsSelectV790');
+    const known = new Set(state.tagOptions);
+    const custom = [];
+    if (sel) {
+      Array.from(sel.options).forEach(opt => { opt.selected = false; });
+      tags.forEach(tag => {
+        if (known.has(tag)) {
+          const option = Array.from(sel.options).find(opt => opt.value === tag);
+          if (option) option.selected = true;
+        } else {
+          custom.push(tag);
+        }
+      });
+    } else {
+      custom.push(...tags);
+    }
+    setInput('haosNotesTagsInputV790', unique(custom).join(', '));
   }
 
   function ensureModule() {
@@ -134,12 +237,25 @@
                 </select>
               </div>
               <div class="col-md-6">
-                <label class="form-label fw-bold">แท็ก</label>
-                <input id="haosNotesTagsInputV790" class="form-control" placeholder="คั่นด้วย , เช่น ด่วน, ประชุม, ติดตาม">
+                <label class="form-label fw-bold">ประเภทงาน / Tags</label>
+                <select id="haosNotesTagsSelectV790" class="form-select haos-notes-tag-select" multiple size="6"></select>
+                <small class="haos-notes-field-help"><i class="bi bi-check2-square"></i> เลือกได้หลายรายการ ไม่ต้องกด Ctrl</small>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold">แท็กเพิ่มเติม</label>
+                <input id="haosNotesTagsInputV790" class="form-control" placeholder="พิมพ์เพิ่มและคั่นด้วย , เช่น โทรกลับ, ติดตาม">
+                <small class="haos-notes-field-help">ใช้เมื่อต้องการแท็กที่ยังไม่มีในประเภทงานของระบบ</small>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold">ไฟล์แนบประกอบ Note</label>
+                <input id="haosNotesFileUploadV790" type="file" class="form-control" multiple>
+                <small class="haos-notes-field-help"><i class="bi bi-paperclip"></i> เลือกได้หลายไฟล์ ระบบจะอัปโหลดเข้า Google Drive แล้วแนบลิงก์ไว้กับ Note</small>
+                <div id="haosNotesFileExistingV790" class="mt-2"></div>
               </div>
               <div class="col-md-6">
                 <label class="form-label fw-bold">ลิงก์ไฟล์ / อ้างอิง</label>
                 <input id="haosNotesFileInputV790" class="form-control" placeholder="วาง URL ถ้ามี">
+                <small class="haos-notes-field-help">วางลิงก์เองได้ หรือปล่อยให้ระบบเติมจากไฟล์แนบที่อัปโหลด</small>
               </div>
               <div class="col-md-6">
                 <label class="form-label fw-bold">เชื่อมกับโมดูล</label>
@@ -167,7 +283,7 @@
             </div>
             <div class="haos-notes-editor-actions">
               <button type="button" class="btn btn-secondary fw-bold" onclick="window.HAOSNotes.closeEditor()">ยกเลิก</button>
-              <button type="button" class="btn btn-success fw-bold" onclick="window.HAOSNotes.save()"><i class="bi bi-save"></i> บันทึก Note</button>
+              <button id="haosNotesSaveBtnV790" type="button" class="btn btn-success fw-bold" onclick="window.HAOSNotes.save()"><i class="bi bi-save"></i> บันทึก Note</button>
             </div>
           </div>
         </div>
@@ -177,6 +293,14 @@
       const el = $(id);
       if (el) el.addEventListener('change', load);
     });
+    $('haosNotesTagsSelectV790')?.addEventListener('mousedown', ev => {
+      if (ev.target && ev.target.tagName === 'OPTION') {
+        ev.preventDefault();
+        ev.target.selected = !ev.target.selected;
+        $('haosNotesTagsSelectV790')?.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
+    loadTagOptions();
   }
 
   function tagsHtml(item) {
@@ -276,10 +400,14 @@
     const data = item || preset || {};
     state.editing = item || null;
     $('haosNotesEditorTitleV790').textContent = item ? 'แก้ไข Note' : 'บันทึก Note';
+    populateTagOptions();
     setInput('haosNotesTitleInputV790', data.title || '');
     setInput('haosNotesScopeInputV790', data.scope || 'personal');
-    setInput('haosNotesTagsInputV790', data.tags || '');
+    setTagsValue(data.tags || '');
     setInput('haosNotesFileInputV790', data.fileUrl || '');
+    setInput('haosNotesFileUploadV790', '');
+    const existing = $('haosNotesFileExistingV790');
+    if (existing) existing.innerHTML = data.fileUrl ? `<div class="small fw-bold text-muted mb-1">ไฟล์แนบเดิม</div>${renderFileButtons(data.fileUrl)}` : '';
     setInput('haosNotesLinkedTypeInputV790', data.linkedType || '');
     setInput('haosNotesLinkedIdInputV790', data.linkedId || '');
     setInput('haosNotesContentInputV790', data.content || '');
@@ -287,6 +415,7 @@
     $('haosNotesEditorV790')?.classList.add('show');
     $('haosNotesEditorV790')?.setAttribute('aria-hidden', 'false');
     setTimeout(() => $('haosNotesTitleInputV790')?.focus(), 80);
+    loadTagOptions().then(() => setTagsValue(data.tags || '')).catch(() => {});
   }
 
   function closeEditor() {
@@ -302,19 +431,27 @@
     if (!title && !content) return window.Swal?.fire('กรุณาระบุหัวข้อหรือรายละเอียด Note', '', 'warning');
     const old = state.editing || {};
     const me = getUser();
-    const payload = {
-      noteId: old.noteId || '',
-      title,
-      content,
-      scope: $('haosNotesScopeInputV790')?.value || 'personal',
-      tags: $('haosNotesTagsInputV790')?.value || '',
-      fileUrl: $('haosNotesFileInputV790')?.value || '',
-      linkedType: $('haosNotesLinkedTypeInputV790')?.value || '',
-      linkedId: $('haosNotesLinkedIdInputV790')?.value || '',
-      pinned: !!$('haosNotesPinnedInputV790')?.checked
-    };
+    const btn = $('haosNotesSaveBtnV790');
+    const oldBtnHtml = btn?.innerHTML || '';
     try {
       state.busy = true;
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังอัปโหลดไฟล์แนบ...';
+      }
+      const uploadedUrls = await uploadSelectedFiles();
+      if (btn) btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังบันทึก...';
+      const payload = {
+        noteId: old.noteId || '',
+        title,
+        content,
+        scope: $('haosNotesScopeInputV790')?.value || 'personal',
+        tags: selectedTags().join(', '),
+        fileUrl: mergeUrls($('haosNotesFileInputV790')?.value || '', uploadedUrls.join('\n')),
+        linkedType: $('haosNotesLinkedTypeInputV790')?.value || '',
+        linkedId: $('haosNotesLinkedIdInputV790')?.value || '',
+        pinned: !!$('haosNotesPinnedInputV790')?.checked
+      };
       const res = await gas('saveUserNoteV790', [payload, me.phone || '', me.role || 'User']);
       if (!res || !res.success) throw new Error(res?.message || 'บันทึก Note ไม่สำเร็จ');
       closeEditor();
@@ -325,6 +462,10 @@
       window.Swal?.fire('บันทึกไม่สำเร็จ', err?.message || String(err), 'error');
     } finally {
       state.busy = false;
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = oldBtnHtml || '<i class="bi bi-save"></i> บันทึก Note';
+      }
     }
   }
 
@@ -345,7 +486,7 @@
           <div class="haos-notes-view-content">${esc(item.content || '-')}</div>
           ${tagsHtml(item)}
           <div class="d-flex gap-2 flex-wrap mt-3">
-            ${item.fileUrl ? `<a class="btn btn-sm btn-outline-primary" href="${esc(item.fileUrl)}" target="_blank"><i class="bi bi-box-arrow-up-right"></i> เปิดลิงก์แนบ</a>` : ''}
+            ${renderFileButtons(item.fileUrl)}
             <button class="btn btn-sm btn-outline-secondary" onclick="window.HAOSNotes.copy(${index})"><i class="bi bi-clipboard"></i> คัดลอก</button>
           </div>
         </div>`
@@ -474,6 +615,7 @@
   };
   window.openUserNotesV790 = open;
   window.openQuickNoteV790 = quickNote;
+  window.openQuickNoteHeroV790 = quickNote;
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
   else boot();
@@ -483,5 +625,9 @@
   });
   try { observer.observe(document.body, { childList: true, subtree: true }); } catch (err) {}
   setInterval(installCard, 2500);
+  if (window.__haosPendingQuickNoteV790) {
+    window.__haosPendingQuickNoteV790 = false;
+    setTimeout(quickNote, 80);
+  }
   console.info('HAOS ' + PATCH + ' loaded');
 })();
