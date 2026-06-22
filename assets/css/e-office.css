@@ -1,0 +1,287 @@
+.haos-eoffice-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 12045;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, .58);
+  backdrop-filter: blur(6px);
+}
+
+.haos-eoffice-overlay.show {
+  display: flex;
+}
+
+.haos-eoffice-shell {
+  width: min(1220px, 100%);
+  max-height: min(92vh, 920px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 22px;
+  background: #f8fbff;
+  box-shadow: 0 28px 80px rgba(15, 23, 42, .28);
+}
+
+.haos-eoffice-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 22px 26px;
+  color: #fff;
+  background: linear-gradient(135deg, #0f766e, #2563eb 58%, #14b8a6);
+}
+
+.haos-eoffice-header h4 {
+  margin: 4px 0;
+  font-weight: 900;
+}
+
+.haos-eoffice-header p {
+  margin: 0;
+  opacity: .82;
+}
+
+.haos-eoffice-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .16);
+  font-weight: 900;
+}
+
+.haos-eoffice-body {
+  overflow: auto;
+  padding: 20px 24px 24px;
+}
+
+.haos-eoffice-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.haos-eoffice-count {
+  margin-left: auto;
+  padding: 8px 12px;
+  border-radius: 999px;
+  color: #075985;
+  background: #e0f2fe;
+  font-weight: 900;
+}
+
+.haos-eoffice-guide {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.haos-eoffice-guide > div {
+  border: 1px solid rgba(14, 165, 233, .18);
+  border-radius: 16px;
+  padding: 12px;
+  background: #fff;
+}
+
+.haos-eoffice-guide b,
+.haos-eoffice-guide span {
+  display: block;
+}
+
+.haos-eoffice-guide span {
+  margin-top: 4px;
+  color: #64748b;
+  font-size: .86rem;
+}
+
+.haos-eoffice-filters {
+  display: none;
+  grid-template-columns: minmax(180px, 2fr) repeat(4, minmax(120px, 1fr)) auto auto;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 12px;
+  border: 1px solid rgba(148, 163, 184, .24);
+  border-radius: 18px;
+  background: #fff;
+}
+
+.haos-eoffice-filters.show {
+  display: grid;
+}
+
+.haos-eoffice-list {
+  display: grid;
+  gap: 10px;
+}
+
+.haos-eoffice-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid rgba(148, 163, 184, .22);
+  border-left: 6px solid #10b981;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, .06);
+}
+
+.haos-eoffice-docno {
+  color: #0f766e;
+  font-weight: 900;
+  font-size: .86rem;
+}
+
+.haos-eoffice-main h6 {
+  margin: 3px 0 8px;
+  color: #0f172a;
+  font-weight: 900;
+}
+
+.haos-eoffice-main p {
+  margin: 8px 0 0;
+  color: #475569;
+}
+
+.haos-eoffice-meta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  color: #64748b;
+  font-size: .86rem;
+}
+
+.haos-eoffice-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.haos-eoffice-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.haos-eoffice-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 14px;
+}
+
+.haos-eoffice-actions .btn {
+  width: 42px;
+  height: 40px;
+  border-radius: 13px;
+}
+
+.haos-eoffice-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: .8rem;
+}
+
+.haos-eoffice-badge.success {
+  color: #047857;
+  background: #d1fae5;
+}
+
+.haos-eoffice-badge.info {
+  color: #0369a1;
+  background: #e0f2fe;
+}
+
+.haos-eoffice-badge.warning {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.haos-eoffice-badge.danger {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+
+.haos-eoffice-badge.neutral {
+  color: #334155;
+  background: #f1f5f9;
+}
+
+.haos-eoffice-empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 34px 18px;
+  border: 1px dashed rgba(14, 165, 233, .35);
+  border-radius: 18px;
+  color: #64748b;
+  background: #f0f9ff;
+  text-align: center;
+}
+
+.haos-eoffice-empty i {
+  font-size: 2rem;
+  color: #0ea5e9;
+}
+
+.haos-eoffice-editor {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, .46);
+}
+
+.haos-eoffice-editor.show {
+  display: flex;
+}
+
+.haos-eoffice-editor-panel {
+  width: min(980px, 100%);
+  max-height: min(86vh, 820px);
+  overflow: auto;
+  padding: 22px;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, .26);
+}
+
+@media (max-width: 900px) {
+  .haos-eoffice-overlay {
+    padding: 8px;
+  }
+
+  .haos-eoffice-header,
+  .haos-eoffice-body {
+    padding: 16px;
+  }
+
+  .haos-eoffice-guide,
+  .haos-eoffice-item,
+  .haos-eoffice-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .haos-eoffice-side {
+    align-items: flex-start;
+  }
+
+  .haos-eoffice-actions {
+    justify-content: flex-start;
+  }
+}

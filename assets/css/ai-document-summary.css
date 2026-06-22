@@ -123,6 +123,19 @@
   box-shadow: 0 14px 30px rgba(15, 23, 42, .09);
 }
 
+.haos-ai-doc-history-filters {
+  display: grid;
+  grid-template-columns: minmax(110px, 1fr) minmax(120px, 1fr) minmax(110px, 1fr) minmax(110px, 1fr) auto;
+  gap: 6px;
+}
+
+.haos-ai-doc-history-delete {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+}
+
 .haos-ai-doc-loading {
   display: inline-flex;
   align-items: center;
@@ -154,5 +167,9 @@
   .haos-ai-doc-header,
   .haos-ai-doc-body {
     padding: 16px;
+  }
+
+  .haos-ai-doc-history-filters {
+    grid-template-columns: 1fr 1fr;
   }
 }

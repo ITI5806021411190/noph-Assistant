@@ -23,6 +23,7 @@ const SHEET_MEETING_MINUTES = 'MeetingMinutes';
 const SHEET_BACKUP_LOGS = 'BackupLogs';
 const SHEET_PERMISSION_MATRIX = 'PermissionMatrix';
 const SHEET_AI_DOCUMENT_SUMMARIES = 'AIDocumentSummaries';
+const SHEET_E_OFFICE_DOCUMENTS = 'EOfficeDocuments';
 const FALLBACK_BOT_TOKEN = ''; // ตั้งค่าจริงใน Script Properties: BOT_TOKEN
 const FALLBACK_GEMINI_API_KEY = ''; // ตั้งค่าจริงใน Script Properties: GEMINI_API_KEY
 const FALLBACK_VERCEL_API_SECRET = 'HAOS_1777448392812_5f154d07d5ca59a27854741941470dc3'; // ตั้งค่าเดียวกันใน Vercel env: GAS_API_SECRET และ Script Properties: VERCEL_API_SECRET
@@ -2458,6 +2459,21 @@ function aiDocCleanV788_(value) {
   return String(value === null || value === undefined ? '' : value).replace(/\r/g, '\n').trim();
 }
 
+function aiDocNormalizeDateTimeV789_(value) {
+  var raw = aiDocCleanV788_(value);
+  if (!raw) return '';
+  var normalized = raw.replace(/\s+/g, 'T');
+  var m = normalized.match(/^(\d{4})([-\/])(\d{1,2})\2(\d{1,2})(?:T(\d{1,2}):(\d{2})(?::\d{2})?)?/);
+  if (!m) return raw;
+  var year = Number(m[1]);
+  if (year >= 2400) year -= 543;
+  var month = ('0' + Number(m[3])).slice(-2);
+  var day = ('0' + Number(m[4])).slice(-2);
+  var hour = m[5] !== undefined ? ('0' + Number(m[5])).slice(-2) : '';
+  var minute = m[6] || '';
+  return year + '-' + month + '-' + day + (hour ? 'T' + hour + ':' + minute : '');
+}
+
 function aiDocSafeJsonV788_(value) {
   try {
     return JSON.stringify(value || {});
@@ -2539,8 +2555,8 @@ function aiDocNormalizeResultV788_(parsed, fallbackText) {
     scheduleDrafts: aiDocArrayV788_(parsed.schedule_drafts || parsed.scheduleDrafts).map(function(x) {
       return {
         eventName: aiDocCleanV788_(x.eventName || x.event_name || x.title || ''),
-        startTime: aiDocCleanV788_(x.startTime || x.start_time || x.date_time || ''),
-        endTime: aiDocCleanV788_(x.endTime || x.end_time || ''),
+        startTime: aiDocNormalizeDateTimeV789_(x.startTime || x.start_time || x.date_time || ''),
+        endTime: aiDocNormalizeDateTimeV789_(x.endTime || x.end_time || ''),
         location: aiDocCleanV788_(x.location || ''),
         details: aiDocCleanV788_(x.details || x.summary || ''),
         meetingLink: aiDocCleanV788_(x.meetingLink || x.meeting_link || ''),
@@ -2569,6 +2585,7 @@ function aiDocBuildPromptV788_(mode, fileName, sourceText) {
     '- ภาษาไทยสุภาพ อ่านง่าย ใช้ถ้อยคำแบบสำนักงาน',
     '- ถ้าไม่พบข้อมูลให้ใส่ค่าว่างหรือ array ว่าง ห้ามแต่งข้อมูลเอง',
     '- ถ้าพบวันเวลา ให้พยายามแปลง schedule_drafts.startTime/endTime เป็น YYYY-MM-DDTHH:MM',
+    '- schedule_drafts.startTime/endTime ต้องใช้ปี ค.ศ. เท่านั้น เช่น 25 มิถุนายน 2569 = 2026-06-25T13:30 ห้ามส่งปี พ.ศ. 2569 เป็นปี 2569',
     '- action_items ต้องเป็นสิ่งที่ต้องดำเนินการจริง ไม่ใช่สรุปทั่วไป',
     '- draft LINE ให้สั้น กระชับ ส่งต่อได้ทันที',
     '',
@@ -2756,6 +2773,241 @@ function createAIDocumentSummaryDocV788(summaryId, actorPhone) {
       logAudit_(actorPhone, getUserNameByPhone_(actorPhone), 'AI_DOCUMENT_EXPORT', 'AIDocumentSummary', summaryId, 'สร้าง Google Doc/PDF จากผลสรุปเอกสาร', null, {docUrl:docUrl, pdfUrl:pdfUrl});
     } catch(ignore) {}
     return { success:true, docUrl:docUrl, pdfUrl:pdfUrl, message:'สร้าง Google Doc และ PDF แล้ว' };
+  } catch(e) {
+    return { success:false, message:e.toString() };
+  }
+}
+
+function deleteAIDocumentSummaryV788(summaryId, actorPhone, role) {
+  try {
+    var sh = getAIDocumentSummarySheetV788_();
+    var values = sh.getDataRange().getValues();
+    var targetPhone = String(actorPhone || '').replace(/'/g, '');
+    var isAdminRole = String(role || '').toLowerCase().indexOf('admin') !== -1 || String(role || '') === 'Super Admin';
+    for (var i = 1; i < values.length; i++) {
+      if (String(values[i][0]) !== String(summaryId)) continue;
+      var item = aiDocRowToObjectV788_(values[i]);
+      if (!isAdminRole && item.userPhone !== targetPhone) {
+        return { success:false, message:'ไม่มีสิทธิ์ลบประวัติสรุปเอกสารนี้' };
+      }
+      sh.deleteRow(i + 1);
+      try {
+        logAudit_(targetPhone, getUserNameByPhone_(targetPhone), 'DELETE_AI_DOCUMENT_SUMMARY', 'AIDocumentSummary', summaryId, 'ลบประวัติสรุปเอกสาร AI: ' + (item.title || summaryId), item, null);
+      } catch(ignore) {}
+      return { success:true, message:'ลบประวัติสรุปเอกสารแล้ว' };
+    }
+    return { success:false, message:'ไม่พบประวัติสรุปเอกสาร' };
+  } catch(e) {
+    return { success:false, message:e.toString() };
+  }
+}
+
+// ========================= v70.89: e-Office Document Index =========================
+function getEOfficeDocumentSheetV789_() {
+  return getOrCreateSheet_(SHEET_E_OFFICE_DOCUMENTS, [
+    'Document ID','Document No','Document Date','Title','Origin Agency','Document Type','Direction','Status','Priority',
+    'Owner Phone','Owner Name','Department','Assignee','Due Date','Summary ID','Summary Text','File URL','Meeting Link',
+    'Notes','Created At','Updated At'
+  ], '#d1fae5');
+}
+
+function eOfficeCleanV789_(value) {
+  return String(value === null || value === undefined ? '' : value).replace(/\r/g, '\n').trim();
+}
+
+function eOfficeIsAdminV789_(role) {
+  var raw = String(role || '').toLowerCase();
+  return raw.indexOf('admin') !== -1 || String(role || '') === 'Super Admin';
+}
+
+function eOfficeDocumentNoV789_() {
+  return 'EO-' + Utilities.formatDate(new Date(), 'GMT+7', 'yyyyMMdd') + '-' + Utilities.getUuid().substring(0, 5).toUpperCase();
+}
+
+function eOfficeRowToObjectV789_(row) {
+  return {
+    documentId: row[0],
+    documentNo: row[1],
+    documentDate: row[2],
+    title: row[3],
+    originAgency: row[4],
+    documentType: row[5],
+    direction: row[6],
+    status: row[7],
+    priority: row[8],
+    ownerPhone: String(row[9] || '').replace(/'/g, ''),
+    ownerName: row[10],
+    department: row[11],
+    assignee: row[12],
+    dueDate: row[13],
+    summaryId: row[14],
+    summaryText: row[15],
+    fileUrl: row[16],
+    meetingLink: row[17],
+    notes: row[18],
+    createdAt: row[19],
+    updatedAt: row[20]
+  };
+}
+
+function eOfficeCanManageV789_(item, actorPhone, role) {
+  return eOfficeIsAdminV789_(role) || String(item.ownerPhone || '') === String(actorPhone || '').replace(/'/g, '');
+}
+
+function getEOfficeDocumentsV789(phone, role, department, filters) {
+  try {
+    var sh = getEOfficeDocumentSheetV789_();
+    var values = sh.getDataRange().getValues();
+    var targetPhone = String(phone || '').replace(/'/g, '');
+    var isAdminRole = eOfficeIsAdminV789_(role);
+    filters = filters || {};
+    var q = String(filters.q || filters.query || '').toLowerCase().trim();
+    var status = String(filters.status || '').toLowerCase().trim();
+    var type = String(filters.documentType || filters.type || '').toLowerCase().trim();
+    var direction = String(filters.direction || '').toLowerCase().trim();
+    var priority = String(filters.priority || '').toLowerCase().trim();
+    var dept = String(department || '').toLowerCase().trim();
+    var out = [];
+    for (var i = values.length - 1; i >= 1; i--) {
+      var item = eOfficeRowToObjectV789_(values[i]);
+      if (!isAdminRole && item.ownerPhone !== targetPhone && String(item.department || '').toLowerCase() !== dept) continue;
+      if (status && String(item.status || '').toLowerCase() !== status) continue;
+      if (type && String(item.documentType || '').toLowerCase().indexOf(type) === -1) continue;
+      if (direction && String(item.direction || '').toLowerCase() !== direction) continue;
+      if (priority && String(item.priority || '').toLowerCase() !== priority) continue;
+      if (q) {
+        var hay = [item.documentNo, item.title, item.originAgency, item.documentType, item.department, item.assignee, item.summaryText, item.notes].join(' ').toLowerCase();
+        if (hay.indexOf(q) === -1) continue;
+      }
+      out.push(item);
+      if (out.length >= 200) break;
+    }
+    return { success:true, data:out };
+  } catch(e) {
+    return { success:false, message:e.toString(), data:[] };
+  }
+}
+
+function saveEOfficeDocumentV789(payload, actorPhone, role) {
+  try {
+    payload = payload || {};
+    var sh = getEOfficeDocumentSheetV789_();
+    var values = sh.getDataRange().getValues();
+    var targetPhone = String(actorPhone || payload.ownerPhone || '').replace(/'/g, '');
+    var profile = {};
+    try { profile = getUserProfileByPhone_(targetPhone) || {}; } catch(ignore) {}
+    var actorName = eOfficeCleanV789_(payload.ownerName || profile.fullName || getUserNameByPhone_(targetPhone) || '');
+    var department = eOfficeCleanV789_(payload.department || profile.department || '');
+    var now = new Date();
+    var documentId = eOfficeCleanV789_(payload.documentId || '');
+    var rowIndex = -1;
+    var oldItem = null;
+    if (documentId) {
+      for (var i = 1; i < values.length; i++) {
+        if (String(values[i][0]) === documentId) {
+          rowIndex = i + 1;
+          oldItem = eOfficeRowToObjectV789_(values[i]);
+          break;
+        }
+      }
+      if (oldItem && !eOfficeCanManageV789_(oldItem, targetPhone, role)) {
+        return { success:false, message:'ไม่มีสิทธิ์แก้ไขรายการสารบัญเอกสารนี้' };
+      }
+    }
+    if (!documentId) documentId = 'EOD-' + Utilities.getUuid().substring(0, 8).toUpperCase();
+    var createdAt = oldItem && oldItem.createdAt ? oldItem.createdAt : now;
+    var item = {
+      documentId: documentId,
+      documentNo: eOfficeCleanV789_(payload.documentNo || (oldItem && oldItem.documentNo) || eOfficeDocumentNoV789_()),
+      documentDate: aiDocNormalizeDateTimeV789_(payload.documentDate || (oldItem && oldItem.documentDate) || Utilities.formatDate(now, 'GMT+7', 'yyyy-MM-dd')),
+      title: eOfficeCleanV789_(payload.title || (oldItem && oldItem.title) || 'เอกสารใหม่'),
+      originAgency: eOfficeCleanV789_(payload.originAgency || (oldItem && oldItem.originAgency) || ''),
+      documentType: eOfficeCleanV789_(payload.documentType || (oldItem && oldItem.documentType) || 'หนังสือทั่วไป'),
+      direction: eOfficeCleanV789_(payload.direction || (oldItem && oldItem.direction) || 'รับเข้า'),
+      status: eOfficeCleanV789_(payload.status || (oldItem && oldItem.status) || 'รอตรวจสอบ'),
+      priority: eOfficeCleanV789_(payload.priority || (oldItem && oldItem.priority) || 'ปกติ'),
+      ownerPhone: targetPhone,
+      ownerName: actorName,
+      department: department,
+      assignee: eOfficeCleanV789_(payload.assignee || (oldItem && oldItem.assignee) || ''),
+      dueDate: aiDocNormalizeDateTimeV789_(payload.dueDate || (oldItem && oldItem.dueDate) || ''),
+      summaryId: eOfficeCleanV789_(payload.summaryId || (oldItem && oldItem.summaryId) || ''),
+      summaryText: eOfficeCleanV789_(payload.summaryText || (oldItem && oldItem.summaryText) || ''),
+      fileUrl: eOfficeCleanV789_(payload.fileUrl || (oldItem && oldItem.fileUrl) || ''),
+      meetingLink: eOfficeCleanV789_(payload.meetingLink || (oldItem && oldItem.meetingLink) || ''),
+      notes: eOfficeCleanV789_(payload.notes || (oldItem && oldItem.notes) || ''),
+      createdAt: createdAt,
+      updatedAt: now
+    };
+    var row = [
+      item.documentId, item.documentNo, item.documentDate, item.title, item.originAgency, item.documentType, item.direction, item.status, item.priority,
+      "'" + item.ownerPhone, item.ownerName, item.department, item.assignee, item.dueDate, item.summaryId, item.summaryText, item.fileUrl, item.meetingLink,
+      item.notes, item.createdAt, item.updatedAt
+    ];
+    if (rowIndex > 0) sh.getRange(rowIndex, 1, 1, row.length).setValues([row]);
+    else sh.appendRow(row);
+    try {
+      logAudit_(targetPhone, actorName, rowIndex > 0 ? 'UPDATE_E_OFFICE_DOCUMENT' : 'CREATE_E_OFFICE_DOCUMENT', 'EOfficeDocument', documentId, 'บันทึกสารบัญเอกสาร: ' + item.title, oldItem, item);
+    } catch(ignore2) {}
+    return { success:true, data:item, message:'บันทึกสารบัญเอกสารแล้ว' };
+  } catch(e) {
+    return { success:false, message:e.toString() };
+  }
+}
+
+function deleteEOfficeDocumentV789(documentId, actorPhone, role) {
+  try {
+    var sh = getEOfficeDocumentSheetV789_();
+    var values = sh.getDataRange().getValues();
+    var targetPhone = String(actorPhone || '').replace(/'/g, '');
+    for (var i = 1; i < values.length; i++) {
+      if (String(values[i][0]) !== String(documentId)) continue;
+      var item = eOfficeRowToObjectV789_(values[i]);
+      if (!eOfficeCanManageV789_(item, targetPhone, role)) return { success:false, message:'ไม่มีสิทธิ์ลบรายการสารบัญเอกสารนี้' };
+      sh.deleteRow(i + 1);
+      try {
+        logAudit_(targetPhone, getUserNameByPhone_(targetPhone), 'DELETE_E_OFFICE_DOCUMENT', 'EOfficeDocument', documentId, 'ลบสารบัญเอกสาร: ' + (item.title || documentId), item, null);
+      } catch(ignore) {}
+      return { success:true, message:'ลบรายการสารบัญเอกสารแล้ว' };
+    }
+    return { success:false, message:'ไม่พบรายการสารบัญเอกสาร' };
+  } catch(e) {
+    return { success:false, message:e.toString() };
+  }
+}
+
+function createEOfficeFromAISummaryV789(summaryId, actorPhone, role) {
+  try {
+    var sh = getAIDocumentSummarySheetV788_();
+    var values = sh.getDataRange().getValues();
+    var targetPhone = String(actorPhone || '').replace(/'/g, '');
+    var isAdminRole = eOfficeIsAdminV789_(role);
+    var item = null;
+    for (var i = 1; i < values.length; i++) {
+      if (String(values[i][0]) === String(summaryId)) {
+        item = aiDocRowToObjectV788_(values[i]);
+        break;
+      }
+    }
+    if (!item) return { success:false, message:'ไม่พบผลสรุปเอกสาร AI' };
+    if (!isAdminRole && item.userPhone !== targetPhone) return { success:false, message:'ไม่มีสิทธิ์ส่งผลสรุปนี้เข้า e-Office' };
+    var extracted = item.extracted || {};
+    var payload = {
+      title: item.title || extracted.subject || 'เอกสารจาก AI Summary',
+      documentNo: item.documentNo || '',
+      documentDate: item.documentDate || '',
+      originAgency: item.originAgency || '',
+      documentType: item.documentType || 'หนังสือทั่วไป',
+      direction: 'รับเข้า',
+      status: 'รอตรวจสอบ',
+      priority: 'ปกติ',
+      summaryId: item.summaryId,
+      summaryText: item.summary || '',
+      meetingLink: item.meetingLink || '',
+      fileUrl: item.docUrl || item.pdfUrl || '',
+      notes: 'สร้างจากผลสรุปเอกสารด้วย AI'
+    };
+    return saveEOfficeDocumentV789(payload, targetPhone, role);
   } catch(e) {
     return { success:false, message:e.toString() };
   }
@@ -15312,5 +15564,26 @@ function bridgeWhitelistHealthCheckV781() {
     version:'v70.81-meeting-minutes-ai-modes',
     functions:['analyzeMeetingMinutesText'],
     modes:['auto', 'concise', 'detailed']
+  };
+}
+
+// v70.89: AI document summary cleanup and e-Office document index.
+var haosV789PrevGetAllowedBridgeFunctions_ = typeof getAllowedBridgeFunctions_ === 'function' ? getAllowedBridgeFunctions_ : null;
+getAllowedBridgeFunctions_ = function() {
+  var allowed = haosV789PrevGetAllowedBridgeFunctions_ ? haosV789PrevGetAllowedBridgeFunctions_() : {};
+  allowed.deleteAIDocumentSummaryV788 = true;
+  allowed.getEOfficeDocumentsV789 = true;
+  allowed.saveEOfficeDocumentV789 = true;
+  allowed.deleteEOfficeDocumentV789 = true;
+  allowed.createEOfficeFromAISummaryV789 = true;
+  allowed.bridgeWhitelistHealthCheckV789 = true;
+  return allowed;
+};
+
+function bridgeWhitelistHealthCheckV789() {
+  return {
+    success:true,
+    version:'v70.89-ai-doc-summary-eoffice',
+    functions:['deleteAIDocumentSummaryV788', 'getEOfficeDocumentsV789', 'saveEOfficeDocumentV789', 'deleteEOfficeDocumentV789', 'createEOfficeFromAISummaryV789']
   };
 }

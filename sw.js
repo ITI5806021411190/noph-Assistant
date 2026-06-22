@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-88-ai-document-summary';
+const CACHE_NAME = 'haos-v70-89-ai-doc-eoffice';
 const CORE = [
   '/',
   '/index.html',
@@ -40,6 +40,8 @@ const CORE = [
   '/assets/js/modules/shared-workspace-builder.js',
   '/assets/css/ai-document-summary.css',
   '/assets/js/modules/ai-document-summary.js',
+  '/assets/css/e-office.css',
+  '/assets/js/modules/e-office.js',
   '/assets/js/modules/notifications-action-fix.js'
 ];
 self.addEventListener('install', event => {

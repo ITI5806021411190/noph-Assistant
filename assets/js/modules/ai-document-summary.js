@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  const PATCH = 'v70.88-ai-document-summary';
+  const PATCH = 'v70.89-ai-document-summary-phase2';
   if (window.__HAOS_V788_AI_DOCUMENT_SUMMARY__) return;
   window.__HAOS_V788_AI_DOCUMENT_SUMMARY__ = true;
 
@@ -17,6 +17,12 @@
     mode: safeLocalGet('haos.aiDoc.mode', 'auto'),
     result: null,
     history: [],
+    filters: {
+      mode: '',
+      type: '',
+      from: '',
+      to: ''
+    },
     busy: false
   };
 
@@ -24,6 +30,32 @@
   const qa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
   const esc = value => String(value ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
   const clean = value => String(value ?? '').replace(/\s+/g, ' ').trim();
+
+  function normalizeThaiYearDateTime(value) {
+    const raw = clean(value);
+    if (!raw) return '';
+    let out = raw.replace(/\s+/g, 'T');
+    const match = out.match(/^(\d{4})([-/])(\d{1,2})\2(\d{1,2})(?:T(\d{1,2}):(\d{2})(?::\d{2})?)?/);
+    if (!match) return raw;
+    let year = Number(match[1]);
+    if (year >= 2400) year -= 543;
+    const month = String(Number(match[3])).padStart(2, '0');
+    const day = String(Number(match[4])).padStart(2, '0');
+    const hour = match[5] != null ? String(Number(match[5])).padStart(2, '0') : '';
+    const minute = match[6] || '';
+    return `${year}-${month}-${day}${hour ? `T${hour}:${minute}` : ''}`;
+  }
+
+  function displayScheduleDateTime(value) {
+    const normalized = normalizeThaiYearDateTime(value);
+    if (!normalized) return '-';
+    try {
+      if (window.HAOSDateDisplay?.dateTime) {
+        return window.HAOSDateDisplay.dateTime(normalized, { forceTime: normalized.includes('T') });
+      }
+    } catch (err) {}
+    return normalized.replace('T', ' ');
+  }
 
   function safeLocalGet(key, fallback) {
     try {
@@ -106,6 +138,20 @@
                     <button type="button" class="btn btn-sm btn-outline-primary fw-bold" onclick="window.HAOSAiDocSummary.loadHistory()"><i class="bi bi-arrow-clockwise"></i></button>
                   </div>
                   <input id="haosAiDocHistorySearchV788" class="form-control form-control-sm mb-2" placeholder="ค้นหาประวัติ..." onkeydown="if(event.key==='Enter')window.HAOSAiDocSummary.loadHistory()">
+                  <div class="haos-ai-doc-history-filters mb-2">
+                    <select id="haosAiDocFilterModeV788" class="form-select form-select-sm" onchange="window.HAOSAiDocSummary.renderHistory()">
+                      <option value="">ทุกโหมด</option>
+                      <option value="auto">อัตโนมัติ</option>
+                      <option value="short">สั้น</option>
+                      <option value="detailed">ละเอียด</option>
+                      <option value="executive">ผู้บริหาร</option>
+                      <option value="officer">เจ้าหน้าที่</option>
+                    </select>
+                    <input id="haosAiDocFilterTypeV788" class="form-control form-control-sm" placeholder="ประเภทเอกสาร" oninput="window.HAOSAiDocSummary.renderHistory()">
+                    <input id="haosAiDocFilterFromV788" type="date" class="form-control form-control-sm" onchange="window.HAOSAiDocSummary.renderHistory()">
+                    <input id="haosAiDocFilterToV788" type="date" class="form-control form-control-sm" onchange="window.HAOSAiDocSummary.renderHistory()">
+                    <button type="button" class="btn btn-sm btn-outline-secondary fw-bold" onclick="window.HAOSAiDocSummary.clearFilters()" title="ล้างตัวกรอง"><i class="bi bi-x-circle"></i></button>
+                  </div>
                   <div id="haosAiDocHistoryV788" class="d-grid gap-2"></div>
                 </div>
               </div>
@@ -213,7 +259,11 @@
         otherLinks: []
       },
       drafts: item.drafts || {},
-      scheduleDrafts: item.scheduleDrafts || [],
+      scheduleDrafts: (item.scheduleDrafts || []).map(draft => ({
+        ...draft,
+        startTime: normalizeThaiYearDateTime(draft.startTime || draft.start_time || draft.date_time || ''),
+        endTime: normalizeThaiYearDateTime(draft.endTime || draft.end_time || '')
+      })),
       fileName: item.fileName || '',
       summaryMode: item.summaryMode || '',
       summaryModeLabel: modeLabel(item.summaryMode || 'auto'),
@@ -314,7 +364,7 @@
         <div class="d-flex justify-content-between gap-2 flex-wrap">
           <div>
             <div class="fw-bold text-primary">${esc(item.eventName || 'กำหนดการจากเอกสาร')}</div>
-            <div class="small text-muted">${esc(item.startTime || '-')} ${item.endTime ? 'ถึง ' + esc(item.endTime) : ''} · ${esc(item.location || '-')}</div>
+            <div class="small text-muted">${esc(displayScheduleDateTime(item.startTime))} ${item.endTime ? 'ถึง ' + esc(displayScheduleDateTime(item.endTime)) : ''} · ${esc(item.location || '-')}</div>
           </div>
           <button type="button" class="btn btn-sm btn-success fw-bold" onclick="window.HAOSAiDocSummary.createSchedule(${index})"><i class="bi bi-calendar-plus"></i> สร้างตารางงาน</button>
         </div>
@@ -349,6 +399,7 @@
           <div class="d-flex gap-2 flex-wrap align-items-start">
             <button class="btn btn-light fw-bold" onclick="window.HAOSAiDocSummary.copy()"><i class="bi bi-clipboard"></i> คัดลอก</button>
             <button class="btn btn-warning fw-bold" onclick="window.HAOSAiDocSummary.createSchedule(0)"><i class="bi bi-calendar-plus"></i> สร้างตารางงาน</button>
+            <button class="btn btn-success fw-bold" onclick="window.HAOSAiDocSummary.sendToEOffice()"><i class="bi bi-journal-check"></i> ส่งเข้า e-Office</button>
             <button class="btn btn-outline-light fw-bold" onclick="window.HAOSAiDocSummary.createDoc()"><i class="bi bi-file-earmark-word"></i> Doc/PDF</button>
           </div>
         </div>
@@ -449,8 +500,8 @@
       const ex = result.extracted || {};
       set('eventName', draft.eventName || result.title || 'กำหนดการจากเอกสาร');
       set('eventDetails', draft.details || [result.summary, result.officerSummary, resultText(result)].filter(Boolean).join('\n\n'));
-      set('startTime', draft.startTime || '');
-      set('endTime', draft.endTime || '');
+      set('startTime', normalizeThaiYearDateTime(draft.startTime || ''));
+      set('endTime', normalizeThaiYearDateTime(draft.endTime || ''));
       set('eventLocation', draft.location || '');
       set('meetingLink', draft.meetingLink || ex.meetingLink || '');
       if ($('eventPriority')) $('eventPriority').value = draft.priority || 'ปกติ';
@@ -492,22 +543,127 @@
     try {
       const me = getUser();
       const q = $('haosAiDocHistorySearchV788')?.value || '';
-      const res = await gas('getAIDocumentSummaryHistoryV788', [me.phone || '', me.role || 'User', me.department || '', q, 30]);
+      const res = await gas('getAIDocumentSummaryHistoryV788', [me.phone || '', me.role || 'User', me.department || '', q, 100]);
       if (!res || !res.success) throw new Error(res?.message || 'โหลดประวัติไม่สำเร็จ');
       state.history = (res.data || []).map(normalizeHistoryItem);
-      if (!state.history.length) {
-        box.innerHTML = '<div class="haos-ai-doc-empty p-3">ยังไม่มีประวัติสรุปเอกสาร</div>';
-        return;
-      }
-      box.innerHTML = state.history.map((item, index) => `
-        <div class="haos-ai-doc-history-item" onclick="window.HAOSAiDocSummary.openHistory(${index})">
-          <div class="fw-bold text-primary">${esc(item.title || '-')}</div>
-          <div class="small text-muted">${esc(item.documentType || '-')} · ${esc(item.fileName || 'ข้อความ')}</div>
-          <div class="small text-muted">${esc(String(item.summary || '').slice(0, 110))}${String(item.summary || '').length > 110 ? '...' : ''}</div>
-        </div>
-      `).join('');
+      renderHistory();
     } catch (err) {
       box.innerHTML = `<div class="text-danger small">${esc(err?.message || String(err))}</div>`;
+    }
+  }
+
+  function readHistoryFilters() {
+    state.filters.mode = $('haosAiDocFilterModeV788')?.value || '';
+    state.filters.type = clean($('haosAiDocFilterTypeV788')?.value || '').toLowerCase();
+    state.filters.from = $('haosAiDocFilterFromV788')?.value || '';
+    state.filters.to = $('haosAiDocFilterToV788')?.value || '';
+    return state.filters;
+  }
+
+  function dateOnly(value) {
+    if (!value) return '';
+    const normalized = normalizeThaiYearDateTime(value);
+    if (/^\d{4}-\d{2}-\d{2}/.test(normalized)) return normalized.slice(0, 10);
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toISOString().slice(0, 10);
+  }
+
+  function renderHistory() {
+    const box = $('haosAiDocHistoryV788');
+    if (!box) return;
+    const filters = readHistoryFilters();
+    const items = state.history.map((item, index) => ({ item, index })).filter(entry => {
+      const item = entry.item;
+      if (filters.mode && String(item.summaryMode || '') !== filters.mode) return false;
+      if (filters.type && String(item.documentType || '').toLowerCase().indexOf(filters.type) === -1) return false;
+      const created = dateOnly(item.createdAt);
+      if (filters.from && created && created < filters.from) return false;
+      if (filters.to && created && created > filters.to) return false;
+      return true;
+    });
+    if (!state.history.length) {
+      box.innerHTML = '<div class="haos-ai-doc-empty p-3">ยังไม่มีประวัติสรุปเอกสาร</div>';
+      return;
+    }
+    if (!items.length) {
+      box.innerHTML = '<div class="haos-ai-doc-empty p-3">ไม่พบประวัติตามตัวกรอง</div>';
+      return;
+    }
+    box.innerHTML = items.map(({ item, index }) => `
+      <div class="haos-ai-doc-history-item" onclick="window.HAOSAiDocSummary.openHistory(${index})">
+        <div class="d-flex justify-content-between gap-2">
+          <div class="min-w-0">
+            <div class="fw-bold text-primary">${esc(item.title || '-')}</div>
+            <div class="small text-muted">${esc(item.documentType || '-')} · ${esc(item.fileName || 'ข้อความ')} · ${esc(item.summaryModeLabel || modeLabel(item.summaryMode))}</div>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-danger haos-ai-doc-history-delete" onclick="window.HAOSAiDocSummary.deleteHistory(${index}, event)" title="ลบประวัติ"><i class="bi bi-trash"></i></button>
+        </div>
+        <div class="small text-muted mt-1">${esc(String(item.summary || '').slice(0, 110))}${String(item.summary || '').length > 110 ? '...' : ''}</div>
+      </div>
+    `).join('');
+  }
+
+  function clearFilters() {
+    ['haosAiDocFilterModeV788', 'haosAiDocFilterTypeV788', 'haosAiDocFilterFromV788', 'haosAiDocFilterToV788'].forEach(id => {
+      const el = $(id);
+      if (el) el.value = '';
+    });
+    renderHistory();
+  }
+
+  async function deleteHistory(index, event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    const item = state.history[index];
+    if (!item || !item.summaryId) return;
+    const ok = await window.Swal?.fire({
+      icon: 'warning',
+      title: 'ลบประวัติสรุปเอกสารนี้?',
+      text: item.title || item.summaryId,
+      showCancelButton: true,
+      confirmButtonText: 'ลบ',
+      cancelButtonText: 'ยกเลิก',
+      confirmButtonColor: '#dc3545'
+    });
+    if (ok && !ok.isConfirmed) return;
+    try {
+      const me = getUser();
+      const res = await gas('deleteAIDocumentSummaryV788', [item.summaryId, me.phone || '', me.role || 'User']);
+      if (!res || !res.success) throw new Error(res?.message || 'ลบประวัติไม่สำเร็จ');
+      if (state.result?.summaryId === item.summaryId) {
+        state.result = null;
+        const resultBox = $('haosAiDocResultV788');
+        if (resultBox) {
+          resultBox.className = 'haos-ai-doc-empty';
+          resultBox.innerHTML = '<i class="bi bi-file-earmark-text fs-1 d-block mb-2"></i>เลือกไฟล์หรือวางข้อความ แล้วกด “เริ่มสรุปเอกสาร”';
+        }
+      }
+      await loadHistory();
+      window.Swal?.fire({ icon: 'success', title: 'ลบประวัติแล้ว', timer: 1000, showConfirmButton: false });
+    } catch (err) {
+      window.Swal?.fire('ลบไม่สำเร็จ', err?.message || String(err), 'error');
+    }
+  }
+
+  async function sendToEOffice() {
+    const result = state.result;
+    if (!result || !result.summaryId) {
+      return window.Swal?.fire('ยังไม่มีผลสรุป', 'กรุณาสรุปเอกสารให้สำเร็จก่อนส่งเข้า e-Office', 'warning');
+    }
+    try {
+      window.Swal?.fire({ title: 'กำลังส่งเข้า e-Office...', allowOutsideClick: false, didOpen: () => window.Swal.showLoading() });
+      const me = getUser();
+      const res = await gas('createEOfficeFromAISummaryV789', [result.summaryId, me.phone || '', me.role || 'User']);
+      if (!res || !res.success) throw new Error(res?.message || 'ส่งเข้า e-Office ไม่สำเร็จ');
+      window.Swal?.fire({ icon: 'success', title: 'ส่งเข้า e-Office แล้ว', text: res.data?.documentNo || res.data?.documentId || '', timer: 1300, showConfirmButton: false });
+      if (window.HAOSEOffice?.open) {
+        setTimeout(() => window.HAOSEOffice.open(), 350);
+      }
+    } catch (err) {
+      window.Swal?.fire('ส่งเข้า e-Office ไม่สำเร็จ', err?.message || String(err), 'error');
     }
   }
 
@@ -579,6 +735,10 @@
     createSchedule,
     createDoc,
     loadHistory,
+    renderHistory,
+    clearFilters,
+    deleteHistory,
+    sendToEOffice,
     openHistory,
     version: PATCH
   };
