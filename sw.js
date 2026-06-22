@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-89-ai-doc-eoffice-zfix';
+const CACHE_NAME = 'haos-v70-91-user-notes';
 const CORE = [
   '/',
   '/index.html',
@@ -42,6 +42,8 @@ const CORE = [
   '/assets/js/modules/ai-document-summary.js',
   '/assets/css/e-office.css',
   '/assets/js/modules/e-office.js',
+  '/assets/css/notes.css',
+  '/assets/js/modules/notes.js',
   '/assets/js/modules/notifications-action-fix.js'
 ];
 self.addEventListener('install', event => {

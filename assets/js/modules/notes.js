@@ -1,0 +1,487 @@
+(function () {
+  'use strict';
+
+  const PATCH = 'v70.90-user-notes';
+  if (window.__HAOS_V790_USER_NOTES__) return;
+  window.__HAOS_V790_USER_NOTES__ = true;
+
+  const state = {
+    notes: [],
+    editing: null,
+    busy: false
+  };
+
+  const $ = id => document.getElementById(id);
+  const qa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+  const esc = value => String(value ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+  const clean = value => String(value ?? '').trim();
+  const compact = value => String(value ?? '').replace(/\s+/g, ' ').trim();
+
+  function getUser() {
+    try {
+      if (typeof window.currentUser === 'function') return window.currentUser() || {};
+    } catch (err) {}
+    return window.user || {};
+  }
+
+  function gas(fn, args) {
+    if (typeof window.gasRunPromise_ === 'function') return window.gasRunPromise_(fn, args || []);
+    return new Promise((resolve, reject) => {
+      try {
+        google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run, args || []);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  function displayDateTime(value) {
+    if (!value) return '-';
+    try {
+      if (window.HAOSDateDisplay?.dateTime) return window.HAOSDateDisplay.dateTime(value);
+      if (window.HAOSDateDisplay?.date) return window.HAOSDateDisplay.date(value);
+    } catch (err) {}
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleString('th-TH');
+  }
+
+  function noteScopeLabel(scope) {
+    return String(scope || 'personal').toLowerCase() === 'department' ? 'กลุ่มงาน' : 'ส่วนตัว';
+  }
+
+  function noteScopeIcon(scope) {
+    return String(scope || 'personal').toLowerCase() === 'department' ? 'bi-people' : 'bi-person';
+  }
+
+  function noteTone(scope) {
+    return String(scope || 'personal').toLowerCase() === 'department' ? 'dept' : 'personal';
+  }
+
+  function readFilters() {
+    return {
+      q: $('haosNotesSearchV790')?.value || '',
+      scope: $('haosNotesScopeFilterV790')?.value || '',
+      tag: $('haosNotesTagFilterV790')?.value || '',
+      pinnedOnly: !!$('haosNotesPinnedFilterV790')?.checked,
+      includeArchived: !!$('haosNotesArchiveFilterV790')?.checked
+    };
+  }
+
+  function ensureModule() {
+    if ($('haosNotesModuleV790')) return;
+    const pane = $('itservices-pane') || document.body;
+    pane.insertAdjacentHTML('beforeend', `
+      <section id="haosNotesModuleV790" class="haos-notes-module" aria-hidden="true">
+        <div class="haos-notes-shell">
+          <div class="haos-notes-header">
+            <div>
+              <div class="haos-notes-kicker"><i class="bi bi-journal-richtext"></i> สมุด Note</div>
+              <h4>บันทึกสั้น ๆ ที่หยิบใช้ต่อได้ทันที</h4>
+              <p>จดส่วนตัวหรือแชร์ในกลุ่มงาน ปักหมุด ค้นหา ติดแท็ก และแนบลิงก์อ้างอิงงานสำคัญไว้ในที่เดียว</p>
+            </div>
+            <div class="haos-notes-header-actions">
+              <button type="button" class="btn btn-light fw-bold" onclick="window.HAOSNotes.quickNote()"><i class="bi bi-pencil-square"></i> บันทึก Note</button>
+              <button type="button" class="btn btn-outline-light fw-bold" onclick="window.HAOSNotes.close()"><i class="bi bi-x-lg"></i></button>
+            </div>
+          </div>
+          <div class="haos-notes-body">
+            <div class="haos-notes-toolbar">
+              <button type="button" class="btn btn-success fw-bold" onclick="window.HAOSNotes.openEditor()"><i class="bi bi-plus-circle"></i> เพิ่ม Note</button>
+              <button type="button" class="btn btn-outline-primary fw-bold" onclick="window.HAOSNotes.load()"><i class="bi bi-arrow-clockwise"></i> โหลดใหม่</button>
+              <button type="button" class="btn btn-outline-secondary fw-bold" onclick="window.HAOSNotes.toggleFilters()"><i class="bi bi-funnel"></i> ตัวกรอง</button>
+              <span id="haosNotesCountV790" class="haos-notes-count">0 รายการ</span>
+            </div>
+            <div class="haos-notes-guide">
+              <div><b><i class="bi bi-pin-angle"></i> ปักหมุดเรื่องสำคัญ</b><span>ทำให้ Note ที่ใช้บ่อยขึ้นก่อนรายการอื่นเสมอ</span></div>
+              <div><b><i class="bi bi-tags"></i> ติดแท็กค้นเร็ว</b><span>ใช้คำอย่าง ประชุม, โทรกลับ, เอกสาร, ด่วน เพื่อค้นย้อนหลังง่ายขึ้น</span></div>
+              <div><b><i class="bi bi-people"></i> แชร์ในกลุ่มงาน</b><span>เลือกขอบเขตเป็นกลุ่มงานเมื่ออยากให้ทีมเห็นข้อมูลเดียวกัน</span></div>
+            </div>
+            <div id="haosNotesFiltersV790" class="haos-notes-filters">
+              <input id="haosNotesSearchV790" class="form-control" placeholder="ค้นหาหัวข้อ เนื้อหา แท็ก หรือผู้บันทึก..." onkeydown="if(event.key==='Enter')window.HAOSNotes.load()">
+              <select id="haosNotesScopeFilterV790" class="form-select">
+                <option value="">ทุกขอบเขต</option>
+                <option value="personal">ส่วนตัว</option>
+                <option value="department">กลุ่มงาน</option>
+              </select>
+              <input id="haosNotesTagFilterV790" class="form-control" placeholder="กรองด้วยแท็ก">
+              <label class="haos-notes-check"><input id="haosNotesPinnedFilterV790" type="checkbox"> ปักหมุด</label>
+              <label class="haos-notes-check"><input id="haosNotesArchiveFilterV790" type="checkbox"> รวมที่เก็บแล้ว</label>
+              <button type="button" class="btn btn-primary fw-bold" onclick="window.HAOSNotes.load()"><i class="bi bi-search"></i> ค้นหา</button>
+              <button type="button" class="btn btn-outline-secondary fw-bold" onclick="window.HAOSNotes.clearFilters()"><i class="bi bi-x-circle"></i></button>
+            </div>
+            <div id="haosNotesListV790" class="haos-notes-list"></div>
+          </div>
+        </div>
+        <div id="haosNotesEditorV790" class="haos-notes-editor" aria-hidden="true">
+          <div class="haos-notes-editor-panel">
+            <div class="haos-notes-editor-head">
+              <div>
+                <h5 id="haosNotesEditorTitleV790">บันทึก Note</h5>
+                <p>จดสิ่งที่ต้องจำ ลิงก์ที่เกี่ยวข้อง หรือข้อความที่ต้องนำไปใช้ต่อ</p>
+              </div>
+              <button type="button" class="btn btn-outline-secondary" onclick="window.HAOSNotes.closeEditor()"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-8">
+                <label class="form-label fw-bold">หัวข้อ</label>
+                <input id="haosNotesTitleInputV790" class="form-control" placeholder="เช่น โทรกลับเรื่อง Zoom / ข้อสรุปประชุมเช้า">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-bold">ขอบเขต</label>
+                <select id="haosNotesScopeInputV790" class="form-select">
+                  <option value="personal">ส่วนตัว</option>
+                  <option value="department">กลุ่มงาน</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold">แท็ก</label>
+                <input id="haosNotesTagsInputV790" class="form-control" placeholder="คั่นด้วย , เช่น ด่วน, ประชุม, ติดตาม">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold">ลิงก์ไฟล์ / อ้างอิง</label>
+                <input id="haosNotesFileInputV790" class="form-control" placeholder="วาง URL ถ้ามี">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold">เชื่อมกับโมดูล</label>
+                <select id="haosNotesLinkedTypeInputV790" class="form-select">
+                  <option value="">ไม่ระบุ</option>
+                  <option value="schedule">ตารางงาน & นัดหมาย</option>
+                  <option value="meeting_minutes">รายงานการประชุม</option>
+                  <option value="e_office">e-Office</option>
+                  <option value="helpdesk">แจ้งซ่อม IT / Helpdesk</option>
+                  <option value="booking">จองห้องประชุม / Zoom</option>
+                  <option value="ai_document">สรุปเอกสารด้วย AI</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold">รหัสอ้างอิง</label>
+                <input id="haosNotesLinkedIdInputV790" class="form-control" placeholder="เช่น Schedule ID / เลขหนังสือ / รหัสงาน">
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-bold">รายละเอียด Note</label>
+                <textarea id="haosNotesContentInputV790" class="form-control" rows="9" placeholder="พิมพ์ Note ที่นี่..."></textarea>
+              </div>
+              <div class="col-12">
+                <label class="haos-notes-check strong"><input id="haosNotesPinnedInputV790" type="checkbox"> ปักหมุด Note นี้</label>
+              </div>
+            </div>
+            <div class="haos-notes-editor-actions">
+              <button type="button" class="btn btn-secondary fw-bold" onclick="window.HAOSNotes.closeEditor()">ยกเลิก</button>
+              <button type="button" class="btn btn-success fw-bold" onclick="window.HAOSNotes.save()"><i class="bi bi-save"></i> บันทึก Note</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    `);
+    ['haosNotesScopeFilterV790', 'haosNotesTagFilterV790', 'haosNotesPinnedFilterV790', 'haosNotesArchiveFilterV790'].forEach(id => {
+      const el = $(id);
+      if (el) el.addEventListener('change', load);
+    });
+  }
+
+  function tagsHtml(item) {
+    const tags = Array.isArray(item.tagsList) ? item.tagsList : compact(item.tags || '').split(',').map(t => t.trim()).filter(Boolean);
+    if (!tags.length) return '';
+    return `<div class="haos-notes-tags">${tags.map(tag => `<span>${esc(tag)}</span>`).join('')}</div>`;
+  }
+
+  function renderList() {
+    const box = $('haosNotesListV790');
+    const count = $('haosNotesCountV790');
+    if (count) count.textContent = `${state.notes.length} รายการ`;
+    if (!box) return;
+    if (!state.notes.length) {
+      box.innerHTML = `
+        <div class="haos-notes-empty">
+          <i class="bi bi-journal-plus"></i>
+          <b>ยังไม่มี Note ตามตัวกรองนี้</b>
+          <span>กด “เพิ่ม Note” หรือใช้ปุ่ม “บันทึก Note” บนการ์ดหน้าแรกเพื่อจดเรื่องสำคัญได้ทันที</span>
+        </div>`;
+      return;
+    }
+    box.innerHTML = state.notes.map((item, index) => {
+      const content = compact(item.content || '');
+      const preview = content.length > 180 ? `${content.slice(0, 180)}...` : content;
+      const canManage = item.canManage !== false;
+      return `
+        <article class="haos-notes-item ${noteTone(item.scope)} ${item.archived ? 'archived' : ''}">
+          <div class="haos-notes-pin">${item.pinned ? '<i class="bi bi-pin-angle-fill"></i>' : '<i class="bi bi-journal-text"></i>'}</div>
+          <div class="haos-notes-main">
+            <div class="haos-notes-title-row">
+              <h6>${esc(item.title || 'Note')}</h6>
+              <span class="haos-notes-scope ${noteTone(item.scope)}"><i class="bi ${noteScopeIcon(item.scope)}"></i>${noteScopeLabel(item.scope)}</span>
+            </div>
+            <p>${esc(preview || '-')}</p>
+            ${tagsHtml(item)}
+            <div class="haos-notes-meta">
+              <span><i class="bi bi-person"></i>${esc(item.ownerName || '-')}</span>
+              <span><i class="bi bi-building"></i>${esc(item.department || '-')}</span>
+              <span><i class="bi bi-clock"></i>${esc(displayDateTime(item.updatedAt || item.createdAt))}</span>
+              ${item.fileUrl ? '<span><i class="bi bi-link-45deg"></i>มีลิงก์แนบ</span>' : ''}
+            </div>
+          </div>
+          <div class="haos-notes-actions">
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="window.HAOSNotes.view(${index})" title="ดู Note"><i class="bi bi-eye"></i></button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.HAOSNotes.copy(${index})" title="คัดลอก"><i class="bi bi-clipboard"></i></button>
+            ${canManage ? `<button type="button" class="btn btn-sm btn-outline-warning" onclick="window.HAOSNotes.togglePin(${index})" title="ปักหมุด"><i class="bi ${item.pinned ? 'bi-pin-angle-fill' : 'bi-pin-angle'}"></i></button>` : ''}
+            ${canManage ? `<button type="button" class="btn btn-sm btn-outline-success" onclick="window.HAOSNotes.openEditor(${index})" title="แก้ไข"><i class="bi bi-pencil"></i></button>` : ''}
+            ${canManage ? `<button type="button" class="btn btn-sm btn-outline-danger" onclick="window.HAOSNotes.remove(${index})" title="ลบ"><i class="bi bi-trash"></i></button>` : ''}
+          </div>
+        </article>`;
+    }).join('');
+  }
+
+  async function load() {
+    ensureModule();
+    const box = $('haosNotesListV790');
+    if (box) box.innerHTML = '<div class="haos-notes-empty"><span class="spinner-border spinner-border-sm"></span><b>กำลังโหลด Note...</b></div>';
+    try {
+      const me = getUser();
+      const res = await gas('getUserNotesV790', [me.phone || '', me.role || 'User', me.department || me.departmentName || '', readFilters()]);
+      if (!res || !res.success) throw new Error(res?.message || 'โหลด Note ไม่สำเร็จ');
+      state.notes = res.data || [];
+      renderList();
+    } catch (err) {
+      if (box) box.innerHTML = `<div class="text-danger p-3">${esc(err?.message || String(err))}</div>`;
+    }
+  }
+
+  function clearFilters() {
+    ['haosNotesSearchV790', 'haosNotesScopeFilterV790', 'haosNotesTagFilterV790'].forEach(id => {
+      const el = $(id);
+      if (el) el.value = '';
+    });
+    ['haosNotesPinnedFilterV790', 'haosNotesArchiveFilterV790'].forEach(id => {
+      const el = $(id);
+      if (el) el.checked = false;
+    });
+    load();
+  }
+
+  function toggleFilters() {
+    $('haosNotesFiltersV790')?.classList.toggle('show');
+  }
+
+  function setInput(id, value) {
+    const el = $(id);
+    if (el) {
+      if (el.type === 'checkbox') el.checked = !!value;
+      else el.value = value || '';
+    }
+  }
+
+  function openEditor(index, preset) {
+    ensureModule();
+    const item = typeof index === 'number' ? state.notes[index] : null;
+    const data = item || preset || {};
+    state.editing = item || null;
+    $('haosNotesEditorTitleV790').textContent = item ? 'แก้ไข Note' : 'บันทึก Note';
+    setInput('haosNotesTitleInputV790', data.title || '');
+    setInput('haosNotesScopeInputV790', data.scope || 'personal');
+    setInput('haosNotesTagsInputV790', data.tags || '');
+    setInput('haosNotesFileInputV790', data.fileUrl || '');
+    setInput('haosNotesLinkedTypeInputV790', data.linkedType || '');
+    setInput('haosNotesLinkedIdInputV790', data.linkedId || '');
+    setInput('haosNotesContentInputV790', data.content || '');
+    setInput('haosNotesPinnedInputV790', !!data.pinned);
+    $('haosNotesEditorV790')?.classList.add('show');
+    $('haosNotesEditorV790')?.setAttribute('aria-hidden', 'false');
+    setTimeout(() => $('haosNotesTitleInputV790')?.focus(), 80);
+  }
+
+  function closeEditor() {
+    $('haosNotesEditorV790')?.classList.remove('show');
+    $('haosNotesEditorV790')?.setAttribute('aria-hidden', 'true');
+    state.editing = null;
+  }
+
+  async function save() {
+    if (state.busy) return;
+    const title = clean($('haosNotesTitleInputV790')?.value || '');
+    const content = clean($('haosNotesContentInputV790')?.value || '');
+    if (!title && !content) return window.Swal?.fire('กรุณาระบุหัวข้อหรือรายละเอียด Note', '', 'warning');
+    const old = state.editing || {};
+    const me = getUser();
+    const payload = {
+      noteId: old.noteId || '',
+      title,
+      content,
+      scope: $('haosNotesScopeInputV790')?.value || 'personal',
+      tags: $('haosNotesTagsInputV790')?.value || '',
+      fileUrl: $('haosNotesFileInputV790')?.value || '',
+      linkedType: $('haosNotesLinkedTypeInputV790')?.value || '',
+      linkedId: $('haosNotesLinkedIdInputV790')?.value || '',
+      pinned: !!$('haosNotesPinnedInputV790')?.checked
+    };
+    try {
+      state.busy = true;
+      const res = await gas('saveUserNoteV790', [payload, me.phone || '', me.role || 'User']);
+      if (!res || !res.success) throw new Error(res?.message || 'บันทึก Note ไม่สำเร็จ');
+      closeEditor();
+      open();
+      await load();
+      window.Swal?.fire({ icon: 'success', title: 'บันทึก Note แล้ว', timer: 1000, showConfirmButton: false });
+    } catch (err) {
+      window.Swal?.fire('บันทึกไม่สำเร็จ', err?.message || String(err), 'error');
+    } finally {
+      state.busy = false;
+    }
+  }
+
+  function view(index) {
+    const item = state.notes[index];
+    if (!item) return;
+    window.Swal?.fire({
+      title: esc(item.title || 'Note'),
+      width: 760,
+      html: `
+        <div class="haos-notes-view text-start">
+          <div class="mb-2">
+            <span class="haos-notes-scope ${noteTone(item.scope)}"><i class="bi ${noteScopeIcon(item.scope)}"></i>${noteScopeLabel(item.scope)}</span>
+            ${item.pinned ? '<span class="haos-notes-scope pin"><i class="bi bi-pin-angle-fill"></i>ปักหมุด</span>' : ''}
+            ${item.archived ? '<span class="haos-notes-scope muted"><i class="bi bi-archive"></i>เก็บแล้ว</span>' : ''}
+          </div>
+          <p class="text-muted small mb-2">${esc(item.ownerName || '-')} · ${esc(item.department || '-')} · ${esc(displayDateTime(item.updatedAt || item.createdAt))}</p>
+          <div class="haos-notes-view-content">${esc(item.content || '-')}</div>
+          ${tagsHtml(item)}
+          <div class="d-flex gap-2 flex-wrap mt-3">
+            ${item.fileUrl ? `<a class="btn btn-sm btn-outline-primary" href="${esc(item.fileUrl)}" target="_blank"><i class="bi bi-box-arrow-up-right"></i> เปิดลิงก์แนบ</a>` : ''}
+            <button class="btn btn-sm btn-outline-secondary" onclick="window.HAOSNotes.copy(${index})"><i class="bi bi-clipboard"></i> คัดลอก</button>
+          </div>
+        </div>`
+    });
+  }
+
+  async function copy(index) {
+    const item = state.notes[index];
+    if (!item) return;
+    const text = [item.title, item.content, item.fileUrl].filter(Boolean).join('\n\n');
+    try {
+      await navigator.clipboard.writeText(text);
+      window.Swal?.fire({ icon: 'success', title: 'คัดลอก Note แล้ว', timer: 900, showConfirmButton: false });
+    } catch (err) {
+      window.Swal?.fire('คัดลอกไม่สำเร็จ', err?.message || String(err), 'error');
+    }
+  }
+
+  async function togglePin(index) {
+    const item = state.notes[index];
+    if (!item) return;
+    try {
+      const me = getUser();
+      const res = await gas('toggleUserNotePinV790', [item.noteId, me.phone || '', me.role || 'User', !item.pinned]);
+      if (!res || !res.success) throw new Error(res?.message || 'อัปเดตปักหมุดไม่สำเร็จ');
+      await load();
+    } catch (err) {
+      window.Swal?.fire('อัปเดตไม่สำเร็จ', err?.message || String(err), 'error');
+    }
+  }
+
+  async function remove(index) {
+    const item = state.notes[index];
+    if (!item) return;
+    const ok = await window.Swal?.fire({
+      icon: 'warning',
+      title: 'ลบ Note นี้?',
+      text: item.title || item.noteId,
+      showCancelButton: true,
+      confirmButtonText: 'ลบ',
+      cancelButtonText: 'ยกเลิก',
+      confirmButtonColor: '#dc3545'
+    });
+    if (ok && !ok.isConfirmed) return;
+    try {
+      const me = getUser();
+      const res = await gas('deleteUserNoteV790', [item.noteId, me.phone || '', me.role || 'User']);
+      if (!res || !res.success) throw new Error(res?.message || 'ลบ Note ไม่สำเร็จ');
+      await load();
+      window.Swal?.fire({ icon: 'success', title: 'ลบ Note แล้ว', timer: 900, showConfirmButton: false });
+    } catch (err) {
+      window.Swal?.fire('ลบไม่สำเร็จ', err?.message || String(err), 'error');
+    }
+  }
+
+  function open() {
+    ensureModule();
+    $('haosNotesModuleV790')?.classList.add('show');
+    $('haosNotesModuleV790')?.setAttribute('aria-hidden', 'false');
+    load();
+    setTimeout(() => {
+      try {
+        $('haosNotesModuleV790')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (err) {}
+    }, 80);
+  }
+
+  function close() {
+    $('haosNotesModuleV790')?.classList.remove('show');
+    $('haosNotesModuleV790')?.setAttribute('aria-hidden', 'true');
+  }
+
+  function quickNote() {
+    ensureModule();
+    openEditor(null, { scope: 'personal', tags: 'ด่วน' });
+  }
+
+  function installCard() {
+    const pane = $('itservices-pane');
+    if (!pane || $('userNotesCardV790')) return;
+    const rows = qa('.row.g-3.mb-4,.row.g-3', pane);
+    const row = rows.find(el => el.querySelector('.it-service-card,.card.h-100')) || rows[0];
+    if (!row) return;
+    const card = document.createElement('div');
+    card.id = 'userNotesCardV790';
+    card.className = 'col-md-4';
+    card.dataset.moduleId = 'user_notes';
+    card.innerHTML = `
+      <div class="card h-100 it-service-card">
+        <div class="card-body p-4 d-flex flex-column">
+          <div class="mb-3 d-inline-flex align-items-center justify-content-center rounded-4" style="width:54px;height:54px;background:#fff7ed;color:#c2410c;font-size:1.55rem"><i class="bi bi-journal-richtext"></i></div>
+          <h6 class="fw-bold">สมุด Note</h6>
+          <p class="text-muted small flex-grow-1">จดบันทึกส่วนตัวหรือกลุ่มงาน ปักหมุด ติดแท็ก ค้นย้อนหลัง และแนบลิงก์งานสำคัญไว้ใช้งานต่อได้ทันที</p>
+          <div class="d-flex gap-2 flex-wrap">
+            <button type="button" class="btn btn-warning btn-sm fw-bold" onclick="window.HAOSNotes.quickNote()"><i class="bi bi-pencil-square"></i> บันทึกเร็ว</button>
+            <button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="window.HAOSNotes.open()"><i class="bi bi-folder2-open"></i> เปิดสมุด Note</button>
+          </div>
+        </div>
+      </div>`;
+    row.appendChild(card);
+    try {
+      if (typeof window.applyITHubLayoutV759 === 'function') window.applyITHubLayoutV759();
+    } catch (err) {}
+  }
+
+  function boot() {
+    ensureModule();
+    installCard();
+  }
+
+  window.HAOSNotes = {
+    open,
+    close,
+    load,
+    clearFilters,
+    toggleFilters,
+    openEditor,
+    closeEditor,
+    quickNote,
+    save,
+    view,
+    copy,
+    togglePin,
+    remove,
+    version: PATCH
+  };
+  window.openUserNotesV790 = open;
+  window.openQuickNoteV790 = quickNote;
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
+  else boot();
+  const observer = new MutationObserver(() => {
+    clearTimeout(window.__haosNotesInstallTimerV790);
+    window.__haosNotesInstallTimerV790 = setTimeout(installCard, 150);
+  });
+  try { observer.observe(document.body, { childList: true, subtree: true }); } catch (err) {}
+  setInterval(installCard, 2500);
+  console.info('HAOS ' + PATCH + ' loaded');
+})();

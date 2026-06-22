@@ -83,7 +83,9 @@
 
   function ensureOverlay() {
     if ($('haosEOfficeOverlayV789')) return;
-    document.body.insertAdjacentHTML('beforeend', `
+    const pane = $('itservices-pane');
+    const host = pane || document.body;
+    host.insertAdjacentHTML('beforeend', `
       <div id="haosEOfficeOverlayV789" class="haos-eoffice-overlay" aria-hidden="true">
         <div class="haos-eoffice-shell">
           <div class="haos-eoffice-header">
@@ -339,6 +341,11 @@
     $('haosEOfficeOverlayV789')?.classList.add('show');
     $('haosEOfficeOverlayV789')?.setAttribute('aria-hidden', 'false');
     load();
+    setTimeout(() => {
+      try {
+        $('haosEOfficeOverlayV789')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (err) {}
+    }, 80);
   }
 
   function close() {

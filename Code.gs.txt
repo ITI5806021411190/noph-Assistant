@@ -24,6 +24,7 @@ const SHEET_BACKUP_LOGS = 'BackupLogs';
 const SHEET_PERMISSION_MATRIX = 'PermissionMatrix';
 const SHEET_AI_DOCUMENT_SUMMARIES = 'AIDocumentSummaries';
 const SHEET_E_OFFICE_DOCUMENTS = 'EOfficeDocuments';
+const SHEET_USER_NOTES = 'UserNotes';
 const FALLBACK_BOT_TOKEN = ''; // ตั้งค่าจริงใน Script Properties: BOT_TOKEN
 const FALLBACK_GEMINI_API_KEY = ''; // ตั้งค่าจริงใน Script Properties: GEMINI_API_KEY
 const FALLBACK_VERCEL_API_SECRET = 'HAOS_1777448392812_5f154d07d5ca59a27854741941470dc3'; // ตั้งค่าเดียวกันใน Vercel env: GAS_API_SECRET และ Script Properties: VERCEL_API_SECRET
@@ -3008,6 +3009,250 @@ function createEOfficeFromAISummaryV789(summaryId, actorPhone, role) {
       notes: 'สร้างจากผลสรุปเอกสารด้วย AI'
     };
     return saveEOfficeDocumentV789(payload, targetPhone, role);
+  } catch(e) {
+    return { success:false, message:e.toString() };
+  }
+}
+
+// ========================= v70.90: User Notes =========================
+function getUserNotesSheetV790_() {
+  return getOrCreateSheet_(SHEET_USER_NOTES, [
+    'Note ID','Title','Content','Scope','Tags','Pinned','Archived','Owner Phone','Owner Name','Department',
+    'Linked Type','Linked ID','File URL','Created At','Updated At'
+  ], '#fef3c7');
+}
+
+function userNoteCleanV790_(value) {
+  return String(value === null || value === undefined ? '' : value).replace(/\r/g, '\n').trim();
+}
+
+function userNotePhoneV790_(value) {
+  return String(value || '').replace(/'/g, '').trim();
+}
+
+function userNoteIsAdminV790_(role) {
+  var raw = String(role || '').toLowerCase();
+  return raw.indexOf('admin') !== -1 || raw.indexOf('super') !== -1 || raw.indexOf('master') !== -1;
+}
+
+function userNoteBoolV790_(value) {
+  var raw = String(value === null || value === undefined ? '' : value).toLowerCase();
+  return value === true || raw === 'true' || raw === 'yes' || raw === '1' || raw === 'ใช่';
+}
+
+function userNoteTagsV790_(value) {
+  return userNoteCleanV790_(value)
+    .split(',')
+    .map(function(tag){ return tag.trim(); })
+    .filter(function(tag){ return !!tag; });
+}
+
+function userNoteMakeIdV790_() {
+  return 'NOTE-' + Utilities.formatDate(new Date(), 'GMT+7', 'yyyyMMdd') + '-' + Utilities.getUuid().substring(0, 6).toUpperCase();
+}
+
+function userNoteRowToObjectV790_(row) {
+  var item = {
+    noteId: row[0],
+    title: row[1],
+    content: row[2],
+    scope: row[3] || 'personal',
+    tags: row[4],
+    pinned: userNoteBoolV790_(row[5]),
+    archived: userNoteBoolV790_(row[6]),
+    ownerPhone: userNotePhoneV790_(row[7]),
+    ownerName: row[8],
+    department: row[9],
+    linkedType: row[10],
+    linkedId: row[11],
+    fileUrl: row[12],
+    createdAt: row[13],
+    updatedAt: row[14]
+  };
+  item.tagsList = userNoteTagsV790_(item.tags);
+  return item;
+}
+
+function userNoteActorProfileV790_(phone) {
+  var profile = {};
+  try { profile = getUserProfileByPhone_(phone) || {}; } catch(ignore) {}
+  return {
+    phone: userNotePhoneV790_(phone),
+    name: userNoteCleanV790_(profile.fullName || profile.name || getUserNameByPhone_(phone) || ''),
+    department: userNoteCleanV790_(profile.department || profile.departmentName || '')
+  };
+}
+
+function userNoteCanViewV790_(item, actorPhone, role, department) {
+  if (userNoteIsAdminV790_(role)) return true;
+  var phone = userNotePhoneV790_(actorPhone);
+  if (item.ownerPhone === phone) return true;
+  var scope = String(item.scope || 'personal').toLowerCase();
+  if (scope === 'department') {
+    return userNoteCleanV790_(item.department).toLowerCase() === userNoteCleanV790_(department).toLowerCase();
+  }
+  return false;
+}
+
+function userNoteCanManageV790_(item, actorPhone, role) {
+  return userNoteIsAdminV790_(role) || item.ownerPhone === userNotePhoneV790_(actorPhone);
+}
+
+function getUserNotesV790(phone, role, department, filters) {
+  try {
+    var sh = getUserNotesSheetV790_();
+    var values = sh.getDataRange().getValues();
+    var actorPhone = userNotePhoneV790_(phone);
+    var actorDept = userNoteCleanV790_(department);
+    if (!actorDept && actorPhone) actorDept = userNoteActorProfileV790_(actorPhone).department;
+    filters = filters || {};
+    var q = userNoteCleanV790_(filters.q || filters.query || '').toLowerCase();
+    var scopeFilter = userNoteCleanV790_(filters.scope || '').toLowerCase();
+    var tagFilter = userNoteCleanV790_(filters.tag || '').toLowerCase();
+    var pinnedOnly = userNoteBoolV790_(filters.pinnedOnly || filters.pinned);
+    var includeArchived = userNoteBoolV790_(filters.includeArchived);
+    var out = [];
+    for (var i = values.length - 1; i >= 1; i--) {
+      var item = userNoteRowToObjectV790_(values[i]);
+      if (!includeArchived && item.archived) continue;
+      if (!userNoteCanViewV790_(item, actorPhone, role, actorDept)) continue;
+      var scope = String(item.scope || 'personal').toLowerCase();
+      if (scopeFilter && scopeFilter !== 'all' && scope !== scopeFilter) continue;
+      if (pinnedOnly && !item.pinned) continue;
+      if (tagFilter && item.tagsList.join(' ').toLowerCase().indexOf(tagFilter) === -1) continue;
+      if (q) {
+        var hay = [item.title, item.content, item.tags, item.department, item.ownerName, item.linkedType, item.linkedId].join(' ').toLowerCase();
+        if (hay.indexOf(q) === -1) continue;
+      }
+      item.canManage = userNoteCanManageV790_(item, actorPhone, role);
+      out.push(item);
+      if (out.length >= 300) break;
+    }
+    out.sort(function(a, b) {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+      return new Date(b.updatedAt || b.createdAt || 0).getTime() - new Date(a.updatedAt || a.createdAt || 0).getTime();
+    });
+    return { success:true, data:out };
+  } catch(e) {
+    return { success:false, message:e.toString(), data:[] };
+  }
+}
+
+function saveUserNoteV790(payload, actorPhone, role) {
+  try {
+    payload = payload || {};
+    var sh = getUserNotesSheetV790_();
+    var values = sh.getDataRange().getValues();
+    var actor = userNoteActorProfileV790_(actorPhone || payload.ownerPhone || '');
+    if (!actor.phone) return { success:false, message:'ไม่พบข้อมูลผู้ใช้งาน กรุณาเข้าสู่ระบบใหม่' };
+    var noteId = userNoteCleanV790_(payload.noteId || '');
+    var rowIndex = -1;
+    var oldItem = null;
+    for (var i = 1; i < values.length; i++) {
+      if (String(values[i][0]) === String(noteId)) {
+        rowIndex = i + 1;
+        oldItem = userNoteRowToObjectV790_(values[i]);
+        break;
+      }
+    }
+    if (oldItem && !userNoteCanManageV790_(oldItem, actor.phone, role)) {
+      return { success:false, message:'ไม่มีสิทธิ์แก้ไข Note นี้' };
+    }
+    if (!noteId) noteId = userNoteMakeIdV790_();
+    var now = new Date();
+    var content = userNoteCleanV790_(payload.content || (oldItem && oldItem.content) || '');
+    var title = userNoteCleanV790_(payload.title || (oldItem && oldItem.title) || '');
+    if (!title) title = content ? content.split('\n')[0].substring(0, 80) : 'Note ใหม่';
+    var scope = String(payload.scope || (oldItem && oldItem.scope) || 'personal').toLowerCase() === 'department' ? 'department' : 'personal';
+    var item = {
+      noteId: noteId,
+      title: title,
+      content: content,
+      scope: scope,
+      tags: userNoteTagsV790_(payload.tags || (oldItem && oldItem.tags) || '').join(', '),
+      pinned: userNoteBoolV790_(payload.pinned !== undefined ? payload.pinned : (oldItem && oldItem.pinned)),
+      archived: userNoteBoolV790_(payload.archived !== undefined ? payload.archived : (oldItem && oldItem.archived)),
+      ownerPhone: oldItem && oldItem.ownerPhone ? oldItem.ownerPhone : actor.phone,
+      ownerName: oldItem && oldItem.ownerName ? oldItem.ownerName : actor.name,
+      department: userNoteCleanV790_(payload.department || (oldItem && oldItem.department) || actor.department),
+      linkedType: userNoteCleanV790_(payload.linkedType || (oldItem && oldItem.linkedType) || ''),
+      linkedId: userNoteCleanV790_(payload.linkedId || (oldItem && oldItem.linkedId) || ''),
+      fileUrl: userNoteCleanV790_(payload.fileUrl || (oldItem && oldItem.fileUrl) || ''),
+      createdAt: oldItem && oldItem.createdAt ? oldItem.createdAt : now,
+      updatedAt: now
+    };
+    var row = [
+      item.noteId, item.title, item.content, item.scope, item.tags, item.pinned, item.archived,
+      "'" + item.ownerPhone, item.ownerName, item.department, item.linkedType, item.linkedId, item.fileUrl,
+      item.createdAt, item.updatedAt
+    ];
+    if (rowIndex > 0) sh.getRange(rowIndex, 1, 1, row.length).setValues([row]);
+    else sh.appendRow(row);
+    try {
+      logAudit_(actor.phone, actor.name, rowIndex > 0 ? 'UPDATE_USER_NOTE' : 'CREATE_USER_NOTE', 'UserNote', noteId, 'บันทึก Note: ' + item.title, oldItem, item);
+    } catch(ignore) {}
+    item.canManage = true;
+    item.tagsList = userNoteTagsV790_(item.tags);
+    return { success:true, data:item, message:'บันทึก Note แล้ว' };
+  } catch(e) {
+    return { success:false, message:e.toString() };
+  }
+}
+
+function toggleUserNotePinV790(noteId, actorPhone, role, pinned) {
+  try {
+    var sh = getUserNotesSheetV790_();
+    var values = sh.getDataRange().getValues();
+    var actor = userNoteActorProfileV790_(actorPhone || '');
+    for (var i = 1; i < values.length; i++) {
+      if (String(values[i][0]) !== String(noteId)) continue;
+      var item = userNoteRowToObjectV790_(values[i]);
+      if (!userNoteCanManageV790_(item, actor.phone, role)) return { success:false, message:'ไม่มีสิทธิ์ปักหมุด Note นี้' };
+      sh.getRange(i + 1, 6).setValue(!!pinned);
+      sh.getRange(i + 1, 15).setValue(new Date());
+      return { success:true, message:pinned ? 'ปักหมุด Note แล้ว' : 'ยกเลิกปักหมุดแล้ว' };
+    }
+    return { success:false, message:'ไม่พบ Note' };
+  } catch(e) {
+    return { success:false, message:e.toString() };
+  }
+}
+
+function archiveUserNoteV790(noteId, actorPhone, role, archived) {
+  try {
+    var sh = getUserNotesSheetV790_();
+    var values = sh.getDataRange().getValues();
+    var actor = userNoteActorProfileV790_(actorPhone || '');
+    for (var i = 1; i < values.length; i++) {
+      if (String(values[i][0]) !== String(noteId)) continue;
+      var item = userNoteRowToObjectV790_(values[i]);
+      if (!userNoteCanManageV790_(item, actor.phone, role)) return { success:false, message:'ไม่มีสิทธิ์จัดเก็บ Note นี้' };
+      sh.getRange(i + 1, 7).setValue(!!archived);
+      sh.getRange(i + 1, 15).setValue(new Date());
+      return { success:true, message:archived ? 'เก็บ Note เข้าคลังแล้ว' : 'นำ Note กลับมาแล้ว' };
+    }
+    return { success:false, message:'ไม่พบ Note' };
+  } catch(e) {
+    return { success:false, message:e.toString() };
+  }
+}
+
+function deleteUserNoteV790(noteId, actorPhone, role) {
+  try {
+    var sh = getUserNotesSheetV790_();
+    var values = sh.getDataRange().getValues();
+    var actor = userNoteActorProfileV790_(actorPhone || '');
+    for (var i = 1; i < values.length; i++) {
+      if (String(values[i][0]) !== String(noteId)) continue;
+      var item = userNoteRowToObjectV790_(values[i]);
+      if (!userNoteCanManageV790_(item, actor.phone, role)) return { success:false, message:'ไม่มีสิทธิ์ลบ Note นี้' };
+      sh.deleteRow(i + 1);
+      try {
+        logAudit_(actor.phone, actor.name, 'DELETE_USER_NOTE', 'UserNote', noteId, 'ลบ Note: ' + (item.title || noteId), item, null);
+      } catch(ignore) {}
+      return { success:true, message:'ลบ Note แล้ว' };
+    }
+    return { success:false, message:'ไม่พบ Note' };
   } catch(e) {
     return { success:false, message:e.toString() };
   }
@@ -15585,5 +15830,26 @@ function bridgeWhitelistHealthCheckV789() {
     success:true,
     version:'v70.89-ai-doc-summary-eoffice',
     functions:['deleteAIDocumentSummaryV788', 'getEOfficeDocumentsV789', 'saveEOfficeDocumentV789', 'deleteEOfficeDocumentV789', 'createEOfficeFromAISummaryV789']
+  };
+}
+
+// v70.90: User Notes module.
+var haosV790PrevGetAllowedBridgeFunctions_ = typeof getAllowedBridgeFunctions_ === 'function' ? getAllowedBridgeFunctions_ : null;
+getAllowedBridgeFunctions_ = function() {
+  var allowed = haosV790PrevGetAllowedBridgeFunctions_ ? haosV790PrevGetAllowedBridgeFunctions_() : {};
+  allowed.getUserNotesV790 = true;
+  allowed.saveUserNoteV790 = true;
+  allowed.toggleUserNotePinV790 = true;
+  allowed.archiveUserNoteV790 = true;
+  allowed.deleteUserNoteV790 = true;
+  allowed.bridgeWhitelistHealthCheckV790 = true;
+  return allowed;
+};
+
+function bridgeWhitelistHealthCheckV790() {
+  return {
+    success:true,
+    version:'v70.90-user-notes',
+    functions:['getUserNotesV790', 'saveUserNoteV790', 'toggleUserNotePinV790', 'archiveUserNoteV790', 'deleteUserNoteV790']
   };
 }
