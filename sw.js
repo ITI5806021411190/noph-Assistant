@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-96-register-guide-agenda-schedule';
+const CACHE_NAME = 'haos-v70-97-rollback-last-ui-experiments';
 const CORE = [
   '/',
   '/index.html',

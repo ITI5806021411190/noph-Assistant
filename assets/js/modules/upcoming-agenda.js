@@ -5,11 +5,10 @@
   if (window.__HAOS_V787_UPCOMING_AGENDA__) return;
   window.__HAOS_V787_UPCOMING_AGENDA__ = true;
 
-  const LOOKAHEAD_OPTIONS = [3, 7, 15];
+  const LOOKAHEAD_OPTIONS = [3];
   const LOOKAHEAD_KEY = 'haos_upcoming_agenda_lookahead_days_v796';
   function readLookaheadDays() {
-    const value = Number(localStorage.getItem(LOOKAHEAD_KEY) || 3);
-    return LOOKAHEAD_OPTIONS.includes(value) ? value : 3;
+    return 3;
   }
   let LOOKAHEAD_DAYS = readLookaheadDays();
   const $ = id => document.getElementById(id);

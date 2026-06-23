@@ -19760,5 +19760,76 @@ window.openQuickNoteHeroV790 = window.openQuickNoteHeroV790 || function(){
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<script id="haos-v70-97-rollback-last-ui-experiments">
+(function(){
+  const PATCH='v70.97-rollback-last-ui-experiments';
+  if(window.__HAOS_V797_ROLLBACK_LAST_UI_EXPERIMENTS__)return;
+  window.__HAOS_V797_ROLLBACK_LAST_UI_EXPERIMENTS__=true;
+  const $=id=>document.getElementById(id);
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  function roleOf(){try{return String((window.user||user||{}).role||(window.user||user||{}).accountRole||'User');}catch(e){return 'User';}}
+  function rollbackTabOrder(){
+    const nav=$('mainTab');if(!nav)return;
+    ['upcoming-agenda-tab','itservices-tab','schedule-tab','report-tab'].forEach(id=>{
+      const li=$(id)?.closest('li');if(li)nav.appendChild(li);
+    });
+  }
+  function rollbackAgendaLookahead(){
+    try{localStorage.removeItem('haos_upcoming_agenda_lookahead_days_v796');}catch(e){}
+    $('haosAgendaLookaheadV796')?.closest('label')?.remove();
+    if(window.HAOSUpcomingAgenda&&typeof window.HAOSUpcomingAgenda.render==='function'){
+      try{window.HAOSUpcomingAgenda.render();}catch(e){}
+      setTimeout(()=>{$('haosAgendaLookaheadV796')?.closest('label')?.remove();},80);
+    }
+  }
+  function rollbackGuide(){
+    const cards=[
+      ['bi-pc-display-horizontal','IT Services Hub','เก็บบริการ IT หลักไว้ในจุดเดียว เช่น จองห้อง/Zoom, Helpdesk, ทรัพย์สิน, License และเครื่องมือบริการ IT','เดิม'],
+      ['bi-calendar2-check','กำหนดการวันนี้และใกล้ถึง','ดูงานวันนี้และกำหนดการที่จะถึง โดยใช้ช่วงแจ้งเตือน 3 วันตามค่าตั้งต้นเดิม','เดิม'],
+      ['bi-calendar2-week','ตารางงาน & นัดหมาย','งานส่วนตัว/กลุ่มงาน มุมมองรายการ การ์ด ปฏิทิน Tags, Priority, Public Link และ QR','หลัก'],
+      ['bi-camera-video','จองห้องประชุม / Zoom','สร้างคำขอ ติดตามสถานะ อนุมัติ/ไม่อนุมัติ พร้อมแจ้งเตือนและ Digital View','อัปเดต'],
+      ['bi-tools','แจ้งซ่อม IT / Helpdesk','แจ้งซ่อมพร้อมรูป ติดตามสถานะ และเปิดรายการจาก Notification Center','หลัก'],
+      ['bi-bell-fill','Notification Center','รวมแจ้งเตือนจากโมดูลต่าง ๆ อ่านทั้งหมด ลบ และเปิดรายการปลายทาง','หลัก'],
+      ['bi-person-vcard','Active Profile','บัญชีเดียวมีหลายโปรไฟล์การทำงาน และบันทึก audit log ตามโปรไฟล์ที่เลือก','ใหม่'],
+      ['bi-journal-check','รายงานการปฏิบัติงาน','บันทึกรายงานประจำวัน แนบไฟล์ ใช้ AI ช่วยเรียบเรียง และดูประวัติได้หลายมุมมอง','หลัก']
+    ];
+    if(/Admin|Super Admin|Head/i.test(roleOf()))cards.push(['bi-graph-up-arrow','Executive / Export','Dashboard ผู้บริหาร อนุมัติงาน สรุปรายงาน และ Export PDF/Excel ตามสิทธิ์','Admin']);
+    if(/Super Admin/i.test(roleOf()))cards.push(['bi-shield-check','เครื่องมือระบบขั้นสูง','จัดการผู้ใช้/โปรไฟล์ Permission Matrix Branding Backup/Restore ซ่อมฐานข้อมูล และ System Health','Super']);
+    window.openProgramGuide=function(force){
+      const key='haos_guide_hide_today_rollback_'+new Date().toISOString().slice(0,10);
+      if(!force&&localStorage.getItem(key)==='1')return;
+      Swal.fire({
+        title:'คู่มือ Health Assistant OS',
+        width:1040,
+        showCloseButton:true,
+        confirmButtonText:'เริ่มใช้งาน',
+        html:`<div class="haos-v733-guide-hero"><h5><i class="bi bi-stars"></i> คู่มือฟังก์ชันหลัก</h5><div class="small opacity-75">สิทธิ์ปัจจุบัน: ${esc(roleOf())}</div></div><div class="haos-v733-guide-grid">${cards.map(c=>`<div class="haos-v733-guide-card"><div class="d-flex justify-content-between gap-2"><h6><i class="bi ${esc(c[0])}"></i> ${esc(c[1])}</h6><span class="badge bg-primary-subtle text-primary">${esc(c[3])}</span></div><div class="small text-muted">${esc(c[2])}</div></div>`).join('')}</div><div class="guide-option-box mt-3 text-start"><div class="form-check"><input class="form-check-input" type="checkbox" id="guideHideTodayRollbackV797"><label class="form-check-label small" for="guideHideTodayRollbackV797">ไม่แสดงคำแนะนำนี้อีกในวันนี้</label></div></div>`,
+        preConfirm:()=>{if($('guideHideTodayRollbackV797')?.checked)localStorage.setItem(key,'1');}
+      });
+    };
+    window.openHelpCenterV60=function(){return window.openProgramGuide(true);};
+  }
+  function rollbackSchedulePopup(){
+    $('haosScheduleDetailBackdropV796')?.remove();
+    try{window.__HAOS_V782_SCHEDULE_THAI_LIST__=false;}catch(e){}
+    const old=document.getElementById('haos-v797-schedule-reload');
+    if(old)old.remove();
+    const script=document.createElement('script');
+    script.id='haos-v797-schedule-reload';
+    script.src='assets/js/modules/schedule-thai-list.js?v=rollback-v70-97';
+    document.body.appendChild(script);
+  }
+  function bootRollback(){
+    rollbackGuide();
+    rollbackTabOrder();
+    rollbackAgendaLookahead();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootRollback,{once:true});else bootRollback();
+  rollbackSchedulePopup();
+  [500,1300,2300,3800,5200].forEach(t=>setTimeout(bootRollback,t));
+  setTimeout(rollbackSchedulePopup,700);
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
