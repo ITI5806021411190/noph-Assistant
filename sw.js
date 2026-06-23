@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-95-calendar-booking-register-hotfix';
+const CACHE_NAME = 'haos-v70-95-popup-safety-audit';
 const CORE = [
   '/',
   '/index.html',

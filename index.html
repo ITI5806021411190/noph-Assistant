@@ -19521,5 +19521,222 @@ window.openQuickNoteHeroV790 = window.openQuickNoteHeroV790 || function(){
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<style id="haos-v70-95-popup-safety-audit-style">
+  body .swal2-container{z-index:2147483900!important}
+  body .swal2-container.haos-swal-calendar-layer{z-index:2147483500!important}
+  .modal-backdrop.show{z-index:2147483200!important}
+  .modal.show{z-index:2147483300!important}
+  #scheduleDetailModal{z-index:2147483300!important}
+  #haosSignatureModalV748,
+  .haos-v748-sign-modal{z-index:2147483400!important}
+  #haosSignatureModalV748 + .modal-backdrop,
+  .haos-v748-sign-modal + .modal-backdrop{z-index:2147483390!important}
+  #haosScheduleDetailBackdropV782,
+  .haos-v782-detail-backdrop,
+  #haosScheduleDetailBackdropV749,
+  .haos-v749-schedule-detail-backdrop{
+    z-index:2147483600!important;
+    position:fixed!important;
+    pointer-events:auto!important;
+  }
+  #haosScheduleDetailBackdropV782 .haos-v782-detail,
+  .haos-v782-detail,
+  #haosScheduleDetailBackdropV749 .haos-v749-schedule-detail,
+  .haos-v749-schedule-detail{
+    z-index:2147483601!important;
+    position:relative!important;
+  }
+</style>
+<script id="haos-v70-95-popup-safety-audit-script">
+(function(){
+  const PATCH='v70.95-popup-safety-audit';
+  if(window.__HAOS_V795_POPUP_SAFETY_AUDIT__)return;
+  window.__HAOS_V795_POPUP_SAFETY_AUDIT__=true;
+  const $=id=>document.getElementById(id);
+  const qa=(sel,root=document)=>Array.from((root||document).querySelectorAll(sel));
+  const Z={
+    modalBackdrop:2147483200,
+    modal:2147483300,
+    signature:2147483400,
+    calendarSwal:2147483500,
+    scheduleDetail:2147483600,
+    scheduleCard:2147483601,
+    swal:2147483900
+  };
+  let pending=false;
+
+  function setImportant(el,prop,value){
+    if(!el)return;
+    try{el.style.setProperty(prop,String(value),'important');}
+    catch(e){try{el.style[prop]=String(value);}catch(_e){}}
+  }
+  function isShown(el){
+    if(!el)return false;
+    const style=getComputedStyle(el);
+    return style.display!=='none'&&style.visibility!=='hidden'&&style.opacity!=='0';
+  }
+  function isCalendarSwal(container){
+    const title=(container?.querySelector?.('.swal2-title')?.textContent||'').trim();
+    return title.includes('ปฏิทิน')&&(title.includes('ตารางงาน')||title.includes('นัดหมาย'));
+  }
+  function visibleSwals(){
+    return qa('.swal2-container').filter(el=>isShown(el)&&el.querySelector('.swal2-popup'));
+  }
+  function syncFocusTrap(hasSwal){
+    if(!window.bootstrap?.Modal)return;
+    qa('.modal.show').forEach(modal=>{
+      try{
+        const inst=bootstrap.Modal.getInstance(modal);
+        const trap=inst&&inst._focustrap;
+        if(!trap)return;
+        if(hasSwal)trap.deactivate();
+        else if(modal.classList.contains('show'))trap.activate();
+      }catch(e){}
+    });
+  }
+  function raiseLayers(){
+    const swals=visibleSwals();
+    swals.forEach(container=>{
+      const calendar=isCalendarSwal(container);
+      container.classList.toggle('haos-swal-calendar-layer',calendar);
+      setImportant(container,'z-index',calendar?Z.calendarSwal:Z.swal);
+    });
+
+    qa('#haosScheduleDetailBackdropV782,.haos-v782-detail-backdrop,#haosScheduleDetailBackdropV749,.haos-v749-schedule-detail-backdrop').forEach(backdrop=>{
+      setImportant(backdrop,'z-index',Z.scheduleDetail);
+      setImportant(backdrop,'position','fixed');
+      setImportant(backdrop,'pointer-events','auto');
+      const card=backdrop.querySelector('.haos-v782-detail,.haos-v749-schedule-detail');
+      if(card){
+        setImportant(card,'z-index',Z.scheduleCard);
+        setImportant(card,'position','relative');
+        setImportant(card,'pointer-events','auto');
+      }
+    });
+
+    qa('.modal.show').forEach(modal=>{
+      const isSignature=modal.id==='haosSignatureModalV748'||modal.classList.contains('haos-v748-sign-modal');
+      setImportant(modal,'z-index',isSignature?Z.signature:Z.modal);
+    });
+    const scheduleModal=$('scheduleDetailModal');
+    if(scheduleModal)setImportant(scheduleModal,'z-index',Z.modal);
+
+    qa('.modal-backdrop').forEach(backdrop=>{
+      const hasSignature=qa('#haosSignatureModalV748.show,.haos-v748-sign-modal.show').length>0;
+      setImportant(backdrop,'z-index',hasSignature?Z.signature-10:Z.modalBackdrop);
+    });
+    syncFocusTrap(swals.length>0);
+  }
+  function scheduleRaise(delay){
+    if(pending&&delay!==0)return;
+    pending=true;
+    setTimeout(()=>{pending=false;raiseLayers();},delay||0);
+  }
+  function cleanupModalState(){
+    setTimeout(()=>{
+      if(!qa('.modal.show').length){
+        qa('.modal-backdrop').forEach(el=>el.remove());
+        document.body.classList.remove('modal-open');
+        document.body.style.removeProperty('overflow');
+        document.body.style.removeProperty('padding-right');
+      }
+      raiseLayers();
+    },120);
+  }
+  function hideBootstrapModalById(id){
+    const modal=$(id);
+    if(!modal)return false;
+    try{
+      if(window.bootstrap?.Modal){
+        const inst=bootstrap.Modal.getInstance(modal)||bootstrap.Modal.getOrCreateInstance(modal);
+        inst.hide();
+      }
+    }catch(e){}
+    setTimeout(()=>{
+      if(!modal.classList.contains('show')){
+        modal.style.display='none';
+        modal.setAttribute('aria-hidden','true');
+      }
+      cleanupModalState();
+    },80);
+    return false;
+  }
+  function wrapAfter(name){
+    const fn=window[name];
+    if(typeof fn!=='function'||fn.__haosPopupSafeV795)return;
+    const wrapped=function(){
+      const result=fn.apply(this,arguments);
+      [0,80,220,500].forEach(t=>setTimeout(raiseLayers,t));
+      return result;
+    };
+    wrapped.__haosPopupSafeV795=true;
+    window[name]=wrapped;
+  }
+  function installSwalWrapper(){
+    if(!window.Swal?.fire||Swal.fire.__haosPopupSafeV795)return;
+    const fire=Swal.fire.bind(Swal);
+    const wrapped=function(){
+      const result=fire.apply(Swal,arguments);
+      [0,40,140,360,900].forEach(t=>setTimeout(raiseLayers,t));
+      return result;
+    };
+    wrapped.__haosPopupSafeV795=true;
+    Swal.fire=wrapped;
+  }
+  function installNotificationClosePatch(){
+    window.closeNotificationCenterV794=function(){
+      return hideBootstrapModalById('notificationCenterModal');
+    };
+    if(typeof window.openNotificationTargetV732==='function'&&!window.openNotificationTargetV732.__haosPopupSafeV795){
+      const previous=window.openNotificationTargetV732;
+      const wrapped=function(){
+        hideBootstrapModalById('notificationCenterModal');
+        const result=previous.apply(this,arguments);
+        [80,240,600].forEach(t=>setTimeout(()=>hideBootstrapModalById('notificationCenterModal'),t));
+        return result;
+      };
+      wrapped.__haosPopupSafeV795=true;
+      window.openNotificationTargetV732=wrapped;
+    }
+  }
+  function install(){
+    installSwalWrapper();
+    installNotificationClosePatch();
+    ['showSchedulePopupDetailV749','showSchedulePopupDetailV782','openScheduleDetailFromPopupV749','viewScheduleDetail','openScheduleCalendarPopupV745'].forEach(wrapAfter);
+    raiseLayers();
+  }
+
+  document.addEventListener('shown.bs.modal',()=>scheduleRaise(0),true);
+  document.addEventListener('hidden.bs.modal',()=>cleanupModalState(),true);
+  document.addEventListener('click',ev=>{
+    if(ev.target.closest('#notificationCenterModal [onclick*="openNotificationTargetV732"],#notificationCenterList [onclick*="openNotificationTargetV732"]')){
+      setTimeout(()=>hideBootstrapModalById('notificationCenterModal'),60);
+    }
+    if(ev.target.closest('.fc-event,.haos-v745-calendar-item,.haos-v782-actions button,.haos-v749-schedule-detail-backdrop')){
+      [0,80,220].forEach(t=>setTimeout(raiseLayers,t));
+    }
+  },true);
+  try{
+    new MutationObserver(()=>scheduleRaise(30)).observe(document.body,{childList:true,subtree:true});
+  }catch(e){}
+  window.HAOSPopupDiagnosticsV795=function(){
+    const nodes=qa('.swal2-container,.modal.show,.modal-backdrop,#haosScheduleDetailBackdropV782,#haosScheduleDetailBackdropV749,.haos-v782-detail-backdrop,.haos-v749-schedule-detail-backdrop,.haos-ai-doc-overlay.show,.haos-eoffice-overlay.show,.haos-notes-editor');
+    return nodes.map(el=>({
+      tag:el.tagName,
+      id:el.id||'',
+      className:el.className||'',
+      zIndex:getComputedStyle(el).zIndex,
+      display:getComputedStyle(el).display,
+      visible:isShown(el)
+    }));
+  };
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});
+  else install();
+  setTimeout(install,700);
+  setTimeout(install,1600);
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
