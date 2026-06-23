@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-94-final-interaction-booking-fixes';
+const CACHE_NAME = 'haos-v70-95-calendar-booking-register-fixes';
 const CORE = [
   '/',
   '/index.html',

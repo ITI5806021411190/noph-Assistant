@@ -19179,5 +19179,275 @@ window.openQuickNoteHeroV790 = window.openQuickNoteHeroV790 || function(){
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<style id="haos-v70-95-calendar-booking-register-style">
+  #haosScheduleDetailBackdropV782,
+  .haos-v782-detail-backdrop,
+  #haosScheduleDetailBackdropV749,
+  .haos-v749-schedule-detail-backdrop{
+    z-index:2147483646!important;
+    position:fixed!important;
+    pointer-events:auto!important;
+  }
+  #haosScheduleDetailBackdropV782 .haos-v782-detail,
+  .haos-v782-detail,
+  #haosScheduleDetailBackdropV749 .haos-v749-schedule-detail,
+  .haos-v749-schedule-detail{
+    z-index:2147483647!important;
+    position:relative!important;
+  }
+  .haos-v795-booking-popup .swal2-html-container{text-align:left!important}
+  .haos-v795-booking-detail{display:grid;gap:14px;color:#0f172a}
+  .haos-v795-booking-hero{
+    border-radius:22px;
+    padding:18px 20px;
+    color:#fff;
+    background:linear-gradient(135deg,#0ea5e9,#2563eb 58%,#0f766e);
+    box-shadow:0 18px 42px rgba(37,99,235,.18);
+  }
+  .haos-v795-booking-hero h3{margin:0 0 8px;font-weight:900;font-size:1.45rem}
+  .haos-v795-booking-sub{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .haos-v795-pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:6px 11px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.24);font-weight:800}
+  .haos-v795-booking-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .haos-v795-booking-card{border:1px solid #dbeafe;border-radius:18px;background:#f8fbff;padding:13px 14px}
+  .haos-v795-booking-card small{display:block;color:#64748b;font-weight:800;margin-bottom:4px}
+  .haos-v795-booking-card b{font-size:1.02rem}
+  .haos-v795-booking-admin{border:1px solid #bbf7d0;background:#f0fdf4;border-radius:20px;padding:14px}
+  .haos-v795-booking-admin h6{font-weight:900;color:#047857;margin:0 0 10px}
+  .haos-v795-booking-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:6px}
+  .haos-v795-register-prefill{
+    border:1px solid #bfdbfe;
+    background:#eff6ff;
+    color:#1d4ed8;
+    border-radius:16px;
+    padding:10px 12px;
+    font-weight:800;
+    margin-bottom:14px;
+  }
+  @media(max-width:720px){.haos-v795-booking-grid{grid-template-columns:1fr}.haos-v795-booking-hero h3{font-size:1.18rem}}
+</style>
+<script id="haos-v70-95-calendar-booking-register-script">
+(function(){
+  const PATCH='v70.95-calendar-booking-register';
+  if(window.__HAOS_V795_CALENDAR_BOOKING_REGISTER__)return;
+  window.__HAOS_V795_CALENDAR_BOOKING_REGISTER__=true;
+  const $=id=>document.getElementById(id);
+  const qa=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const clean=v=>String(v??'').replace(/\s+/g,' ').trim();
+  const stripDept=v=>clean(v).replace(/^\d{1,3}\s+/,'');
+
+  function raiseScheduleDetailV795(){
+    qa('#haosScheduleDetailBackdropV782,.haos-v782-detail-backdrop,#haosScheduleDetailBackdropV749,.haos-v749-schedule-detail-backdrop').forEach(el=>{
+      el.style.zIndex='2147483646';
+      el.style.pointerEvents='auto';
+      el.style.position='fixed';
+      const card=el.querySelector('.haos-v782-detail,.haos-v749-schedule-detail');
+      if(card){
+        card.style.zIndex='2147483647';
+        card.style.position='relative';
+      }
+    });
+    const modal=$('scheduleDetailModal');
+    if(modal&&modal.classList.contains('show'))modal.style.zIndex='2147483647';
+  }
+  window.raiseScheduleDetailV795=raiseScheduleDetailV795;
+
+  function wrapScheduleDetail(name){
+    const fn=window[name];
+    if(typeof fn!=='function'||fn.__haosV795Wrapped)return;
+    window[name]=function(){
+      const result=fn.apply(this,arguments);
+      setTimeout(raiseScheduleDetailV795,0);
+      setTimeout(raiseScheduleDetailV795,80);
+      setTimeout(raiseScheduleDetailV795,220);
+      return result;
+    };
+    window[name].__haosV795Wrapped=true;
+  }
+
+  function fmtDateTime(value){
+    if(!value)return '-';
+    try{
+      if(window.HAOSDateDisplay&&window.HAOSDateDisplay.dateTime)return window.HAOSDateDisplay.dateTime(value,{forceTime:true});
+      if(typeof window.formatThaiDateTime24_==='function')return window.formatThaiDateTime24_(value);
+    }catch(e){}
+    const d=value instanceof Date?value:new Date(value);
+    if(!isNaN(d))return d.toLocaleString('th-TH',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}).replace(',', '');
+    return clean(value)||'-';
+  }
+  function fmtDate(value){
+    if(!value)return '-';
+    try{if(window.HAOSDateDisplay&&window.HAOSDateDisplay.date)return window.HAOSDateDisplay.date(value);}catch(e){}
+    const d=value instanceof Date?value:new Date(value);
+    if(!isNaN(d))return d.toLocaleDateString('th-TH',{day:'2-digit',month:'long',year:'numeric'});
+    return clean(value)||'-';
+  }
+  function bookingById(id){
+    const list=window.itBookingsGlobal||[];
+    return list.find(x=>String(x.id)===String(id));
+  }
+  function statusBadge(status){
+    try{if(typeof window.itBookingStatusBadge_==='function')return window.itBookingStatusBadge_(status);}catch(e){}
+    return `<span class="badge bg-secondary">${esc(status||'-')}</span>`;
+  }
+  function linkHtml(url,label){
+    const href=clean(url);
+    if(!href)return '-';
+    const safe=/^https?:\/\//i.test(href)?href:'#';
+    return `<a href="${esc(safe)}" target="_blank" rel="noopener" class="fw-bold text-break">${esc(label||href)}</a>`;
+  }
+  function valueBlock(label,value,icon){
+    return `<div class="haos-v795-booking-card"><small>${icon?`<i class="bi ${icon}"></i> `:''}${esc(label)}</small><b>${value||'-'}</b></div>`;
+  }
+
+  window.copyItBookingDetailV795=async function(id){
+    const item=bookingById(id);
+    if(!item)return;
+    const adminMeetingId=item.adminMeetingId||item.meetingId||'';
+    const text=[
+      item.topic||'-',
+      'ผู้ขอ: '+(item.ownerName||'-'),
+      'ตำแหน่ง: '+(item.ownerPosition||item.position||'-'),
+      'กลุ่มงาน: '+stripDept(item.department||'-'),
+      'เริ่ม: '+fmtDateTime(item.startTime||item.rawStartTime),
+      'สิ้นสุด: '+fmtDateTime(item.endTime||item.rawEndTime),
+      'ห้อง/สถานที่: '+(item.roomName||item.otherLocation||item.adminRoomId||'-'),
+      'Meeting ID: '+(adminMeetingId||'-'),
+      'Passcode: '+(item.adminPasscode||item.passcode||'-'),
+      'Link: '+(item.adminLink||item.meetingLink||'-')
+    ].join('\n');
+    try{
+      await navigator.clipboard.writeText(text);
+      Swal.fire({icon:'success',title:'คัดลอกแล้ว',timer:1100,showConfirmButton:false});
+    }catch(e){
+      Swal.fire('คัดลอกไม่สำเร็จ',e.message||String(e),'warning');
+    }
+  };
+
+  window.openItBookingDetail=function(id){
+    const item=bookingById(id);
+    if(!item)return Swal.fire('ไม่พบข้อมูล','กรุณาโหลดข้อมูลใหม่อีกครั้ง','warning');
+    const adminMeetingId=item.adminMeetingId||item.meetingId||'';
+    const adminPasscode=item.adminPasscode||item.passcode||'';
+    const adminLink=item.adminLink||item.meetingLink||'';
+    const requestLink=item.meetingLink||item.joinLink||'';
+    const place=item.roomName||item.otherLocation||item.location||item.adminRoomId||'-';
+    const type=item.bookingType||item.type||'-';
+    const submittedAt=item.createdAt||item.createdDate||item.timestamp||item.updatedAt||'';
+    Swal.fire({
+      title:'',
+      width:920,
+      showConfirmButton:false,
+      showCloseButton:true,
+      customClass:{popup:'haos-v795-booking-popup'},
+      html:`<div class="haos-v795-booking-detail">
+        <section class="haos-v795-booking-hero">
+          <h3>${esc(item.topic||'-')}</h3>
+          <div class="haos-v795-booking-sub">
+            ${statusBadge(item.status)}
+            <span class="haos-v795-pill"><i class="bi bi-camera-video"></i>${esc(type)}</span>
+            <span class="haos-v795-pill"><i class="bi bi-calendar-event"></i>${esc(fmtDate(item.startTime||item.rawStartTime))}</span>
+          </div>
+        </section>
+        <div class="haos-v795-booking-grid">
+          ${valueBlock('ผู้ขอ',esc(item.ownerName||item.requesterName||'-'),'bi-person')}
+          ${valueBlock('ตำแหน่ง',esc(item.ownerPosition||item.position||'-'),'bi-person-badge')}
+          ${valueBlock('กลุ่มงาน',esc(stripDept(item.department||'-')),'bi-building')}
+          ${valueBlock('ห้อง/สถานที่',esc(place),'bi-geo-alt')}
+          ${valueBlock('เริ่ม',esc(fmtDateTime(item.startTime||item.rawStartTime)),'bi-clock')}
+          ${valueBlock('สิ้นสุด',esc(fmtDateTime(item.endTime||item.rawEndTime)),'bi-clock-history')}
+          ${valueBlock('วันที่ทำรายการ',esc(submittedAt?fmtDateTime(submittedAt):'-'),'bi-send-check')}
+          ${valueBlock('ลิงก์เข้าร่วมที่ผู้ขอกรอก',linkHtml(requestLink,requestLink),'bi-link-45deg')}
+        </div>
+        <section class="haos-v795-booking-admin">
+          <h6><i class="bi bi-shield-check"></i> ข้อมูลจากเจ้าหน้าที่</h6>
+          <div class="haos-v795-booking-grid">
+            ${valueBlock('ห้องจัดประชุมที่',esc(item.adminRoomId||'-'),'bi-door-open')}
+            ${valueBlock('Meeting ID / Room Number',esc(adminMeetingId||'-'),'bi-hash')}
+            ${valueBlock('Password / Passcode',esc(adminPasscode||'-'),'bi-key')}
+            ${valueBlock('ลิงก์ประชุม',linkHtml(adminLink,adminLink),'bi-link')}
+          </div>
+        </section>
+        <div class="haos-v795-booking-actions">
+          <button type="button" class="btn btn-outline-dark fw-bold" onclick="openItBookingDigitalView('${esc(id)}')"><i class="bi bi-file-earmark-text"></i> Digital View</button>
+          <button type="button" class="btn btn-outline-success fw-bold" onclick="copyItBookingDetailV795('${esc(id)}')"><i class="bi bi-clipboard-check"></i> คัดลอกข้อมูล</button>
+          <button type="button" class="btn btn-secondary fw-bold" onclick="Swal.close()">ปิดหน้าต่าง</button>
+        </div>
+      </div>`
+    });
+  };
+
+  const REGISTER_KEY='haos_public_booking_register_prefill_v795';
+  function readRegisterPrefill(){
+    const params=new URLSearchParams(location.search);
+    let data={};
+    try{data=JSON.parse(localStorage.getItem(REGISTER_KEY)||'{}')||{};}catch(e){data={};}
+    ['name','phone','department','position','email'].forEach(key=>{
+      if(params.has(key))data[key]=params.get(key)||'';
+    });
+    if(data.ownerName&&!data.name)data.name=data.ownerName;
+    if(data.ownerPhone&&!data.phone)data.phone=data.ownerPhone;
+    if(data.ownerEmail&&!data.email)data.email=data.ownerEmail;
+    if(data.ownerPosition&&!data.position)data.position=data.ownerPosition;
+    return data;
+  }
+  function setInput(id,value){
+    const el=$(id);
+    if(el&&clean(value))el.value=value;
+  }
+  function selectDepartment(value){
+    const sel=$('regDepartment');
+    if(!sel||!clean(value))return;
+    const target=stripDept(value).toLowerCase();
+    let match=Array.from(sel.options).find(opt=>stripDept(opt.value).toLowerCase()===target||stripDept(opt.textContent).toLowerCase()===target);
+    if(!match)match=Array.from(sel.options).find(opt=>stripDept(opt.value).toLowerCase().includes(target)||target.includes(stripDept(opt.value).toLowerCase()));
+    if(match)sel.value=match.value;
+    else{
+      const opt=document.createElement('option');
+      opt.value=value;
+      opt.textContent=value;
+      sel.appendChild(opt);
+      sel.value=value;
+    }
+  }
+  function applyRegisterPrefillV795(){
+    const params=new URLSearchParams(location.search);
+    const shouldApply=params.get('register')==='1'||params.get('fromBooking')==='1'||localStorage.getItem(REGISTER_KEY);
+    if(!shouldApply||!$('registerSection'))return;
+    const data=readRegisterPrefill();
+    try{if(typeof window.showSection==='function')window.showSection('registerSection');}catch(e){}
+    $('registerSection').style.display='';
+    setInput('regFullName',data.name||data.ownerName);
+    setInput('regPosition',data.position||data.ownerPosition);
+    setInput('regPhone',data.phone||data.ownerPhone);
+    setInput('regEmail',data.email||data.ownerEmail);
+    selectDepartment(data.department);
+    const form=$('registerSection')?.querySelector('form');
+    if(form&&!$('haosRegisterPrefillNoticeV795')){
+      form.insertAdjacentHTML('afterbegin','<div id="haosRegisterPrefillNoticeV795" class="haos-v795-register-prefill"><i class="bi bi-info-circle"></i> ระบบเติมข้อมูลจากคำขอจองสาธารณะให้แล้ว กรุณาตรวจสอบและกรอกข้อมูลที่ยังขาดก่อนยืนยันลงทะเบียน</div>');
+    }
+    try{localStorage.removeItem(REGISTER_KEY);}catch(e){}
+  }
+  window.applyPublicBookingRegisterPrefillV795=applyRegisterPrefillV795;
+
+  function bootV795(){
+    wrapScheduleDetail('showSchedulePopupDetailV749');
+    wrapScheduleDetail('showSchedulePopupDetailV782');
+    wrapScheduleDetail('openScheduleDetailFromPopupV749');
+    raiseScheduleDetailV795();
+    applyRegisterPrefillV795();
+    try{
+      new MutationObserver(()=>raiseScheduleDetailV795()).observe(document.body,{childList:true,subtree:false});
+    }catch(e){}
+  }
+  document.addEventListener('click',ev=>{
+    if(ev.target.closest('.fc-event,.haos-v745-calendar-item,.haos-v782-actions button'))setTimeout(raiseScheduleDetailV795,80);
+  },true);
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootV795,{once:true});else bootV795();
+  setTimeout(bootV795,600);
+  setTimeout(applyRegisterPrefillV795,1200);
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
