@@ -19448,386 +19448,76 @@ window.openQuickNoteHeroV790 = window.openQuickNoteHeroV790 || function(){
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
-<style id="haos-v70-96-polish-style">
-  .haos-v796-register-prefill{display:flex;gap:10px;align-items:flex-start;border:1px solid rgba(14,165,233,.25);background:linear-gradient(135deg,#eff6ff,#ecfdf5);color:#0f766e;border-radius:8px;padding:12px 14px;margin-bottom:16px;font-weight:800}
-  .haos-v796-guide-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;text-align:left}
-  .haos-v796-guide-card{border:1px solid rgba(148,163,184,.28);border-radius:8px;background:#fff;padding:16px;box-shadow:0 12px 28px rgba(15,23,42,.06)}
-  .haos-v796-guide-card h6{font-weight:950;color:#075985;margin:0 0 8px;display:flex;gap:8px;align-items:center}
-  .haos-v796-guide-card p{margin:0;color:#475569;line-height:1.55;font-weight:650}
-  .haos-v796-guide-card small{display:inline-flex;margin-top:10px;border-radius:999px;background:#dbeafe;color:#1d4ed8;padding:4px 9px;font-weight:900}
-  .haos-v796-help-hero{border-radius:8px;background:linear-gradient(135deg,#0ea5e9,#10b981);color:#fff;padding:22px;text-align:left;margin-bottom:14px}
-  .haos-v796-help-hero h4{font-weight:950;margin:0 0 6px}.haos-v796-help-hero p{margin:0;opacity:.94;font-weight:700}
-  .haos-v796-help-section{border:1px solid rgba(148,163,184,.25);border-radius:8px;background:#fff;padding:16px;text-align:left;margin-bottom:12px}
-  .haos-v796-help-section h6{font-weight:950;color:#0f766e;margin-bottom:8px}
-  .haos-v796-help-section ul{margin:0;padding-left:1.15rem;color:#475569;font-weight:650}
-  .haos-v796-lookahead{display:inline-flex;align-items:center;gap:8px;margin-top:12px;border:1px solid rgba(14,165,233,.22);border-radius:999px;background:#fff;padding:6px 8px 6px 12px;color:#0369a1;font-weight:950;box-shadow:0 10px 24px rgba(15,23,42,.06)}
-  .haos-v796-lookahead select{border:0;background:#eff6ff;border-radius:999px;padding:6px 28px 6px 10px;color:#1d4ed8;font-weight:950;outline:0}
-  .haos-v796-schedule-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.58);backdrop-filter:blur(4px);z-index:2147483646;display:flex;align-items:center;justify-content:center;padding:22px}
-  .haos-v796-schedule-modal{width:min(980px,96vw);max-height:92vh;overflow:hidden;border-radius:14px;background:#fff;box-shadow:0 28px 80px rgba(15,23,42,.34);display:flex;flex-direction:column}
-  .haos-v796-schedule-head{background:linear-gradient(135deg,#0ea5e9,#2563eb 55%,#10b981);color:#fff;padding:22px 24px;display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
-  .haos-v796-schedule-head h3{font-weight:950;margin:0;font-size:1.45rem;line-height:1.35}.haos-v796-schedule-head p{margin:5px 0 0;opacity:.9;font-weight:750}
-  .haos-v796-schedule-close{border:0;background:rgba(255,255,255,.18);color:#fff;border-radius:8px;width:42px;height:42px;font-size:1.5rem;line-height:1}
-  .haos-v796-schedule-body{padding:18px 22px;overflow:auto}
-  .haos-v796-schedule-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
-  .haos-v796-pill{display:inline-flex;gap:6px;align-items:center;border-radius:999px;border:1px solid rgba(148,163,184,.25);background:#f8fafc;color:#334155;padding:6px 11px;font-weight:900}
-  .haos-v796-pill.scope-my{background:#dbeafe;color:#1d4ed8}.haos-v796-pill.scope-dept{background:#dcfce7;color:#047857}.haos-v796-pill.urgent{background:#ffedd5;color:#c2410c}
-  .haos-v796-detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:14px}
-  .haos-v796-detail-box{border:1px solid rgba(148,163,184,.25);border-radius:8px;background:#f8fafc;padding:13px 14px}
-  .haos-v796-detail-box small{display:block;color:#64748b;font-weight:900;margin-bottom:4px}.haos-v796-detail-box b{color:#0f172a}
-  .haos-v796-section{border:1px solid rgba(148,163,184,.23);border-radius:8px;background:#fff;padding:14px;margin-top:12px}
-  .haos-v796-section h6{font-weight:950;color:#075985;margin-bottom:8px;display:flex;gap:7px;align-items:center}
-  .haos-v796-section .text-body{white-space:pre-wrap;color:#334155;font-weight:650;line-height:1.65}
-  .haos-v796-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;padding:14px 22px;border-top:1px solid rgba(148,163,184,.22);background:#f8fafc}
-  .haos-v796-calendar-wrap{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:14px;text-align:left}
-  .haos-v796-calendar-side{max-height:600px;overflow:auto;border-left:1px solid rgba(148,163,184,.25);padding-left:12px}
-  .haos-v796-calendar-item{width:100%;border:1px solid rgba(148,163,184,.24);border-left:6px solid #2563eb;background:#fff;border-radius:8px;padding:10px 12px;margin-bottom:8px;text-align:left}
-  .haos-v796-calendar-item.dept{border-left-color:#059669}.haos-v796-calendar-item b{display:block;color:#1d4ed8}.haos-v796-calendar-item small{display:block;color:#64748b;font-weight:750;margin-top:4px}
-  @media(max-width:900px){.haos-v796-calendar-wrap{grid-template-columns:1fr}.haos-v796-calendar-side{border-left:0;border-top:1px solid rgba(148,163,184,.25);padding-left:0;padding-top:12px}.haos-v796-schedule-head{display:block}.haos-v796-schedule-close{margin-top:12px}}
-</style>
-<script id="haos-v70-96-register-guide-agenda-schedule">
+<script id="haos-v70-95-public-booking-register-route-hotfix">
 (function(){
-  const PATCH='v70.96-register-guide-agenda-schedule';
-  if(window.__HAOS_V796_REGISTER_GUIDE_AGENDA_SCHEDULE__)return;
-  window.__HAOS_V796_REGISTER_GUIDE_AGENDA_SCHEDULE__=true;
+  const PATCH='v70.95-public-booking-register-route-hotfix';
+  if(window.__HAOS_V795_REGISTER_ROUTE_HOTFIX__)return;
+  window.__HAOS_V795_REGISTER_ROUTE_HOTFIX__=true;
+  const KEY='haos_public_booking_register_prefill_v795';
   const $=id=>document.getElementById(id);
-  const qa=sel=>Array.from(document.querySelectorAll(sel));
   const clean=v=>String(v??'').replace(/\s+/g,' ').trim();
-  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-  const months=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
-  function stripDept(v){return clean(v).replace(/^\s*\d{1,3}\s+/, '').replace(/\s+/g,' ').trim();}
-  function parseDate(value){
-    if(!value)return null;
-    if(value instanceof Date&&!Number.isNaN(value.getTime()))return value;
-    const raw=String(value).trim();
-    let m=raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s](\d{1,2}):(\d{2}))?/);
-    if(m){let y=Number(m[1]);if(y>2400)y-=543;return new Date(y,Number(m[2])-1,Number(m[3]),Number(m[4]||0),Number(m[5]||0));}
-    m=raw.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
-    if(m){let y=Number(m[3]);if(y>2400)y-=543;return new Date(y,Number(m[2])-1,Number(m[1]),Number(m[4]||0),Number(m[5]||0));}
-    const d=new Date(raw);
-    return Number.isNaN(d.getTime())?null:d;
+  function isRegisterRoute(){
+    const params=new URLSearchParams(location.search||'');
+    return params.get('register')==='1'||params.get('fromBooking')==='1'||!!localStorage.getItem(KEY);
   }
-  function dateText(value){
-    try{if(window.HAOSDateDisplay&&typeof window.HAOSDateDisplay.date==='function')return window.HAOSDateDisplay.date(value);}catch(e){}
-    const d=parseDate(value);if(!d)return clean(value)||'-';
-    return `${String(d.getDate()).padStart(2,'0')} • ${months[d.getMonth()]} • ${d.getFullYear()+543}`;
-  }
-  function timeText(value){
-    try{if(window.HAOSDateDisplay&&typeof window.HAOSDateDisplay.time==='function')return window.HAOSDateDisplay.time(value);}catch(e){}
-    const d=parseDate(value);if(!d)return '';
-    return `${String(d.getHours()).padStart(2,'0')}.${String(d.getMinutes()).padStart(2,'0')} น.`;
-  }
-  function firstValue(item,keys){for(const key of keys){if(clean(item&&item[key]))return item[key];}return '';}
-  function scheduleId(item){return clean(firstValue(item,['id','scheduleId','eventId','publicId','uid']))||clean([item?.eventName,item?.startTime,item?.createdAt].join('|'));}
-  function startOf(item){return parseDate(firstValue(item,['startTime','rawStartTime','startDateTime','start','eventStart','date','eventDate']));}
-  function endOf(item){return parseDate(firstValue(item,['endTime','rawEndTime','endDateTime','end','eventEnd']));}
-  function scheduleTitle(item){return clean(firstValue(item,['__title','eventName','title','topic','name']))||'รายละเอียดตารางงาน';}
-  function scheduleScope(item){const raw=clean(firstValue(item,['__scope','scope','type'])).toLowerCase();if(raw.includes('dept')||raw.includes('group')||raw.includes('กลุ่ม'))return 'dept';if(raw.includes('my')||raw.includes('personal')||raw.includes('ส่วนตัว'))return 'my';return 'my';}
-  function allSchedulesV796(){
-    const list=[];
-    try{if(window.HAOSScheduleCore&&typeof window.HAOSScheduleCore.readAll==='function')list.push(...(window.HAOSScheduleCore.readAll()||[]));}catch(e){}
-    try{(window.mySchedulesGlobal||[]).forEach(item=>list.push(Object.assign({__scope:'my'},item)));}catch(e){}
-    try{(window.departmentSchedulesGlobal||[]).forEach(item=>list.push(Object.assign({__scope:'dept'},item)));}catch(e){}
-    const seen=new Set();
-    return list.filter((item,idx)=>{const key=scheduleId(item)||idx;if(seen.has(key))return false;seen.add(key);return true;});
-  }
-  function findScheduleV796(id){const target=clean(id);return allSchedulesV796().find(item=>scheduleId(item)===target||clean(item.id)===target||clean(item.publicId)===target);}
-  function rangeText(item){
-    const s=startOf(item), e=endOf(item);
-    if(!s)return '-';
-    const same=e&&s.toDateString()===e.toDateString();
-    if(!e)return `${dateText(s)} ${timeText(s)}`;
-    return same?`${dateText(s)} ${timeText(s)} ถึง ${timeText(e)}`:`${dateText(s)} ${timeText(s)} ถึง ${dateText(e)} ${timeText(e)}`;
-  }
-  function linkButtons(item){
-    const links=[];
-    ['meetingLink','meetLink','zoomLink','documentLink','documentLinks','fileUrl','attachmentUrl','attachments'].forEach(key=>{
-      const value=item&&item[key];
-      if(Array.isArray(value))links.push(...value);
-      else if(clean(value))links.push(...String(value).split(/[\n,]+/));
-    });
-    const uniq=[...new Set(links.map(clean).filter(v=>/^https?:\/\//i.test(v)))];
-    if(!uniq.length)return '<span class="text-muted">ไม่มีลิงก์หรือไฟล์แนบ</span>';
-    return uniq.map((url,idx)=>`<a class="btn btn-outline-primary btn-sm fw-bold me-1 mb-1" target="_blank" href="${esc(url)}"><i class="bi bi-box-arrow-up-right"></i> เปิดลิงก์ ${idx+1}</a>`).join('');
-  }
-  window.closeSchedulePrettyDetailV796=function(){$('haosScheduleDetailBackdropV796')?.remove();};
-  window.copyScheduleDetailV796=function(id){
-    const item=findScheduleV796(id);if(!item)return;
-    const text=[scheduleTitle(item),`วันเวลา: ${rangeText(item)}`,`สถานที่: ${stripDept(firstValue(item,['__location','location','eventLocation']))||'-'}`,`สถานะ: ${firstValue(item,['__status','workStatus','status'])||'-'}`,`รายละเอียด: ${firstValue(item,['details','detail','description'])||'-'}`].join('\n');
-    navigator.clipboard?.writeText(text);
-    window.Swal&&Swal.fire({icon:'success',title:'คัดลอกแล้ว',timer:1100,showConfirmButton:false});
-  };
-  window.editScheduleFromDetailV796=function(id){
-    window.closeSchedulePrettyDetailV796();
-    if(typeof window.editSchedule==='function')return window.editSchedule(id);
-    window.Swal&&Swal.fire('ยังแก้ไขไม่ได้','ไม่พบฟังก์ชันแก้ไขตารางงานในหน้านี้','info');
-  };
-  window.openSchedulePrettyDetailV796=function(id){
-    const item=typeof id==='object'?id:findScheduleV796(id);
-    if(!item){window.Swal&&Swal.fire('ไม่พบรายการ','กรุณากดรีเฟรชตารางงานแล้วลองอีกครั้ง','warning');return;}
-    const idText=scheduleId(item);
-    const scope=scheduleScope(item);
-    const status=clean(firstValue(item,['__status','workStatus','status']))||'อยู่ระหว่างการดำเนินการ';
-    const priority=clean(firstValue(item,['priority','urgency']))||'ปกติ';
-    const tags=clean(firstValue(item,['tags','tag','category','type']));
-    const owner=stripDept(firstValue(item,['__ownerName','ownerName','createdBy','requesterName']))||'-';
-    const dept=stripDept(firstValue(item,['department','ownerDepartment','createdByDepartment','__department']))||'-';
-    const location=stripDept(firstValue(item,['__location','location','eventLocation','place']))||'-';
-    const details=clean(firstValue(item,['details','detail','description']))||'-';
-    $('haosScheduleDetailBackdropV796')?.remove();
-    const html=`<div id="haosScheduleDetailBackdropV796" class="haos-v796-schedule-backdrop" onclick="if(event.target.id==='haosScheduleDetailBackdropV796')closeSchedulePrettyDetailV796()">
-      <article class="haos-v796-schedule-modal" role="dialog" aria-modal="true">
-        <header class="haos-v796-schedule-head">
-          <div><h3>${esc(scheduleTitle(item))}</h3><p><i class="bi bi-clock"></i> ${esc(rangeText(item))}</p></div>
-          <button type="button" class="haos-v796-schedule-close" onclick="closeSchedulePrettyDetailV796()">×</button>
-        </header>
-        <div class="haos-v796-schedule-body">
-          <div class="haos-v796-schedule-pills">
-            <span class="haos-v796-pill ${scope==='dept'?'scope-dept':'scope-my'}"><i class="bi ${scope==='dept'?'bi-people':'bi-person'}"></i> ${scope==='dept'?'กลุ่มงาน':'ส่วนตัว'}</span>
-            <span class="haos-v796-pill"><i class="bi bi-activity"></i> ${esc(status)}</span>
-            <span class="haos-v796-pill ${/ด่วน/.test(priority)?'urgent':''}"><i class="bi bi-flag"></i> ${esc(priority)}</span>
-            ${tags?`<span class="haos-v796-pill"><i class="bi bi-tags"></i> ${esc(tags)}</span>`:''}
-          </div>
-          <div class="haos-v796-detail-grid">
-            <div class="haos-v796-detail-box"><small>วัน-เวลา</small><b>${esc(rangeText(item))}</b></div>
-            <div class="haos-v796-detail-box"><small>สถานที่</small><b>${esc(location)}</b></div>
-            <div class="haos-v796-detail-box"><small>ผู้สร้าง/เจ้าของ</small><b>${esc(owner)}</b><div class="text-muted small">${esc(dept)}</div></div>
-            <div class="haos-v796-detail-box"><small>รหัสรายการ</small><b>${esc(idText||'-')}</b></div>
-          </div>
-          <section class="haos-v796-section"><h6><i class="bi bi-card-text"></i> รายละเอียด / สิ่งที่ต้องทำ</h6><div class="text-body">${esc(details)}</div></section>
-          <section class="haos-v796-section"><h6><i class="bi bi-link-45deg"></i> ลิงก์และไฟล์แนบ</h6><div>${linkButtons(item)}</div></section>
-        </div>
-        <footer class="haos-v796-actions">
-          <button class="btn btn-outline-success fw-bold" onclick="copyScheduleDetailV796('${esc(idText)}')"><i class="bi bi-clipboard-check"></i> คัดลอก</button>
-          <button class="btn btn-outline-warning fw-bold text-dark" onclick="editScheduleFromDetailV796('${esc(idText)}')"><i class="bi bi-pencil-square"></i> แก้ไข</button>
-          <button class="btn btn-secondary fw-bold" onclick="closeSchedulePrettyDetailV796()">ปิดหน้าต่าง</button>
-        </footer>
-      </article>
-    </div>`;
-    document.body.insertAdjacentHTML('beforeend',html);
-  };
-  ['viewScheduleDetail','showSchedulePopupDetailV749','showSchedulePopupDetailV782','openScheduleDetailFromPopupV749'].forEach(name=>{window[name]=id=>window.openSchedulePrettyDetailV796(id);});
-  function openScheduleCalendarPopupV796(){
-    const render=()=>{
-      const list=allSchedulesV796().filter(item=>startOf(item)).sort((a,b)=>startOf(a)-startOf(b));
-      const side=list.filter(item=>startOf(item)>=new Date(Date.now()-86400000)).slice(0,18).map(item=>{
-        const id=scheduleId(item), scope=scheduleScope(item);
-        return `<button type="button" class="haos-v796-calendar-item ${scope==='dept'?'dept':''}" onclick="openSchedulePrettyDetailV796('${esc(id)}')"><b>${esc(scheduleTitle(item))}</b><small><i class="bi bi-clock"></i> ${esc(rangeText(item))}</small><small><i class="bi bi-geo-alt"></i> ${esc(stripDept(firstValue(item,['__location','location','eventLocation']))||'-')}</small></button>`;
-      }).join('')||'<div class="text-muted text-center py-4">ยังไม่มีรายการใกล้ถึง</div>';
-      window.Swal.fire({
-        title:'ปฏิทินตารางงาน & นัดหมาย',
-        width:1280,
-        html:`<div class="haos-v796-calendar-wrap"><div id="haosCalendarPopupV796"></div><aside class="haos-v796-calendar-side">${side}</aside></div>`,
-        showCloseButton:true,
-        confirmButtonText:'ปิด',
-        didOpen:()=>{
-          const el=$('haosCalendarPopupV796');
-          if(!el||!window.FullCalendar){el&&(el.innerHTML='<div class="text-muted text-center py-5">ไม่พบ FullCalendar</div>');return;}
-          const events=list.map(item=>{
-            const s=startOf(item), e=endOf(item), id=scheduleId(item), scope=scheduleScope(item), priority=clean(firstValue(item,['priority','urgency']));
-            const color=/ด่วนมาก/.test(priority)?'#dc2626':(/ด่วน/.test(priority)?'#f97316':(scope==='dept'?'#059669':'#2563eb'));
-            const time=timeText(s);
-            return {title:`${time?time+' ':''}${scheduleTitle(item)}`,start:s,end:e||undefined,allDay:!time,backgroundColor:color,borderColor:'transparent',extendedProps:{id}};
-          });
-          const cal=new FullCalendar.Calendar(el,{initialView:'dayGridMonth',locale:'th',height:610,headerToolbar:{left:'prev,next today',center:'title',right:'dayGridMonth,timeGridWeek,timeGridDay,listMonth'},displayEventTime:false,events,eventClick:info=>{info.jsEvent&&info.jsEvent.preventDefault();window.openSchedulePrettyDetailV796(info.event.extendedProps.id);}});
-          cal.render();
-        }
-      });
-    };
-    if(!allSchedulesV796().length){
-      try{window.loadMySchedules&&window.loadMySchedules();window.loadDepartmentSchedules&&window.loadDepartmentSchedules();}catch(e){}
-      setTimeout(render,900);
-    }else render();
-  }
-  window.openScheduleCalendarPopupV745=openScheduleCalendarPopupV796;
-  function bindCalendarButtons(){
-    qa('button[onclick*="openScheduleCalendarPopupV745"],button[onclick*="toggleCalendarView"]').forEach(btn=>{
-      if(btn.querySelector('.bi-calendar3')||/ปฏิทิน/.test(btn.textContent||'')){
-        btn.onclick=()=>window.openScheduleCalendarPopupV745();
-        btn.setAttribute('onclick','openScheduleCalendarPopupV745()');
-      }
-    });
-  }
-  function readRegisterData(){
-    const params=new URLSearchParams(location.search);
+  function readPrefill(){
+    const params=new URLSearchParams(location.search||'');
     let data={};
-    try{data=JSON.parse(localStorage.getItem('haos_public_booking_register_prefill_v795')||'{}')||{};}catch(e){data={};}
+    try{data=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){data={};}
     ['name','phone','position','email'].forEach(key=>{if(params.has(key))data[key]=params.get(key)||'';});
     if(data.ownerName&&!data.name)data.name=data.ownerName;
+    if(data.requesterName&&!data.name)data.name=data.requesterName;
     if(data.ownerPhone&&!data.phone)data.phone=data.ownerPhone;
     if(data.ownerPosition&&!data.position)data.position=data.ownerPosition;
     if(data.ownerEmail&&!data.email)data.email=data.ownerEmail;
     return data;
   }
-  function isRegisterRoute(){const p=new URLSearchParams(location.search);return p.get('register')==='1'||p.get('fromBooking')==='1'||!!localStorage.getItem('haos_public_booking_register_prefill_v795');}
-  function openRegisterFromBooking(){
-    if(!isRegisterRoute()||!$('registerSection'))return;
-    const data=readRegisterData();
+  function setValue(id,value){
+    const el=$(id);
+    if(el&&clean(value)){
+      el.value=value;
+      try{el.dispatchEvent(new Event('input',{bubbles:true}));}catch(e){}
+      try{el.dispatchEvent(new Event('change',{bubbles:true}));}catch(e){}
+    }
+  }
+  function openRegisterFromPublicBooking(){
+    if(!isRegisterRoute())return;
+    const register=$('registerSection');
+    if(!register)return;
+    const data=readPrefill();
     try{if(typeof window.showSection==='function')window.showSection('registerSection');}catch(e){}
-    ['loginSection','appSection'].forEach(id=>{$(id)&&($(id).style.display='none');});
-    $('registerSection').style.display='block';
-    $('topNav')?.classList.add('d-none');
-    const map={regFullName:data.name,regPosition:data.position,regPhone:data.phone,regEmail:data.email};
-    Object.keys(map).forEach(id=>{if($(id)&&clean(map[id]))$(id).value=map[id];});
+    ['loginSection','appSection'].forEach(id=>{const el=$(id);if(el)el.style.display='none';});
+    const topNav=$('topNav');
+    if(topNav)topNav.classList.add('d-none');
+    register.style.display='block';
+    setValue('regFullName',data.name);
+    setValue('regPosition',data.position);
+    setValue('regPhone',data.phone);
+    setValue('regEmail',data.email);
     const dept=$('regDepartment');
     if(dept){
-      if(!Array.from(dept.options).some(o=>o.value===''))dept.insertAdjacentHTML('afterbegin','<option value="">กรุณาเลือกกลุ่มงาน</option>');
       dept.value='';
+      try{dept.dispatchEvent(new Event('change',{bubbles:true}));}catch(e){}
     }
-    const form=$('registerSection')?.querySelector('form');
-    if(form&&!$('haosRegisterPrefillNoticeV796')){
-      form.insertAdjacentHTML('afterbegin','<div id="haosRegisterPrefillNoticeV796" class="haos-v796-register-prefill"><i class="bi bi-info-circle"></i><div>นำข้อมูลจากคำขอจองสาธารณะมาเติมให้แล้ว กรุณาเลือกกลุ่มงานจากรายการด้วยตนเองก่อนลงทะเบียน</div></div>');
+    const form=register.querySelector('form');
+    const noticeText='ระบบเติมชื่อ เบอร์โทร ตำแหน่ง และอีเมลจากคำขอจองสาธารณะให้แล้ว กรุณาเลือกกลุ่มงานจากรายการด้วยตนเองก่อนยืนยันลงทะเบียน';
+    if(form){
+      let notice=$('haosRegisterPrefillNoticeV795');
+      if(notice){notice.innerHTML='<i class="bi bi-info-circle"></i> '+noticeText;}
+      else form.insertAdjacentHTML('afterbegin','<div id="haosRegisterPrefillNoticeV795" class="haos-v795-register-prefill"><i class="bi bi-info-circle"></i> '+noticeText+'</div>');
     }
-    try{localStorage.removeItem('haos_public_booking_register_prefill_v795');}catch(e){}
-    window.scrollTo({top:0,behavior:'smooth'});
+    try{localStorage.removeItem(KEY);}catch(e){}
+    setTimeout(()=>{try{register.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){}},80);
   }
+  window.applyPublicBookingRegisterPrefillV795=openRegisterFromPublicBooking;
+  function scheduleOpen(){[0,120,350,900,1600,2600].forEach(t=>setTimeout(openRegisterFromPublicBooking,t));}
   const previousOnload=window.onload;
   window.onload=function(ev){
     if(typeof previousOnload==='function')previousOnload.call(this,ev);
-    if(isRegisterRoute())[0,120,450,1000,1800].forEach(t=>setTimeout(openRegisterFromBooking,t));
+    if(isRegisterRoute())scheduleOpen();
   };
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{if(isRegisterRoute())[0,250,900].forEach(t=>setTimeout(openRegisterFromBooking,t));},{once:true});
-  else if(isRegisterRoute())[0,250,900].forEach(t=>setTimeout(openRegisterFromBooking,t));
-  function reorderMainTabsV796(){
-    const nav=$('mainTab');if(!nav)return;
-    ['itservices-tab','schedule-tab','upcoming-agenda-tab','report-tab'].forEach(id=>{
-      const li=$(id)?.closest('li');if(li)nav.appendChild(li);
-    });
-  }
-  window.reorderMainTabsV796=reorderMainTabsV796;
-  function setUpcomingAgendaLookaheadV796(days){
-    const value=Number(days);
-    if(![3,7,15].includes(value))return;
-    try{localStorage.setItem('haos_upcoming_agenda_lookahead_days_v796',String(value));}catch(e){}
-    if(window.HAOSUpcomingAgenda&&typeof window.HAOSUpcomingAgenda.render==='function')window.HAOSUpcomingAgenda.render();
-    setTimeout(injectAgendaLookaheadV796,80);
-  }
-  window.setUpcomingAgendaLookaheadV796=setUpcomingAgendaLookaheadV796;
-  function injectAgendaLookaheadV796(){
-    const hero=document.querySelector('.haos-v787-hero > div:first-child');
-    if(!hero||$('haosAgendaLookaheadV796'))return;
-    const current=Number(localStorage.getItem('haos_upcoming_agenda_lookahead_days_v796')||3);
-    hero.insertAdjacentHTML('beforeend',`<label class="haos-v796-lookahead"><span>ช่วงแจ้งเตือน</span><select id="haosAgendaLookaheadV796" onchange="setUpcomingAgendaLookaheadV796(this.value)">${[3,7,15].map(v=>`<option value="${v}" ${v===current?'selected':''}>${v} วัน</option>`).join('')}</select></label>`);
-  }
-  const guideCards=[
-    ['bi-pc-display-horizontal','IT Services Hub','ศูนย์รวมบริการ IT ทั้งจองห้อง/Zoom แจ้งซ่อม ทรัพย์สิน License e-Meeting รายงานประชุม AI เอกสาร e-Office Note และ AnyDesk','แกนหลัก'],
-    ['bi-calendar2-check','กำหนดการวันนี้และใกล้ถึง','ดูงานวันนี้และงานที่จะมาถึง ปรับช่วง 3/7/15 วัน และเปิดรายการจากการ์ดได้ทันที','ใหม่'],
-    ['bi-calendar-event','ตารางงาน & นัดหมาย','สร้างงานส่วนตัว/กลุ่มงาน หลายช่วงเวลา ปักหมุด ตัวกรอง Public Link QR Code ปฏิทิน และแจ้งเตือน','หลัก'],
-    ['bi-bell','Notification Center','รวมแจ้งเตือนจากตารางงาน จองห้อง/Zoom แจ้งซ่อม PIN และงานระบบ พร้อมกรองและเปิดรายการตรงจุด','อัปเดต'],
-    ['bi-file-earmark-text','สรุปเอกสารด้วย AI','แนบ PDF/รูปภาพหรือวางข้อความ สรุปประเด็น งานที่ต้องทำ กำหนดเวลา และส่งต่อไปตารางงาน/e-Office/Note','AI'],
-    ['bi-journal-bookmark','e-Office / สารบัญเอกสาร','บันทึกสารบัญ ตรวจสอบ เสนอเซ็น ติดตามเอกสาร และเชื่อมกับผลสรุปเอกสาร','ใหม่'],
-    ['bi-stickies','สมุด Note','บันทึกโน้ตส่วนตัว/งาน แนบไฟล์ ใส่แท็ก ปักหมุด และส่งข้อมูลจาก AI หรือตารางงานเข้ามาเก็บได้','ใหม่'],
-    ['bi-grid-3x3-gap','พื้นที่ทำงานร่วมกัน','สร้างแบบฟอร์ม ตารางเบา แบบทดสอบ มีสิทธิ์ผู้แก้ไข รายงานคำตอบ และ export Excel/PDF/รูปภาพ','หลัก'],
-    ['bi-camera-video','จองห้องประชุม / Zoom','ส่งคำขอ ติดตามสถานะ Digital View ปฏิทิน แจ้งเตือน และแบบฟอร์มสาธารณะสำหรับคนนอกระบบ','อัปเดต'],
-    ['bi-headset','AnyDesk Remote Support','เปิดงานช่วยเหลือทางไกล ดาวน์โหลด AnyDesk ส่งลิงก์โมดูล และเก็บประวัติทั้งเจ้าหน้าที่/ผู้ใช้','ใหม่']
-  ];
-  window.openProgramGuide=function(force){
-    const key='haos_program_guide_hide_'+new Date().toISOString().slice(0,10);
-    if(!force&&localStorage.getItem(key)==='1')return;
-    Swal.fire({
-      title:'แนะนำ Health Assistant OS',
-      width:1120,
-      html:`<div class="text-start mb-3"><b>เริ่มจาก IT Services Hub</b> แล้วเลือกงานที่ต้องการใช้งานได้จากแท็บหลักและการ์ดโมดูล</div><div class="haos-v796-guide-grid">${guideCards.map(c=>`<div class="haos-v796-guide-card"><h6><i class="bi ${c[0]}"></i>${c[1]}</h6><p>${c[2]}</p><small>${c[3]}</small></div>`).join('')}</div><label class="d-flex align-items-center gap-2 mt-3"><input type="checkbox" id="haosGuideHideTodayV796"> ไม่แสดงไกด์นี้อีกวันนี้</label>`,
-      showCancelButton:true,
-      confirmButtonText:'เริ่มใช้งาน',
-      cancelButtonText:'ปิด',
-      didClose:()=>{if($('haosGuideHideTodayV796')?.checked)localStorage.setItem(key,'1');}
-    });
-  };
-  window.openHelpCenterV60=async function(){
-    Swal.fire({
-      title:'คู่มือ Health Assistant OS',
-      width:1180,
-      html:`<div class="haos-v796-help-hero"><h4>คู่มือฟังก์ชันล่าสุด</h4><p>ระบบทำงานด้วยบัญชีเดียวหลายโปรไฟล์ เริ่มต้นที่ IT Services Hub แล้วต่อด้วยตารางงาน กำหนดการ และรายงานการปฏิบัติงาน</p></div>
-      <div class="haos-v796-guide-grid">
-        <section class="haos-v796-help-section"><h6><i class="bi bi-person-badge"></i> บัญชีและโปรไฟล์</h6><ul><li>เลือก Active Profile เมื่อมีหลายกลุ่มงาน</li><li>เปิด/ปิดเข้าสู่ระบบอัตโนมัติและตรวจอุปกรณ์ที่จดจำไว้</li><li>รีเซ็ต PIN ผ่าน OTP อีเมลเพื่อความปลอดภัย</li></ul></section>
-        <section class="haos-v796-help-section"><h6><i class="bi bi-calendar-event"></i> ตารางงานและกำหนดการ</h6><ul><li>สร้างงานส่วนตัว/กลุ่มงาน หลายช่วงเวลา และแนบไฟล์/ลิงก์เอกสาร</li><li>ใช้ตัวกรอง มุมมองรายการ การ์ด ปฏิทิน และ Public Link</li><li>แท็บกำหนดการวันนี้และใกล้ถึงปรับช่วง 3/7/15 วันได้</li></ul></section>
-        <section class="haos-v796-help-section"><h6><i class="bi bi-tools"></i> IT Services Hub</h6><ul><li>จองห้อง/Zoom แจ้งซ่อม ทรัพย์สิน License e-Meeting และรายงานประชุม</li><li>จัดเรียง ปักหมุด หรือซ่อนโมดูลที่ไม่ใช้</li><li>AnyDesk ช่วยเหลือทางไกลพร้อมประวัติการให้บริการ</li></ul></section>
-        <section class="haos-v796-help-section"><h6><i class="bi bi-stars"></i> AI / เอกสาร / Note</h6><ul><li>สรุปเอกสารด้วย AI จาก PDF รูปภาพ หรือข้อความ</li><li>ส่งผลสรุปเข้า e-Office ตารางงาน หรือสมุด Note</li><li>รายงานประชุมรองรับไฟล์เสียงใหญ่ด้วยตัวแบ่งไฟล์อัตโนมัติ</li></ul></section>
-        <section class="haos-v796-help-section"><h6><i class="bi bi-people"></i> พื้นที่ทำงานร่วมกัน</h6><ul><li>สร้างแบบฟอร์ม ตารางเบา และ Quiz พร้อมตัวเลือก Dropdown/Radio/Checkbox</li><li>กำหนดสิทธิ์ดู/แก้ไข รายงานคำตอบ และ export เป็น Excel/PDF/รูปภาพ</li><li>รองรับ logic ของคำถามและชื่อหน่วยงานแบบกำหนดเอง</li></ul></section>
-        <section class="haos-v796-help-section"><h6><i class="bi bi-shield-check"></i> ผู้ดูแลระบบ</h6><ul><li>จัดการผู้ใช้ โปรไฟล์หลายกลุ่มงาน หน่วยงานภายนอก และสิทธิ์</li><li>ซ่อมฐานข้อมูล ตรวจสุขภาพระบบ Backup/Restore และ Branding/PWA</li><li>Audit Log เก็บบัญชีและโปรไฟล์ที่ใช้งานจริง</li></ul></section>
-      </div>`,
-      confirmButtonText:'เข้าใจแล้ว',
-      showCloseButton:true
-    });
-  };
-  function bootV796(){
-    reorderMainTabsV796();
-    bindCalendarButtons();
-    injectAgendaLookaheadV796();
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootV796,{once:true});else bootV796();
-  [300,900,1800,3200].forEach(t=>setTimeout(bootV796,t));
-  console.info('HAOS '+PATCH+' loaded');
-})();
-</script>
-<script id="haos-v70-97-rollback-last-ui-experiments">
-(function(){
-  const PATCH='v70.97-rollback-last-ui-experiments';
-  if(window.__HAOS_V797_ROLLBACK_LAST_UI_EXPERIMENTS__)return;
-  window.__HAOS_V797_ROLLBACK_LAST_UI_EXPERIMENTS__=true;
-  const $=id=>document.getElementById(id);
-  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-  function roleOf(){try{return String((window.user||user||{}).role||(window.user||user||{}).accountRole||'User');}catch(e){return 'User';}}
-  function rollbackTabOrder(){
-    const nav=$('mainTab');if(!nav)return;
-    ['upcoming-agenda-tab','itservices-tab','schedule-tab','report-tab'].forEach(id=>{
-      const li=$(id)?.closest('li');if(li)nav.appendChild(li);
-    });
-  }
-  function rollbackAgendaLookahead(){
-    try{localStorage.removeItem('haos_upcoming_agenda_lookahead_days_v796');}catch(e){}
-    $('haosAgendaLookaheadV796')?.closest('label')?.remove();
-    if(window.HAOSUpcomingAgenda&&typeof window.HAOSUpcomingAgenda.render==='function'){
-      try{window.HAOSUpcomingAgenda.render();}catch(e){}
-      setTimeout(()=>{$('haosAgendaLookaheadV796')?.closest('label')?.remove();},80);
-    }
-  }
-  function rollbackGuide(){
-    const cards=[
-      ['bi-pc-display-horizontal','IT Services Hub','เก็บบริการ IT หลักไว้ในจุดเดียว เช่น จองห้อง/Zoom, Helpdesk, ทรัพย์สิน, License และเครื่องมือบริการ IT','เดิม'],
-      ['bi-calendar2-check','กำหนดการวันนี้และใกล้ถึง','ดูงานวันนี้และกำหนดการที่จะถึง โดยใช้ช่วงแจ้งเตือน 3 วันตามค่าตั้งต้นเดิม','เดิม'],
-      ['bi-calendar2-week','ตารางงาน & นัดหมาย','งานส่วนตัว/กลุ่มงาน มุมมองรายการ การ์ด ปฏิทิน Tags, Priority, Public Link และ QR','หลัก'],
-      ['bi-camera-video','จองห้องประชุม / Zoom','สร้างคำขอ ติดตามสถานะ อนุมัติ/ไม่อนุมัติ พร้อมแจ้งเตือนและ Digital View','อัปเดต'],
-      ['bi-tools','แจ้งซ่อม IT / Helpdesk','แจ้งซ่อมพร้อมรูป ติดตามสถานะ และเปิดรายการจาก Notification Center','หลัก'],
-      ['bi-bell-fill','Notification Center','รวมแจ้งเตือนจากโมดูลต่าง ๆ อ่านทั้งหมด ลบ และเปิดรายการปลายทาง','หลัก'],
-      ['bi-person-vcard','Active Profile','บัญชีเดียวมีหลายโปรไฟล์การทำงาน และบันทึก audit log ตามโปรไฟล์ที่เลือก','ใหม่'],
-      ['bi-journal-check','รายงานการปฏิบัติงาน','บันทึกรายงานประจำวัน แนบไฟล์ ใช้ AI ช่วยเรียบเรียง และดูประวัติได้หลายมุมมอง','หลัก']
-    ];
-    if(/Admin|Super Admin|Head/i.test(roleOf()))cards.push(['bi-graph-up-arrow','Executive / Export','Dashboard ผู้บริหาร อนุมัติงาน สรุปรายงาน และ Export PDF/Excel ตามสิทธิ์','Admin']);
-    if(/Super Admin/i.test(roleOf()))cards.push(['bi-shield-check','เครื่องมือระบบขั้นสูง','จัดการผู้ใช้/โปรไฟล์ Permission Matrix Branding Backup/Restore ซ่อมฐานข้อมูล และ System Health','Super']);
-    window.openProgramGuide=function(force){
-      const key='haos_guide_hide_today_rollback_'+new Date().toISOString().slice(0,10);
-      if(!force&&localStorage.getItem(key)==='1')return;
-      Swal.fire({
-        title:'คู่มือ Health Assistant OS',
-        width:1040,
-        showCloseButton:true,
-        confirmButtonText:'เริ่มใช้งาน',
-        html:`<div class="haos-v733-guide-hero"><h5><i class="bi bi-stars"></i> คู่มือฟังก์ชันหลัก</h5><div class="small opacity-75">สิทธิ์ปัจจุบัน: ${esc(roleOf())}</div></div><div class="haos-v733-guide-grid">${cards.map(c=>`<div class="haos-v733-guide-card"><div class="d-flex justify-content-between gap-2"><h6><i class="bi ${esc(c[0])}"></i> ${esc(c[1])}</h6><span class="badge bg-primary-subtle text-primary">${esc(c[3])}</span></div><div class="small text-muted">${esc(c[2])}</div></div>`).join('')}</div><div class="guide-option-box mt-3 text-start"><div class="form-check"><input class="form-check-input" type="checkbox" id="guideHideTodayRollbackV797"><label class="form-check-label small" for="guideHideTodayRollbackV797">ไม่แสดงคำแนะนำนี้อีกในวันนี้</label></div></div>`,
-        preConfirm:()=>{if($('guideHideTodayRollbackV797')?.checked)localStorage.setItem(key,'1');}
-      });
-    };
-    window.openHelpCenterV60=function(){return window.openProgramGuide(true);};
-  }
-  function rollbackSchedulePopup(){
-    $('haosScheduleDetailBackdropV796')?.remove();
-    try{window.__HAOS_V782_SCHEDULE_THAI_LIST__=false;}catch(e){}
-    const old=document.getElementById('haos-v797-schedule-reload');
-    if(old)old.remove();
-    const script=document.createElement('script');
-    script.id='haos-v797-schedule-reload';
-    script.src='assets/js/modules/schedule-thai-list.js?v=rollback-v70-97';
-    document.body.appendChild(script);
-  }
-  function bootRollback(){
-    rollbackGuide();
-    rollbackTabOrder();
-    rollbackAgendaLookahead();
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootRollback,{once:true});else bootRollback();
-  rollbackSchedulePopup();
-  [500,1300,2300,3800,5200].forEach(t=>setTimeout(bootRollback,t));
-  setTimeout(rollbackSchedulePopup,700);
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{if(isRegisterRoute())scheduleOpen();},{once:true});
+  else if(isRegisterRoute())scheduleOpen();
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>

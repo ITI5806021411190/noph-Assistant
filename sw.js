@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-97-rollback-last-ui-experiments';
+const CACHE_NAME = 'haos-v70-95-calendar-booking-register-hotfix';
 const CORE = [
   '/',
   '/index.html',
