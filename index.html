@@ -6335,7 +6335,7 @@ function clearItBookingCanvas_(canvasId) {
   }
 
   function itBookingSigBlock_(img, name, role, position) {
-    const sig = img ? `<img src="${img}" style="max-height:56px;max-width:190px;object-fit:contain;display:block;margin:0 auto 2px;">` : `<div style="height:56px"></div>`;
+    const sig = img ? `<img src="${img}" style="max-height:84px;max-width:250px;object-fit:contain;display:block;margin:0 auto 2px;">` : `<div style="height:84px"></div>`;
     return `<div style="width:48%;text-align:center;line-height:1.55;break-inside:avoid;">
       <div>ลงชื่อ</div>
       ${sig}
@@ -6357,20 +6357,20 @@ function clearItBookingCanvas_(canvasId) {
     return `<div id="itBookingDigitalPaper" class="it-booking-paper" style="width:210mm;min-height:297mm;margin:0 auto;background:#fff;color:#111;padding:18mm 17mm;font-family:'Sarabun',sans-serif;font-size:14px;line-height:1.72;box-sizing:border-box;box-shadow:0 0 18px rgba(15,23,42,.18);">
       <div style="text-align:right;color:#64748b;font-size:12px;margin-bottom:2mm;">แบบฟอร์มดิจิทัล (Digital Paper Form)</div>
       <div style="text-align:center;font-size:22px;font-weight:800;margin-bottom:4mm;">ใบขออนุญาตใช้ระบบการประชุมทางไกล / การประชุมออนไลน์</div>
-      <div style="text-align:center;font-size:18px;margin-bottom:8mm;">วันที่ <span style="display:inline-block;min-width:120px;border-bottom:1px dotted #555;color:#14248a;font-weight:800;">${itBookingThaiDate_(item.startTime || item.createdAt)}</span></div>
+      <div style="text-align:center;font-size:18px;margin-bottom:8mm;">วันที่ <span style="display:inline-block;min-width:120px;border-bottom:1px dotted #555;color:#14248a;font-weight:800;">${itBookingThaiDate_(item.createdAt || item.updatedAt || item.startTime)}</span></div>
 
       <div><b>เรื่อง</b> ขออนุญาตใช้ระบบการประชุมทางไกล / การประชุมออนไลน์</div>
       <div><b>เรียน</b> นายแพทย์สาธารณสุขจังหวัดนครนายก</div>
 
       <div style="margin-top:7mm;text-indent:12mm;">ด้วยข้าพเจ้า <span style="display:inline-block;min-width:180px;border-bottom:1px dotted #555;color:#14248a;font-weight:800;text-align:center;">${escapeHtml(item.ownerName || '')}</span>
-      ตำแหน่ง <span style="display:inline-block;min-width:165px;border-bottom:1px dotted #555;color:#14248a;font-weight:800;text-align:center;">${escapeHtml(item.ownerPosition || user?.position || '')}</span></div>
+      ตำแหน่ง <span style="display:inline-block;min-width:165px;border-bottom:1px dotted #555;color:#14248a;font-weight:800;text-align:center;">${escapeHtml(item.ownerPosition || '')}</span></div>
       <div>สังกัด/หน่วยงาน <span style="display:inline-block;min-width:310px;border-bottom:1px dotted #555;color:#14248a;font-weight:800;text-align:center;">${escapeHtml(item.department || '')}</span> มีความจำเป็นขอใช้งานระบบ:</div>
 
       <div style="margin-top:4mm;margin-left:10mm;">
         <div>${itBookingCheck_(false)} การประชุมทางไกล VDO Conference (Polycom) <span style="margin-left:8px;">RoomNumber</span> <span style="display:inline-block;min-width:70px;border-bottom:1px dotted #555;text-align:center;color:#14248a;font-weight:700;">-</span></div>
         <div>${itBookingCheck_(true)} การประชุมออนไลน์ e-Conference (Webex / Zoom / Meet / etc.)</div>
         <div style="margin-left:10mm;">${itBookingCheck_(isHost)} เป็นผู้จัดการประชุม (HOST)</div>
-        <div style="margin-left:10mm;">${itBookingCheck_(isJoin)} เข้าร่วมการประชุม RoomNumber/ID <span style="display:inline-block;min-width:90px;border-bottom:1px dotted #555;color:#14248a;font-weight:700;text-align:center;">${escapeHtml(item.meetingId || item.adminRoomId || '')}</span> Password <span style="display:inline-block;min-width:80px;border-bottom:1px dotted #555;color:#14248a;font-weight:700;text-align:center;">${escapeHtml(item.passcode || item.adminPasscode || '')}</span></div>
+        <div style="margin-left:10mm;">${itBookingCheck_(isJoin)} เข้าร่วมการประชุม RoomNumber/ID <span style="display:inline-block;min-width:90px;border-bottom:1px dotted #555;color:#14248a;font-weight:700;text-align:center;">${escapeHtml(item.meetingId || item.adminMeetingId || '')}</span> Password <span style="display:inline-block;min-width:80px;border-bottom:1px dotted #555;color:#14248a;font-weight:700;text-align:center;">${escapeHtml(item.passcode || item.adminPasscode || '')}</span></div>
         <div>${itBookingCheck_(false)} อื่น ๆ ระบุ <span style="display:inline-block;min-width:300px;border-bottom:1px dotted #555;color:#14248a;font-weight:700;">${escapeHtml(item.otherLocation || '')}</span></div>
       </div>
 
@@ -6386,7 +6386,7 @@ function clearItBookingCanvas_(canvasId) {
       <div style="border:1px solid #e2e8f0;background:#f8fafc;margin-top:10mm;padding:4mm 5mm;border-radius:6px;break-inside:avoid;">
         <div style="font-weight:800;margin-bottom:3mm;">สำหรับเจ้าหน้าที่</div>
         <div>ห้องจัดประชุมที่ : <span style="display:inline-block;min-width:230px;border-bottom:1px dotted #555;color:#14248a;font-weight:800;">${escapeHtml(item.adminRoomId || roomParts.room || '')}</span></div>
-        <div>RoomNumber : <span style="display:inline-block;min-width:260px;border-bottom:1px dotted #555;color:#14248a;font-weight:800;">${escapeHtml(item.adminRoomId || item.meetingId || '')}</span></div>
+        <div>Meeting ID : <span style="display:inline-block;min-width:260px;border-bottom:1px dotted #555;color:#14248a;font-weight:800;">${escapeHtml(item.adminMeetingId || item.meetingId || '')}</span></div>
         <div>Password : <span style="display:inline-block;min-width:270px;border-bottom:1px dotted #555;color:#14248a;font-weight:800;">${escapeHtml(item.adminPasscode || item.passcode || '')}</span></div>
         ${item.adminLink ? `<div>Link : <span style="color:#0d6efd;font-weight:700;word-break:break-all;">${escapeHtml(item.adminLink)}</span></div>` : ''}
         <div style="margin-top:4mm;">${itBookingCheck_(approved)} อนุญาต&nbsp;&nbsp;&nbsp;&nbsp; ${itBookingCheck_(rejected)} ไม่อนุญาต <span style="display:inline-block;min-width:220px;border-bottom:1px dotted #555;color:#14248a;font-weight:700;">${escapeHtml(item.cancelReason || item.approvalNote || '')}</span></div>
@@ -18858,5 +18858,326 @@ window.openQuickNoteHeroV790 = window.openQuickNoteHeroV790 || function(){
 </script>
 <script src="assets/js/modules/notes.js"></script>
 <script>window.HAOSDateDisplay&&window.HAOSDateDisplay.installCompatibilityGlobals&&window.HAOSDateDisplay.installCompatibilityGlobals();</script>
+<style id="haos-v70-94-final-interaction-booking-style">
+  #haosScheduleDetailBackdropV749,
+  .haos-v749-schedule-detail-backdrop{z-index:2147483646!important}
+  #haosScheduleDetailBackdropV749 .haos-v749-schedule-detail,
+  .haos-v749-schedule-detail{z-index:2147483647!important}
+  #scheduleDetailModal{z-index:2147483647!important}
+  body .swal2-container{z-index:2147483000!important}
+  .haos-v748-sign-modal{z-index:2147483400!important}
+  .haos-v794-doc-link-rows{display:grid;gap:8px;margin-top:8px}
+  .haos-v794-doc-link-row{display:grid;grid-template-columns:minmax(0,1fr) 46px;gap:8px;align-items:center}
+  .haos-v794-doc-link-row .btn{min-height:44px;border-radius:14px}
+</style>
+<script id="haos-v70-94-final-interaction-booking-script">
+(function(){
+  const PATCH='v70.94-final-interaction-booking';
+  if(window.__HAOS_V794_FINAL_INTERACTION_BOOKING__)return;
+  window.__HAOS_V794_FINAL_INTERACTION_BOOKING__=true;
+  const $=id=>document.getElementById(id);
+  const qa=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const clean=v=>String(v??'').trim();
+
+  function currentUser(){
+    try{return typeof window.getUser==='function'?window.getUser():(window.user||{});}catch(e){return window.user||{};}
+  }
+
+  function callGas(fn,args){
+    args=args||[];
+    if(typeof window.gasRunPromise_==='function')return window.gasRunPromise_(fn,args);
+    if(typeof window.gas==='function')return window.gas(fn,args);
+    return new Promise((resolve,reject)=>{
+      try{
+        const runner=google.script.run.withSuccessHandler(resolve).withFailureHandler(reject);
+        runner[fn].apply(runner,args);
+      }catch(err){reject(err);}
+    });
+  }
+
+  function closeNotificationCenterV794(){
+    const modalEl=$('notificationCenterModal');
+    try{
+      if(modalEl&&window.bootstrap?.Modal){
+        const inst=bootstrap.Modal.getInstance(modalEl)||bootstrap.Modal.getOrCreateInstance(modalEl);
+        inst.hide();
+      }
+    }catch(e){}
+    if(modalEl){
+      modalEl.classList.remove('show');
+      modalEl.style.display='none';
+      modalEl.setAttribute('aria-hidden','true');
+    }
+    qa('.modal-backdrop').forEach(el=>el.remove());
+    document.body.classList.remove('modal-open');
+    document.body.style.removeProperty('overflow');
+    document.body.style.removeProperty('padding-right');
+  }
+  window.closeNotificationCenterV794=closeNotificationCenterV794;
+
+  function openScheduleFromNotificationV794(entityId, forceToday){
+    const id=clean(entityId||'');
+    closeNotificationCenterV794();
+    setTimeout(()=>{
+      try{$('schedule-tab')?.click();}catch(e){}
+      try{sessionStorage.setItem('haos_user_tab_choice_v733','1');}catch(e){}
+      try{if(typeof window.haosOpenScheduleV687==='function')window.haosOpenScheduleV687();}catch(e){}
+      setTimeout(()=>{
+        try{if(forceToday&&$('unifiedSchedulePeriodV702'))$('unifiedSchedulePeriodV702').value='today';}catch(e){}
+        try{if(typeof window.setUnifiedScheduleViewV702==='function')window.setUnifiedScheduleViewV702('list');}catch(e){}
+        try{if(typeof window.renderUnifiedScheduleV702==='function')window.renderUnifiedScheduleV702();}catch(e){}
+        const target=$('unifiedSchedulePanelV702')||$('schedule-pane')||$('mainTabsContent');
+        try{target?.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){}
+        if(id){
+          setTimeout(()=>{
+            try{
+              if(typeof window.showSchedulePopupDetailV749==='function')window.showSchedulePopupDetailV749(id);
+              else if(typeof window.viewScheduleDetail==='function')window.viewScheduleDetail(id);
+              raiseScheduleDetailV794();
+            }catch(err){
+              if(window.Swal)Swal.fire('เปิดรายการไม่สำเร็จ',err?.message||String(err),'warning');
+            }
+          },450);
+        }else{
+          setTimeout(()=>target?.classList?.add('haos-flash-focus'),250);
+          setTimeout(()=>target?.classList?.remove('haos-flash-focus'),1200);
+        }
+      },250);
+    },120);
+    return false;
+  }
+
+  const previousNotif=window.openNotificationTargetV732;
+  window.openNotificationTargetV732=function(moduleName,entityId,action){
+    const mod=String(moduleName||'').toLowerCase();
+    const act=String(action||'').toLowerCase();
+    const isSchedule=mod.includes('schedule')||mod.includes('today')||act.includes('schedule')||act.includes('approv');
+    if(isSchedule)return openScheduleFromNotificationV794(entityId,!entityId||mod.includes('today')||act.includes('today'));
+    closeNotificationCenterV794();
+    setTimeout(()=>{
+      if(typeof previousNotif==='function')previousNotif.apply(this,arguments);
+    },120);
+    return false;
+  };
+
+  function patchUpcomingAgendaV794(){
+    const agenda=window.HAOSUpcomingAgenda;
+    if(!agenda||agenda.__haosV794Patched)return;
+    agenda.__haosV794Patched=true;
+    const oldOpenSchedule=agenda.openSchedule;
+    const oldOpenAgenda=agenda.openAgendaTab;
+    agenda.openSchedule=function(itemOrId){
+      const id=typeof itemOrId==='string'?itemOrId:(itemOrId&&(itemOrId.id||itemOrId.publicId||itemOrId.scheduleId));
+      return openScheduleFromNotificationV794(id,false);
+    };
+    agenda.openAgendaTab=function(){
+      closeNotificationCenterV794();
+      setTimeout(()=>{
+        try{if(typeof oldOpenAgenda==='function')oldOpenAgenda.call(agenda);}catch(e){}
+        try{$('upcoming-agenda-tab')?.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){}
+      },150);
+      return false;
+    };
+    agenda.__haosV794OldOpenSchedule=oldOpenSchedule;
+  }
+
+  function raiseScheduleDetailV794(){
+    qa('#haosScheduleDetailBackdropV749,.haos-v749-schedule-detail-backdrop').forEach(el=>{
+      el.style.zIndex='2147483646';
+      el.style.pointerEvents='auto';
+      const card=el.querySelector('.haos-v749-schedule-detail');
+      if(card)card.style.zIndex='2147483647';
+    });
+    const modal=$('scheduleDetailModal');
+    if(modal)modal.style.zIndex='2147483647';
+    qa('.modal-backdrop').forEach(el=>{
+      if(modal&&modal.classList.contains('show'))el.style.zIndex='2147483645';
+    });
+  }
+  const previousShowScheduleDetail=window.showSchedulePopupDetailV749;
+  if(typeof previousShowScheduleDetail==='function'){
+    window.showSchedulePopupDetailV749=function(){
+      const result=previousShowScheduleDetail.apply(this,arguments);
+      setTimeout(raiseScheduleDetailV794,0);
+      setTimeout(raiseScheduleDetailV794,120);
+      return result;
+    };
+    window.openScheduleDetailFromPopupV749=window.showSchedulePopupDetailV749;
+  }
+
+  function addScheduleDocLinkV794(value){
+    const wrap=$('scheduleDocumentLinkRowsV794');
+    if(!wrap)return;
+    const row=document.createElement('div');
+    row.className='haos-v794-doc-link-row';
+    row.innerHTML=`<input class="form-control schedule-document-link-v794" placeholder="วางลิงก์เอกสารประกอบ" value="${esc(value||'')}"><button type="button" class="btn btn-outline-danger" title="ลบลิงก์นี้" aria-label="ลบลิงก์นี้"><i class="bi bi-trash"></i></button>`;
+    row.querySelector('button')?.addEventListener('click',()=>row.remove());
+    wrap.appendChild(row);
+  }
+  window.addScheduleDocLinkV794=addScheduleDocLinkV794;
+
+  function ensureScheduleDocumentLinksV794(){
+    if($('scheduleDocumentLinksWrapV794'))return;
+    const meeting=$('meetingLink');
+    if(!meeting)return;
+    const block=meeting.closest('.mb-3')||meeting.parentElement;
+    if(!block)return;
+    block.insertAdjacentHTML('afterend',`
+      <div id="scheduleDocumentLinksWrapV794" class="mb-3">
+        <label class="small fw-bold text-muted">ลิงก์เอกสารประกอบ</label>
+        <input id="scheduleDocumentLinkMainV794" class="form-control" placeholder="วางลิงก์เอกสาร เช่น Google Docs / Drive / PDF">
+        <div id="scheduleDocumentLinkRowsV794" class="haos-v794-doc-link-rows"></div>
+        <button type="button" class="btn btn-sm btn-outline-primary fw-bold mt-2" onclick="addScheduleDocLinkV794()"><i class="bi bi-plus-circle"></i> เพิ่มลิงก์เอกสาร</button>
+        <small class="text-muted d-block mt-1">ระบบจะบันทึกลิงก์เหล่านี้รวมกับไฟล์แนบประกอบเรื่อง เพื่อเปิดดูย้อนหลังได้จากรายละเอียดตารางงาน</small>
+      </div>`);
+  }
+
+  function collectScheduleDocumentLinksV794(){
+    return [
+      $('scheduleDocumentLinkMainV794')?.value||'',
+      ...qa('.schedule-document-link-v794').map(input=>input.value||'')
+    ].map(clean).filter(Boolean);
+  }
+
+  function mergeLinesV794(){
+    const seen=new Set();
+    return Array.from(arguments).join('\n').split(/\r?\n+/).map(clean).filter(Boolean).filter(v=>{
+      const key=v.toLowerCase();
+      if(seen.has(key))return false;
+      seen.add(key);
+      return true;
+    }).join('\n');
+  }
+
+  const previousOpenScheduleForm=window.openScheduleFormModal;
+  if(typeof previousOpenScheduleForm==='function')window.openScheduleFormModal=function(){
+    const result=previousOpenScheduleForm.apply(this,arguments);
+    setTimeout(()=>{
+      ensureScheduleDocumentLinksV794();
+      if($('scheduleDocumentLinkMainV794'))$('scheduleDocumentLinkMainV794').value='';
+      const rows=$('scheduleDocumentLinkRowsV794');
+      if(rows)rows.innerHTML='';
+    },160);
+    return result;
+  };
+  const previousSubmitSchedule=window.submitScheduleData;
+  if(typeof previousSubmitSchedule==='function')window.submitScheduleData=function(data,btn){
+    ensureScheduleDocumentLinksV794();
+    const links=collectScheduleDocumentLinksV794();
+    if(data&&links.length)data.fileUrl=mergeLinesV794(data.fileUrl||'',links.join('\n'));
+    return previousSubmitSchedule.call(this,data,btn);
+  };
+
+  function bookingByIdV794(id){
+    return (window.itBookingsGlobal||[]).find(x=>String(x.id)===String(id));
+  }
+  function signatureButtonsV794(canvasId){
+    if(typeof window.signatureButtons_==='function')return window.signatureButtons_(canvasId);
+    return `<div class="d-flex gap-2 flex-wrap mb-2"><button type="button" class="btn btn-sm btn-outline-primary" onclick="useSavedSignatureForCanvas_('${canvasId}')"><i class="bi bi-vector-pen"></i> ใช้ลายเซ็นส่วนตัว</button><button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearItBookingCanvas_('${canvasId}')">ล้าง</button></div>`;
+  }
+  function statusBadgeV794(status){
+    try{if(typeof window.itBookingStatusBadge_==='function')return window.itBookingStatusBadge_(status);}catch(e){}
+    return `<span class="badge bg-secondary">${esc(status||'-')}</span>`;
+  }
+
+  window.openItBookingManage=async function(id){
+    const item=bookingByIdV794(id);
+    if(!item)return Swal.fire('ไม่พบข้อมูล','กรุณาโหลดข้อมูลใหม่อีกครั้ง','warning');
+    const me=currentUser();
+    let head={};
+    try{const res=await callGas('getDigitalHealthHeadInfo',[]); if(res&&res.success)head=res.data||{};}catch(e){}
+    const defaultSupervisorName=item.supervisorName||me.fullName||'';
+    const defaultSupervisorPos=item.supervisorPosition||me.position||'';
+    const defaultApproverName=item.approverName||head.fullName||'หัวหน้ากลุ่มงานสุขภาพดิจิทัล';
+    const defaultApproverPos=item.approverPosition||head.position||'หัวหน้ากลุ่มงานสุขภาพดิจิทัล';
+    let collect=()=>({});
+    window.__haosV794BookingPayload=null;
+    const result=await Swal.fire({
+      title:'จัดการคำขอจอง / กรอกส่วนเจ้าหน้าที่',
+      width:980,
+      showCloseButton:true,
+      showDenyButton:true,
+      showCancelButton:true,
+      confirmButtonText:'อนุมัติ',
+      denyButtonText:'ไม่อนุญาต',
+      cancelButtonText:'ยกเลิกคำขอ',
+      footer:`<button type="button" class="btn btn-outline-dark btn-sm me-2" onclick="openItBookingDigitalView('${esc(id)}')"><i class="bi bi-file-earmark-text"></i> Digital View</button><button type="button" class="btn btn-outline-secondary btn-sm" onclick="Swal.close()">ปิดหน้าต่าง</button>`,
+      html:`<div class="text-start small">
+        <div class="alert alert-info py-2 mb-3"><b>${esc(item.topic||'-')}</b><br>กรอกข้อมูลส่วนเจ้าหน้าที่ โดยแยกห้องจัดประชุมกับ Meeting ID คนละช่อง และเก็บ Passcode เป็นข้อความเพื่อไม่ให้เลข 0 หาย</div>
+        <div class="mb-2">สถานะปัจจุบัน: ${statusBadgeV794(item.status)}</div>
+        <div class="row g-2">
+          <div class="col-md-4"><label class="small fw-bold text-muted">ห้องจัดประชุมที่</label><input id="itbmRoom" class="form-control mb-2" value="${esc(item.adminRoomId||'')}" placeholder="เช่น ห้องประชุม 1 ชั้น 2"></div>
+          <div class="col-md-4"><label class="small fw-bold text-muted">Meeting ID / Room Number</label><input id="itbmMeetingIdV794" class="form-control mb-2" value="${esc(item.adminMeetingId||item.meetingId||'')}" inputmode="text" autocomplete="off" placeholder="เช่น 123 456 7890"></div>
+          <div class="col-md-4"><label class="small fw-bold text-muted">Password / Passcode</label><input id="itbmPass" class="form-control mb-2" value="${esc(item.adminPasscode||item.passcode||'')}" inputmode="text" autocomplete="off" placeholder="เช่น 00016"></div>
+        </div>
+        <label class="small fw-bold text-muted">ลิงก์ประชุม</label><input id="itbmLink" class="form-control mb-3" value="${esc(item.adminLink||item.meetingLink||'')}">
+        <div class="row g-2"><div class="col-md-6"><label class="small fw-bold text-muted">ผู้ควบคุมดูแล</label><input id="itbmSupervisorName" class="form-control mb-2" value="${esc(defaultSupervisorName)}"></div><div class="col-md-6"><label class="small fw-bold text-muted">ตำแหน่งผู้ควบคุมดูแล</label><input id="itbmSupervisorPosition" class="form-control mb-2" value="${esc(defaultSupervisorPos)}"></div></div>
+        <div class="mb-2 p-2 border rounded bg-light"><label class="small fw-bold text-muted mb-1">ลายเซ็นผู้ควบคุมดูแล</label>${signatureButtonsV794('itbmSupervisorSig')}<canvas id="itbmSupervisorSig" width="720" height="150" style="width:100%;height:150px;border:1px dashed #64748b;border-radius:10px;background:#fff;touch-action:none;"></canvas></div>
+        <div class="row g-2"><div class="col-md-6"><label class="small fw-bold text-muted">เจ้าหน้าที่ผู้กรอกข้อมูล</label><input id="itbmStaffName" class="form-control mb-2" value="${esc(item.staffName||me.fullName||'')}"></div><div class="col-md-6"><label class="small fw-bold text-muted">ตำแหน่งเจ้าหน้าที่</label><input id="itbmStaffPosition" class="form-control mb-2" value="${esc(item.staffPosition||me.position||'')}"></div></div>
+        <div class="mb-2 p-2 border rounded bg-light"><label class="small fw-bold text-muted mb-1">ลายเซ็นเจ้าหน้าที่ผู้กรอกข้อมูล</label>${signatureButtonsV794('itbmAdminSig')}<canvas id="itbmAdminSig" width="720" height="150" style="width:100%;height:150px;border:1px dashed #64748b;border-radius:10px;background:#fff;touch-action:none;"></canvas></div>
+        <div class="row g-2"><div class="col-md-6"><label class="small fw-bold text-muted">ผู้อนุญาต / ไม่อนุญาต</label><input id="itbmApproverName" class="form-control mb-2" value="${esc(defaultApproverName)}"></div><div class="col-md-6"><label class="small fw-bold text-muted">ตำแหน่งผู้อนุญาต</label><input id="itbmApproverPosition" class="form-control mb-2" value="${esc(defaultApproverPos)}"></div></div>
+        <div class="mb-2 p-2 border rounded bg-light"><label class="small fw-bold text-muted mb-1">ลายเซ็นผู้อนุญาต / ไม่อนุญาต</label>${signatureButtonsV794('itbmApproverSig')}<canvas id="itbmApproverSig" width="720" height="150" style="width:100%;height:150px;border:1px dashed #64748b;border-radius:10px;background:#fff;touch-action:none;"></canvas></div>
+        <label class="small fw-bold text-muted">เหตุผล / หมายเหตุ / ไม่อนุญาตเพราะ</label><textarea id="itbmReason" class="form-control" rows="2">${esc(item.cancelReason||item.approvalNote||'')}</textarea>
+      </div>`,
+      didOpen:()=>{
+        ['itbmSupervisorSig','itbmAdminSig','itbmApproverSig'].forEach(cid=>{try{window.setupItBookingSignature_&&window.setupItBookingSignature_(cid);}catch(e){}});
+        if(item.supervisorSignatureData)try{window.drawSignatureToCanvas_&&window.drawSignatureToCanvas_('itbmSupervisorSig',item.supervisorSignatureData);}catch(e){}
+        if(item.adminSignatureData)try{window.drawSignatureToCanvas_&&window.drawSignatureToCanvas_('itbmAdminSig',item.adminSignatureData);}catch(e){}
+        if(item.approverSignatureData)try{window.drawSignatureToCanvas_&&window.drawSignatureToCanvas_('itbmApproverSig',item.approverSignatureData);}catch(e){}
+        collect=()=>({
+          adminRoomId:$('itbmRoom')?.value||'',
+          adminMeetingId:$('itbmMeetingIdV794')?.value||'',
+          adminPasscode:$('itbmPass')?.value||'',
+          adminLink:$('itbmLink')?.value||'',
+          reason:$('itbmReason')?.value||'',
+          approvalNote:$('itbmReason')?.value||'',
+          staffName:$('itbmStaffName')?.value||'',
+          staffPosition:$('itbmStaffPosition')?.value||'',
+          supervisorName:$('itbmSupervisorName')?.value||'',
+          supervisorPosition:$('itbmSupervisorPosition')?.value||'',
+          supervisorSignatureData:(window.getItBookingCanvasData_&&window.getItBookingCanvasData_('itbmSupervisorSig'))||item.supervisorSignatureData||'',
+          adminSignatureData:(window.getItBookingCanvasData_&&window.getItBookingCanvasData_('itbmAdminSig'))||item.adminSignatureData||'',
+          approverName:$('itbmApproverName')?.value||'',
+          approverPosition:$('itbmApproverPosition')?.value||'',
+          approverSignatureData:(window.getItBookingCanvasData_&&window.getItBookingCanvasData_('itbmApproverSig'))||item.approverSignatureData||''
+        });
+      },
+      preConfirm:()=>{window.__haosV794BookingPayload=collect();return true;},
+      preDeny:()=>{window.__haosV794BookingPayload=collect();return true;},
+      willClose:()=>{try{if(!window.__haosV794BookingPayload)window.__haosV794BookingPayload=collect();}catch(e){}}
+    });
+    if(!result.isConfirmed&&!result.isDenied&&result.dismiss!==Swal.DismissReason.cancel)return;
+    const action=result.isConfirmed?'approve':(result.isDenied?'reject':'cancel');
+    const payload=window.__haosV794BookingPayload||collect();
+    Swal.fire({title:'กำลังอัปเดต...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+    try{
+      const res=await callGas('updateITBookingStatus',[id,action,(me.phone||''),payload]);
+      if(!res||!res.success)throw new Error(res?.message||'อัปเดตไม่สำเร็จ');
+      Swal.fire({icon:'success',title:'อัปเดตแล้ว',text:res.message||'',timer:1500,showConfirmButton:false});
+      try{if(typeof window.loadItBookings==='function')window.loadItBookings();}catch(e){}
+    }catch(err){
+      Swal.fire('ผิดพลาด',err?.message||String(err),'error');
+    }
+  };
+
+  function bootV794(){
+    patchUpcomingAgendaV794();
+    ensureScheduleDocumentLinksV794();
+    raiseScheduleDetailV794();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootV794,{once:true});else bootV794();
+  setTimeout(patchUpcomingAgendaV794,500);
+  setTimeout(patchUpcomingAgendaV794,1500);
+  setInterval(()=>{patchUpcomingAgendaV794();ensureScheduleDocumentLinksV794();},1800);
+  document.addEventListener('click',ev=>{
+    if(ev.target.closest('#notificationCenterList .haos-v787-agenda-notif button,#notificationCenterList button[onclick*="openNotificationTargetV732"]')){
+      setTimeout(closeNotificationCenterV794,40);
+    }
+    if(ev.target.closest('.fc-event,.haos-v745-calendar-item'))setTimeout(raiseScheduleDetailV794,120);
+  },true);
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>

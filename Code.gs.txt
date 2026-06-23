@@ -4272,8 +4272,8 @@ function getITBookingSheet_() {
   return getOrCreateSheet_(SHEET_IT_BOOKINGS, [
     'Booking ID', 'Topic', 'Booking Type', 'Join Option', 'Meeting ID', 'Passcode',
     'Resource ID', 'Room Name', 'Other Location', 'Start Time', 'End Time',
-    'Owner Phone', 'Owner Name', 'Department', 'Status', 'Approver Phone',
-    'Admin Room ID', 'Admin Passcode', 'Admin Link', 'Cancel Reason', 'Signature Data',
+    'Owner Phone', 'Owner Name', 'Owner Position', 'Department', 'Status', 'Approver Phone',
+    'Admin Room ID', 'Admin Meeting ID', 'Admin Passcode', 'Admin Link', 'Cancel Reason', 'Signature Data',
     'Created At', 'Updated At',
     'Staff Name', 'Staff Position', 'Supervisor Name', 'Supervisor Position',
     'Supervisor Signature Data', 'Admin Signature Data', 'Approval Note',
@@ -4715,7 +4715,7 @@ function syncITBookingToGoogleCalendarV66_(item, existingEventId) {
     if (isNaN(start.getTime()) || isNaN(end.getTime())) return 'Error';
     var title = '[จอง Zoom/ห้อง] ' + (item.topic || '-');
     var loc = item.roomName || item.otherLocation || item.adminRoomId || item.joinLink || item.adminLink || '';
-    var desc = ['ระบบจองห้องประชุม / Zoom', 'สถานะ: ' + (item.status || '-'), 'ประเภท: ' + (item.bookingType || '-'), 'ผู้ขอ: ' + (item.ownerName || '-'), 'กลุ่มงาน: ' + (item.department || '-'), 'Meeting ID: ' + (item.meetingId || item.adminRoomId || '-'), 'Passcode: ' + (item.passcode || item.adminPasscode || '-'), 'Link: ' + (item.joinLink || item.adminLink || '-')].join('\n');
+    var desc = ['ระบบจองห้องประชุม / Zoom', 'สถานะ: ' + (item.status || '-'), 'ประเภท: ' + (item.bookingType || '-'), 'ผู้ขอ: ' + (item.ownerName || '-'), 'กลุ่มงาน: ' + (item.department || '-'), 'Meeting ID: ' + (item.meetingId || item.adminMeetingId || item.adminRoomId || '-'), 'Passcode: ' + (item.passcode || item.adminPasscode || '-'), 'Link: ' + (item.joinLink || item.adminLink || '-')].join('\n');
     var cal = CalendarApp.getDefaultCalendar(); var ev = null; if (existingEventId) { try { ev = cal.getEventById(existingEventId); } catch(ignore){} }
     if (ev) { ev.setTitle(title); ev.setTime(start,end); ev.setLocation(loc); ev.setDescription(desc); return ev.getId(); }
     return cal.createEvent(title, start, end, {location:loc, description:desc}).getId();
@@ -5311,8 +5311,8 @@ function getITBookingHeadersV47_() {
   return [
     'Booking ID', 'Topic', 'Booking Type', 'Join Option', 'Meeting ID', 'Passcode', 'Meeting Link',
     'Resource ID', 'Room Name', 'Other Location', 'Start Time', 'End Time',
-    'Owner Phone', 'Owner Name', 'Department', 'Status', 'Approver Phone',
-    'Admin Room ID', 'Admin Passcode', 'Admin Link', 'Cancel Reason', 'Signature Data',
+    'Owner Phone', 'Owner Name', 'Owner Position', 'Department', 'Status', 'Approver Phone',
+    'Admin Room ID', 'Admin Meeting ID', 'Admin Passcode', 'Admin Link', 'Cancel Reason', 'Signature Data',
     'Created At', 'Updated At', 'Staff Name', 'Staff Position', 'Supervisor Name', 'Supervisor Position',
     'Supervisor Signature Data', 'Admin Signature Data', 'Approval Note',
     'Approver Name', 'Approver Position', 'Approver Signature Data'
@@ -5334,6 +5334,14 @@ function itBookingHeaderMapV47_(sheet) {
 }
 function itGetByHeader_(row, map, name) { var idx = map[name]; return idx ? row[idx-1] : ''; }
 function itSetByHeader_(sheet, rowIndex, map, name, value) { var idx = map[name]; if (idx) sheet.getRange(rowIndex, idx).setValue(value); }
+function itPlainTextV794_(value) { return String(value == null ? '' : value).replace(/^'+/, ''); }
+function itSetTextByHeaderV794_(sheet, rowIndex, map, name, value) {
+  var idx = map[name];
+  if (!idx) return;
+  var range = sheet.getRange(rowIndex, idx);
+  range.setNumberFormat('@');
+  range.setValue(itPlainTextV794_(value));
+}
 
 function itBookingRowToObject_(row) {
   var sheet = getITBookingSheet_();
@@ -5349,11 +5357,11 @@ function itBookingRowToObject_(row) {
   var ownerPhone = String(itGetByHeader_(row, map, 'Owner Phone') || '').replace(/'/g, '');
   return {
     id: itGetByHeader_(row,map,'Booking ID'), topic: itGetByHeader_(row,map,'Topic'), bookingType: itGetByHeader_(row,map,'Booking Type'), joinOption: itGetByHeader_(row,map,'Join Option'),
-    meetingId: itGetByHeader_(row,map,'Meeting ID'), passcode: itGetByHeader_(row,map,'Passcode'), meetingLink: itGetByHeader_(row,map,'Meeting Link'),
+    meetingId: itPlainTextV794_(itGetByHeader_(row,map,'Meeting ID')), passcode: itPlainTextV794_(itGetByHeader_(row,map,'Passcode')), meetingLink: itGetByHeader_(row,map,'Meeting Link'),
     resourceId: itGetByHeader_(row,map,'Resource ID'), roomName: itGetByHeader_(row,map,'Room Name'), otherLocation: itGetByHeader_(row,map,'Other Location'),
     startTime: fmtDateTime_(start), endTime: fmtDateTime_(end), rawStartTime: start instanceof Date ? Utilities.formatDate(start, 'GMT+7', "yyyy-MM-dd'T'HH:mm") : String(start || ''), rawEndTime: end instanceof Date ? Utilities.formatDate(end, 'GMT+7', "yyyy-MM-dd'T'HH:mm") : String(end || ''),
-    ownerPhone: ownerPhone, ownerName: itGetByHeader_(row,map,'Owner Name'), ownerPosition: getUserPositionByPhone_(ownerPhone), department: itGetByHeader_(row,map,'Department'), status: itGetByHeader_(row,map,'Status') || 'รอเจ้าหน้าที่', approverPhone: String(itGetByHeader_(row,map,'Approver Phone') || '').replace(/'/g, ''),
-    adminRoomId: itGetByHeader_(row,map,'Admin Room ID'), adminPasscode: itGetByHeader_(row,map,'Admin Passcode'), adminLink: itGetByHeader_(row,map,'Admin Link'), cancelReason: itGetByHeader_(row,map,'Cancel Reason'), signatureData: itGetByHeader_(row,map,'Signature Data'),
+    ownerPhone: ownerPhone, ownerName: itGetByHeader_(row,map,'Owner Name'), ownerPosition: itGetByHeader_(row,map,'Owner Position') || getUserPositionByPhone_(ownerPhone), department: itGetByHeader_(row,map,'Department'), status: itGetByHeader_(row,map,'Status') || 'รอเจ้าหน้าที่', approverPhone: String(itGetByHeader_(row,map,'Approver Phone') || '').replace(/'/g, ''),
+    adminRoomId: itPlainTextV794_(itGetByHeader_(row,map,'Admin Room ID')), adminMeetingId: itPlainTextV794_(itGetByHeader_(row,map,'Admin Meeting ID')), adminPasscode: itPlainTextV794_(itGetByHeader_(row,map,'Admin Passcode')), adminLink: itGetByHeader_(row,map,'Admin Link'), cancelReason: itGetByHeader_(row,map,'Cancel Reason'), signatureData: itGetByHeader_(row,map,'Signature Data'),
     createdAt: fmtDateTime_(itGetByHeader_(row,map,'Created At')), updatedAt: fmtDateTime_(itGetByHeader_(row,map,'Updated At')),
     staffName: itGetByHeader_(row,map,'Staff Name'), staffPosition: itGetByHeader_(row,map,'Staff Position'), supervisorName: itGetByHeader_(row,map,'Supervisor Name'), supervisorPosition: itGetByHeader_(row,map,'Supervisor Position'),
     supervisorSignatureData: itGetByHeader_(row,map,'Supervisor Signature Data'), adminSignatureData: itGetByHeader_(row,map,'Admin Signature Data'), approvalNote: itGetByHeader_(row,map,'Approval Note'),
@@ -5375,15 +5383,19 @@ function saveITBooking(data) {
     var id = 'ITB-' + Utilities.getUuid().substring(0, 8).toUpperCase();
     var rowObj = {
       'Booking ID': id, 'Topic': data.topic || '', 'Booking Type': data.bookingType || 'Host', 'Join Option': data.joinOption || '',
-      'Meeting ID': data.meetingId || '', 'Passcode': data.passcode || '', 'Meeting Link': data.meetingLink || '',
+      'Meeting ID': itPlainTextV794_(data.meetingId || ''), 'Passcode': itPlainTextV794_(data.passcode || ''), 'Meeting Link': data.meetingLink || '',
       'Resource ID': data.resourceId || '', 'Room Name': data.roomName || '', 'Other Location': data.otherLocation || '',
-      'Start Time': start, 'End Time': end, 'Owner Phone': "'" + String(data.ownerPhone || '').replace(/'/g, ''), 'Owner Name': data.ownerName || '', 'Department': data.department || '',
-      'Status': 'รอเจ้าหน้าที่', 'Approver Phone': '', 'Admin Room ID': '', 'Admin Passcode': '', 'Admin Link': data.meetingLink || '', 'Cancel Reason': '',
+      'Start Time': start, 'End Time': end, 'Owner Phone': "'" + String(data.ownerPhone || '').replace(/'/g, ''), 'Owner Name': data.ownerName || '', 'Owner Position': data.ownerPosition || data.position || getUserPositionByPhone_(data.ownerPhone || '') || '', 'Department': data.department || '',
+      'Status': 'รอเจ้าหน้าที่', 'Approver Phone': '', 'Admin Room ID': '', 'Admin Meeting ID': '', 'Admin Passcode': '', 'Admin Link': data.meetingLink || '', 'Cancel Reason': '',
       'Signature Data': data.signatureData || '', 'Created At': new Date(), 'Updated At': new Date(),
       'Staff Name': '', 'Staff Position': '', 'Supervisor Name': '', 'Supervisor Position': '', 'Supervisor Signature Data': '', 'Admin Signature Data': '', 'Approval Note': '',
       'Approver Name': '', 'Approver Position': '', 'Approver Signature Data': ''
     };
     sheet.appendRow(headers.map(function(h){ return rowObj[h] !== undefined ? rowObj[h] : ''; }));
+    var savedRow = sheet.getLastRow();
+    var savedMap = itBookingHeaderMapV47_(sheet);
+    itSetTextByHeaderV794_(sheet, savedRow, savedMap, 'Meeting ID', data.meetingId || '');
+    itSetTextByHeaderV794_(sheet, savedRow, savedMap, 'Passcode', data.passcode || '');
     try {
       createNotificationsV732_(getITServiceStaffPhones_(), 'มีคำขอจองห้อง/Zoom ใหม่รอเจ้าหน้าที่ดำเนินการ: ' + data.topic, 'IT Booking', id, 'ปกติ', {module:'itBooking', action:'openItBooking', createdBy:data.ownerPhone});
       if (data.ownerPhone) createNotificationV732_(data.ownerPhone, 'ส่งคำขอจองห้อง/Zoom แล้ว: ' + data.topic, 'IT Booking Submitted', id, 'ปกติ', {module:'itBooking', action:'openItBooking', createdBy:data.ownerPhone});
@@ -5409,8 +5421,12 @@ function updateITBookingStatus(bookingId, action, actorPhone, payload) {
         var r = i + 1;
         itSetByHeader_(sheet, r, map, 'Status', status);
         itSetByHeader_(sheet, r, map, 'Updated At', new Date());
-        var fields = { adminRoomId:'Admin Room ID', adminPasscode:'Admin Passcode', adminLink:'Admin Link', reason:'Cancel Reason', approvalNote:'Approval Note', staffName:'Staff Name', staffPosition:'Staff Position', supervisorName:'Supervisor Name', supervisorPosition:'Supervisor Position', supervisorSignatureData:'Supervisor Signature Data', adminSignatureData:'Admin Signature Data', approverName:'Approver Name', approverPosition:'Approver Position', approverSignatureData:'Approver Signature Data' };
-        Object.keys(fields).forEach(function(k){ if (payload[k] !== undefined) itSetByHeader_(sheet, r, map, fields[k], payload[k] || ''); });
+        var fields = { adminRoomId:'Admin Room ID', adminMeetingId:'Admin Meeting ID', adminPasscode:'Admin Passcode', adminLink:'Admin Link', reason:'Cancel Reason', approvalNote:'Approval Note', staffName:'Staff Name', staffPosition:'Staff Position', supervisorName:'Supervisor Name', supervisorPosition:'Supervisor Position', supervisorSignatureData:'Supervisor Signature Data', adminSignatureData:'Admin Signature Data', approverName:'Approver Name', approverPosition:'Approver Position', approverSignatureData:'Approver Signature Data' };
+        Object.keys(fields).forEach(function(k){
+          if (payload[k] === undefined) return;
+          if (k === 'adminRoomId' || k === 'adminMeetingId' || k === 'adminPasscode') itSetTextByHeaderV794_(sheet, r, map, fields[k], payload[k] || '');
+          else itSetByHeader_(sheet, r, map, fields[k], payload[k] || '');
+        });
         try { createNotificationV732_(before.ownerPhone, 'คำขอจองห้อง/Zoom ของคุณ: ' + before.topic + ' — ' + status, 'IT Booking Status', bookingId, status === 'ไม่อนุญาต' ? 'ด่วน' : 'ปกติ', {module:'itBooking', action:'openItBooking', createdBy:actor}); } catch(ignore) {}
         logAudit_(actorPhone, getUserNameByPhone_(actorPhone), 'UPDATE_IT_BOOKING_STATUS', 'ITBooking', bookingId, 'เปลี่ยนสถานะคำขอจองเป็น ' + status, before, payload);
         return { success:true, message:'อัปเดตสถานะเรียบร้อยแล้ว' };
@@ -5594,7 +5610,7 @@ function syncITBookingToGoogleCalendarV66_(item, existingEventId) {
     if (isNaN(start.getTime()) || isNaN(end.getTime())) return 'Error';
     var title = '[จอง Zoom/ห้อง] ' + (item.topic || '-');
     var loc = item.roomName || item.otherLocation || item.adminRoomId || item.joinLink || item.adminLink || '';
-    var desc = ['ระบบจองห้องประชุม / Zoom', 'สถานะ: ' + (item.status || '-'), 'ประเภท: ' + (item.bookingType || '-'), 'ผู้ขอ: ' + (item.ownerName || '-'), 'กลุ่มงาน: ' + (item.department || '-'), 'Meeting ID: ' + (item.meetingId || item.adminRoomId || '-'), 'Passcode: ' + (item.passcode || item.adminPasscode || '-'), 'Link: ' + (item.joinLink || item.adminLink || '-')].join('\n');
+    var desc = ['ระบบจองห้องประชุม / Zoom', 'สถานะ: ' + (item.status || '-'), 'ประเภท: ' + (item.bookingType || '-'), 'ผู้ขอ: ' + (item.ownerName || '-'), 'กลุ่มงาน: ' + (item.department || '-'), 'Meeting ID: ' + (item.meetingId || item.adminMeetingId || item.adminRoomId || '-'), 'Passcode: ' + (item.passcode || item.adminPasscode || '-'), 'Link: ' + (item.joinLink || item.adminLink || '-')].join('\n');
     var cal = CalendarApp.getDefaultCalendar(); var ev = null; if (existingEventId) { try { ev = cal.getEventById(existingEventId); } catch(ignore){} }
     if (ev) { ev.setTitle(title); ev.setTime(start,end); ev.setLocation(loc); ev.setDescription(desc); return ev.getId(); }
     return cal.createEvent(title, start, end, {location:loc, description:desc}).getId();
@@ -6088,7 +6104,7 @@ function syncITBookingToGoogleCalendarV66_(item, existingEventId) {
     if (isNaN(start.getTime()) || isNaN(end.getTime())) return 'Error';
     var title = '[จอง Zoom/ห้อง] ' + (item.topic || '-');
     var loc = item.roomName || item.otherLocation || item.adminRoomId || item.joinLink || item.adminLink || '';
-    var desc = ['ระบบจองห้องประชุม / Zoom', 'สถานะ: ' + (item.status || '-'), 'ประเภท: ' + (item.bookingType || '-'), 'ผู้ขอ: ' + (item.ownerName || '-'), 'กลุ่มงาน: ' + (item.department || '-'), 'Meeting ID: ' + (item.meetingId || item.adminRoomId || '-'), 'Passcode: ' + (item.passcode || item.adminPasscode || '-'), 'Link: ' + (item.joinLink || item.adminLink || '-')].join('\n');
+    var desc = ['ระบบจองห้องประชุม / Zoom', 'สถานะ: ' + (item.status || '-'), 'ประเภท: ' + (item.bookingType || '-'), 'ผู้ขอ: ' + (item.ownerName || '-'), 'กลุ่มงาน: ' + (item.department || '-'), 'Meeting ID: ' + (item.meetingId || item.adminMeetingId || item.adminRoomId || '-'), 'Passcode: ' + (item.passcode || item.adminPasscode || '-'), 'Link: ' + (item.joinLink || item.adminLink || '-')].join('\n');
     var cal = CalendarApp.getDefaultCalendar(); var ev = null; if (existingEventId) { try { ev = cal.getEventById(existingEventId); } catch(ignore){} }
     if (ev) { ev.setTitle(title); ev.setTime(start,end); ev.setLocation(loc); ev.setDescription(desc); return ev.getId(); }
     return cal.createEvent(title, start, end, {location:loc, description:desc}).getId();
@@ -13341,7 +13357,8 @@ function reviewITBookingChangeRequestV748(requestId, approve, note, adminPhone) 
               var d = new Date(v);
               v = isNaN(d.getTime()) ? v : d;
             }
-            itSetByHeader_(found.sheet, found.row, found.map, fieldMap[k], v || '');
+            if (k === 'meetingId' || k === 'passcode') itSetTextByHeaderV794_(found.sheet, found.row, found.map, fieldMap[k], v || '');
+            else itSetByHeader_(found.sheet, found.row, found.map, fieldMap[k], v || '');
           });
           itSetByHeader_(found.sheet, found.row, found.map, 'Updated At', new Date());
           try { haosV748UpdateLinkedBookingSchedule_(req.bookingId, 'edit', adminPhone); } catch(ignoreSyncEdit) {}

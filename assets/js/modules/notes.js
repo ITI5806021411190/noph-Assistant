@@ -77,14 +77,54 @@
   }
 
   async function uploadSelectedFiles() {
-    const input = $('haosNotesFileUploadV790');
-    const files = Array.from(input?.files || []);
+    const inputs = [
+      $('haosNotesFileUploadV790'),
+      ...Array.from(document.querySelectorAll('.haos-notes-file-upload-extra-v794'))
+    ].filter(Boolean);
+    const files = inputs.flatMap(input => Array.from(input.files || []));
     if (!files.length) return [];
     const urls = [];
     for (const file of files) {
       urls.push(await uploadFile(file));
     }
     return urls.filter(Boolean);
+  }
+
+  function extraLinkValues() {
+    return Array.from(document.querySelectorAll('.haos-notes-link-extra-v794'))
+      .map(input => clean(input.value || ''))
+      .filter(Boolean);
+  }
+
+  function addFileRow() {
+    const wrap = $('haosNotesExtraFileRowsV794');
+    if (!wrap) return;
+    const row = document.createElement('div');
+    row.className = 'haos-notes-extra-row';
+    row.innerHTML = `
+      <input type="file" class="form-control haos-notes-file-upload-extra-v794" multiple>
+      <button type="button" class="btn btn-outline-danger" title="ลบช่องนี้" aria-label="ลบช่องนี้"><i class="bi bi-trash"></i></button>`;
+    row.querySelector('button')?.addEventListener('click', () => row.remove());
+    wrap.appendChild(row);
+  }
+
+  function addLinkRow(value) {
+    const wrap = $('haosNotesExtraLinkRowsV794');
+    if (!wrap) return;
+    const row = document.createElement('div');
+    row.className = 'haos-notes-extra-row';
+    row.innerHTML = `
+      <input class="form-control haos-notes-link-extra-v794" placeholder="วาง URL เพิ่มเติม" value="${esc(value || '')}">
+      <button type="button" class="btn btn-outline-danger" title="ลบช่องนี้" aria-label="ลบช่องนี้"><i class="bi bi-trash"></i></button>`;
+    row.querySelector('button')?.addEventListener('click', () => row.remove());
+    wrap.appendChild(row);
+  }
+
+  function resetExtraRows() {
+    const fileWrap = $('haosNotesExtraFileRowsV794');
+    const linkWrap = $('haosNotesExtraLinkRowsV794');
+    if (fileWrap) fileWrap.innerHTML = '';
+    if (linkWrap) linkWrap.innerHTML = '';
   }
 
   function noteScopeLabel(scope) {
@@ -266,12 +306,16 @@
               <div class="col-md-6">
                 <label class="form-label fw-bold">ไฟล์แนบประกอบ Note</label>
                 <input id="haosNotesFileUploadV790" type="file" class="form-control" multiple>
+                <div id="haosNotesExtraFileRowsV794" class="haos-notes-extra-rows"></div>
+                <button type="button" class="btn btn-sm btn-outline-primary fw-bold mt-2" onclick="window.HAOSNotes.addFileRow()"><i class="bi bi-plus-circle"></i> เพิ่มช่องไฟล์แนบ</button>
                 <small class="haos-notes-field-help"><i class="bi bi-paperclip"></i> เลือกได้หลายไฟล์ ระบบจะอัปโหลดเข้า Google Drive แล้วแนบลิงก์ไว้กับ Note</small>
                 <div id="haosNotesFileExistingV790" class="mt-2"></div>
               </div>
               <div class="col-md-6">
                 <label class="form-label fw-bold">ลิงก์ไฟล์ / อ้างอิง</label>
                 <input id="haosNotesFileInputV790" class="form-control" placeholder="วาง URL ถ้ามี">
+                <div id="haosNotesExtraLinkRowsV794" class="haos-notes-extra-rows"></div>
+                <button type="button" class="btn btn-sm btn-outline-primary fw-bold mt-2" onclick="window.HAOSNotes.addLinkRow()"><i class="bi bi-plus-circle"></i> เพิ่มลิงก์อ้างอิง</button>
                 <small class="haos-notes-field-help">วางลิงก์เองได้ หรือปล่อยให้ระบบเติมจากไฟล์แนบที่อัปโหลด</small>
               </div>
               <div class="col-md-6">
@@ -464,6 +508,7 @@
     setTagsValue(data.tags || '');
     setInput('haosNotesFileInputV790', data.fileUrl || '');
     setInput('haosNotesFileUploadV790', '');
+    resetExtraRows();
     const existing = $('haosNotesFileExistingV790');
     if (existing) existing.innerHTML = data.fileUrl ? `<div class="small fw-bold text-muted mb-1">ไฟล์แนบเดิม</div>${renderFileButtons(data.fileUrl)}` : '';
     setInput('haosNotesLinkedTypeInputV790', data.linkedType || '');
@@ -500,13 +545,17 @@
       }
       const uploadedUrls = await uploadSelectedFiles();
       if (btn) btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังบันทึก...';
+      const manualLinks = [$('haosNotesFileInputV790')?.value || '', ...extraLinkValues()]
+        .map(v => clean(v || ''))
+        .filter(Boolean)
+        .join('\n');
       const payload = {
         noteId: old.noteId || '',
         title,
         content,
         scope: $('haosNotesScopeInputV790')?.value || 'personal',
         tags: selectedTags().join(', '),
-        fileUrl: mergeUrls($('haosNotesFileInputV790')?.value || '', uploadedUrls.join('\n')),
+        fileUrl: mergeUrls(manualLinks, uploadedUrls.join('\n')),
         linkedType: $('haosNotesLinkedTypeInputV790')?.value || '',
         linkedId: $('haosNotesLinkedIdInputV790')?.value || '',
         pinned: !!$('haosNotesPinnedInputV790')?.checked
@@ -723,6 +772,8 @@
     load,
     clearFilters,
     toggleFilters,
+    addFileRow,
+    addLinkRow,
     openEditor,
     closeEditor,
     quickNote,

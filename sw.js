@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-93-user-notes-popup-notification-fixes';
+const CACHE_NAME = 'haos-v70-94-final-interaction-booking-fixes';
 const CORE = [
   '/',
   '/index.html',

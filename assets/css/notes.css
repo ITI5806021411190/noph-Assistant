@@ -310,6 +310,24 @@
   font-weight: 700;
 }
 
+.haos-notes-extra-rows {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.haos-notes-extra-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 46px;
+  gap: 8px;
+  align-items: center;
+}
+
+.haos-notes-extra-row .btn {
+  min-height: 44px;
+  border-radius: 14px;
+}
+
 .haos-notes-file-links {
   display: flex;
   flex-wrap: wrap;
