@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  const PATCH = 'v70.89-ai-document-summary-phase2';
+  const PATCH = 'v70.93-ai-document-summary-phase2';
   if (window.__HAOS_V788_AI_DOCUMENT_SUMMARY__) return;
   window.__HAOS_V788_AI_DOCUMENT_SUMMARY__ = true;
 
@@ -400,6 +400,7 @@
             <button class="btn btn-light fw-bold" onclick="window.HAOSAiDocSummary.copy()"><i class="bi bi-clipboard"></i> คัดลอก</button>
             <button class="btn btn-warning fw-bold" onclick="window.HAOSAiDocSummary.createSchedule(0)"><i class="bi bi-calendar-plus"></i> สร้างตารางงาน</button>
             <button class="btn btn-success fw-bold" onclick="window.HAOSAiDocSummary.sendToEOffice()"><i class="bi bi-journal-check"></i> ส่งเข้า e-Office</button>
+            <button class="btn btn-info fw-bold text-white" onclick="window.HAOSAiDocSummary.sendToNote()"><i class="bi bi-journal-plus"></i> ส่งเข้า Note</button>
             <button class="btn btn-outline-light fw-bold" onclick="window.HAOSAiDocSummary.createDoc()"><i class="bi bi-file-earmark-word"></i> Doc/PDF</button>
           </div>
         </div>
@@ -667,6 +668,42 @@
     }
   }
 
+  async function sendToNote() {
+    const result = state.result;
+    if (!result || !result.summaryId) {
+      return window.Swal?.fire('ยังไม่มีผลสรุป', 'กรุณาสรุปเอกสารให้สำเร็จก่อนส่งเข้า Note', 'warning');
+    }
+    try {
+      window.Swal?.fire({ title: 'กำลังส่งเข้า Note...', allowOutsideClick: false, didOpen: () => window.Swal.showLoading() });
+      const me = getUser();
+      const files = [result.docUrl, result.pdfUrl, result.fileUrl].filter(Boolean).join('\n');
+      const tags = ['สรุปเอกสาร', result.documentType || '', result.summaryModeLabel || ''].filter(Boolean).join(', ');
+      const payload = {
+        title: 'สรุปเอกสาร: ' + (result.title || result.fileName || 'เอกสาร'),
+        content: resultText(result),
+        scope: 'personal',
+        tags,
+        fileUrl: files,
+        linkedType: 'ai_document',
+        linkedId: result.summaryId,
+        pinned: false
+      };
+      const res = await gas('saveUserNoteV790', [payload, me.phone || '', me.role || 'User']);
+      if (!res || !res.success) throw new Error(res?.message || 'ส่งเข้า Note ไม่สำเร็จ');
+      window.Swal?.fire({
+        icon: 'success',
+        title: 'ส่งเข้า Note แล้ว',
+        showCancelButton: true,
+        confirmButtonText: 'เปิดสมุด Note',
+        cancelButtonText: 'ปิด'
+      }).then(choice => {
+        if (choice?.isConfirmed && window.HAOSNotes?.open) window.HAOSNotes.open();
+      });
+    } catch (err) {
+      window.Swal?.fire('ส่งเข้า Note ไม่สำเร็จ', err?.message || String(err), 'error');
+    }
+  }
+
   function openHistory(index) {
     state.result = state.history[index] || null;
     renderResult();
@@ -739,6 +776,7 @@
     clearFilters,
     deleteHistory,
     sendToEOffice,
+    sendToNote,
     openHistory,
     version: PATCH
   };

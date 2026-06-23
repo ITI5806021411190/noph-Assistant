@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-92-user-notes-fixes';
+const CACHE_NAME = 'haos-v70-93-user-notes-popup-notification-fixes';
 const CORE = [
   '/',
   '/index.html',

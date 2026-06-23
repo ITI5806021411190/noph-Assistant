@@ -1403,6 +1403,10 @@ function saveScheduleV2(data) {
       });
     }
 
+    if (data.saveToNote) {
+      try { createScheduleNoteFromPayloadV793_(data, id); } catch(noteErr) {}
+    }
+
     return { success: true, message: data.recurringEnabled ? "บันทึกกำหนดการและตั้งค่างานประจำสำเร็จ!" : "บันทึกกำหนดการสำเร็จ!" };
   } catch (e) { 
     return { success: false, message: e.toString() }; 
@@ -1473,6 +1477,9 @@ function updateScheduleV2(data) {
         }
 
         logAudit_(data.ownerPhone, data.ownerName || '', 'UPDATE_SCHEDULE', 'Schedule', data.eventEditId, 'อัปเดตกำหนดการ: ' + data.eventName, null, data);
+        if (data.saveToNote) {
+          try { createScheduleNoteFromPayloadV793_(data, data.eventEditId); } catch(noteErr) {}
+        }
         return { success: true, message: "อัปเดตกำหนดการเรียบร้อยแล้วครับ" };
       }
     }
@@ -3051,6 +3058,20 @@ function userNoteMakeIdV790_() {
   return 'NOTE-' + Utilities.formatDate(new Date(), 'GMT+7', 'yyyyMMdd') + '-' + Utilities.getUuid().substring(0, 6).toUpperCase();
 }
 
+function userNoteFormatDateTimeV790_(value) {
+  if (!value) return '';
+  try {
+    if (Object.prototype.toString.call(value) === '[object Date]' && !isNaN(value.getTime())) {
+      return Utilities.formatDate(value, 'GMT+7', 'yyyy-MM-dd HH:mm:ss');
+    }
+    var parsed = new Date(value);
+    if (!isNaN(parsed.getTime()) && /^\d{4}-\d{2}-\d{2}T/.test(String(value))) {
+      return Utilities.formatDate(parsed, 'GMT+7', 'yyyy-MM-dd HH:mm:ss');
+    }
+  } catch(ignore) {}
+  return userNoteCleanV790_(value);
+}
+
 function userNoteRowToObjectV790_(row) {
   var item = {
     noteId: row[0],
@@ -3066,8 +3087,8 @@ function userNoteRowToObjectV790_(row) {
     linkedType: row[10],
     linkedId: row[11],
     fileUrl: row[12],
-    createdAt: row[13],
-    updatedAt: row[14]
+    createdAt: userNoteFormatDateTimeV790_(row[13]),
+    updatedAt: userNoteFormatDateTimeV790_(row[14])
   };
   item.tagsList = userNoteTagsV790_(item.tags);
   return item;
@@ -3160,6 +3181,7 @@ function saveUserNoteV790(payload, actorPhone, role) {
     }
     if (!noteId) noteId = userNoteMakeIdV790_();
     var now = new Date();
+    var nowText = userNoteFormatDateTimeV790_(now);
     var content = userNoteCleanV790_(payload.content || (oldItem && oldItem.content) || '');
     var title = userNoteCleanV790_(payload.title || (oldItem && oldItem.title) || '');
     if (!title) title = content ? content.split('\n')[0].substring(0, 80) : 'Note ใหม่';
@@ -3178,8 +3200,8 @@ function saveUserNoteV790(payload, actorPhone, role) {
       linkedType: userNoteCleanV790_(payload.linkedType || (oldItem && oldItem.linkedType) || ''),
       linkedId: userNoteCleanV790_(payload.linkedId || (oldItem && oldItem.linkedId) || ''),
       fileUrl: userNoteCleanV790_(payload.fileUrl || (oldItem && oldItem.fileUrl) || ''),
-      createdAt: oldItem && oldItem.createdAt ? oldItem.createdAt : now,
-      updatedAt: now
+      createdAt: oldItem && oldItem.createdAt ? oldItem.createdAt : nowText,
+      updatedAt: nowText
     };
     var row = [
       item.noteId, item.title, item.content, item.scope, item.tags, item.pinned, item.archived,
@@ -3256,6 +3278,37 @@ function deleteUserNoteV790(noteId, actorPhone, role) {
   } catch(e) {
     return { success:false, message:e.toString() };
   }
+}
+
+function createScheduleNoteFromPayloadV793_(data, scheduleId) {
+  data = data || {};
+  var actorPhone = userNotePhoneV790_(data.ownerPhone || data.userPhone || '');
+  if (!actorPhone) return null;
+  var title = 'ตารางงาน: ' + userNoteCleanV790_(data.eventName || data.title || 'กำหนดการ');
+  var lines = [];
+  lines.push(title);
+  if (data.startTime || data.endTime) lines.push('เวลา: ' + userNoteCleanV790_(data.startTime || '-') + (data.endTime ? ' ถึง ' + userNoteCleanV790_(data.endTime) : ''));
+  if (data.location) lines.push('สถานที่: ' + userNoteCleanV790_(data.location));
+  if (data.meetingLink) lines.push('ลิงก์ประชุม: ' + userNoteCleanV790_(data.meetingLink));
+  if (data.workStatus) lines.push('สถานะ: ' + userNoteCleanV790_(data.workStatus));
+  if (data.priority) lines.push('ความสำคัญ: ' + userNoteCleanV790_(data.priority));
+  if (data.details) {
+    lines.push('');
+    lines.push('รายละเอียด');
+    lines.push(userNoteCleanV790_(data.details));
+  }
+  var tags = Array.isArray(data.tags) ? data.tags.join(', ') : userNoteCleanV790_(data.tags || '');
+  var payload = {
+    title: title,
+    content: lines.join('\n'),
+    scope: String(data.scheduleScope || '').toLowerCase() === 'department' ? 'department' : 'personal',
+    tags: tags,
+    fileUrl: userNoteCleanV790_(data.fileUrl || ''),
+    linkedType: 'schedule',
+    linkedId: scheduleId || data.eventEditId || '',
+    pinned: false
+  };
+  return saveUserNoteV790(payload, actorPhone, data.role || data.userRole || 'User');
 }
 
 function testListGeminiModels() {

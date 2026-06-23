@@ -17114,6 +17114,7 @@ HAOS v68.6 FINISHING FIX
     const [label,icon]=moduleInfo(mod);
     const tone=priorityTone(n.priority);
     const entity=String(n.entityId||'');
+    const canOpen=!!entity||mod==='schedule'||String(n.action||'').toLowerCase().includes('schedule')||!!n.virtual;
     const unread=!n.isRead;
     return `<div class="list-group-item haos-v746-notif-card ${unread?'unread':''}" data-module="${esc(mod)}">
       <div class="d-flex gap-3 align-items-start">
@@ -17128,7 +17129,7 @@ HAOS v68.6 FINISHING FIX
           </div>
         </div>
         <div class="haos-v746-notif-actions">
-          <button class="btn btn-sm btn-primary" ${(!entity&&n.virtual)?'disabled':''} onclick="openNotificationTargetV732&&openNotificationTargetV732('${esc(mod)}','${esc(entity)}','${esc(n.action||'')}')"><i class="bi bi-box-arrow-up-right"></i> เปิดรายการ</button>
+          <button class="btn btn-sm btn-primary" ${canOpen?'':'disabled'} onclick="openNotificationTargetV732&&openNotificationTargetV732('${esc(mod)}','${esc(entity)}','${esc(n.action||'')}')"><i class="bi bi-box-arrow-up-right"></i> เปิดรายการ</button>
           ${n.virtual?'':`<button class="btn btn-sm btn-outline-success" onclick="readNotif&&readNotif('${esc(n.id)}');setTimeout(loadNotificationCenter,250)" title="อ่านแล้ว"><i class="bi bi-check"></i></button><button class="btn btn-sm btn-outline-danger" onclick="deleteNotificationUI&&deleteNotificationUI('${esc(n.id)}')" title="ลบ"><i class="bi bi-trash"></i></button>`}
         </div>
       </div>
@@ -18711,6 +18712,109 @@ HAOS v68.6 FINISHING FIX
     if(kind==='xls'||kind==='xlsx')return exportXlsx();
     if(typeof prevExport==='function')return prevExport.apply(this,arguments);
   };
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
+<style id="haos-v70-93-note-popup-bridge-style">
+  .haos-v749-schedule-detail-backdrop{z-index:2147483100!important}
+  body .swal2-container{z-index:2147483000!important}
+  .haos-v793-save-note-wrap{border:1px solid rgba(245,158,11,.28);border-radius:16px;background:#fffbeb;padding:12px 14px}
+  .haos-v793-save-note-wrap .form-check-label{font-weight:900;color:#92400e}
+  .haos-v793-save-note-wrap small{display:block;color:#64748b;font-weight:700;margin-top:2px}
+</style>
+<script id="haos-v70-93-note-popup-bridge-script">
+(function(){
+  const PATCH='v70.93-note-popup-bridge';
+  if(window.__HAOS_V793_NOTE_POPUP_BRIDGE__)return;
+  window.__HAOS_V793_NOTE_POPUP_BRIDGE__=true;
+  const $=id=>document.getElementById(id);
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+  function ensureScheduleSaveToNote(){
+    if($('scheduleSaveToNoteWrapV793'))return;
+    const target=$('scheduleAiFileBox')||$('btnSaveEvent')?.closest('.d-flex');
+    if(!target)return;
+    target.insertAdjacentHTML('afterend',`
+      <div id="scheduleSaveToNoteWrapV793" class="haos-v793-save-note-wrap mb-3">
+        <div class="form-check m-0">
+          <input id="scheduleSaveToNoteV793" class="form-check-input" type="checkbox">
+          <label class="form-check-label" for="scheduleSaveToNoteV793"><i class="bi bi-journal-plus"></i> บันทึกข้อมูลนี้เข้า สมุด Note ด้วย</label>
+          <small>ไม่เปิดไว้เป็นค่าเริ่มต้น ผู้ใช้เลือกเองเมื่อต้องการเก็บสำเนาไว้ค้นย้อนหลังใน Note</small>
+        </div>
+      </div>`);
+  }
+
+  const oldOpenSchedule=window.openScheduleFormModal;
+  if(typeof oldOpenSchedule==='function')window.openScheduleFormModal=function(){
+    const r=oldOpenSchedule.apply(this,arguments);
+    setTimeout(()=>{ensureScheduleSaveToNote();const cb=$('scheduleSaveToNoteV793');if(cb)cb.checked=false;},120);
+    return r;
+  };
+
+  const oldCancelEdit=window.cancelEditEvent;
+  if(typeof oldCancelEdit==='function')window.cancelEditEvent=function(){
+    const r=oldCancelEdit.apply(this,arguments);
+    const cb=$('scheduleSaveToNoteV793');if(cb)cb.checked=false;
+    return r;
+  };
+
+  const oldSubmitSchedule=window.submitScheduleData;
+  if(typeof oldSubmitSchedule==='function')window.submitScheduleData=function(data,btn){
+    ensureScheduleSaveToNote();
+    if(data)data.saveToNote=!!$('scheduleSaveToNoteV793')?.checked;
+    return oldSubmitSchedule.call(this,data,btn);
+  };
+
+  const oldOpenNotif=window.openNotificationTargetV732;
+  window.openNotificationTargetV732=function(moduleName,entityId,action){
+    const mod=String(moduleName||'');
+    const act=String(action||'');
+    const entity=String(entityId||'').trim();
+    if(mod==='schedule'||mod==='today'||act.indexOf('openSchedule')!==-1||act.indexOf('openApprovals')!==-1){
+      try{
+        const modalEl=$('notificationCenterModal');
+        if(modalEl&&window.bootstrap?.Modal)(bootstrap.Modal.getInstance(modalEl)||bootstrap.Modal.getOrCreateInstance(modalEl)).hide();
+      }catch(e){}
+      setTimeout(()=>{
+        try{document.getElementById('schedule-tab')?.click();}catch(e){}
+        try{sessionStorage.setItem('haos_user_tab_choice_v733','1');}catch(e){}
+        try{if(typeof window.haosOpenScheduleV687==='function')window.haosOpenScheduleV687();}catch(e){}
+        try{if($('unifiedSchedulePeriodV702'))$('unifiedSchedulePeriodV702').value='today';}catch(e){}
+        try{if(typeof window.setUnifiedScheduleViewV702==='function')window.setUnifiedScheduleViewV702('list');}catch(e){}
+        try{if(typeof window.renderUnifiedScheduleV702==='function')window.renderUnifiedScheduleV702();}catch(e){}
+        if(entity){
+          setTimeout(()=>{
+            try{
+              if(typeof window.showSchedulePopupDetailV749==='function')window.showSchedulePopupDetailV749(entity);
+              else if(typeof window.viewScheduleDetail==='function')window.viewScheduleDetail(entity);
+            }catch(err){
+              if(window.Swal)Swal.fire('เปิดรายละเอียดไม่สำเร็จ',esc(err.message||err),'warning');
+            }
+          },650);
+        }else if(window.Swal){
+          setTimeout(()=>Swal.fire({icon:'info',title:'เปิดกำหนดการวันนี้แล้ว',text:'รายการแจ้งเตือนนี้เป็นรายการสรุปของวันนี้ ระบบจึงพาไปยังตารางงานที่กรองวันนี้ให้แทน',timer:1700,showConfirmButton:false}),450);
+        }
+      },220);
+      return false;
+    }
+    if(typeof oldOpenNotif==='function'){
+      const r=oldOpenNotif.apply(this,arguments);
+      if(r!==undefined)return r;
+    }
+    if(window.Swal)Swal.fire('รายละเอียดการแจ้งเตือน',`<div class="text-start"><b>ฟังก์ชัน:</b> ${esc(mod||'-')}<br><b>รหัสอ้างอิง:</b> ${esc(entity||'-')}<br><b>Action:</b> ${esc(act||'-')}</div>`,'info');
+    return false;
+  };
+
+  const oldCalendarPopup=window.openScheduleCalendarPopupV745;
+  if(typeof oldCalendarPopup==='function')window.openScheduleCalendarPopupV745=function(){
+    const r=oldCalendarPopup.apply(this,arguments);
+    setTimeout(()=>{const el=$('haosScheduleDetailBackdropV749');if(el)el.style.zIndex='2147483100';},100);
+    return r;
+  };
+
+  function boot(){ensureScheduleSaveToNote();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+  setInterval(ensureScheduleSaveToNote,1200);
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>

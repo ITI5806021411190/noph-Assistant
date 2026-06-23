@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  const PATCH = 'v70.90-user-notes';
+  const PATCH = 'v70.93-user-notes';
   if (window.__HAOS_V790_USER_NOTES__) return;
   window.__HAOS_V790_USER_NOTES__ = true;
 
@@ -10,7 +10,8 @@
     editing: null,
     busy: false,
     tagOptions: [],
-    loadingTags: null
+    loadingTags: null,
+    selected: new Set()
   };
 
   const $ = id => document.getElementById(id);
@@ -170,8 +171,21 @@
     setInput('haosNotesTagsInputV790', unique(custom).join(', '));
   }
 
+  function noteKey(item, index) {
+    if (item?.noteId) return String(item.noteId);
+    return index === undefined || index === null ? '' : String(index);
+  }
+
+  function ensureEditorInBody() {
+    const editor = $('haosNotesEditorV790');
+    if (editor && editor.parentElement !== document.body) document.body.appendChild(editor);
+  }
+
   function ensureModule() {
-    if ($('haosNotesModuleV790')) return;
+    if ($('haosNotesModuleV790')) {
+      ensureEditorInBody();
+      return;
+    }
     const pane = $('itservices-pane') || document.body;
     pane.insertAdjacentHTML('beforeend', `
       <section id="haosNotesModuleV790" class="haos-notes-module" aria-hidden="true">
@@ -193,6 +207,9 @@
               <button type="button" class="btn btn-outline-primary fw-bold" onclick="window.HAOSNotes.load()"><i class="bi bi-arrow-clockwise"></i> โหลดใหม่</button>
               <button type="button" class="btn btn-outline-secondary fw-bold" onclick="window.HAOSNotes.toggleFilters()"><i class="bi bi-funnel"></i> ตัวกรอง</button>
               <span id="haosNotesCountV790" class="haos-notes-count">0 รายการ</span>
+              <span id="haosNotesBulkCountV790" class="haos-notes-count haos-notes-bulk-count d-none">เลือก 0 รายการ</span>
+              <button id="haosNotesBulkDoneV790" type="button" class="btn btn-outline-success fw-bold d-none" onclick="window.HAOSNotes.bulkDone()"><i class="bi bi-check2-circle"></i> เสร็จสิ้นแล้ว</button>
+              <button id="haosNotesBulkDeleteV790" type="button" class="btn btn-outline-danger fw-bold d-none" onclick="window.HAOSNotes.bulkDelete()"><i class="bi bi-trash"></i> ลบที่เลือก</button>
             </div>
             <div class="haos-notes-guide">
               <div><b><i class="bi bi-pin-angle"></i> ปักหมุดเรื่องสำคัญ</b><span>ทำให้ Note ที่ใช้บ่อยขึ้นก่อนรายการอื่นเสมอ</span></div>
@@ -258,7 +275,7 @@
                 <small class="haos-notes-field-help">วางลิงก์เองได้ หรือปล่อยให้ระบบเติมจากไฟล์แนบที่อัปโหลด</small>
               </div>
               <div class="col-md-6">
-                <label class="form-label fw-bold">เชื่อมกับโมดูล</label>
+                <label class="form-label fw-bold">อ้างอิงโมดูล</label>
                 <select id="haosNotesLinkedTypeInputV790" class="form-select">
                   <option value="">ไม่ระบุ</option>
                   <option value="schedule">ตารางงาน & นัดหมาย</option>
@@ -268,6 +285,7 @@
                   <option value="booking">จองห้องประชุม / Zoom</option>
                   <option value="ai_document">สรุปเอกสารด้วย AI</option>
                 </select>
+                <small class="haos-notes-field-help">ใช้เพื่อจัดหมวดและค้นหา Note ยังไม่สร้างรายการในโมดูลปลายทางอัตโนมัติ</small>
               </div>
               <div class="col-md-6">
                 <label class="form-label fw-bold">รหัสอ้างอิง</label>
@@ -289,6 +307,7 @@
         </div>
       </section>
     `);
+    ensureEditorInBody();
     ['haosNotesScopeFilterV790', 'haosNotesTagFilterV790', 'haosNotesPinnedFilterV790', 'haosNotesArchiveFilterV790'].forEach(id => {
       const el = $(id);
       if (el) el.addEventListener('change', load);
@@ -309,12 +328,40 @@
     return `<div class="haos-notes-tags">${tags.map(tag => `<span>${esc(tag)}</span>`).join('')}</div>`;
   }
 
+  function linkedLabel(type) {
+    return {
+      schedule: 'ตารางงาน & นัดหมาย',
+      meeting_minutes: 'รายงานการประชุม',
+      e_office: 'e-Office',
+      helpdesk: 'แจ้งซ่อม IT / Helpdesk',
+      booking: 'จองห้องประชุม / Zoom',
+      ai_document: 'สรุปเอกสารด้วย AI'
+    }[String(type || '')] || String(type || '');
+  }
+
+  function selectedManageItems() {
+    return state.notes.filter((item, index) => state.selected.has(noteKey(item, index)) && item.canManage !== false);
+  }
+
+  function updateBulkUI() {
+    const selectedCount = selectedManageItems().length;
+    const count = $('haosNotesBulkCountV790');
+    const done = $('haosNotesBulkDoneV790');
+    const del = $('haosNotesBulkDeleteV790');
+    [count, done, del].forEach(el => el?.classList.toggle('d-none', selectedCount < 1));
+    if (count) count.textContent = `เลือก ${selectedCount} รายการ`;
+  }
+
   function renderList() {
     const box = $('haosNotesListV790');
     const count = $('haosNotesCountV790');
     if (count) count.textContent = `${state.notes.length} รายการ`;
     if (!box) return;
+    const validKeys = new Set(state.notes.map((item, index) => noteKey(item, index)));
+    Array.from(state.selected).forEach(key => { if (!validKeys.has(key)) state.selected.delete(key); });
     if (!state.notes.length) {
+      state.selected.clear();
+      updateBulkUI();
       box.innerHTML = `
         <div class="haos-notes-empty">
           <i class="bi bi-journal-plus"></i>
@@ -327,9 +374,17 @@
       const content = compact(item.content || '');
       const preview = content.length > 180 ? `${content.slice(0, 180)}...` : content;
       const canManage = item.canManage !== false;
+      const key = noteKey(item, index);
+      const checked = state.selected.has(key) ? 'checked' : '';
+      const disabled = canManage ? '' : 'disabled';
       return `
         <article class="haos-notes-item ${noteTone(item.scope)} ${item.archived ? 'archived' : ''}">
-          <div class="haos-notes-pin">${item.pinned ? '<i class="bi bi-pin-angle-fill"></i>' : '<i class="bi bi-journal-text"></i>'}</div>
+          <div class="haos-notes-pin">
+            <label class="haos-notes-select" title="เลือกเพื่อจัดการรวดเร็ว" onclick="event.stopPropagation()">
+              <input type="checkbox" ${checked} ${disabled} onchange="window.HAOSNotes.toggleSelect('${esc(key)}', this.checked)">
+            </label>
+            <span>${item.pinned ? '<i class="bi bi-pin-angle-fill"></i>' : '<i class="bi bi-journal-text"></i>'}</span>
+          </div>
           <div class="haos-notes-main">
             <div class="haos-notes-title-row">
               <h6>${esc(item.title || 'Note')}</h6>
@@ -353,6 +408,7 @@
           </div>
         </article>`;
     }).join('');
+    updateBulkUI();
   }
 
   async function load() {
@@ -364,6 +420,8 @@
       const res = await gas('getUserNotesV790', [me.phone || '', me.role || 'User', me.department || me.departmentName || '', readFilters()]);
       if (!res || !res.success) throw new Error(res?.message || 'โหลด Note ไม่สำเร็จ');
       state.notes = res.data || [];
+      const validKeys = new Set(state.notes.map((item, index) => noteKey(item, index)));
+      Array.from(state.selected).forEach(key => { if (!validKeys.has(key)) state.selected.delete(key); });
       renderList();
     } catch (err) {
       if (box) box.innerHTML = `<div class="text-danger p-3">${esc(err?.message || String(err))}</div>`;
@@ -412,6 +470,7 @@
     setInput('haosNotesLinkedIdInputV790', data.linkedId || '');
     setInput('haosNotesContentInputV790', data.content || '');
     setInput('haosNotesPinnedInputV790', !!data.pinned);
+    ensureEditorInBody();
     $('haosNotesEditorV790')?.classList.add('show');
     $('haosNotesEditorV790')?.setAttribute('aria-hidden', 'false');
     setTimeout(() => $('haosNotesTitleInputV790')?.focus(), 80);
@@ -483,6 +542,7 @@
             ${item.archived ? '<span class="haos-notes-scope muted"><i class="bi bi-archive"></i>เก็บแล้ว</span>' : ''}
           </div>
           <p class="text-muted small mb-2">${esc(item.ownerName || '-')} · ${esc(item.department || '-')} · ${esc(displayDateTime(item.updatedAt || item.createdAt))}</p>
+          ${item.linkedType ? `<div class="alert alert-light border small fw-bold"><i class="bi bi-link-45deg"></i> อ้างอิง: ${esc(linkedLabel(item.linkedType))}${item.linkedId ? ' · ' + esc(item.linkedId) : ''}</div>` : ''}
           <div class="haos-notes-view-content">${esc(item.content || '-')}</div>
           ${tagsHtml(item)}
           <div class="d-flex gap-2 flex-wrap mt-3">
@@ -537,6 +597,66 @@
       if (!res || !res.success) throw new Error(res?.message || 'ลบ Note ไม่สำเร็จ');
       await load();
       window.Swal?.fire({ icon: 'success', title: 'ลบ Note แล้ว', timer: 900, showConfirmButton: false });
+    } catch (err) {
+      window.Swal?.fire('ลบไม่สำเร็จ', err?.message || String(err), 'error');
+    }
+  }
+
+  function toggleSelect(key, checked) {
+    if (!key) return;
+    if (checked) state.selected.add(String(key));
+    else state.selected.delete(String(key));
+    updateBulkUI();
+  }
+
+  async function bulkDone() {
+    const items = selectedManageItems();
+    if (!items.length) return;
+    const ok = await window.Swal?.fire({
+      icon: 'question',
+      title: `ทำเครื่องหมายเสร็จสิ้น ${items.length} รายการ?`,
+      text: 'รายการจะถูกย้ายไปสถานะเก็บแล้ว และสามารถดูได้เมื่อเปิดตัวกรอง “รวมที่เก็บแล้ว”',
+      showCancelButton: true,
+      confirmButtonText: 'เสร็จสิ้นแล้ว',
+      cancelButtonText: 'ยกเลิก'
+    });
+    if (ok && !ok.isConfirmed) return;
+    try {
+      const me = getUser();
+      for (const item of items) {
+        const res = await gas('archiveUserNoteV790', [item.noteId, me.phone || '', me.role || 'User', true]);
+        if (!res || !res.success) throw new Error(res?.message || `อัปเดต ${item.title || item.noteId} ไม่สำเร็จ`);
+      }
+      state.selected.clear();
+      await load();
+      window.Swal?.fire({ icon: 'success', title: 'อัปเดต Note ที่เลือกแล้ว', timer: 1000, showConfirmButton: false });
+    } catch (err) {
+      window.Swal?.fire('อัปเดตไม่สำเร็จ', err?.message || String(err), 'error');
+    }
+  }
+
+  async function bulkDelete() {
+    const items = selectedManageItems();
+    if (!items.length) return;
+    const ok = await window.Swal?.fire({
+      icon: 'warning',
+      title: `ลบ Note ${items.length} รายการ?`,
+      text: 'การลบนี้จะนำรายการออกจากฐานข้อมูล',
+      showCancelButton: true,
+      confirmButtonText: 'ลบ',
+      cancelButtonText: 'ยกเลิก',
+      confirmButtonColor: '#dc3545'
+    });
+    if (ok && !ok.isConfirmed) return;
+    try {
+      const me = getUser();
+      for (const item of items) {
+        const res = await gas('deleteUserNoteV790', [item.noteId, me.phone || '', me.role || 'User']);
+        if (!res || !res.success) throw new Error(res?.message || `ลบ ${item.title || item.noteId} ไม่สำเร็จ`);
+      }
+      state.selected.clear();
+      await load();
+      window.Swal?.fire({ icon: 'success', title: 'ลบ Note ที่เลือกแล้ว', timer: 1000, showConfirmButton: false });
     } catch (err) {
       window.Swal?.fire('ลบไม่สำเร็จ', err?.message || String(err), 'error');
     }
@@ -611,6 +731,9 @@
     copy,
     togglePin,
     remove,
+    toggleSelect,
+    bulkDone,
+    bulkDelete,
     version: PATCH
   };
   window.openUserNotesV790 = open;
