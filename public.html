@@ -2174,7 +2174,6 @@ body{background:radial-gradient(circle at 12% 10%,rgba(14,165,233,.20),transpare
     const data={
       name:clean(payload.ownerName||payload.requesterName||payload.name||''),
       position:clean(payload.ownerPosition||payload.position||''),
-      department:clean(payload.department||''),
       phone:clean(payload.ownerPhone||payload.phone||''),
       email:clean(payload.ownerEmail||payload.email||'')
     };
@@ -2184,7 +2183,6 @@ body{background:radial-gradient(circle at 12% 10%,rgba(14,165,233,.20),transpare
     url.searchParams.set('fromBooking','1');
     if(data.name)url.searchParams.set('name',data.name);
     if(data.phone)url.searchParams.set('phone',data.phone);
-    if(data.department)url.searchParams.set('department',data.department);
     if(data.position)url.searchParams.set('position',data.position);
     if(data.email)url.searchParams.set('email',data.email);
     location.href=url.toString();

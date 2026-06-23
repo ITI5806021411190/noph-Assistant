@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-95-calendar-booking-register-fixes';
+const CACHE_NAME = 'haos-v70-96-register-guide-agenda-schedule';
 const CORE = [
   '/',
   '/index.html',
