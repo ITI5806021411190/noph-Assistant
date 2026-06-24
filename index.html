@@ -20974,5 +20974,353 @@ window.openQuickNoteHeroV790 = window.openQuickNoteHeroV790 || function(){
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<style id="haos-v70-101-advanced-help-workspace-modal-style">
+  #helpSupportAdminCardV713{
+    display:none!important;
+  }
+  .haos-v801-help-card{
+    border-left:5px solid #0ea5e9!important;
+  }
+  .haos-v801-help-settings{
+    text-align:left;
+    color:#0f172a;
+  }
+  .haos-v801-help-toolbar{
+    display:grid;
+    grid-template-columns:minmax(260px,1fr) auto auto;
+    gap:12px;
+    align-items:center;
+    margin:14px 0;
+  }
+  .haos-v801-help-list{
+    max-height:min(62vh,620px);
+    overflow:auto;
+    border:1px solid rgba(14,165,233,.24);
+    border-radius:18px;
+    background:linear-gradient(180deg,#f8fbff,#fff);
+    padding:10px;
+  }
+  .haos-v801-help-head,
+  .haos-v801-help-row{
+    display:grid;
+    grid-template-columns:76px minmax(230px,1.25fr) minmax(120px,.62fr) minmax(190px,.95fr) minmax(230px,1fr) 92px 106px;
+    min-width:980px;
+    align-items:stretch;
+  }
+  .haos-v801-help-head{
+    position:sticky;
+    top:0;
+    z-index:4;
+    overflow:hidden;
+    border-radius:14px;
+    margin-bottom:10px;
+    box-shadow:0 10px 22px rgba(15,23,42,.06);
+  }
+  .haos-v801-help-head > div{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-width:0;
+    padding:12px 10px;
+    background:#eaf6ff;
+    color:#0f3f66;
+    font-weight:950;
+    border-right:1px solid rgba(148,163,184,.18);
+  }
+  .haos-v801-help-row{
+    overflow:hidden;
+    border:1px solid rgba(148,163,184,.22);
+    border-left:6px solid #0ea5e9;
+    border-radius:16px;
+    background:#fff;
+    box-shadow:0 12px 30px rgba(15,23,42,.06);
+    margin-bottom:10px;
+  }
+  .haos-v801-help-row[hidden]{
+    display:none!important;
+  }
+  .haos-v801-help-cell{
+    display:flex;
+    align-items:center;
+    min-width:0;
+    padding:12px 14px;
+    border-right:1px solid rgba(148,163,184,.15);
+    overflow-wrap:anywhere;
+    word-break:break-word;
+    line-height:1.35;
+    font-weight:820;
+    color:#334155;
+  }
+  .haos-v801-help-cell.center{
+    justify-content:center;
+    text-align:center;
+  }
+  .haos-v801-help-contact{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    align-items:flex-start;
+  }
+  .haos-v801-help-contact b{
+    color:#0f172a;
+    font-size:.98rem;
+    font-weight:950;
+  }
+  .haos-v801-help-contact small,
+  .haos-v801-help-muted{
+    color:#64748b;
+    font-size:.84rem;
+    font-weight:850;
+  }
+  .haos-v801-help-row input[type="number"]{
+    width:72px;
+    min-width:72px;
+    text-align:center;
+    border-radius:13px;
+    font-weight:850;
+  }
+  .haos-v801-help-row .form-check-input{
+    width:1.18rem;
+    height:1.18rem;
+    margin:0;
+  }
+  @media (max-width:980px){
+    .haos-v801-help-toolbar{
+      grid-template-columns:1fr;
+    }
+    .haos-v801-help-list{
+      overflow-x:auto;
+    }
+  }
+</style>
+<script id="haos-v70-101-advanced-help-workspace-modal-script">
+(function(){
+  const PATCH='v70.101-advanced-help-workspace-modal';
+  if(window.__HAOS_V801_ADVANCED_HELP_WORKSPACE_MODAL__)return;
+  window.__HAOS_V801_ADVANCED_HELP_WORKSPACE_MODAL__=true;
+  const $=id=>document.getElementById(id);
+  const qa=(sel,root=document)=>Array.from((root||document).querySelectorAll(sel));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const clean=v=>String(v??'').replace(/\s+/g,' ').trim();
+  const currentUser=()=>{try{if(typeof window.getUser==='function')return window.getUser()||{};}catch(e){}try{return window.user||user||{};}catch(e){return window.user||{};}};
+  const gas=(fn,args)=>new Promise((resolve,reject)=>{
+    try{
+      if(typeof window.gasRunPromise_==='function')return window.gasRunPromise_(fn,args||[]).then(resolve,reject);
+      google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run,args||[]);
+    }catch(e){reject(e);}
+  });
+
+  function removeAdminHelpCardV801(){
+    qa('#helpSupportAdminCardV713').forEach(el=>el.remove());
+  }
+  function advancedHelpCardHtmlV801(){
+    return '<div class="haos-v750-tool-card haos-v801-help-card" id="haosAdvancedHelpLiveChatCardV801">'+
+      '<h6><i class="bi bi-headset text-primary"></i> Help Center / Live Chat</h6>'+
+      '<p>กำหนดผู้ติดต่อกลาง ปุ่ม Help และกล่องแชทช่วยเหลือสำหรับรับเรื่องจากผู้ใช้งาน</p>'+
+      '<div class="d-flex flex-wrap gap-2">'+
+        '<button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="openHelpSupportSettingsV713()"><i class="bi bi-person-lines-fill"></i> ตั้งค่าผู้ติดต่อ</button>'+
+        '<button type="button" class="btn btn-primary btn-sm fw-bold" onclick="openHelpChatInboxV713()"><i class="bi bi-chat-dots"></i> กล่องแชท</button>'+
+      '</div>'+
+    '</div>';
+  }
+  function installAdvancedHelpCardV801(){
+    removeAdminHelpCardV801();
+    qa('.haos-v750-tools-grid').forEach(grid=>{
+      if(grid.querySelector('#haosAdvancedHelpLiveChatCardV801'))return;
+      grid.insertAdjacentHTML('beforeend',advancedHelpCardHtmlV801());
+    });
+  }
+
+  function helpRowsV801(){
+    return qa('#helpSupportSettingsListV801 .haos-v801-help-row');
+  }
+  function helpRowHtmlV801(u,i){
+    const hay=[u.fullName,u.name,u.phone,u.role,u.department,u.email].map(clean).join(' ').toLowerCase();
+    return '<div class="haos-v801-help-row" data-phone="'+esc(u.phone||'')+'" data-role="'+esc(u.role||'')+'" data-dept="'+esc(u.department||'')+'" data-search="'+esc(hay)+'">'+
+      '<div class="haos-v801-help-cell center"><input class="form-check-input" type="checkbox" data-support-select '+(u.selected?'checked':'')+'></div>'+
+      '<div class="haos-v801-help-cell"><span class="haos-v801-help-contact"><b>'+esc(u.fullName||u.name||'-')+'</b><small>'+esc(u.phone||'-')+'</small></span></div>'+
+      '<div class="haos-v801-help-cell"><span class="haos-v801-help-muted">'+esc(u.role||'-')+'</span></div>'+
+      '<div class="haos-v801-help-cell"><span class="haos-v801-help-muted">'+esc(u.department||'-')+'</span></div>'+
+      '<div class="haos-v801-help-cell"><span class="haos-v801-help-muted">'+esc(u.email||'-')+'</span></div>'+
+      '<div class="haos-v801-help-cell center"><input class="form-control form-control-sm" type="number" min="1" data-support-sort value="'+esc(u.sortOrder||i+1)+'"></div>'+
+      '<div class="haos-v801-help-cell center"><input class="form-check-input" type="checkbox" data-support-chat '+(u.chatEnabled!==false?'checked':'')+'></div>'+
+    '</div>';
+  }
+  function helpSettingsHtmlV801(users,hasCustom){
+    const rows=(users||[]).map(helpRowHtmlV801).join('')||'<div class="text-center text-muted py-4">ไม่พบรายชื่อผู้ใช้งานสำหรับตั้งค่าผู้ติดต่อ</div>';
+    return '<div class="haos-v801-help-settings">'+
+      '<div class="alert '+(hasCustom?'alert-success':'alert-info')+' py-2 small fw-bold mb-0"><i class="bi bi-info-circle me-1"></i>'+(hasCustom?'ระบบใช้รายชื่อผู้ติดต่อที่ Super Admin กำหนดแล้ว':'ยังไม่เคยกำหนดรายชื่อ ระบบจะแนะนำ Admin / Super Admin / กลุ่มงานสุขภาพดิจิทัลเป็นค่าเริ่มต้น')+'</div>'+
+      '<div class="haos-v801-help-toolbar">'+
+        '<input id="helpSupportSearchV713" class="form-control" placeholder="ค้นหาชื่อ เบอร์ บทบาท กลุ่มงาน..." oninput="filterHelpSupportUsersV713()">'+
+        '<button type="button" class="btn btn-outline-info fw-bold" onclick="selectDefaultSupportV713()"><i class="bi bi-stars"></i> เลือกกลุ่มแนะนำ</button>'+
+        '<button type="button" class="btn btn-primary fw-bold" onclick="saveHelpSupportSettingsV713()"><i class="bi bi-save"></i> บันทึกผู้ติดต่อ</button>'+
+      '</div>'+
+      '<div id="helpSupportSaveStatusV713" class="small fw-bold mb-2"></div>'+
+      '<div id="helpSupportSettingsListV801" class="haos-v801-help-list">'+
+        '<div class="haos-v801-help-head"><div>แสดง</div><div>ผู้ติดต่อ</div><div>บทบาท</div><div>กลุ่มงาน</div><div>Email</div><div>ลำดับ</div><div>Live Chat</div></div>'+
+        rows+
+      '</div>'+
+    '</div>';
+  }
+  window.filterHelpSupportUsersV713=function(){
+    const q=clean($('helpSupportSearchV713')?.value).toLowerCase();
+    helpRowsV801().forEach(row=>{row.hidden=!!(q&&!String(row.dataset.search||'').includes(q));});
+  };
+  window.selectDefaultSupportV713=function(){
+    helpRowsV801().forEach(row=>{
+      const hay=(String(row.dataset.role||'')+' '+String(row.dataset.dept||'')).toLowerCase();
+      const pick=hay.includes('super')||hay.includes('admin')||hay.includes('สุขภาพดิจิทัล')||hay.includes('digital');
+      const cb=row.querySelector('[data-support-select]');
+      const chat=row.querySelector('[data-support-chat]');
+      if(cb)cb.checked=pick;
+      if(chat)chat.checked=pick;
+    });
+  };
+  window.saveHelpSupportSettingsV713=async function(){
+    const status=$('helpSupportSaveStatusV713');
+    const contacts=helpRowsV801().filter(row=>row.querySelector('[data-support-select]')?.checked).map((row,i)=>({
+      phone:row.dataset.phone||'',
+      chatEnabled:row.querySelector('[data-support-chat]')?.checked!==false,
+      sortOrder:Number(row.querySelector('[data-support-sort]')?.value||i+1)
+    }));
+    if(status)status.innerHTML='<span class="text-primary"><span class="spinner-border spinner-border-sm"></span> กำลังบันทึก...</span>';
+    try{
+      const res=await gas('saveHelpSupportContactSettingsV713',[currentUser().phone||'',contacts]);
+      if(!res||!res.success)throw new Error((res&&res.message)||'บันทึกไม่สำเร็จ');
+      if(status)status.innerHTML='<span class="text-success"><i class="bi bi-check-circle"></i> บันทึกแล้ว '+contacts.length+' รายชื่อ</span>';
+    }catch(e){
+      if(status)status.innerHTML='<span class="text-danger"><i class="bi bi-exclamation-triangle"></i> '+esc(e.message||String(e))+'</span>';
+    }
+  };
+  async function openHelpSupportSettingsV801(){
+    Swal.fire({title:'กำลังโหลดรายชื่อผู้ติดต่อ...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+    try{
+      const res=await gas('getHelpSupportContactSettingsV713',[currentUser().phone||'']);
+      if(!res||!res.success)throw new Error((res&&res.message)||'โหลดข้อมูลไม่สำเร็จ');
+      await Swal.fire({
+        title:'ตั้งค่าผู้ติดต่อ Help และ Live Chat',
+        width:1120,
+        showConfirmButton:false,
+        showCloseButton:true,
+        customClass:{popup:'haos-v801-help-popup'},
+        html:helpSettingsHtmlV801(res.users||[],res.hasCustomSettings),
+        didOpen:()=>setTimeout(()=>{try{window.filterHelpSupportUsersV713();}catch(e){}},30)
+      });
+    }catch(e){
+      Swal.fire('เปิดการตั้งค่าไม่สำเร็จ',e.message||String(e),'error');
+    }
+  }
+  openHelpSupportSettingsV801.__haosV796=true;
+  openHelpSupportSettingsV801.__haosV797=true;
+  openHelpSupportSettingsV801.__haosV798=true;
+  openHelpSupportSettingsV801.__haosV799=true;
+  openHelpSupportSettingsV801.__haosV800=true;
+  openHelpSupportSettingsV801.__haosV801=true;
+  window.openHelpSupportSettingsV713=openHelpSupportSettingsV801;
+  window.HAOSOpenHelpSupportSettingsV799=openHelpSupportSettingsV801;
+  window.HAOSOpenHelpSupportSettingsV801=openHelpSupportSettingsV801;
+
+  function closeWorkspaceTableModalV801(){
+    const modalEl=$('workspaceTableModal');
+    if(!modalEl)return;
+    try{
+      if(window.bootstrap){
+        const inst=bootstrap.Modal.getInstance(modalEl)||bootstrap.Modal.getOrCreateInstance(modalEl);
+        inst.hide();
+      }
+    }catch(e){}
+    modalEl.classList.remove('show');
+    modalEl.style.display='none';
+    modalEl.setAttribute('aria-hidden','true');
+    modalEl.removeAttribute('aria-modal');
+    const otherOpen=qa('.modal.show').filter(m=>m!==modalEl);
+    if(!otherOpen.length){
+      document.body.classList.remove('modal-open');
+      document.body.style.removeProperty('padding-right');
+      qa('.modal-backdrop').forEach(b=>b.remove());
+    }
+  }
+  function workspacePoolsV801(){
+    const pools=[];
+    try{if(Array.isArray(sharedWorkspacesGlobal))pools.push(sharedWorkspacesGlobal);}catch(e){}
+    try{if(Array.isArray(window.sharedWorkspacesGlobal))pools.push(window.sharedWorkspacesGlobal);}catch(e){}
+    return pools.flat();
+  }
+  function resolveWorkspaceFromButtonV801(btn,id){
+    const sid=clean(id||btn?.dataset?.workspaceId||btn?.closest?.('tr')?.dataset?.workspaceId);
+    const tr=btn?.closest?.('tr');
+    const title=clean(tr?.querySelector('td:first-child .fw-bold')?.textContent||tr?.querySelector('.fw-bold')?.textContent||'');
+    const list=workspacePoolsV801();
+    let ws=sid?list.find(item=>clean(item?.id)===sid||clean(item?.workspaceId)===sid||clean(item?.token)===sid):null;
+    if(title&&(!ws||clean(ws.title)!==title)){
+      const byTitle=list.filter(item=>clean(item?.title)===title);
+      if(byTitle.length===1)ws=byTitle[0];
+      else if(byTitle.length>1&&sid)ws=byTitle.find(item=>clean(item?.id)===sid||clean(item?.workspaceId)===sid||clean(item?.token)===sid)||ws;
+    }
+    return ws||null;
+  }
+  function setCurrentWorkspaceV801(ws){
+    if(!ws)return;
+    try{window.currentWorkspace=Object.assign({},window.currentWorkspace||{},ws);}catch(e){}
+    try{currentWorkspace=Object.assign({},currentWorkspace||{},ws);}catch(e){}
+  }
+  const previousConfigEditorV801=window.openWorkspaceConfigEditorV737;
+  if(typeof previousConfigEditorV801==='function'){
+    window.openWorkspaceConfigEditorV737=function(id){
+      closeWorkspaceTableModalV801();
+      const ws=resolveWorkspaceFromButtonV801(document.activeElement,id);
+      if(ws&&clean(ws.id))setCurrentWorkspaceV801(ws);
+      const targetId=clean(ws&&ws.id)||id;
+      const result=previousConfigEditorV801.call(this,targetId);
+      [0,80,220,520].forEach(t=>setTimeout(closeWorkspaceTableModalV801,t));
+      return result;
+    };
+    window.openWorkspaceConfigEditorV737.__haosV801=true;
+  }
+  window.addEventListener('click',ev=>{
+    const helpBtn=ev.target.closest?.('[onclick*="openHelpSupportSettingsV713"]');
+    if(helpBtn){
+      ev.preventDefault();
+      ev.stopPropagation();
+      ev.stopImmediatePropagation();
+      openHelpSupportSettingsV801();
+      return;
+    }
+    const configBtn=ev.target.closest?.('[onclick*="openWorkspaceConfigEditorV737"]');
+    if(!configBtn||typeof previousConfigEditorV801!=='function')return;
+    const match=String(configBtn.getAttribute('onclick')||'').match(/openWorkspaceConfigEditorV737\(['"]([^'"]*)['"]\)/);
+    const id=configBtn.dataset.workspaceId||configBtn.closest('tr')?.dataset.workspaceId||(match?match[1]:'');
+    const ws=resolveWorkspaceFromButtonV801(configBtn,id);
+    ev.preventDefault();
+    ev.stopPropagation();
+    ev.stopImmediatePropagation();
+    closeWorkspaceTableModalV801();
+    if(ws&&clean(ws.id))setCurrentWorkspaceV801(ws);
+    previousConfigEditorV801.call(window,clean(ws&&ws.id)||id);
+    [0,80,220,520].forEach(t=>setTimeout(closeWorkspaceTableModalV801,t));
+  },true);
+
+  const oldOpenToolsV801=window.openV66ControlCenter;
+  if(typeof oldOpenToolsV801==='function'&&!oldOpenToolsV801.__haosV801){
+    window.openV66ControlCenter=function(){
+      const result=oldOpenToolsV801.apply(this,arguments);
+      [0,80,220,520].forEach(t=>setTimeout(installAdvancedHelpCardV801,t));
+      return result;
+    };
+    window.openV66ControlCenter.__haosV801=true;
+  }
+  function monitorWorkspaceConfigLayerV801(){
+    const title=clean(document.querySelector('.swal2-container .swal2-title')?.textContent);
+    if(title.includes('แก้ไขพื้นที่ทำงานร่วมกัน'))closeWorkspaceTableModalV801();
+  }
+  try{new MutationObserver(()=>{installAdvancedHelpCardV801();monitorWorkspaceConfigLayerV801();}).observe(document.body,{childList:true,subtree:true});}catch(e){}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{installAdvancedHelpCardV801();removeAdminHelpCardV801();},{once:true});
+  else{installAdvancedHelpCardV801();removeAdminHelpCardV801();}
+  setTimeout(installAdvancedHelpCardV801,600);
+  setInterval(()=>{removeAdminHelpCardV801();installAdvancedHelpCardV801();monitorWorkspaceConfigLayerV801();},1800);
+  window.HAOSCloseWorkspaceTableModalV801=closeWorkspaceTableModalV801;
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
