@@ -20130,5 +20130,259 @@ window.openQuickNoteHeroV790 = window.openQuickNoteHeroV790 || function(){
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<style id="haos-v70-98-help-live-chat-stable-render-style">
+  .haos-v798-support-settings{
+    text-align:left;
+    color:#0f172a;
+  }
+  .haos-v798-support-toolbar{
+    display:grid;
+    grid-template-columns:minmax(240px,1fr) auto auto;
+    gap:10px;
+    align-items:center;
+    margin:14px 0 12px;
+  }
+  .haos-v798-support-list{
+    max-height:min(62vh,620px);
+    overflow:auto;
+    border:1px solid rgba(14,165,233,.22);
+    border-radius:18px;
+    background:linear-gradient(180deg,#f8fbff,#ffffff);
+    padding:10px;
+  }
+  .haos-v798-support-head,
+  .haos-v798-support-row{
+    display:grid;
+    grid-template-columns:76px minmax(230px,1.25fr) minmax(120px,.62fr) minmax(190px,.95fr) minmax(230px,1fr) 92px 106px;
+    align-items:stretch;
+    min-width:980px;
+  }
+  .haos-v798-support-head{
+    position:sticky;
+    top:0;
+    z-index:3;
+    overflow:hidden;
+    border-radius:14px;
+    margin-bottom:10px;
+    box-shadow:0 10px 22px rgba(15,23,42,.06);
+  }
+  .haos-v798-support-head > div{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-width:0;
+    padding:12px 10px;
+    background:#eaf6ff;
+    color:#0f3f66;
+    font-weight:950;
+    border-right:1px solid rgba(148,163,184,.18);
+  }
+  .haos-v798-support-row{
+    overflow:hidden;
+    border:1px solid rgba(148,163,184,.22);
+    border-left:6px solid #0ea5e9;
+    border-radius:16px;
+    background:#fff;
+    box-shadow:0 12px 30px rgba(15,23,42,.06);
+    margin-bottom:10px;
+  }
+  .haos-v798-support-row[hidden]{
+    display:none!important;
+  }
+  .haos-v798-support-cell{
+    display:flex;
+    align-items:center;
+    min-width:0;
+    padding:12px 14px;
+    border-right:1px solid rgba(148,163,184,.15);
+    overflow-wrap:anywhere;
+    word-break:break-word;
+    line-height:1.35;
+    font-weight:820;
+    color:#334155;
+  }
+  .haos-v798-support-cell.center{
+    justify-content:center;
+    text-align:center;
+  }
+  .haos-v798-support-contact{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    align-items:flex-start;
+  }
+  .haos-v798-support-contact b{
+    color:#0f172a;
+    font-size:.98rem;
+    font-weight:950;
+  }
+  .haos-v798-support-contact small,
+  .haos-v798-muted{
+    color:#64748b;
+    font-size:.84rem;
+    font-weight:850;
+  }
+  .haos-v798-support-row input[type="number"]{
+    width:72px;
+    min-width:72px;
+    text-align:center;
+    border-radius:13px;
+    font-weight:850;
+  }
+  .haos-v798-support-row .form-check-input{
+    width:1.18rem;
+    height:1.18rem;
+    margin:0;
+  }
+  #itservices-pane #itLiveSurveyPanelV737,
+  #itservices-pane .haos-v737-live-card{
+    display:none!important;
+  }
+  @media (max-width: 980px){
+    .haos-v798-support-toolbar{
+      grid-template-columns:1fr;
+    }
+    .haos-v798-support-list{
+      overflow-x:auto;
+    }
+  }
+</style>
+<script id="haos-v70-98-help-live-chat-stable-render-script">
+(function(){
+  const PATCH='v70.98-help-live-chat-stable-render';
+  if(window.__HAOS_V798_HELP_LIVE_CHAT_STABLE_RENDER__)return;
+  window.__HAOS_V798_HELP_LIVE_CHAT_STABLE_RENDER__=true;
+  const $=id=>document.getElementById(id);
+  const qa=(sel,root=document)=>Array.from((root||document).querySelectorAll(sel));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const clean=v=>String(v??'').replace(/\s+/g,' ').trim();
+  function currentUser(){
+    try{if(typeof window.getUser==='function')return window.getUser()||{};}catch(e){}
+    try{return window.user||user||{};}catch(e){return window.user||{};}
+  }
+  function gas(fn,args){
+    if(typeof window.gasRunPromise_==='function')return window.gasRunPromise_(fn,args||[]);
+    return new Promise((resolve,reject)=>{
+      try{google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run,args||[]);}
+      catch(e){reject(e);}
+    });
+  }
+  function supportRow(u,i){
+    const hay=[u.fullName,u.phone,u.role,u.department,u.email].map(clean).join(' ').toLowerCase();
+    return '<div class="haos-v798-support-row" data-phone="'+esc(u.phone||'')+'" data-role="'+esc(u.role||'')+'" data-dept="'+esc(u.department||'')+'" data-search="'+esc(hay)+'">'+
+      '<div class="haos-v798-support-cell center"><input class="form-check-input" type="checkbox" data-support-select '+(u.selected?'checked':'')+'></div>'+
+      '<div class="haos-v798-support-cell"><span class="haos-v798-support-contact"><b>'+esc(u.fullName||u.name||'-')+'</b><small>'+esc(u.phone||'-')+'</small></span></div>'+
+      '<div class="haos-v798-support-cell"><span class="haos-v798-muted">'+esc(u.role||'-')+'</span></div>'+
+      '<div class="haos-v798-support-cell"><span class="haos-v798-muted">'+esc(u.department||'-')+'</span></div>'+
+      '<div class="haos-v798-support-cell"><span class="haos-v798-muted">'+esc(u.email||'-')+'</span></div>'+
+      '<div class="haos-v798-support-cell center"><input class="form-control form-control-sm" type="number" min="1" data-support-sort value="'+esc(u.sortOrder||i+1)+'"></div>'+
+      '<div class="haos-v798-support-cell center"><input class="form-check-input" type="checkbox" data-support-chat '+(u.chatEnabled!==false?'checked':'')+'></div>'+
+    '</div>';
+  }
+  function supportSettingsHtml(users,hasCustom){
+    const rows=(users||[]).map(supportRow).join('')||'<div class="text-center text-muted py-4">ไม่พบรายชื่อผู้ใช้งานสำหรับตั้งค่าผู้ติดต่อ</div>';
+    return '<div class="haos-v798-support-settings">'+
+      '<div class="alert '+(hasCustom?'alert-success':'alert-info')+' py-2 small fw-bold mb-0"><i class="bi bi-info-circle me-1"></i>'+(hasCustom?'ระบบใช้รายชื่อผู้ติดต่อที่ Super Admin กำหนดแล้ว':'ยังไม่เคยกำหนดรายชื่อ ระบบจะแนะนำ Admin / Super Admin / กลุ่มงานสุขภาพดิจิทัลเป็นค่าเริ่มต้น')+'</div>'+
+      '<div class="haos-v798-support-toolbar">'+
+        '<input id="helpSupportSearchV713" class="form-control" placeholder="ค้นหาชื่อ เบอร์ บทบาท กลุ่มงาน..." oninput="filterHelpSupportUsersV713()">'+
+        '<button type="button" class="btn btn-outline-info fw-bold" onclick="selectDefaultSupportV713()"><i class="bi bi-stars"></i> เลือกกลุ่มแนะนำ</button>'+
+        '<button type="button" class="btn btn-primary fw-bold" onclick="saveHelpSupportSettingsV713()"><i class="bi bi-save"></i> บันทึกผู้ติดต่อ</button>'+
+      '</div>'+
+      '<div id="helpSupportSaveStatusV713" class="small fw-bold mb-2"></div>'+
+      '<div id="helpSupportSettingsListV798" class="haos-v798-support-list">'+
+        '<div class="haos-v798-support-head"><div>แสดง</div><div>ผู้ติดต่อ</div><div>บทบาท</div><div>กลุ่มงาน</div><div>Email</div><div>ลำดับ</div><div>Live Chat</div></div>'+
+        rows+
+      '</div>'+
+    '</div>';
+  }
+  function rows(){
+    return qa('#helpSupportSettingsListV798 .haos-v798-support-row');
+  }
+  window.filterHelpSupportUsersV713=function(){
+    const q=clean($('helpSupportSearchV713')?.value).toLowerCase();
+    rows().forEach(row=>{row.hidden=!!(q&&!String(row.dataset.search||'').includes(q));});
+  };
+  window.selectDefaultSupportV713=function(){
+    rows().forEach(row=>{
+      const hay=(String(row.dataset.role||'')+' '+String(row.dataset.dept||'')).toLowerCase();
+      const pick=hay.includes('super')||hay.includes('admin')||hay.includes('สุขภาพดิจิทัล')||hay.includes('digital');
+      const cb=row.querySelector('[data-support-select]');
+      const chat=row.querySelector('[data-support-chat]');
+      if(cb)cb.checked=pick;
+      if(chat)chat.checked=pick;
+    });
+  };
+  window.saveHelpSupportSettingsV713=async function(){
+    const user=currentUser();
+    const status=$('helpSupportSaveStatusV713');
+    const contacts=rows().filter(row=>row.querySelector('[data-support-select]')?.checked).map((row,i)=>({
+      phone:row.dataset.phone||'',
+      chatEnabled:row.querySelector('[data-support-chat]')?.checked!==false,
+      sortOrder:Number(row.querySelector('[data-support-sort]')?.value||i+1)
+    }));
+    if(status)status.innerHTML='<span class="text-primary"><span class="spinner-border spinner-border-sm"></span> กำลังบันทึก...</span>';
+    try{
+      const res=await gas('saveHelpSupportContactSettingsV713',[user.phone||'',contacts]);
+      if(!res||!res.success)throw new Error((res&&res.message)||'บันทึกไม่สำเร็จ');
+      if(status)status.innerHTML='<span class="text-success"><i class="bi bi-check-circle"></i> บันทึกแล้ว '+contacts.length+' รายชื่อ</span>';
+    }catch(e){
+      if(status)status.innerHTML='<span class="text-danger"><i class="bi bi-exclamation-triangle"></i> '+esc(e.message||String(e))+'</span>';
+    }
+  };
+  async function openHelpSupportSettingsStable(){
+    const user=currentUser();
+    Swal.fire({title:'กำลังโหลดรายชื่อผู้ติดต่อ...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+    try{
+      const res=await gas('getHelpSupportContactSettingsV713',[user.phone||'']);
+      if(!res||!res.success)throw new Error((res&&res.message)||'โหลดข้อมูลไม่สำเร็จ');
+      Swal.fire({
+        title:'ตั้งค่าผู้ติดต่อ Help Center / Live Chat',
+        width:1120,
+        showConfirmButton:false,
+        showCloseButton:true,
+        html:supportSettingsHtml(res.users||[],res.hasCustomSettings),
+        didOpen:()=>setTimeout(()=>{try{window.filterHelpSupportUsersV713();}catch(e){}},30)
+      });
+    }catch(e){
+      Swal.fire('เปิดการตั้งค่าไม่สำเร็จ',e.message||String(e),'error');
+    }
+  }
+  openHelpSupportSettingsStable.__haosV796=true;
+  openHelpSupportSettingsStable.__haosV797=true;
+  openHelpSupportSettingsStable.__haosV798=true;
+  window.openHelpSupportSettingsV713=openHelpSupportSettingsStable;
+
+  function hideLiveSurveyLeak(){
+    const pane=$('itservices-pane');
+    if(!pane)return;
+    const card= pane.querySelector('#itLiveSurveyPanelV737') || pane.querySelector('#liveSurveyTableBody')?.closest('.card') || pane.querySelector('.haos-v737-live-card');
+    if(card){
+      card.id=card.id||'itLiveSurveyPanelV737';
+      card.classList.add('d-none','haos-v798-wordcloud-hidden');
+      card.style.display='none';
+      card.setAttribute('aria-hidden','true');
+    }
+  }
+  const oldInit=window.initItServicesHub;
+  if(typeof oldInit==='function'&&!oldInit.__haosV798){
+    const wrapped=function(){
+      const result=oldInit.apply(this,arguments);
+      [0,120,360,800,1400].forEach(t=>setTimeout(hideLiveSurveyLeak,t));
+      return result;
+    };
+    wrapped.__haosV798=true;
+    window.initItServicesHub=wrapped;
+  }
+  document.addEventListener('click',ev=>{
+    if(ev.target.closest('[onclick*="openHelpSupportSettingsV713"]'))setTimeout(hideLiveSurveyLeak,120);
+  },true);
+  try{new MutationObserver(()=>setTimeout(hideLiveSurveyLeak,80)).observe(document.body,{childList:true,subtree:true});}catch(e){}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',hideLiveSurveyLeak,{once:true});else hideLiveSurveyLeak();
+  setInterval(hideLiveSurveyLeak,1200);
+  window.HAOSFixHelpSupportStableV798=openHelpSupportSettingsStable;
+  window.HAOSHideWordCloudLeakV798=hideLiveSurveyLeak;
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
