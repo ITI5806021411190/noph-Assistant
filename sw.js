@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-99-admin-help-workspace-fixes';
+const CACHE_NAME = 'haos-v70-100-help-workspace-hardening';
 const CORE = [
   '/',
   '/index.html',
