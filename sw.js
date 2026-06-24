@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-96-help-upcoming-fixes';
+const CACHE_NAME = 'haos-v70-97-help-live-chat-table-fix';
 const CORE = [
   '/',
   '/index.html',

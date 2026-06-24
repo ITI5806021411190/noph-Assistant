@@ -19874,5 +19874,261 @@ window.openQuickNoteHeroV790 = window.openQuickNoteHeroV790 || function(){
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<style id="haos-v70-97-help-live-chat-table-fix-style">
+  .swal2-popup .haos-v797-help-shell{
+    max-height:min(62vh,620px)!important;
+    overflow:auto!important;
+    border:1px solid rgba(14,165,233,.22)!important;
+    border-radius:18px!important;
+    background:linear-gradient(180deg,#f8fbff 0%,#ffffff 100%)!important;
+    padding:8px!important;
+  }
+  #helpSupportSettingsTableV713.haos-v797-help-grid-table{
+    display:block!important;
+    width:100%!important;
+    min-width:0!important;
+    border-collapse:separate!important;
+    border-spacing:0!important;
+    table-layout:auto!important;
+    margin:0!important;
+  }
+  #helpSupportSettingsTableV713.haos-v797-help-grid-table thead,
+  #helpSupportSettingsTableV713.haos-v797-help-grid-table tbody{
+    display:block!important;
+    width:100%!important;
+  }
+  #helpSupportSettingsTableV713.haos-v797-help-grid-table thead tr,
+  #helpSupportSettingsTableV713.haos-v797-help-grid-table tbody tr:not([style*="display: none"]):not([style*="display:none"]){
+    display:grid!important;
+    grid-template-columns:74px minmax(210px,1.25fr) minmax(110px,.62fr) minmax(190px,1fr) minmax(220px,1.08fr) 88px 104px!important;
+    align-items:stretch!important;
+    width:100%!important;
+  }
+  #helpSupportSettingsTableV713.haos-v797-help-grid-table tbody tr[style*="display: none"],
+  #helpSupportSettingsTableV713.haos-v797-help-grid-table tbody tr[style*="display:none"]{
+    display:none!important;
+  }
+  #helpSupportSettingsTableV713.haos-v797-help-grid-table thead tr{
+    position:sticky!important;
+    top:0!important;
+    z-index:2!important;
+    margin-bottom:8px!important;
+    border-radius:14px!important;
+    overflow:hidden!important;
+    box-shadow:0 8px 20px rgba(15,23,42,.05)!important;
+  }
+  #helpSupportSettingsTableV713.haos-v797-help-grid-table tbody tr{
+    margin-bottom:10px!important;
+    border:1px solid rgba(148,163,184,.22)!important;
+    border-left:5px solid #0ea5e9!important;
+    border-radius:16px!important;
+    overflow:hidden!important;
+    background:#fff!important;
+    box-shadow:0 12px 28px rgba(15,23,42,.06)!important;
+  }
+  #helpSupportSettingsTableV713.haos-v797-help-grid-table th,
+  #helpSupportSettingsTableV713.haos-v797-help-grid-table td{
+    display:flex!important;
+    align-items:center!important;
+    min-width:0!important;
+    width:auto!important;
+    max-width:none!important;
+    padding:12px 14px!important;
+    border:0!important;
+    border-right:1px solid rgba(148,163,184,.16)!important;
+    background:#fff!important;
+    color:#334155!important;
+    white-space:normal!important;
+    overflow-wrap:anywhere!important;
+    word-break:break-word!important;
+    line-height:1.35!important;
+  }
+  #helpSupportSettingsTableV713.haos-v797-help-grid-table th{
+    justify-content:center!important;
+    background:#eaf6ff!important;
+    color:#0f3f66!important;
+    font-weight:950!important;
+    text-align:center!important;
+  }
+  #helpSupportSettingsTableV713.haos-v797-help-grid-table td:nth-child(1),
+  #helpSupportSettingsTableV713.haos-v797-help-grid-table td:nth-child(6),
+  #helpSupportSettingsTableV713.haos-v797-help-grid-table td:nth-child(7){
+    justify-content:center!important;
+    text-align:center!important;
+  }
+  #helpSupportSettingsTableV713.haos-v797-help-grid-table td:nth-child(2),
+  #helpSupportSettingsTableV713.haos-v797-help-grid-table td:nth-child(4),
+  #helpSupportSettingsTableV713.haos-v797-help-grid-table td:nth-child(5){
+    flex-direction:column!important;
+    align-items:flex-start!important;
+    justify-content:center!important;
+    gap:4px!important;
+  }
+  #helpSupportSettingsTableV713.haos-v797-help-grid-table td:last-child,
+  #helpSupportSettingsTableV713.haos-v797-help-grid-table th:last-child{
+    border-right:0!important;
+  }
+  #helpSupportSettingsTableV713.haos-v797-help-grid-table .haos-v797-contact-name{
+    display:block!important;
+    color:#0f172a!important;
+    font-size:.98rem!important;
+    font-weight:950!important;
+  }
+  #helpSupportSettingsTableV713.haos-v797-help-grid-table .haos-v797-contact-phone,
+  #helpSupportSettingsTableV713.haos-v797-help-grid-table .haos-v797-muted{
+    display:block!important;
+    color:#64748b!important;
+    font-size:.84rem!important;
+    font-weight:850!important;
+  }
+  #helpSupportSettingsTableV713.haos-v797-help-grid-table input[type="number"]{
+    width:72px!important;
+    min-width:72px!important;
+    text-align:center!important;
+  }
+  #helpSupportSettingsTableV713.haos-v797-help-grid-table .form-check-input{
+    width:1.15rem!important;
+    height:1.15rem!important;
+    margin:0!important;
+  }
+  @media (max-width: 980px){
+    #helpSupportSettingsTableV713.haos-v797-help-grid-table thead{display:none!important;}
+    #helpSupportSettingsTableV713.haos-v797-help-grid-table tbody tr:not([style*="display: none"]):not([style*="display:none"]){
+      grid-template-columns:56px 1fr!important;
+    }
+    #helpSupportSettingsTableV713.haos-v797-help-grid-table td{
+      border-right:0!important;
+      border-bottom:1px solid rgba(148,163,184,.12)!important;
+    }
+    #helpSupportSettingsTableV713.haos-v797-help-grid-table td:nth-child(n+3)::before{
+      content:attr(data-label);
+      display:block;
+      width:100%;
+      color:#0f3f66;
+      font-size:.78rem;
+      font-weight:950;
+      margin-bottom:2px;
+    }
+    #helpSupportSettingsTableV713.haos-v797-help-grid-table td:nth-child(1){grid-row:1 / span 6;}
+  }
+</style>
+<script id="haos-v70-97-help-live-chat-table-fix-script">
+(function(){
+  const PATCH='v70.97-help-live-chat-table-fix';
+  if(window.__HAOS_V797_HELP_LIVE_CHAT_TABLE_FIX__)return;
+  window.__HAOS_V797_HELP_LIVE_CHAT_TABLE_FIX__=true;
+  const $=id=>document.getElementById(id);
+  const qa=(sel,root=document)=>Array.from((root||document).querySelectorAll(sel));
+
+  function textOf(node){
+    return String(node&&node.textContent||'').replace(/\s+/g,' ').trim();
+  }
+
+  function prepareHelpSupportTableV797(){
+    const table=$('helpSupportSettingsTableV713');
+    if(!table)return false;
+    table.classList.add('haos-v797-help-grid-table');
+    table.classList.remove('table-hover');
+    const shell=table.closest('.haos-v713-support-table');
+    if(shell){
+      shell.classList.add('haos-v797-help-shell');
+      shell.classList.remove('haos-v796-help-table-shell');
+    }
+    qa('colgroup',table).forEach(col=>col.remove());
+    const labels=qa('thead th',table).map(th=>textOf(th));
+    qa('tbody tr',table).forEach((tr,rowIndex)=>{
+      const cells=qa(':scope > td',tr);
+      if(cells.length!==7)return;
+      tr.dataset.haosV797='1';
+      cells.forEach((td,i)=>td.setAttribute('data-label',labels[i]||''));
+      const contact=cells[1];
+      if(contact&&!contact.dataset.haosV797){
+        const name=contact.querySelector('b');
+        const phone=contact.querySelector('small');
+        if(name)name.classList.add('haos-v797-contact-name');
+        if(phone)phone.classList.add('haos-v797-contact-phone');
+        contact.dataset.haosV797='1';
+      }
+      [2,3,4].forEach(i=>{
+        const td=cells[i];
+        if(!td||td.dataset.haosV797Text)return;
+        const raw=textOf(td);
+        if(raw&&raw!=='-'){
+          td.innerHTML='<span class="haos-v797-muted">'+raw.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))+'</span>';
+        }
+        td.dataset.haosV797Text='1';
+      });
+      const sort=cells[5]?.querySelector('[data-support-sort]');
+      if(sort&&!sort.value)sort.value=String(rowIndex+1);
+    });
+    return true;
+  }
+
+  function patchFilterAndSaveV797(){
+    if(typeof window.filterHelpSupportUsersV713==='function'&&!window.filterHelpSupportUsersV713.__haosV797){
+      const oldFilter=window.filterHelpSupportUsersV713;
+      const wrappedFilter=function(){
+        const result=oldFilter.apply(this,arguments);
+        setTimeout(prepareHelpSupportTableV797,0);
+        return result;
+      };
+      wrappedFilter.__haosV797=true;
+      window.filterHelpSupportUsersV713=wrappedFilter;
+    }
+    if(typeof window.saveHelpSupportSettingsV713==='function'&&!window.saveHelpSupportSettingsV713.__haosV797){
+      const oldSave=window.saveHelpSupportSettingsV713;
+      const wrappedSave=function(){
+        prepareHelpSupportTableV797();
+        return oldSave.apply(this,arguments);
+      };
+      wrappedSave.__haosV797=true;
+      window.saveHelpSupportSettingsV713=wrappedSave;
+    }
+  }
+
+  function installV797(){
+    prepareHelpSupportTableV797();
+    patchFilterAndSaveV797();
+  }
+
+  if(window.Swal&&typeof window.Swal.fire==='function'&&!window.Swal.fire.__haosV797){
+    const oldFire=window.Swal.fire.bind(window.Swal);
+    const wrappedFire=function(){
+      const args=Array.from(arguments);
+      const opts=args[0];
+      const isHelpSettings=opts&&typeof opts==='object'&&(
+        String(opts.title||'').includes('Help Center / Live Chat')||
+        String(opts.html||'').includes('helpSupportSettingsTableV713')
+      );
+      if(isHelpSettings){
+        const originalDidOpen=opts.didOpen;
+        args[0]=Object.assign({},opts,{
+          didOpen:function(popup){
+            if(typeof originalDidOpen==='function')originalDidOpen.call(this,popup);
+            [0,40,120,260].forEach(t=>setTimeout(prepareHelpSupportTableV797,t));
+          }
+        });
+      }
+      const result=oldFire.apply(this,args);
+      if(isHelpSettings)[80,220,520,900,1400].forEach(t=>setTimeout(prepareHelpSupportTableV797,t));
+      return result;
+    };
+    wrappedFire.__haosV797=true;
+    window.Swal.fire=wrappedFire;
+  }
+
+  document.addEventListener('click',ev=>{
+    if(ev.target.closest('[onclick*="openHelpSupportSettingsV713"]')){
+      [120,360,760,1300].forEach(t=>setTimeout(prepareHelpSupportTableV797,t));
+    }
+  },true);
+  try{new MutationObserver(()=>setTimeout(installV797,60)).observe(document.body,{childList:true,subtree:true});}catch(e){}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installV797,{once:true});else installV797();
+  setTimeout(installV797,700);
+  setInterval(installV797,2500);
+  window.HAOSFixHelpSupportTableV797=prepareHelpSupportTableV797;
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 </body>
 </html>
