@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-98-help-live-chat-stable-render';
+const CACHE_NAME = 'haos-v70-99-admin-help-workspace-fixes';
 const CORE = [
   '/',
   '/index.html',
