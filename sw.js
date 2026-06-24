@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-101-advanced-help-workspace-modal';
+const CACHE_NAME = 'haos-v70-102-help-workspace-canonical';
 const CORE = [
   '/',
   '/index.html',
