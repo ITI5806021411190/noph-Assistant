@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-95-popup-safety-audit';
+const CACHE_NAME = 'haos-v70-96-help-upcoming-fixes';
 const CORE = [
   '/',
   '/index.html',

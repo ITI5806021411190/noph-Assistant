@@ -5,10 +5,19 @@
   if (window.__HAOS_V787_UPCOMING_AGENDA__) return;
   window.__HAOS_V787_UPCOMING_AGENDA__ = true;
 
-  const LOOKAHEAD_OPTIONS = [3];
+  const LOOKAHEAD_OPTIONS = [3, 7, 15];
   const LOOKAHEAD_KEY = 'haos_upcoming_agenda_lookahead_days_v796';
   function readLookaheadDays() {
-    return 3;
+    let value = 3;
+    try { value = Number(localStorage.getItem(LOOKAHEAD_KEY) || 3); } catch (e) {}
+    return LOOKAHEAD_OPTIONS.includes(value) ? value : 3;
+  }
+  function setLookaheadDays(days) {
+    const value = LOOKAHEAD_OPTIONS.includes(Number(days)) ? Number(days) : 3;
+    LOOKAHEAD_DAYS = value;
+    try { localStorage.setItem(LOOKAHEAD_KEY, String(value)); } catch (e) {}
+    render();
+    injectAgendaNotifications();
   }
   let LOOKAHEAD_DAYS = readLookaheadDays();
   const $ = id => document.getElementById(id);
@@ -74,6 +83,12 @@
 
   function scheduleId(item) {
     return clean(item && (item.id || item.publicId || item.eventId || item.scheduleId));
+  }
+
+  function findScheduleById(id) {
+    const key = clean(id);
+    if (!key) return null;
+    return allSchedules().find(item => scheduleId(item) === key) || null;
   }
 
   function startDate(item) {
@@ -183,9 +198,17 @@
       openAgendaTab();
       return;
     }
-    try { if (typeof window.viewScheduleDetail === 'function') return window.viewScheduleDetail(id); } catch (e) {}
+    const item = typeof itemOrId === 'string' ? findScheduleById(id) : itemOrId;
+    try { if (typeof window.showSchedulePopupDetailV782 === 'function') return window.showSchedulePopupDetailV782(id); } catch (e) {}
     try { if (typeof window.showSchedulePopupDetailV749 === 'function') return window.showSchedulePopupDetailV749(id); } catch (e) {}
-    try { document.getElementById('schedule-tab')?.click(); } catch (e) {}
+    try { if (typeof window.viewScheduleDetail === 'function') return window.viewScheduleDetail(id); } catch (e) {}
+    if (window.Swal) {
+      Swal.fire({
+        icon: 'info',
+        title: 'เปิดรายละเอียดไม่ได้',
+        html: `<div class="text-start"><b>${esc(titleOf(item))}</b><br><span class="text-muted">ไม่พบฟังก์ชันแสดงรายละเอียดรายการนี้ กรุณาโหลดตารางงานใหม่อีกครั้ง</span></div>`
+      });
+    }
   }
 
   function openAgendaTab() {
@@ -234,6 +257,13 @@
     </section>`;
   }
 
+  function lookaheadSelector() {
+    return `<div class="haos-v787-lookahead" role="group" aria-label="เลือกช่วงกำหนดการใกล้ถึง">
+      <span><i class="bi bi-hourglass-split"></i> ช่วงใกล้ถึง</span>
+      ${LOOKAHEAD_OPTIONS.map(days => `<button type="button" class="${days === LOOKAHEAD_DAYS ? 'active' : ''}" onclick="window.HAOSUpcomingAgenda.setLookaheadDays(${days})">${days} วัน</button>`).join('')}
+    </div>`;
+  }
+
   function render() {
     ensureTab();
     LOOKAHEAD_DAYS = readLookaheadDays();
@@ -256,6 +286,7 @@
         <button type="button" class="btn btn-success fw-bold" onclick="goToScheduleForm&&goToScheduleForm()"><i class="bi bi-calendar-plus"></i> สร้างตารางงาน</button>
         <button type="button" class="btn btn-outline-primary fw-bold" onclick="window.HAOSUpcomingAgenda.reload()"><i class="bi bi-arrow-clockwise"></i> โหลดใหม่</button>
         <button type="button" class="btn btn-outline-secondary fw-bold" onclick="document.getElementById('schedule-tab')?.click()"><i class="bi bi-table"></i> ไปตารางงานรวม</button>
+        ${lookaheadSelector()}
       </div>
       <div id="agendaTodaySectionV787">${renderSection('กำหนดการวันนี้', 'bi-sun', data.todayItems, 'วันนี้ยังไม่มีกำหนดการ')}</div>
       <div id="agendaUpcomingSectionV787">${renderSection(`กำหนดการที่จะถึงในอีก ${LOOKAHEAD_DAYS} วัน`, 'bi-hourglass-split', data.upcomingItems, 'ยังไม่มีกำหนดการใกล้ถึง')}</div>
@@ -432,6 +463,10 @@
       .haos-v787-kpis{display:grid;grid-template-columns:repeat(2,minmax(110px,1fr));gap:10px}.haos-v787-kpi{border:0;border-radius:8px;background:#fff;padding:12px 16px;text-align:left;box-shadow:0 12px 28px rgba(15,23,42,.08)}
       .haos-v787-kpi small{display:block;color:#64748b;font-weight:850}.haos-v787-kpi b{font-size:2rem;line-height:1;color:#0f172a}.haos-v787-kpi.today b{color:#dc2626}.haos-v787-kpi.soon b{color:#0f766e}
       .haos-v787-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}.haos-v787-section{border:1px solid rgba(148,163,184,.24);border-radius:8px;background:#fff;overflow:hidden;margin-bottom:16px}
+      .haos-v787-lookahead{margin-left:auto;display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(14,165,233,.22);background:#fff;border-radius:999px;padding:6px;box-shadow:0 10px 24px rgba(15,23,42,.06)}
+      .haos-v787-lookahead span{font-size:.86rem;font-weight:950;color:#0369a1;padding:0 8px;white-space:nowrap}
+      .haos-v787-lookahead button{border:0;border-radius:999px;background:#f1f5f9;color:#475569;font-weight:950;padding:8px 12px;white-space:nowrap}
+      .haos-v787-lookahead button.active{background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff;box-shadow:0 8px 18px rgba(37,99,235,.22)}
       .haos-v787-section-head{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#f8fafc;padding:14px 16px;border-bottom:1px solid rgba(148,163,184,.18);font-weight:950;color:#0f172a}.haos-v787-section-head div{display:flex;gap:8px;align-items:center}.haos-v787-section-head span{border-radius:999px;background:#e0f2fe;color:#0369a1;padding:5px 10px;font-weight:900;font-size:.86rem}
       .haos-v787-list{display:grid;gap:10px;padding:14px}.haos-v787-item{display:grid;grid-template-columns:190px 1fr auto;gap:14px;align-items:center;border:1px solid rgba(148,163,184,.22);border-left:8px solid #2563eb;border-radius:8px;background:linear-gradient(90deg,#eff6ff,#fff);padding:14px;box-shadow:0 12px 28px rgba(15,23,42,.05)}
       .haos-v787-item.soon{border-left-color:#059669;background:linear-gradient(90deg,#ecfdf5,#fff)}.haos-v787-datebox{display:grid;gap:4px}.haos-v787-datebox b{font-size:1.05rem;color:#0f172a}.haos-v787-datebox small{color:#64748b;font-weight:800}
@@ -440,7 +475,7 @@
       .haos-v787-empty{display:grid;place-items:center;text-align:center;color:#64748b;gap:5px;padding:28px}.haos-v787-empty i{font-size:2rem;color:#0ea5e9}.haos-v787-empty b{color:#0f172a}
       .haos-v787-hero-card{width:100%;border:1px solid rgba(14,165,233,.22);border-radius:8px;background:rgba(255,255,255,.82);padding:13px 16px;display:grid;grid-template-columns:1fr auto auto auto auto;gap:8px;align-items:center;text-align:left;color:#0f172a;box-shadow:0 12px 26px rgba(15,23,42,.08)}.haos-v787-hero-card span{font-weight:950;color:#0369a1}.haos-v787-hero-card b{font-size:1.45rem;color:#0f172a}.haos-v787-hero-card small{color:#64748b;font-weight:850}
       .haos-v787-agenda-notif{--tone:#2563eb;--soft:#eff6ff}
-      @media(max-width:900px){.haos-v787-hero{display:block}.haos-v787-kpis{margin-top:14px}.haos-v787-item{grid-template-columns:1fr}.haos-v787-actions{justify-self:start}.haos-v787-hero-card{grid-template-columns:1fr auto auto}}
+      @media(max-width:900px){.haos-v787-hero{display:block}.haos-v787-kpis{margin-top:14px}.haos-v787-item{grid-template-columns:1fr}.haos-v787-actions{justify-self:start}.haos-v787-hero-card{grid-template-columns:1fr auto auto}.haos-v787-lookahead{margin-left:0;width:100%;justify-content:space-between;overflow-x:auto}}
     </style>`);
   }
 
@@ -477,6 +512,7 @@
     openSchedule,
     focusToday,
     focusUpcoming,
+    setLookaheadDays,
     getAgenda,
     injectAgendaNotifications
   };
