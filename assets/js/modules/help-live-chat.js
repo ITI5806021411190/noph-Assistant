@@ -1,10 +1,11 @@
 (function () {
-  const PATCH = "v70.105-help-live-chat-module";
+  const PATCH = "v70.107-help-live-chat-card-stabilizer";
   if (window.__HAOS_HELP_LIVE_CHAT_MODULE__) return;
   window.__HAOS_HELP_LIVE_CHAT_MODULE__ = true;
 
   const OVERLAY_ID = "haosHelpLiveChatOverlay";
   const TOOL_CARD_ID = "haosHelpLiveChatToolCard";
+  const CRITICAL_STYLE_ID = "haosHelpLiveChatCriticalStylesV107";
   const LEGACY_SETTING_TITLE = "ตั้งค่าผู้ติดต่อ Help Center / Live Chat";
   let activeTab = "settings";
   let settingsRows = [];
@@ -85,6 +86,59 @@
     });
   }
 
+  function ensureCriticalStyles() {
+    if ($(CRITICAL_STYLE_ID)) return;
+    const style = document.createElement("style");
+    style.id = CRITICAL_STYLE_ID;
+    style.textContent = [
+      "#haosHelpLiveChatOverlay #haosHelpLiveSettingsList .haos-help-live-row{display:block!important;min-width:0!important;overflow:visible!important;margin:0 0 12px!important;padding:14px 16px!important;border:1px solid rgba(148,163,184,.22)!important;border-left:7px solid #0ea5e9!important;border-radius:18px!important;background:linear-gradient(135deg,#fff,#f8fbff)!important;box-shadow:0 14px 34px rgba(15,23,42,.07)!important;}",
+      "#haosHelpLiveChatOverlay .haos-help-live-contact-top{display:flex!important;flex-wrap:wrap!important;gap:8px!important;justify-content:space-between!important;align-items:center!important;margin-bottom:12px!important;}",
+      "#haosHelpLiveChatOverlay .haos-help-live-check{display:inline-flex!important;gap:8px!important;align-items:center!important;margin:0!important;border:1px solid rgba(37,99,235,.18)!important;border-radius:999px!important;background:#eff6ff!important;color:#1d4ed8!important;padding:7px 10px!important;font-weight:950!important;}",
+      "#haosHelpLiveChatOverlay .haos-help-live-check.chat{border-color:rgba(16,185,129,.22)!important;background:#ecfdf5!important;color:#047857!important;}",
+      "#haosHelpLiveChatOverlay .haos-help-live-contact-main{display:grid!important;grid-template-columns:minmax(220px,.85fr) minmax(0,1.8fr)!important;gap:14px!important;align-items:stretch!important;}",
+      "#haosHelpLiveChatOverlay .haos-help-live-contact-grid{display:grid!important;grid-template-columns:repeat(4,minmax(130px,1fr))!important;gap:10px!important;}",
+      "#haosHelpLiveChatOverlay .haos-help-live-contact-grid>div{min-width:0!important;border:1px solid rgba(148,163,184,.18)!important;border-radius:14px!important;background:#fff!important;padding:10px 12px!important;}",
+      "#haosHelpLiveChatOverlay .haos-help-live-contact-grid small{display:block!important;margin-bottom:4px!important;color:#64748b!important;font-size:.78rem!important;font-weight:900!important;}",
+      "#haosHelpLiveChatOverlay .haos-help-live-contact-grid b{display:block!important;color:#0f172a!important;font-weight:900!important;line-height:1.35!important;overflow-wrap:anywhere!important;}",
+      "#haosHelpLiveChatOverlay .haos-help-live-person{display:flex!important;flex-direction:column!important;gap:4px!important;align-items:flex-start!important;}",
+      "@media(max-width:980px){#haosHelpLiveChatOverlay .haos-help-live-contact-main,#haosHelpLiveChatOverlay .haos-help-live-contact-grid{grid-template-columns:1fr!important;}}"
+    ].join("\n");
+    document.head.appendChild(style);
+  }
+
+  function stabilizeSettingsLayout() {
+    const list = $("haosHelpLiveSettingsList");
+    if (!list) return;
+    ensureCriticalStyles();
+    qa(".haos-help-live-head", list).forEach((el) => el.remove());
+    qa(".haos-help-live-row", list).forEach((row) => {
+      row.style.setProperty("display", "block", "important");
+      row.style.setProperty("min-width", "0", "important");
+      row.style.setProperty("overflow", "visible", "important");
+      row.style.setProperty("padding", "14px 16px", "important");
+      row.style.setProperty("margin-bottom", "12px", "important");
+      const top = row.querySelector(".haos-help-live-contact-top");
+      if (top) {
+        top.style.setProperty("display", "flex", "important");
+        top.style.setProperty("flex-wrap", "wrap", "important");
+        top.style.setProperty("gap", "8px", "important");
+        top.style.setProperty("justify-content", "space-between", "important");
+      }
+      const main = row.querySelector(".haos-help-live-contact-main");
+      if (main) {
+        main.style.setProperty("display", "grid", "important");
+        main.style.setProperty("grid-template-columns", "minmax(220px,.85fr) minmax(0,1.8fr)", "important");
+        main.style.setProperty("gap", "14px", "important");
+      }
+      const grid = row.querySelector(".haos-help-live-contact-grid");
+      if (grid) {
+        grid.style.setProperty("display", "grid", "important");
+        grid.style.setProperty("grid-template-columns", "repeat(4,minmax(130px,1fr))", "important");
+        grid.style.setProperty("gap", "10px", "important");
+      }
+    });
+  }
+
   function closeLegacySwalIfNeeded() {
     const title = document.querySelector(".swal2-title");
     if (!title || !clean(title.textContent).includes(LEGACY_SETTING_TITLE)) return false;
@@ -101,6 +155,7 @@
   }
 
   function ensureOverlay() {
+    ensureCriticalStyles();
     let overlay = $(OVERLAY_ID);
     if (overlay) return overlay;
     overlay = document.createElement("div");
@@ -158,6 +213,7 @@
       '</div>'
     ].join("");
     document.body.appendChild(overlay);
+    stabilizeSettingsLayout();
 
     overlay.addEventListener("click", (event) => {
       if (event.target === overlay || event.target.closest("[data-haos-help-close]")) close();
@@ -199,6 +255,7 @@
   }
 
   function open(tab = "settings") {
+    ensureCriticalStyles();
     try {
       if (window.Swal) window.Swal.close();
     } catch (e) {}
@@ -207,6 +264,7 @@
     overlay.classList.add("show");
     document.body.classList.add("haos-help-live-open");
     showTab(tab);
+    [0, 120, 420, 1000].forEach((delay) => setTimeout(stabilizeSettingsLayout, delay));
   }
 
   function openSettings() {
@@ -291,7 +349,9 @@
           : '<div class="text-center text-muted py-5 fw-bold">ไม่พบรายชื่อผู้ใช้งานสำหรับตั้งค่าผู้ติดต่อ</div>';
       }
       settingsLoaded = true;
+      stabilizeSettingsLayout();
       filterSettings();
+      [100, 500, 1200].forEach((delay) => setTimeout(stabilizeSettingsLayout, delay));
     } catch (err) {
       if (list) list.innerHTML = '<div class="alert alert-danger m-3 fw-bold">' + esc(err.message || String(err)) + "</div>";
     }
@@ -302,6 +362,7 @@
     settingRowElements().forEach((row) => {
       row.hidden = !!(query && !String(row.dataset.search || "").includes(query));
     });
+    stabilizeSettingsLayout();
   }
 
   function selectRecommended() {
@@ -510,16 +571,19 @@
   }
 
   function boot() {
+    ensureCriticalStyles();
     overrideLegacyGlobals();
     interceptLegacyClicks();
     installAdvancedToolCard();
     installWorkspaceEditGuard();
     observeLegacySwal();
+    stabilizeSettingsLayout();
     setInterval(() => {
       overrideLegacyGlobals();
       installAdvancedToolCard();
       removeLegacySurfaces();
       closeLegacySwalIfNeeded();
+      if ($(OVERLAY_ID)?.classList.contains("show")) stabilizeSettingsLayout();
     }, 1200);
   }
 
