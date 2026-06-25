@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = 'haos-v70-103-help-workspace-single-source';
+﻿const CACHE_NAME = 'haos-v70-104-help-settings-rebuild';
 const CORE = [
   '/',
   '/index.html',
@@ -67,4 +67,5 @@ self.addEventListener('fetch', event => {
     }).catch(() => caches.match(event.request).then(r => r || caches.match('/index.html')))
   );
 });
+
 
