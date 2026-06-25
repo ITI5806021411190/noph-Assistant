@@ -11584,10 +11584,23 @@ HAOS v68.6 FINISHING FIX
       '</div>'+
     '</div>';
   }
-  window.openHelpSupportSettingsV713=function(){
-    if(window.HAOSHelpLiveChat&&typeof window.HAOSHelpLiveChat.openSettings==='function')return window.HAOSHelpLiveChat.openSettings();
-    setTimeout(()=>{if(window.HAOSHelpLiveChat&&typeof window.HAOSHelpLiveChat.openSettings==='function')window.HAOSHelpLiveChat.openSettings();},80);
+  function openHelpLiveStandaloneV713(mode){
+    const u=(typeof currentUserV713==='function'?currentUserV713():{})||{};
+    const p=new URLSearchParams();
+    p.set('mode',mode==='inbox'?'inbox':'settings');
+    p.set('v','70108');
+    if(u.phone)p.set('phone',u.phone);
+    if(u.fullName||u.name)p.set('name',u.fullName||u.name);
+    if(u.role)p.set('role',u.role);
+    if(u.department)p.set('department',u.department);
+    if(u.email)p.set('email',u.email);
+    const url='/help-live.html?'+p.toString();
+    const opened=window.open(url,'_blank','noopener');
+    if(!opened)window.location.href=url;
     return false;
+  }
+  window.openHelpSupportSettingsV713=function(){
+    return openHelpLiveStandaloneV713('settings');
   };
   window.filterHelpSupportUsersV713=function(){const q=clean($('helpSupportSearchV713')?.value).toLowerCase();supportSettingsRowsV713().forEach(row=>{row.hidden=!!(q&&!String(row.dataset.search||'').includes(q));});};
   window.selectDefaultSupportV713=function(){
@@ -11608,9 +11621,7 @@ HAOS v68.6 FINISHING FIX
 
   let inboxCurrentV713='';
   window.openHelpChatInboxV713=function(){
-    if(window.HAOSHelpLiveChat&&typeof window.HAOSHelpLiveChat.openInbox==='function')return window.HAOSHelpLiveChat.openInbox();
-    setTimeout(()=>{if(window.HAOSHelpLiveChat&&typeof window.HAOSHelpLiveChat.openInbox==='function')window.HAOSHelpLiveChat.openInbox();},80);
-    return false;
+    return openHelpLiveStandaloneV713('inbox');
   };
   window.loadHelpChatInboxV713=async function(){
     const listBox=$('haosChatInboxSessionsV713');if(!listBox)return;
@@ -18866,8 +18877,8 @@ HAOS v68.6 FINISHING FIX
 <script src="assets/js/modules/date-coverage.js"></script>
 <script src="assets/js/modules/schedule-multi-ranges.js"></script>
 <script src="assets/js/modules/upcoming-agenda.js"></script>
-<link rel="stylesheet" href="assets/css/help-live-chat.css?v=70107">
-<script src="assets/js/modules/help-live-chat.js?v=70107"></script>
+<link rel="stylesheet" href="assets/css/help-live-chat.css?v=70108">
+<script src="assets/js/modules/help-live-chat.js?v=70108"></script>
 <link rel="stylesheet" href="assets/css/ai-document-summary.css">
 <script src="assets/js/modules/ai-document-summary.js"></script>
 <link rel="stylesheet" href="assets/css/e-office.css">

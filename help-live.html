@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Help Center / Live Chat - Health Assistant OS</title>
+  <style>
+    :root {
+      --blue: #2563eb;
+      --sky: #0ea5e9;
+      --teal: #0f766e;
+      --green: #10b981;
+      --ink: #0f172a;
+      --muted: #64748b;
+      --line: rgba(148, 163, 184, 0.32);
+      --soft: #f8fbff;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: "Prompt", "Segoe UI", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 12% 8%, rgba(14, 165, 233, 0.18), transparent 34%),
+        radial-gradient(circle at 88% 10%, rgba(16, 185, 129, 0.18), transparent 32%),
+        linear-gradient(180deg, #f8fbff, #eef8fb);
+    }
+
+    button, input, textarea {
+      font: inherit;
+    }
+
+    .page {
+      width: min(1360px, calc(100vw - 32px));
+      margin: 24px auto 56px;
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 18px;
+      padding: 28px 30px;
+      border-radius: 28px;
+      color: #fff;
+      background: linear-gradient(135deg, #0ea5e9, #2563eb 56%, #0f766e);
+      box-shadow: 0 26px 68px rgba(37, 99, 235, 0.22);
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.7rem, 4vw, 2.5rem);
+      font-weight: 950;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 860px;
+      color: rgba(255, 255, 255, 0.88);
+      font-weight: 750;
+      line-height: 1.6;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .shell {
+      overflow: hidden;
+      margin-top: 22px;
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: 0 18px 52px rgba(15, 23, 42, 0.1);
+      backdrop-filter: blur(10px);
+    }
+
+    .tabs {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #f8fbff, #fff);
+    }
+
+    .tab-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .tab {
+      border: 1px solid rgba(37, 99, 235, 0.25);
+      border-radius: 16px;
+      padding: 12px 16px;
+      background: #fff;
+      color: #1d4ed8;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .tab.active {
+      border-color: transparent;
+      color: #fff;
+      background: linear-gradient(135deg, #0ea5e9, #2563eb);
+      box-shadow: 0 14px 34px rgba(37, 99, 235, 0.22);
+    }
+
+    .body {
+      padding: 22px;
+      background: #f8fbff;
+    }
+
+    .panel {
+      display: none;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    .notice {
+      margin-bottom: 14px;
+      border: 1px solid rgba(16, 185, 129, 0.26);
+      border-radius: 16px;
+      padding: 13px 15px;
+      background: #ecfdf5;
+      color: #064e3b;
+      font-weight: 900;
+      line-height: 1.5;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(240px, 1fr) auto auto;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .field, .select, .textarea {
+      width: 100%;
+      min-height: 48px;
+      border: 1px solid rgba(148, 163, 184, 0.38);
+      border-radius: 16px;
+      padding: 11px 14px;
+      background: #fff;
+      color: var(--ink);
+      font-weight: 750;
+      outline: none;
+    }
+
+    .field:focus, .select:focus, .textarea:focus {
+      border-color: var(--sky);
+      box-shadow: 0 0 0 5px rgba(14, 165, 233, 0.12);
+    }
+
+    .btn {
+      min-height: 48px;
+      border: 1px solid transparent;
+      border-radius: 16px;
+      padding: 11px 16px;
+      background: #fff;
+      color: var(--ink);
+      font-weight: 950;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .btn.primary {
+      color: #fff;
+      background: linear-gradient(135deg, #0ea5e9, #2563eb);
+      box-shadow: 0 14px 28px rgba(37, 99, 235, 0.18);
+    }
+
+    .btn.success {
+      color: #fff;
+      background: linear-gradient(135deg, #10b981, #059669);
+      box-shadow: 0 14px 28px rgba(16, 185, 129, 0.14);
+    }
+
+    .btn.danger {
+      color: #b91c1c;
+      border-color: rgba(239, 68, 68, 0.55);
+      background: #fff;
+    }
+
+    .btn.outline {
+      color: #1d4ed8;
+      border-color: rgba(37, 99, 235, 0.36);
+      background: #fff;
+    }
+
+    .status {
+      margin-bottom: 12px;
+      min-height: 24px;
+      color: var(--muted);
+      font-weight: 850;
+    }
+
+    .status.ok { color: #047857; }
+    .status.err { color: #b91c1c; }
+
+    .contact-list, .session-list, .messages {
+      scrollbar-color: #22c55e #dbeafe;
+      scrollbar-width: thin;
+    }
+
+    .contact-list {
+      display: grid;
+      gap: 12px;
+      max-height: min(64vh, 680px);
+      overflow: auto;
+      border: 1px solid rgba(14, 165, 233, 0.22);
+      border-radius: 22px;
+      background: linear-gradient(180deg, #eef8ff, #fff);
+      padding: 14px;
+    }
+
+    .contact-card {
+      display: grid;
+      grid-template-columns: minmax(260px, 0.95fr) minmax(0, 1.85fr);
+      gap: 14px;
+      align-items: stretch;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      border-left: 7px solid var(--sky);
+      border-radius: 20px;
+      padding: 16px;
+      background: linear-gradient(135deg, #fff, #f8fbff);
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+    }
+
+    .contact-top {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .pill-check {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(37, 99, 235, 0.2);
+      border-radius: 999px;
+      padding: 8px 11px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    .pill-check.chat {
+      border-color: rgba(16, 185, 129, 0.22);
+      background: #ecfdf5;
+      color: #047857;
+    }
+
+    .person-name {
+      margin: 0 0 4px;
+      font-size: 1.08rem;
+      font-weight: 950;
+    }
+
+    .person-phone {
+      color: var(--muted);
+      font-weight: 850;
+      overflow-wrap: anywhere;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(130px, 1fr));
+      gap: 10px;
+    }
+
+    .meta-box {
+      min-width: 0;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 16px;
+      padding: 11px 12px;
+      background: #fff;
+    }
+
+    .meta-box small {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 900;
+    }
+
+    .meta-box b {
+      display: block;
+      overflow-wrap: anywhere;
+      line-height: 1.4;
+      font-weight: 950;
+    }
+
+    .sort-field {
+      width: 90px;
+      min-height: 40px;
+      border: 1px solid rgba(148, 163, 184, 0.36);
+      border-radius: 13px;
+      padding: 8px;
+      text-align: center;
+      font-weight: 900;
+    }
+
+    .chat-layout {
+      display: grid;
+      grid-template-columns: minmax(280px, 0.72fr) minmax(0, 1.28fr);
+      gap: 16px;
+      min-height: 620px;
+    }
+
+    .side, .chat-main {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: #fff;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+    }
+
+    .side-head, .chat-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 15px 16px;
+      border-bottom: 1px solid var(--line);
+      background: #f8fbff;
+      font-weight: 950;
+    }
+
+    .session-list {
+      display: grid;
+      gap: 10px;
+      max-height: 560px;
+      overflow: auto;
+      padding: 12px;
+    }
+
+    .session-btn {
+      width: 100%;
+      border: 1px solid rgba(148, 163, 184, 0.26);
+      border-left: 6px solid var(--blue);
+      border-radius: 18px;
+      padding: 12px;
+      background: #fff;
+      text-align: left;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+    }
+
+    .session-btn.active {
+      border-left-color: var(--green);
+      background: linear-gradient(90deg, rgba(16, 185, 129, 0.12), #fff 45%);
+    }
+
+    .session-btn b, .session-btn span {
+      display: block;
+      overflow-wrap: anywhere;
+    }
+
+    .session-btn span {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.86rem;
+      font-weight: 800;
+    }
+
+    .messages {
+      height: 420px;
+      overflow: auto;
+      padding: 16px;
+      background: linear-gradient(180deg, #f8fbff, #fff);
+    }
+
+    .bubble {
+      width: fit-content;
+      max-width: min(84%, 760px);
+      margin: 0 0 10px;
+      border-radius: 18px;
+      padding: 11px 13px;
+      background: #fff;
+      border: 1px solid var(--line);
+      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.05);
+      overflow-wrap: anywhere;
+      line-height: 1.55;
+      font-weight: 760;
+    }
+
+    .bubble.admin {
+      margin-left: auto;
+      color: #fff;
+      border-color: transparent;
+      background: linear-gradient(135deg, #0ea5e9, #2563eb);
+    }
+
+    .bubble .meta {
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 900;
+    }
+
+    .bubble.admin .meta {
+      color: rgba(255, 255, 255, 0.78);
+    }
+
+    .compose {
+      padding: 14px;
+      border-top: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .compose-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .empty {
+      border: 1px dashed rgba(148, 163, 184, 0.42);
+      border-radius: 18px;
+      padding: 28px;
+      text-align: center;
+      color: var(--muted);
+      background: #f8fafc;
+      font-weight: 850;
+    }
+
+    .loading {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--blue);
+      font-weight: 950;
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 3px solid rgba(37, 99, 235, 0.2);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 980px) {
+      .toolbar { grid-template-columns: 1fr; }
+      .contact-card, .meta-grid, .chat-layout { grid-template-columns: 1fr; }
+      .chat-layout { min-height: 0; }
+      .messages { height: 360px; }
+    }
+
+    @media (max-width: 680px) {
+      .page { width: min(100vw - 16px, 1360px); margin-top: 8px; }
+      .hero, .shell { border-radius: 22px; }
+      .hero { padding: 22px; }
+      .body { padding: 14px; }
+      .tabs { align-items: flex-start; flex-direction: column; }
+      .btn, .tab { width: 100%; }
+      .hero-actions { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div>
+        <h1>Help Center / Live Chat</h1>
+        <p>จัดการผู้ติดต่อกลางและกล่องแชทช่วยเหลือในหน้าแยก ลดการชนกับ popup และตารางเดิมของหน้าโปรแกรมหลัก</p>
+      </div>
+      <div class="hero-actions">
+        <a class="btn outline" href="/">กลับระบบหลัก</a>
+        <button class="btn success" id="refreshBtn" type="button">โหลดใหม่</button>
+      </div>
+    </section>
+
+    <section class="shell">
+      <div class="tabs">
+        <div class="tab-buttons">
+          <button class="tab" type="button" data-tab="settings">ตั้งค่าผู้ติดต่อ</button>
+          <button class="tab" type="button" data-tab="inbox">กล่องแชทช่วยเหลือ</button>
+        </div>
+        <div id="actorLabel" class="status"></div>
+      </div>
+
+      <div class="body">
+        <section class="panel" id="settingsPanel">
+          <div class="notice" id="settingsNotice">กำลังโหลดสถานะผู้ติดต่อ...</div>
+          <div class="toolbar">
+            <input id="settingsSearch" class="field" type="search" placeholder="ค้นหาชื่อ เบอร์ บทบาท กลุ่มงาน หรืออีเมล...">
+            <button class="btn outline" type="button" id="recommendedBtn">เลือกกลุ่มแนะนำ</button>
+            <button class="btn primary" type="button" id="saveSettingsBtn">บันทึกผู้ติดต่อ</button>
+          </div>
+          <div id="settingsStatus" class="status"></div>
+          <div id="settingsList" class="contact-list">
+            <div class="empty">กำลังโหลดรายชื่อ...</div>
+          </div>
+        </section>
+
+        <section class="panel" id="inboxPanel">
+          <div class="chat-layout">
+            <aside class="side">
+              <div class="side-head">
+                <span>ห้องแชท</span>
+                <button class="btn outline" type="button" id="refreshInboxBtn">รีเฟรช</button>
+              </div>
+              <div id="sessionList" class="session-list">
+                <div class="empty">กำลังโหลดห้องแชท...</div>
+              </div>
+            </aside>
+
+            <section class="chat-main">
+              <div id="chatHeader" class="chat-head">เลือกห้องแชทเพื่อดูข้อความ</div>
+              <div id="messageList" class="messages">
+                <div class="empty">ยังไม่ได้เลือกห้องแชท</div>
+              </div>
+              <div class="compose">
+                <textarea id="replyText" class="textarea" rows="3" placeholder="พิมพ์ข้อความตอบกลับผู้ใช้งาน..."></textarea>
+                <div class="compose-actions">
+                  <button class="btn danger" type="button" id="closeSessionBtn">ปิดงานแชท</button>
+                  <button class="btn primary" type="button" id="sendReplyBtn">ส่งตอบกลับ</button>
+                </div>
+              </div>
+            </section>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+
+      const PATCH = "v70.108-help-live-standalone-page";
+      const params = new URLSearchParams(location.search);
+      const state = {
+        mode: params.get("mode") === "inbox" ? "inbox" : "settings",
+        actor: {
+          phone: cleanPhone(params.get("phone") || ""),
+          name: params.get("name") || "",
+          fullName: params.get("name") || "",
+          role: params.get("role") || "Admin",
+          department: params.get("department") || "",
+          email: params.get("email") || ""
+        },
+        settingsRows: [],
+        settingsLoaded: false,
+        inboxLoaded: false,
+        sessions: [],
+        currentSessionId: "",
+        inboxTimer: null
+      };
+
+      const $ = (id) => document.getElementById(id);
+      const qa = (selector, root = document) => Array.from((root || document).querySelectorAll(selector));
+
+      function esc(value) {
+        return String(value ?? "").replace(/[&<>"']/g, (ch) => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          "\"": "&quot;",
+          "'": "&#39;"
+        }[ch]));
+      }
+
+      function clean(value) {
+        return String(value ?? "").replace(/\s+/g, " ").trim();
+      }
+
+      function cleanPhone(value) {
+        return String(value ?? "").replace(/\D/g, "");
+      }
+
+      function dateTimeText(value) {
+        const date = value instanceof Date ? value : new Date(value);
+        if (Number.isNaN(date.getTime())) return "-";
+        const datePart = date.toLocaleDateString("th-TH", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric"
+        });
+        const timePart = date.toLocaleTimeString("th-TH", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false
+        }).replace(":", ".");
+        return datePart + " " + timePart + " น.";
+      }
+
+      async function gas(fn, args) {
+        const response = await fetch("/api/gas", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fn, args: Array.isArray(args) ? args : [] })
+        });
+        const text = await response.text();
+        let data = {};
+        try {
+          data = text ? JSON.parse(text) : {};
+        } catch (err) {
+          throw new Error(text || response.statusText || "Invalid API response");
+        }
+        if (!response.ok || data.__bridgeError) {
+          throw new Error(data.message || data.error || "เชื่อมต่อระบบไม่สำเร็จ");
+        }
+        return data;
+      }
+
+      function loading(text) {
+        return '<span class="loading"><span class="spinner"></span>' + esc(text || "กำลังโหลด...") + "</span>";
+      }
+
+      function setStatus(id, text, type) {
+        const el = $(id);
+        if (!el) return;
+        el.className = "status" + (type ? " " + type : "");
+        el.innerHTML = text || "";
+      }
+
+      function ensureActorPhone() {
+        if (state.actor.phone) return true;
+        const phone = prompt("กรุณาระบุเบอร์โทรของผู้ดูแลระบบเพื่อใช้งานหน้านี้");
+        state.actor.phone = cleanPhone(phone || "");
+        updateActorLabel();
+        return !!state.actor.phone;
+      }
+
+      function updateActorLabel() {
+        const label = $("actorLabel");
+        if (!label) return;
+        const name = state.actor.name || state.actor.fullName || "ผู้ใช้งาน";
+        label.textContent = state.actor.phone
+          ? name + " • " + state.actor.phone
+          : "ยังไม่พบเบอร์ผู้ใช้งาน";
+      }
+
+      function showTab(mode) {
+        state.mode = mode === "inbox" ? "inbox" : "settings";
+        qa("[data-tab]").forEach((btn) => btn.classList.toggle("active", btn.dataset.tab === state.mode));
+        $("settingsPanel").classList.toggle("active", state.mode === "settings");
+        $("inboxPanel").classList.toggle("active", state.mode === "inbox");
+        const url = new URL(location.href);
+        url.searchParams.set("mode", state.mode);
+        history.replaceState(null, "", url.toString());
+        if (state.mode === "settings" && !state.settingsLoaded) loadSettings(true);
+        if (state.mode === "inbox") {
+          loadInbox(!state.inboxLoaded);
+          startInboxTimer();
+        } else {
+          stopInboxTimer();
+        }
+      }
+
+      function normalizeUser(user, index) {
+        return {
+          fullName: clean(user.fullName || user.name || user.contactName || "-"),
+          phone: cleanPhone(user.phone || user.userPhone || ""),
+          role: clean(user.role || "-"),
+          position: clean(user.position || ""),
+          department: clean(user.department || "-"),
+          email: clean(user.email || "-"),
+          selected: !!user.selected,
+          chatEnabled: user.chatEnabled !== false,
+          sortOrder: Number(user.sortOrder || index + 1)
+        };
+      }
+
+      function contactCard(user, index) {
+        const row = normalizeUser(user, index);
+        const search = [row.fullName, row.phone, row.role, row.position, row.department, row.email].join(" ").toLowerCase();
+        return [
+          '<article class="contact-card" data-phone="', esc(row.phone), '" data-role="', esc(row.role), '" data-dept="', esc(row.department), '" data-search="', esc(search), '">',
+            '<div>',
+              '<div class="contact-top">',
+                '<label class="pill-check"><input type="checkbox" data-support-select ', row.selected ? "checked" : "", "> แสดงใน Help</label>",
+                '<label class="pill-check chat"><input type="checkbox" data-support-chat ', row.chatEnabled ? "checked" : "", "> Live Chat</label>",
+              "</div>",
+              '<h3 class="person-name">', esc(row.fullName), "</h3>",
+              '<div class="person-phone">', row.phone ? "โทร " + esc(row.phone) : "ไม่มีเบอร์โทร", "</div>",
+            "</div>",
+            '<div class="meta-grid">',
+              '<div class="meta-box"><small>บทบาท</small><b>', esc(row.role || "-"), "</b></div>",
+              '<div class="meta-box"><small>กลุ่มงาน</small><b>', esc(row.department || "-"), "</b></div>",
+              '<div class="meta-box"><small>Email</small><b>', esc(row.email || "-"), "</b></div>",
+              '<div class="meta-box"><small>ลำดับ</small><input class="sort-field" type="number" min="1" data-support-sort value="', esc(row.sortOrder), '"></div>',
+            "</div>",
+          "</article>"
+        ].join("");
+      }
+
+      function settingCards() {
+        return qa("#settingsList .contact-card");
+      }
+
+      async function loadSettings(force) {
+        if (state.settingsLoaded && !force) return;
+        if (!ensureActorPhone()) return;
+        $("settingsList").innerHTML = '<div class="empty">' + loading("กำลังโหลดรายชื่อผู้ใช้งาน...") + "</div>";
+        setStatus("settingsStatus", "", "");
+        try {
+          const res = await gas("getHelpSupportContactSettingsV713", [state.actor.phone]);
+          if (!res || !res.success) throw new Error((res && res.message) || "โหลดข้อมูลไม่สำเร็จ");
+          state.settingsRows = res.users || [];
+          $("settingsNotice").textContent = res.hasCustomSettings
+            ? "ระบบใช้รายชื่อผู้ติดต่อที่ Super Admin กำหนดแล้ว"
+            : "ยังไม่เคยกำหนดรายชื่อ ระบบจะแนะนำ Admin / Super Admin / กลุ่มงานสุขภาพดิจิทัลเป็นค่าเริ่มต้น";
+          $("settingsList").innerHTML = state.settingsRows.length
+            ? state.settingsRows.map(contactCard).join("")
+            : '<div class="empty">ไม่พบรายชื่อผู้ใช้งานสำหรับตั้งค่าผู้ติดต่อ</div>';
+          state.settingsLoaded = true;
+          filterSettings();
+        } catch (err) {
+          $("settingsList").innerHTML = '<div class="empty">โหลดข้อมูลไม่สำเร็จ: ' + esc(err.message || String(err)) + "</div>";
+        }
+      }
+
+      function filterSettings() {
+        const query = clean($("settingsSearch").value).toLowerCase();
+        settingCards().forEach((card) => {
+          card.hidden = !!(query && !String(card.dataset.search || "").includes(query));
+        });
+      }
+
+      function selectRecommended() {
+        settingCards().forEach((card) => {
+          const hay = (String(card.dataset.role || "") + " " + String(card.dataset.dept || "")).toLowerCase();
+          const pick = hay.includes("super") || hay.includes("admin") || hay.includes("สุขภาพดิจิทัล") || hay.includes("digital");
+          const selected = card.querySelector("[data-support-select]");
+          const chat = card.querySelector("[data-support-chat]");
+          if (selected) selected.checked = pick;
+          if (chat) chat.checked = pick;
+        });
+      }
+
+      async function saveSettings() {
+        if (!ensureActorPhone()) return;
+        const contacts = settingCards()
+          .filter((card) => card.querySelector("[data-support-select]")?.checked)
+          .map((card, index) => ({
+            phone: card.dataset.phone || "",
+            chatEnabled: card.querySelector("[data-support-chat]")?.checked !== false,
+            sortOrder: Number(card.querySelector("[data-support-sort]")?.value || index + 1)
+          }))
+          .filter((item) => item.phone);
+        setStatus("settingsStatus", loading("กำลังบันทึกผู้ติดต่อ..."), "");
+        try {
+          const res = await gas("saveHelpSupportContactSettingsV713", [state.actor.phone, contacts]);
+          if (!res || !res.success) throw new Error((res && res.message) || "บันทึกไม่สำเร็จ");
+          setStatus("settingsStatus", "บันทึกแล้ว " + contacts.length + " รายชื่อ", "ok");
+          state.settingsLoaded = false;
+          await loadSettings(true);
+        } catch (err) {
+          setStatus("settingsStatus", "บันทึกไม่สำเร็จ: " + esc(err.message || String(err)), "err");
+        }
+      }
+
+      function sessionCard(session) {
+        const active = session.id === state.currentSessionId ? " active" : "";
+        return [
+          '<button class="session-btn', active, '" type="button" data-session-id="', esc(session.id || ""), '">',
+            '<b>', esc(session.userName || session.userPhone || "-"), "</b>",
+            '<span>', esc(session.department || "-"), "</span>",
+            '<span>', esc(session.status || "Open"), " • ", esc(dateTimeText(session.lastMessageAt || session.createdAt)), "</span>",
+          "</button>"
+        ].join("");
+      }
+
+      async function loadInbox(showLoading) {
+        if (!ensureActorPhone()) return;
+        if (showLoading) $("sessionList").innerHTML = '<div class="empty">' + loading("กำลังโหลดห้องแชท...") + "</div>";
+        try {
+          const res = await gas("getHelpChatInboxV713", [state.actor.phone]);
+          if (!res || !res.success) throw new Error((res && res.message) || "โหลดกล่องแชทไม่สำเร็จ");
+          state.sessions = res.sessions || [];
+          if (!state.currentSessionId && state.sessions[0]) state.currentSessionId = state.sessions[0].id || "";
+          $("sessionList").innerHTML = state.sessions.length
+            ? state.sessions.map(sessionCard).join("")
+            : '<div class="empty">ยังไม่มีห้องแชทช่วยเหลือ</div>';
+          state.inboxLoaded = true;
+          if (state.currentSessionId) await selectSession(state.currentSessionId, true);
+        } catch (err) {
+          $("sessionList").innerHTML = '<div class="empty">โหลดกล่องแชทไม่สำเร็จ: ' + esc(err.message || String(err)) + "</div>";
+        }
+      }
+
+      async function selectSession(sessionId, quiet) {
+        state.currentSessionId = sessionId || "";
+        qa("[data-session-id]").forEach((btn) => btn.classList.toggle("active", btn.dataset.sessionId === state.currentSessionId));
+        if (!state.currentSessionId) return;
+        if (!quiet) $("messageList").innerHTML = '<div class="empty">' + loading("กำลังโหลดข้อความ...") + "</div>";
+        try {
+          const res = await gas("getHelpChatMessagesV713", [state.currentSessionId, state.actor]);
+          if (!res || !res.success) throw new Error((res && res.message) || "โหลดข้อความไม่สำเร็จ");
+          const session = res.session || {};
+          $("chatHeader").innerHTML = '<span>' + esc(session.userName || session.userPhone || "-") + '</span><span>' + esc(session.status || "Open") + "</span>";
+          $("messageList").innerHTML = (res.messages || []).length
+            ? (res.messages || []).map((message) => [
+              '<div class="bubble ', message.isAdmin ? "admin" : "user", '">',
+                '<div class="meta">', esc(message.senderName || "-"), " • ", esc(dateTimeText(message.timestamp)), "</div>",
+                esc(message.message || ""),
+              "</div>"
+            ].join("")).join("")
+            : '<div class="empty">ยังไม่มีข้อความในห้องนี้</div>';
+          $("messageList").scrollTop = $("messageList").scrollHeight;
+        } catch (err) {
+          $("messageList").innerHTML = '<div class="empty">โหลดข้อความไม่สำเร็จ: ' + esc(err.message || String(err)) + "</div>";
+        }
+      }
+
+      async function sendReply() {
+        const input = $("replyText");
+        const message = clean(input.value);
+        if (!state.currentSessionId || !message) return;
+        input.disabled = true;
+        try {
+          const res = await gas("sendHelpChatMessageV713", [state.currentSessionId, state.actor, message]);
+          if (!res || !res.success) throw new Error((res && res.message) || "ส่งข้อความไม่สำเร็จ");
+          input.value = "";
+          await selectSession(state.currentSessionId, true);
+          await loadInbox(false);
+        } catch (err) {
+          alert("ส่งข้อความไม่สำเร็จ\n" + (err.message || String(err)));
+        } finally {
+          input.disabled = false;
+          input.focus();
+        }
+      }
+
+      async function closeSession() {
+        if (!state.currentSessionId) return;
+        if (!confirm("ปิดงานแชทนี้ใช่ไหม?")) return;
+        try {
+          const res = await gas("closeHelpChatSessionV713", [state.currentSessionId, state.actor.phone]);
+          if (!res || !res.success) throw new Error((res && res.message) || "ปิดห้องแชทไม่สำเร็จ");
+          state.currentSessionId = "";
+          $("chatHeader").textContent = "เลือกห้องแชทเพื่อดูข้อความ";
+          $("messageList").innerHTML = '<div class="empty">ยังไม่ได้เลือกห้องแชท</div>';
+          await loadInbox(true);
+        } catch (err) {
+          alert("ปิดห้องแชทไม่สำเร็จ\n" + (err.message || String(err)));
+        }
+      }
+
+      function startInboxTimer() {
+        stopInboxTimer();
+        state.inboxTimer = setInterval(() => loadInbox(false), 8000);
+      }
+
+      function stopInboxTimer() {
+        if (state.inboxTimer) clearInterval(state.inboxTimer);
+        state.inboxTimer = null;
+      }
+
+      function refreshActive() {
+        if (state.mode === "settings") {
+          state.settingsLoaded = false;
+          loadSettings(true);
+        } else {
+          state.inboxLoaded = false;
+          loadInbox(true);
+        }
+      }
+
+      function bind() {
+        qa("[data-tab]").forEach((btn) => btn.addEventListener("click", () => showTab(btn.dataset.tab)));
+        $("settingsSearch").addEventListener("input", filterSettings);
+        $("recommendedBtn").addEventListener("click", selectRecommended);
+        $("saveSettingsBtn").addEventListener("click", saveSettings);
+        $("refreshBtn").addEventListener("click", refreshActive);
+        $("refreshInboxBtn").addEventListener("click", () => loadInbox(true));
+        $("sendReplyBtn").addEventListener("click", sendReply);
+        $("closeSessionBtn").addEventListener("click", closeSession);
+        $("sessionList").addEventListener("click", (event) => {
+          const btn = event.target.closest("[data-session-id]");
+          if (btn) selectSession(btn.dataset.sessionId);
+        });
+      }
+
+      bind();
+      updateActorLabel();
+      showTab(state.mode);
+      window.addEventListener("beforeunload", stopInboxTimer);
+      console.info("HAOS " + PATCH + " loaded");
+    })();
+  </script>
+</body>
+</html>

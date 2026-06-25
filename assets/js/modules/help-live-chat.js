@@ -1,5 +1,5 @@
 (function () {
-  const PATCH = "v70.107-help-live-chat-card-stabilizer";
+  const PATCH = "v70.108-help-live-standalone-page";
   if (window.__HAOS_HELP_LIVE_CHAT_MODULE__) return;
   window.__HAOS_HELP_LIVE_CHAT_MODULE__ = true;
 
@@ -47,6 +47,27 @@
       role: user.role || "User",
       department: user.department || user.group || ""
     };
+  }
+
+  function standaloneUrl(tab) {
+    const user = currentUser();
+    const a = actor();
+    const params = new URLSearchParams();
+    params.set("mode", tab === "inbox" ? "inbox" : "settings");
+    params.set("v", "70108");
+    if (a.phone) params.set("phone", a.phone);
+    if (a.name || a.fullName) params.set("name", a.name || a.fullName);
+    if (a.role) params.set("role", a.role);
+    if (a.department) params.set("department", a.department);
+    if (user.email) params.set("email", user.email);
+    return "/help-live.html?" + params.toString();
+  }
+
+  function openStandalone(tab) {
+    const url = standaloneUrl(tab);
+    const opened = window.open(url, "_blank", "noopener");
+    if (!opened) window.location.href = url;
+    return false;
   }
 
   function gasRun(fn, args) {
@@ -255,24 +276,15 @@
   }
 
   function open(tab = "settings") {
-    ensureCriticalStyles();
-    try {
-      if (window.Swal) window.Swal.close();
-    } catch (e) {}
-    removeLegacySurfaces();
-    const overlay = ensureOverlay();
-    overlay.classList.add("show");
-    document.body.classList.add("haos-help-live-open");
-    showTab(tab);
-    [0, 120, 420, 1000].forEach((delay) => setTimeout(stabilizeSettingsLayout, delay));
+    return openStandalone(tab);
   }
 
   function openSettings() {
-    open("settings");
+    return openStandalone("settings");
   }
 
   function openInbox() {
-    open("inbox");
+    return openStandalone("inbox");
   }
 
   function close() {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-107-help-live-chat-card-stabilizer';
+const CACHE_NAME = 'haos-v70-108-help-live-standalone-page';
 const CORE = [
   '/',
   '/index.html',
@@ -6,6 +6,7 @@ const CORE = [
   '/public',
   '/remote.html',
   '/remote',
+  '/help-live.html',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
@@ -38,8 +39,8 @@ const CORE = [
   '/assets/css/shared-workspace-flow.css',
   '/assets/js/modules/shared-workspace-flow.js',
   '/assets/js/modules/shared-workspace-builder.js',
-  '/assets/css/help-live-chat.css?v=70107',
-  '/assets/js/modules/help-live-chat.js?v=70107',
+  '/assets/css/help-live-chat.css?v=70108',
+  '/assets/js/modules/help-live-chat.js?v=70108',
   '/assets/css/ai-document-summary.css',
   '/assets/js/modules/ai-document-summary.js',
   '/assets/css/e-office.css',
