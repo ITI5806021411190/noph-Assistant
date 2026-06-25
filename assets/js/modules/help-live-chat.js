@@ -129,7 +129,6 @@
             '</div>',
             '<div id="haosHelpLiveStatus" class="haos-help-live-status"></div>',
             '<div class="haos-help-live-list" id="haosHelpLiveSettingsList">',
-              '<div class="haos-help-live-head"><div>แสดง</div><div>ผู้ติดต่อ</div><div>บทบาท</div><div>กลุ่มงาน</div><div>Email</div><div>ลำดับ</div><div>Live Chat</div></div>',
               '<div class="text-center text-muted py-5 fw-bold">กำลังโหลดรายชื่อ...</div>',
             '</div>',
           '</section>',
@@ -246,13 +245,19 @@
     const search = [row.fullName, row.phone, row.role, row.department, row.email].join(" ").toLowerCase();
     return [
       '<div class="haos-help-live-row" data-phone="', esc(row.phone), '" data-role="', esc(row.role), '" data-dept="', esc(row.department), '" data-search="', esc(search), '">',
-        '<div class="haos-help-live-cell center"><input class="form-check-input" type="checkbox" data-support-select ', row.selected ? "checked" : "", "></div>",
-        '<div class="haos-help-live-cell"><div class="haos-help-live-person"><b>', esc(row.fullName), '</b><small>', esc(row.phone || "-"), '</small></div></div>',
-        '<div class="haos-help-live-cell"><span>', esc(row.role || "-"), '</span></div>',
-        '<div class="haos-help-live-cell"><span>', esc(row.department || "-"), '</span></div>',
-        '<div class="haos-help-live-cell"><span>', esc(row.email || "-"), '</span></div>',
-        '<div class="haos-help-live-cell center"><input class="form-control form-control-sm" type="number" min="1" data-support-sort value="', esc(row.sortOrder), '"></div>',
-        '<div class="haos-help-live-cell center"><input class="form-check-input" type="checkbox" data-support-chat ', row.chatEnabled ? "checked" : "", "></div>",
+        '<div class="haos-help-live-contact-top">',
+          '<label class="haos-help-live-check"><input class="form-check-input" type="checkbox" data-support-select ', row.selected ? "checked" : "", "> <span>แสดงใน Help</span></label>",
+          '<label class="haos-help-live-check chat"><input class="form-check-input" type="checkbox" data-support-chat ', row.chatEnabled ? "checked" : "", "> <span>Live Chat</span></label>",
+        "</div>",
+        '<div class="haos-help-live-contact-main">',
+          '<div class="haos-help-live-person"><b>', esc(row.fullName), '</b><small><i class="bi bi-telephone me-1"></i>', esc(row.phone || "-"), "</small></div>",
+          '<div class="haos-help-live-contact-grid">',
+            '<div><small>บทบาท</small><b>', esc(row.role || "-"), "</b></div>",
+            '<div><small>กลุ่มงาน</small><b>', esc(row.department || "-"), "</b></div>",
+            '<div><small>Email</small><b>', esc(row.email || "-"), "</b></div>",
+            '<div><small>ลำดับ</small><input class="form-control form-control-sm" type="number" min="1" data-support-sort value="', esc(row.sortOrder), '"></div>',
+          "</div>",
+        "</div>",
       "</div>"
     ].join("");
   }
@@ -268,7 +273,7 @@
     const status = $("haosHelpLiveStatus");
     if (status) status.innerHTML = "";
     if (list) {
-      list.innerHTML = '<div class="haos-help-live-head"><div>แสดง</div><div>ผู้ติดต่อ</div><div>บทบาท</div><div>กลุ่มงาน</div><div>Email</div><div>ลำดับ</div><div>Live Chat</div></div><div class="text-center text-muted py-5 fw-bold">กำลังโหลดรายชื่อ...</div>';
+      list.innerHTML = '<div class="text-center text-muted py-5 fw-bold">กำลังโหลดรายชื่อ...</div>';
     }
     try {
       const user = currentUser();
@@ -281,8 +286,9 @@
           : "ยังไม่เคยกำหนดรายชื่อ ระบบจะแนะนำ Admin / Super Admin / กลุ่มงานสุขภาพดิจิทัลเป็นค่าเริ่มต้น");
       }
       if (list) {
-        list.innerHTML = '<div class="haos-help-live-head"><div>แสดง</div><div>ผู้ติดต่อ</div><div>บทบาท</div><div>กลุ่มงาน</div><div>Email</div><div>ลำดับ</div><div>Live Chat</div></div>' +
-          (settingsRows.length ? settingsRows.map(rowHtml).join("") : '<div class="text-center text-muted py-5 fw-bold">ไม่พบรายชื่อผู้ใช้งานสำหรับตั้งค่าผู้ติดต่อ</div>');
+        list.innerHTML = settingsRows.length
+          ? settingsRows.map(rowHtml).join("")
+          : '<div class="text-center text-muted py-5 fw-bold">ไม่พบรายชื่อผู้ใช้งานสำหรับตั้งค่าผู้ติดต่อ</div>';
       }
       settingsLoaded = true;
       filterSettings();

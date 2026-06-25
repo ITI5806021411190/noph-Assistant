@@ -7,7 +7,8 @@ This update moves Help Center / Live Chat admin settings out of the old SweetAle
 - `assets/css/help-live-chat.css`
 - `assets/js/modules/help-live-chat.js`
 - `index.html` now loads the new Help module assets.
-- `sw.js` cache name is bumped to `haos-v70-105-help-live-chat-module`.
+- `sw.js` cache name is bumped to `haos-v70-106-help-live-chat-cards`.
+- `index.html` loads Help assets with `?v=70106` to avoid stale browser/service-worker cache.
 - The old v70.104 inline Help settings rebuild block was removed from `index.html`.
 - The legacy Super Admin Help card injector now returns early, so Help Center / Live Chat lives under Advanced System Tools only.
 
@@ -28,7 +29,7 @@ No Google Apps Script or database schema changes are required. The module still 
 2. Restore the previous service worker cache name and remove these files from `CORE`:
    - `/assets/css/help-live-chat.css`
    - `/assets/js/modules/help-live-chat.js`
-3. Restore `docs/ROLLBACK_V70_104_HELP_SETTINGS_REBUILD.md` if returning to the previous v70.104 patch state.
+3. Remove the `?v=70106` query strings from the Help CSS/JS references if returning to the previous v70.104 patch state.
 4. If returning to the old Super Admin card, remove the early `return;` inside `injectAdminSupportToolsV713()`.
 5. Redeploy Vercel and hard refresh/clear site data so the browser drops the v70.105 service worker cache.
 
