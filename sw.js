@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-102-help-workspace-canonical';
+﻿const CACHE_NAME = 'haos-v70-103-help-workspace-single-source';
 const CORE = [
   '/',
   '/index.html',
@@ -67,3 +67,4 @@ self.addEventListener('fetch', event => {
     }).catch(() => caches.match(event.request).then(r => r || caches.match('/index.html')))
   );
 });
+
