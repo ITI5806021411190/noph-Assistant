@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-109-help-live-legacy-cleanup';
+const CACHE_NAME = 'haos-v70-110-workspace-standalone';
 const CORE = [
   '/',
   '/index.html',
@@ -7,6 +7,7 @@ const CORE = [
   '/remote.html',
   '/remote',
   '/help-live.html',
+  '/workspace.html',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
@@ -39,6 +40,8 @@ const CORE = [
   '/assets/css/shared-workspace-flow.css',
   '/assets/js/modules/shared-workspace-flow.js',
   '/assets/js/modules/shared-workspace-builder.js',
+  '/assets/js/modules/workspace-standalone.js?v=70110',
+  '/assets/js/modules/shared-workspace-standalone-entry.js?v=70110',
   '/assets/js/modules/help-live-chat.js?v=70109',
   '/assets/css/ai-document-summary.css',
   '/assets/js/modules/ai-document-summary.js',

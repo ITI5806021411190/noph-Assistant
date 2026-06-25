@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>พื้นที่ทำงานร่วมกัน - Health Assistant OS</title>
+  <style>
+    :root {
+      --blue: #2563eb;
+      --sky: #0ea5e9;
+      --teal: #0f766e;
+      --green: #10b981;
+      --ink: #0f172a;
+      --muted: #64748b;
+      --line: rgba(148, 163, 184, 0.34);
+      --soft: #f8fbff;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: "Prompt", "Segoe UI", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 10% 8%, rgba(14, 165, 233, 0.18), transparent 34%),
+        radial-gradient(circle at 88% 10%, rgba(16, 185, 129, 0.18), transparent 34%),
+        linear-gradient(180deg, #f8fbff, #edf8fb);
+    }
+
+    button, input, select, textarea { font: inherit; }
+
+    .page {
+      width: min(1460px, calc(100vw - 32px));
+      margin: 22px auto 52px;
+    }
+
+    .hero {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 28px 30px;
+      border-radius: 28px;
+      color: #fff;
+      background: linear-gradient(135deg, #0ea5e9, #2563eb 55%, #0f766e);
+      box-shadow: 0 24px 64px rgba(37, 99, 235, 0.22);
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.75rem, 4vw, 2.7rem);
+      font-weight: 950;
+      line-height: 1.15;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 880px;
+      color: rgba(255, 255, 255, 0.9);
+      font-weight: 750;
+      line-height: 1.6;
+    }
+
+    .hero-actions,
+    .toolbar,
+    .button-row,
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .shell {
+      overflow: hidden;
+      margin-top: 22px;
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: 0 18px 52px rgba(15, 23, 42, 0.1);
+      backdrop-filter: blur(10px);
+    }
+
+    .shell-head {
+      display: grid;
+      grid-template-columns: minmax(240px, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      padding: 20px 22px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #f8fbff, #fff);
+    }
+
+    .shell-title h2 {
+      margin: 0 0 4px;
+      font-size: 1.35rem;
+      font-weight: 950;
+    }
+
+    .shell-title p {
+      margin: 0;
+      color: var(--muted);
+      font-weight: 750;
+      line-height: 1.5;
+    }
+
+    .body {
+      padding: 22px;
+      background: #f8fbff;
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) 180px 210px auto;
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 16px;
+      padding: 16px;
+      border: 1px solid rgba(14, 165, 233, 0.2);
+      border-radius: 22px;
+      background: linear-gradient(180deg, #eff8ff, #f8fbff);
+    }
+
+    label {
+      display: block;
+      margin: 0 0 7px;
+      color: #334155;
+      font-weight: 900;
+    }
+
+    .field, .select, .textarea {
+      width: 100%;
+      min-height: 48px;
+      border: 1px solid rgba(148, 163, 184, 0.42);
+      border-radius: 16px;
+      padding: 11px 14px;
+      background: #fff;
+      color: var(--ink);
+      font-weight: 750;
+      outline: none;
+    }
+
+    .textarea {
+      min-height: 105px;
+      resize: vertical;
+    }
+
+    .field:focus, .select:focus, .textarea:focus {
+      border-color: var(--sky);
+      box-shadow: 0 0 0 5px rgba(14, 165, 233, 0.12);
+    }
+
+    .btn {
+      min-height: 48px;
+      border: 1px solid transparent;
+      border-radius: 16px;
+      padding: 11px 16px;
+      background: #fff;
+      color: var(--ink);
+      font-weight: 950;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      white-space: nowrap;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+    .btn:disabled { cursor: not-allowed; opacity: 0.62; transform: none; }
+
+    .btn.primary {
+      color: #fff;
+      background: linear-gradient(135deg, #0ea5e9, #2563eb);
+      box-shadow: 0 14px 30px rgba(37, 99, 235, 0.18);
+    }
+
+    .btn.success {
+      color: #fff;
+      background: linear-gradient(135deg, #10b981, #059669);
+      box-shadow: 0 14px 30px rgba(16, 185, 129, 0.16);
+    }
+
+    .btn.warning {
+      color: #1f2937;
+      background: linear-gradient(135deg, #fde68a, #f59e0b);
+    }
+
+    .btn.danger {
+      color: #b91c1c;
+      border-color: rgba(239, 68, 68, 0.55);
+      background: #fff;
+    }
+
+    .btn.outline {
+      color: #1d4ed8;
+      border-color: rgba(37, 99, 235, 0.36);
+      background: #fff;
+    }
+
+    .status {
+      min-height: 24px;
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-weight: 850;
+    }
+    .status.ok { color: #047857; }
+    .status.err { color: #b91c1c; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(320px, 0.9fr) minmax(520px, 1.45fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .list, .detail {
+      min-height: 480px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: #fff;
+      box-shadow: 0 12px 34px rgba(15, 23, 42, 0.06);
+    }
+
+    .list {
+      overflow: hidden;
+    }
+
+    .list-head,
+    .detail-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #f8fbff, #fff);
+    }
+
+    .list-head h3,
+    .detail-head h3 {
+      margin: 0;
+      font-size: 1.08rem;
+      font-weight: 950;
+    }
+
+    .cards {
+      max-height: calc(100vh - 410px);
+      min-height: 360px;
+      overflow: auto;
+      padding: 14px;
+      scrollbar-color: #22c55e #dbeafe;
+    }
+
+    .workspace-card {
+      position: relative;
+      margin-bottom: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      border-left: 6px solid var(--sky);
+      border-radius: 20px;
+      padding: 15px;
+      background: #fff;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+    }
+
+    .workspace-card.active { border-left-color: var(--green); background: #f0fdf4; }
+    .workspace-card.expired { border-left-color: var(--danger); opacity: 0.78; }
+
+    .workspace-card h4 {
+      margin: 0 0 6px;
+      color: #0f4c81;
+      font-size: 1.04rem;
+      font-weight: 950;
+      line-height: 1.35;
+    }
+
+    .workspace-card p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-weight: 700;
+      line-height: 1.5;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-height: 30px;
+      border: 1px solid rgba(37, 99, 235, 0.18);
+      border-radius: 999px;
+      padding: 5px 10px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-weight: 950;
+      font-size: 0.86rem;
+    }
+    .badge.green { border-color: rgba(16, 185, 129, 0.22); background: #ecfdf5; color: #047857; }
+    .badge.amber { border-color: rgba(245, 158, 11, 0.28); background: #fffbeb; color: #92400e; }
+    .badge.gray { border-color: rgba(100, 116, 139, 0.22); background: #f8fafc; color: #475569; }
+    .badge.red { border-color: rgba(239, 68, 68, 0.24); background: #fef2f2; color: #b91c1c; }
+
+    .empty {
+      padding: 36px 18px;
+      color: var(--muted);
+      text-align: center;
+      font-weight: 850;
+    }
+
+    .detail {
+      overflow: hidden;
+    }
+
+    .detail-body {
+      max-height: calc(100vh - 346px);
+      min-height: 416px;
+      overflow: auto;
+      padding: 18px;
+      scrollbar-color: #22c55e #dbeafe;
+    }
+
+    .detail-summary {
+      margin-bottom: 16px;
+      padding: 16px;
+      border: 1px solid rgba(14, 165, 233, 0.18);
+      border-radius: 20px;
+      background: linear-gradient(180deg, #eff8ff, #fff);
+    }
+
+    .detail-summary h4 {
+      margin: 0 0 7px;
+      font-size: 1.35rem;
+      font-weight: 950;
+    }
+
+    .detail-summary p {
+      margin: 0;
+      color: var(--muted);
+      font-weight: 750;
+      line-height: 1.6;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    th, td {
+      border-bottom: 1px solid rgba(148, 163, 184, 0.24);
+      border-right: 1px solid rgba(148, 163, 184, 0.2);
+      padding: 11px 12px;
+      vertical-align: top;
+      font-weight: 750;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #eaf6ff;
+      color: #0f4c81;
+      font-weight: 950;
+      white-space: nowrap;
+    }
+
+    td:last-child, th:last-child { border-right: 0; }
+    tr:last-child td { border-bottom: 0; }
+
+    .cell-input {
+      width: 100%;
+      min-width: 170px;
+      min-height: 42px;
+      border: 1px solid rgba(148, 163, 184, 0.34);
+      border-radius: 12px;
+      padding: 9px 10px;
+      background: #fff;
+      color: var(--ink);
+      font-weight: 750;
+      outline: none;
+    }
+
+    .cell-input:focus {
+      border-color: var(--sky);
+      box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.11);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(220px, 1fr));
+      gap: 14px;
+    }
+
+    .full { grid-column: 1 / -1; }
+
+    .field-builder {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) 160px minmax(220px, 1.2fr) auto auto;
+      gap: 10px;
+      align-items: end;
+      margin-bottom: 10px;
+      padding: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      border-radius: 18px;
+      background: #fff;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(15, 23, 42, 0.58);
+      backdrop-filter: blur(8px);
+    }
+
+    .modal-backdrop.show { display: flex; }
+
+    .modal {
+      width: min(1100px, calc(100vw - 28px));
+      max-height: calc(100vh - 28px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-radius: 24px;
+      background: #fff;
+      box-shadow: 0 24px 80px rgba(15, 23, 42, 0.24);
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 22px 24px;
+      color: #fff;
+      background: linear-gradient(135deg, #0ea5e9, #2563eb);
+    }
+
+    .modal-head h2 {
+      margin: 0 0 4px;
+      font-size: 1.55rem;
+      font-weight: 950;
+    }
+
+    .modal-head p { margin: 0; opacity: 0.9; font-weight: 750; }
+
+    .modal-body {
+      overflow: auto;
+      padding: 22px;
+      background: #f8fbff;
+    }
+
+    .modal-foot {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 16px 22px;
+      border-top: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 1200;
+      max-width: min(420px, calc(100vw - 36px));
+      display: none;
+      border-radius: 18px;
+      padding: 13px 16px;
+      color: #fff;
+      background: #0f172a;
+      box-shadow: 0 18px 46px rgba(15, 23, 42, 0.22);
+      font-weight: 850;
+      line-height: 1.5;
+    }
+    .toast.show { display: block; }
+    .toast.ok { background: #047857; }
+    .toast.err { background: #b91c1c; }
+
+    .loading {
+      display: inline-block;
+      width: 1em;
+      height: 1em;
+      border: 3px solid rgba(37, 99, 235, 0.2);
+      border-top-color: #2563eb;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 1040px) {
+      .shell-head, .layout, .filters { grid-template-columns: 1fr; }
+      .hero { flex-direction: column; }
+      .cards, .detail-body { max-height: none; }
+    }
+
+    @media (max-width: 720px) {
+      .page { width: min(100vw - 12px, 1460px); margin-top: 8px; }
+      .hero, .shell, .modal { border-radius: 18px; }
+      .body, .modal-body { padding: 14px; }
+      .form-grid, .field-builder { grid-template-columns: 1fr; }
+      .btn { width: 100%; }
+      .toolbar, .button-row { align-items: stretch; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div>
+        <h1>พื้นที่ทำงานร่วมกัน</h1>
+        <p>สร้างแบบฟอร์ม ตารางเบา แบบทดสอบ และจัดการคำตอบในหน้าเฉพาะ เพื่อลดปัญหา popup ซ้อนกับหน้าหลักของ Health Assistant OS</p>
+      </div>
+      <div class="hero-actions">
+        <a class="btn outline" href="/index.html">กลับระบบหลัก</a>
+        <button class="btn success" type="button" id="createWorkspaceTopBtn">สร้างพื้นที่</button>
+      </div>
+    </section>
+
+    <section class="shell">
+      <div class="shell-head">
+        <div class="shell-title">
+          <h2>รายการพื้นที่ทำงาน</h2>
+          <p id="actorLabel">กำลังอ่านข้อมูลผู้ใช้งาน...</p>
+        </div>
+        <div class="toolbar">
+          <button class="btn outline" type="button" id="reloadBtn">โหลดใหม่</button>
+          <button class="btn primary" type="button" id="createWorkspaceBtn">สร้างพื้นที่</button>
+        </div>
+      </div>
+      <div class="body">
+        <div class="filters">
+          <div>
+            <label for="searchInput">ค้นหา</label>
+            <input id="searchInput" class="field" type="search" placeholder="ค้นหาชื่อพื้นที่ เจ้าของ กลุ่มงาน...">
+          </div>
+          <div>
+            <label for="scopeFilter">ขอบเขต</label>
+            <select id="scopeFilter" class="select">
+              <option value="">ทั้งหมด</option>
+              <option value="personal">ส่วนตัว</option>
+              <option value="department">กลุ่มงาน</option>
+            </select>
+          </div>
+          <div>
+            <label for="typeFilter">ชนิดพื้นที่</label>
+            <select id="typeFilter" class="select">
+              <option value="">ทั้งหมด</option>
+              <option value="table">ตารางเบาในระบบ</option>
+              <option value="form">แบบฟอร์มออนไลน์</option>
+              <option value="quiz">แบบทดสอบ / Quiz</option>
+              <option value="checklist">Checklist</option>
+              <option value="google_sheet">Google Sheet จริง</option>
+              <option value="google_form">Google Form จริง</option>
+            </select>
+          </div>
+          <button class="btn outline" type="button" id="clearFilterBtn">ล้างตัวกรอง</button>
+        </div>
+
+        <p class="status" id="statusText"></p>
+        <div class="layout">
+          <section class="list">
+            <div class="list-head">
+              <h3>พื้นที่ของฉัน</h3>
+              <span class="badge gray" id="listCount">0 รายการ</span>
+            </div>
+            <div class="cards" id="workspaceList">
+              <div class="empty"><span class="loading"></span> กำลังโหลด...</div>
+            </div>
+          </section>
+
+          <section class="detail" id="detailPanel">
+            <div class="detail-head">
+              <h3>รายละเอียด / คำตอบ</h3>
+              <div class="button-row" id="detailActions"></div>
+            </div>
+            <div class="detail-body" id="detailBody">
+              <div class="empty">เลือกพื้นที่จากรายการด้านซ้ายเพื่อดูข้อมูล แก้ไข หรือจัดการคำตอบ</div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="workspaceModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="workspaceModalTitle">
+      <div class="modal-head">
+        <div>
+          <h2 id="workspaceModalTitle">สร้างพื้นที่ทำงานร่วมกัน</h2>
+          <p id="workspaceModalSubtitle">ตั้งค่าพื้นที่และออกแบบช่องข้อมูลในหน้าต่างเฉพาะ</p>
+        </div>
+        <button class="btn outline" type="button" data-close-modal>ปิด</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div>
+            <label for="wsTitle">ชื่อพื้นที่</label>
+            <input id="wsTitle" class="field" type="text" placeholder="เช่น ลงทะเบียนเข้าร่วมอบรม">
+          </div>
+          <div>
+            <label for="wsType">ชนิดพื้นที่</label>
+            <select id="wsType" class="select">
+              <option value="table">ตารางเบาในระบบ</option>
+              <option value="form">แบบฟอร์มออนไลน์</option>
+              <option value="quiz">แบบทดสอบ / Quiz</option>
+              <option value="checklist">Checklist</option>
+              <option value="google_sheet">Google Sheet จริง</option>
+              <option value="google_form">Google Form จริง</option>
+            </select>
+          </div>
+          <div class="full">
+            <label for="wsDescription">คำอธิบาย</label>
+            <textarea id="wsDescription" class="textarea" placeholder="คำอธิบายสั้น ๆ สำหรับผู้ร่วมกรอกข้อมูล"></textarea>
+          </div>
+          <div>
+            <label for="wsScope">ขอบเขต</label>
+            <select id="wsScope" class="select">
+              <option value="personal">ส่วนตัว</option>
+              <option value="department">กลุ่มงาน</option>
+            </select>
+          </div>
+          <div>
+            <label for="wsAccessMode">สิทธิ์ของลิงก์</label>
+            <select id="wsAccessMode" class="select">
+              <option value="view">ดูอย่างเดียว</option>
+              <option value="edit">แก้ไข/กรอกได้</option>
+            </select>
+          </div>
+          <div>
+            <label for="wsExpiresAt">วันหมดอายุ</label>
+            <input id="wsExpiresAt" class="field" type="date">
+          </div>
+          <div>
+            <label for="wsRequireLogin">เงื่อนไขแก้ไข</label>
+            <select id="wsRequireLogin" class="select">
+              <option value="false">ไม่บังคับล็อกอิน</option>
+              <option value="true">ต้องล็อกอินก่อนแก้ไข</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-top:18px">
+          <div class="button-row" style="justify-content:space-between">
+            <div>
+              <h3 style="margin:0 0 4px;font-weight:950;color:#047857">ช่องข้อมูล</h3>
+              <p style="margin:0;color:var(--muted);font-weight:750">เพิ่มช่อง เลือกชนิดข้อมูล และใส่ตัวเลือกสำหรับ dropdown / radio / checkbox</p>
+            </div>
+            <button class="btn outline" type="button" id="addFieldBtn">เพิ่มช่อง</button>
+          </div>
+          <div id="fieldBuilderList" style="margin-top:12px"></div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn outline" type="button" id="previewWorkspaceBtn">พรีวิว</button>
+        <button class="btn success" type="button" id="saveWorkspaceBtn">บันทึก</button>
+        <button class="btn" type="button" data-close-modal>ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="assets/js/modules/shared-workspace-core.js"></script>
+  <script src="assets/js/modules/workspace-standalone.js?v=70110"></script>
+</body>
+</html>
