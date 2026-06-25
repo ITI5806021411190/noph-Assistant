@@ -11584,14 +11584,10 @@ HAOS v68.6 FINISHING FIX
       '</div>'+
     '</div>';
   }
-  window.openHelpSupportSettingsV713=async function(){
-    const u=currentUserV713();
-    Swal.fire({title:'กำลังโหลดรายชื่อผู้ติดต่อ...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
-    try{
-      const res=await gasV713('getHelpSupportContactSettingsV713',[u.phone||'']);
-      if(!res||!res.success)throw new Error((res&&res.message)||'โหลดข้อมูลไม่สำเร็จ');
-      Swal.fire({title:'ตั้งค่าผู้ติดต่อ Help Center / Live Chat',width:1180,showConfirmButton:false,showCloseButton:true,customClass:{popup:'haos-v104-support-popup'},html:supportSettingsHtmlV713(res.users||[],res.hasCustomSettings)});
-    }catch(e){Swal.fire('เปิดการตั้งค่าไม่สำเร็จ',e.message||String(e),'error');}
+  window.openHelpSupportSettingsV713=function(){
+    if(window.HAOSHelpLiveChat&&typeof window.HAOSHelpLiveChat.openSettings==='function')return window.HAOSHelpLiveChat.openSettings();
+    setTimeout(()=>{if(window.HAOSHelpLiveChat&&typeof window.HAOSHelpLiveChat.openSettings==='function')window.HAOSHelpLiveChat.openSettings();},80);
+    return false;
   };
   window.filterHelpSupportUsersV713=function(){const q=clean($('helpSupportSearchV713')?.value).toLowerCase();supportSettingsRowsV713().forEach(row=>{row.hidden=!!(q&&!String(row.dataset.search||'').includes(q));});};
   window.selectDefaultSupportV713=function(){
@@ -11612,7 +11608,9 @@ HAOS v68.6 FINISHING FIX
 
   let inboxCurrentV713='';
   window.openHelpChatInboxV713=function(){
-    Swal.fire({title:'กล่องแชทช่วยเหลือ',width:1180,showConfirmButton:false,showCloseButton:true,html:'<div class="haos-v713-chat-shell"><div class="haos-v713-chat-list"><div class="p-3 border-bottom fw-bold"><i class="bi bi-inboxes"></i> ห้องแชท</div><div id="haosChatInboxSessionsV713" class="text-muted p-3">กำลังโหลด...</div></div><div class="haos-v713-chat-main"><div id="haosChatInboxHeaderV713" class="p-3 border-bottom fw-bold text-muted">เลือกห้องแชทเพื่อดูรายละเอียด</div><div id="haosChatInboxMessagesV713" class="haos-v713-chat-messages"></div><div class="haos-v713-chat-compose"><textarea id="haosChatInboxReplyV713" class="form-control" rows="3" placeholder="ตอบกลับผู้ใช้งาน..."></textarea><div class="d-flex justify-content-between gap-2 mt-2"><button type="button" class="btn btn-outline-danger" onclick="closeHelpChatSessionV713Ui()"><i class="bi bi-check2-circle"></i> ปิดงานแชท</button><div><button type="button" class="btn btn-outline-secondary me-2" onclick="loadHelpChatInboxV713()"><i class="bi bi-arrow-clockwise"></i> โหลดใหม่</button><button type="button" class="btn btn-primary fw-bold" onclick="sendHelpChatAdminReplyV713()"><i class="bi bi-send"></i> ส่งตอบกลับ</button></div></div></div></div></div>',didOpen:()=>{loadHelpChatInboxV713();window.haosChatInboxTimerV713=setInterval(loadHelpChatInboxV713,6000);},willClose:()=>{clearInterval(window.haosChatInboxTimerV713);}});
+    if(window.HAOSHelpLiveChat&&typeof window.HAOSHelpLiveChat.openInbox==='function')return window.HAOSHelpLiveChat.openInbox();
+    setTimeout(()=>{if(window.HAOSHelpLiveChat&&typeof window.HAOSHelpLiveChat.openInbox==='function')window.HAOSHelpLiveChat.openInbox();},80);
+    return false;
   };
   window.loadHelpChatInboxV713=async function(){
     const listBox=$('haosChatInboxSessionsV713');if(!listBox)return;
@@ -11652,6 +11650,7 @@ HAOS v68.6 FINISHING FIX
   };
 
   function injectAdminSupportToolsV713(){
+    return;
     const u=currentUserV713();if(!/super\s*admin/i.test(String(u.role||'')))return;
     const row=document.querySelector('#adminPanelBody .row.g-3.text-start')||document.querySelector('#adminPanelBody .row');
     if(!row||$('helpSupportAdminCardV713'))return;
@@ -18867,6 +18866,8 @@ HAOS v68.6 FINISHING FIX
 <script src="assets/js/modules/date-coverage.js"></script>
 <script src="assets/js/modules/schedule-multi-ranges.js"></script>
 <script src="assets/js/modules/upcoming-agenda.js"></script>
+<link rel="stylesheet" href="assets/css/help-live-chat.css">
+<script src="assets/js/modules/help-live-chat.js"></script>
 <link rel="stylesheet" href="assets/css/ai-document-summary.css">
 <script src="assets/js/modules/ai-document-summary.js"></script>
 <link rel="stylesheet" href="assets/css/e-office.css">
@@ -19777,195 +19778,9 @@ window.openQuickNoteHeroV790 = window.openQuickNoteHeroV790 || function(){
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
-<style id="haos-v70-104-help-settings-rebuild-style">
-  #helpSupportAdminCardV713{display:none!important;}
-  #itservices-pane #itLiveSurveyPanelV737,
-  #itservices-pane .haos-v737-live-card{display:none!important;}
-  .swal2-popup.haos-v104-support-popup{width:min(1180px,96vw)!important;}
-  .haos-v104-support-settings{text-align:left;color:#0f172a;}
-  .haos-v104-support-toolbar{display:grid;grid-template-columns:minmax(260px,1fr) auto auto;gap:12px;align-items:center;margin:14px 0;}
-  .haos-v104-support-list{max-height:min(62vh,620px);overflow:auto;border:1px solid rgba(14,165,233,.26);border-radius:18px;background:linear-gradient(180deg,#f8fbff,#fff);padding:10px;}
-  .haos-v104-support-head,.haos-v104-support-row{display:grid;grid-template-columns:76px minmax(230px,1.25fr) minmax(120px,.62fr) minmax(190px,.95fr) minmax(230px,1fr) 92px 106px;min-width:980px;align-items:stretch;}
-  .haos-v104-support-head{position:sticky;top:0;z-index:4;overflow:hidden;border-radius:14px;margin-bottom:10px;box-shadow:0 10px 22px rgba(15,23,42,.06);}
-  .haos-v104-support-head>div{display:flex;align-items:center;justify-content:center;min-width:0;padding:12px 10px;background:#eaf6ff;color:#0f3f66;font-weight:950;border-right:1px solid rgba(148,163,184,.18);}
-  .haos-v104-support-row{overflow:hidden;border:1px solid rgba(148,163,184,.22);border-left:6px solid #0ea5e9;border-radius:16px;background:#fff;box-shadow:0 12px 30px rgba(15,23,42,.06);margin-bottom:10px;}
-  .haos-v104-support-row[hidden]{display:none!important;}
-  .haos-v104-support-cell{display:flex;align-items:center;min-width:0;padding:12px 14px;border-right:1px solid rgba(148,163,184,.15);overflow-wrap:anywhere;word-break:break-word;line-height:1.35;font-weight:820;color:#334155;}
-  .haos-v104-support-cell.center{justify-content:center;text-align:center;}
-  .haos-v104-support-person{display:flex;flex-direction:column;gap:4px;align-items:flex-start;}
-  .haos-v104-support-person b{color:#0f172a;font-size:.98rem;font-weight:950;}
-  .haos-v104-support-person small{color:#64748b;font-size:.84rem;font-weight:850;}
-  .haos-v104-support-row input[type="number"]{width:72px;min-width:72px;text-align:center;border-radius:13px;font-weight:850;}
-  .haos-v104-support-row .form-check-input{width:1.18rem;height:1.18rem;margin:0;}
-  .haos-v104-help-card{border-left:5px solid #0ea5e9!important;}
-  @media (max-width:980px){
-    .haos-v104-support-toolbar{grid-template-columns:1fr;}
-    .haos-v104-support-list{overflow-x:auto;}
-  }
-</style>
-<script id="haos-v70-104-help-settings-rebuild-script">
-(function(){
-  const PATCH='v70.104-help-settings-rebuild';
-  if(window.__HAOS_V104_HELP_SETTINGS_REBUILD__)return;
-  window.__HAOS_V104_HELP_SETTINGS_REBUILD__=true;
-  const $=id=>document.getElementById(id);
-  const qa=(sel,root=document)=>Array.from((root||document).querySelectorAll(sel));
-  const clean=v=>String(v??'').replace(/\s+/g,' ').trim();
-
-  function removeLegacyHelpAdminCard(){
-    qa('#helpSupportAdminCardV713').forEach(el=>el.remove());
-  }
-  function hideLiveSurveyLeak(){
-    const pane=$('itservices-pane');
-    if(!pane)return;
-    const card=pane.querySelector('#itLiveSurveyPanelV737')||pane.querySelector('#liveSurveyTableBody')?.closest('.card')||pane.querySelector('.haos-v737-live-card');
-    if(card){
-      card.id=card.id||'itLiveSurveyPanelV737';
-      card.classList.add('d-none','haos-v104-wordcloud-hidden');
-      card.style.display='none';
-      card.setAttribute('aria-hidden','true');
-    }
-  }
-  function advancedHelpCardHtml(){
-    return '<div class="haos-v750-tool-card haos-v104-help-card" id="haosAdvancedHelpLiveChatCardV104">'+
-      '<h6><i class="bi bi-headset text-primary"></i> Help Center / Live Chat</h6>'+
-      '<p>กำหนดผู้ติดต่อกลาง ปุ่ม Help และกล่องแชทช่วยเหลือสำหรับรับเรื่องจากผู้ใช้งาน</p>'+
-      '<div class="d-flex flex-wrap gap-2">'+
-        '<button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="openHelpSupportSettingsV713()"><i class="bi bi-person-lines-fill"></i> ตั้งค่าผู้ติดต่อ</button>'+
-        '<button type="button" class="btn btn-primary btn-sm fw-bold" onclick="openHelpChatInboxV713()"><i class="bi bi-chat-dots"></i> กล่องแชท</button>'+
-      '</div>'+
-    '</div>';
-  }
-  function installAdvancedHelpCard(){
-    removeLegacyHelpAdminCard();
-    qa('#haosAdvancedHelpLiveChatCardV102,#haosAdvancedHelpLiveChatCardV103,#haosAdvancedHelpLiveChatCardV104').forEach((el,i)=>{if(i>0)el.remove();});
-    qa('.haos-v750-tools-grid').forEach(grid=>{
-      if(grid.querySelector('#haosAdvancedHelpLiveChatCardV104'))return;
-      grid.insertAdjacentHTML('beforeend',advancedHelpCardHtml());
-    });
-  }
-  function closeWorkspaceTableModal(){
-    const modalEl=$('workspaceTableModal');
-    if(!modalEl)return;
-    try{
-      if(window.bootstrap){
-        const inst=bootstrap.Modal.getInstance(modalEl)||bootstrap.Modal.getOrCreateInstance(modalEl);
-        inst.hide();
-      }
-    }catch(e){}
-    modalEl.classList.remove('show');
-    modalEl.style.display='none';
-    modalEl.setAttribute('aria-hidden','true');
-    modalEl.removeAttribute('aria-modal');
-    qa('.modal-backdrop').forEach(b=>b.remove());
-    if(!qa('.modal.show').filter(m=>m!==modalEl).length){
-      document.body.classList.remove('modal-open');
-      document.body.style.removeProperty('padding-right');
-    }
-  }
-  function workspaceList(){
-    const pools=[];
-    try{if(Array.isArray(sharedWorkspacesGlobal))pools.push(sharedWorkspacesGlobal);}catch(e){}
-    try{if(Array.isArray(window.sharedWorkspacesGlobal))pools.push(window.sharedWorkspacesGlobal);}catch(e){}
-    return pools.flat().filter(Boolean);
-  }
-  function sameWsId(ws,id){
-    const sid=clean(id);
-    return !!(sid&&ws&&(clean(ws.id)===sid||clean(ws.workspaceId)===sid||clean(ws.token)===sid));
-  }
-  function rowWorkspaceTitle(node){
-    const tr=node?.closest?.('tr');
-    return clean(tr?.querySelector('td:first-child .fw-bold')?.textContent||tr?.querySelector('.fw-bold')?.textContent||'');
-  }
-  function resolveWorkspace(id,node){
-    const sid=clean(id||node?.dataset?.workspaceId||node?.closest?.('tr')?.dataset?.workspaceId);
-    const title=rowWorkspaceTitle(node);
-    const list=workspaceList();
-    let ws=sid?list.find(item=>sameWsId(item,sid)):null;
-    if(title&&(!ws||clean(ws.title)!==title)){
-      const byTitle=list.filter(item=>clean(item.title)===title);
-      if(byTitle.length===1)ws=byTitle[0];
-      else if(byTitle.length>1&&sid)ws=byTitle.find(item=>sameWsId(item,sid))||ws;
-    }
-    return ws||null;
-  }
-  function setCurrentWorkspace(ws){
-    if(!ws)return;
-    try{window.currentWorkspace=Object.assign({},window.currentWorkspace||{},ws);}catch(e){}
-    try{currentWorkspace=Object.assign({},currentWorkspace||{},ws);}catch(e){}
-  }
-  function annotateWorkspaceRows(){
-    qa('#workspaceTableBody tr').forEach(tr=>{
-      const title=clean(tr.querySelector('td:first-child .fw-bold')?.textContent||tr.querySelector('.fw-bold')?.textContent||'');
-      if(!title)return;
-      const ws=workspaceList().find(item=>clean(item.title)===title);
-      if(!ws||!clean(ws.id))return;
-      tr.dataset.workspaceId=ws.id;
-      qa('[onclick*="openWorkspaceEditor("],[onclick*="openWorkspaceConfigEditorV737"]',tr).forEach(btn=>{btn.dataset.workspaceId=ws.id;});
-    });
-  }
-  const baseConfigEditor=window.openWorkspaceConfigEditorV737;
-  if(typeof baseConfigEditor==='function'){
-    window.openWorkspaceConfigEditorV737=function(id){
-      closeWorkspaceTableModal();
-      const ws=resolveWorkspace(id,document.activeElement);
-      if(ws&&clean(ws.id))setCurrentWorkspace(ws);
-      const targetId=clean(ws&&ws.id)||clean(id);
-      const result=baseConfigEditor.call(this,targetId);
-      [0,80,220,520].forEach(t=>setTimeout(closeWorkspaceTableModal,t));
-      return result;
-    };
-    window.openWorkspaceConfigEditorV737.__haosV104=true;
-  }
-  window.addEventListener('click',ev=>{
-    const configBtn=ev.target.closest?.('[onclick*="openWorkspaceConfigEditorV737"]');
-    if(!configBtn||typeof baseConfigEditor!=='function')return;
-    const match=String(configBtn.getAttribute('onclick')||'').match(/openWorkspaceConfigEditorV737\(['"]([^'"]*)['"]\)/);
-    const id=configBtn.dataset.workspaceId||configBtn.closest('tr')?.dataset.workspaceId||(match?match[1]:'');
-    const ws=resolveWorkspace(id,configBtn);
-    ev.preventDefault();
-    ev.stopPropagation();
-    ev.stopImmediatePropagation();
-    closeWorkspaceTableModal();
-    if(ws&&clean(ws.id))setCurrentWorkspace(ws);
-    baseConfigEditor.call(window,clean(ws&&ws.id)||id);
-    [0,80,220,520].forEach(t=>setTimeout(closeWorkspaceTableModal,t));
-  },true);
-  const oldOpenTools=window.openV66ControlCenter;
-  if(typeof oldOpenTools==='function'&&!oldOpenTools.__haosV104){
-    window.openV66ControlCenter=function(){
-      const result=oldOpenTools.apply(this,arguments);
-      [0,80,220,520,1000].forEach(t=>setTimeout(installAdvancedHelpCard,t));
-      return result;
-    };
-    window.openV66ControlCenter.__haosV104=true;
-  }
-  const oldLoadWorkspaces=window.loadSharedWorkspaces;
-  if(typeof oldLoadWorkspaces==='function'&&!oldLoadWorkspaces.__haosV104){
-    window.loadSharedWorkspaces=function(){
-      const result=oldLoadWorkspaces.apply(this,arguments);
-      [120,420,900,1500].forEach(t=>setTimeout(annotateWorkspaceRows,t));
-      return result;
-    };
-    window.loadSharedWorkspaces.__haosV104=true;
-  }
-  function install(){
-    removeLegacyHelpAdminCard();
-    hideLiveSurveyLeak();
-    installAdvancedHelpCard();
-    annotateWorkspaceRows();
-    const title=clean(document.querySelector('.swal2-container .swal2-title')?.textContent);
-    if(title.includes('แก้ไขพื้นที่ทำงานร่วมกัน'))closeWorkspaceTableModal();
-  }
-  try{new MutationObserver(()=>setTimeout(install,60)).observe(document.body,{childList:true,subtree:true});}catch(e){}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
-  [300,900,1800,3200].forEach(t=>setTimeout(install,t));
-  setInterval(install,2500);
-  window.HAOSHelpWorkspaceRebuildV104={closeWorkspaceTableModal,annotateWorkspaceRows};
-  console.info('HAOS '+PATCH+' loaded');
-})();
-</script>
+<!-- v70.104 Help settings rebuild removed in v70.105; Help now lives in assets/js/modules/help-live-chat.js -->
 </body>
 </html>
+
 
 

@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = 'haos-v70-104-help-settings-rebuild';
+const CACHE_NAME = 'haos-v70-105-help-live-chat-module';
 const CORE = [
   '/',
   '/index.html',
@@ -38,6 +38,8 @@ const CORE = [
   '/assets/css/shared-workspace-flow.css',
   '/assets/js/modules/shared-workspace-flow.js',
   '/assets/js/modules/shared-workspace-builder.js',
+  '/assets/css/help-live-chat.css',
+  '/assets/js/modules/help-live-chat.js',
   '/assets/css/ai-document-summary.css',
   '/assets/js/modules/ai-document-summary.js',
   '/assets/css/e-office.css',
@@ -67,5 +69,3 @@ self.addEventListener('fetch', event => {
     }).catch(() => caches.match(event.request).then(r => r || caches.match('/index.html')))
   );
 });
-
-
