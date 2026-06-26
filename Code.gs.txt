@@ -4860,12 +4860,36 @@ function haosV7111ImportValue_(raw, keys) {
 function haosV7111NormalizeImportDate_(value) {
   if (!value) return '';
   if (Object.prototype.toString.call(value) === '[object Date]' && !isNaN(value.getTime())) {
+    var dateYear = value.getFullYear();
+    if (dateYear >= 2400) {
+      return Utilities.formatDate(new Date(dateYear - 543, value.getMonth(), value.getDate()), 'GMT+7', 'yyyy-MM-dd');
+    }
     return Utilities.formatDate(value, 'GMT+7', 'yyyy-MM-dd');
   }
   var text = String(value || '').trim();
   if (!text) return '';
+  var m = text.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+  if (m) {
+    var y = Number(m[1]);
+    var mo = Number(m[2]);
+    var day = Number(m[3]);
+    if (y >= 2400) y -= 543;
+    return Utilities.formatDate(new Date(y, mo - 1, day), 'GMT+7', 'yyyy-MM-dd');
+  }
+  m = text.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
+  if (m) {
+    var d = Number(m[1]);
+    var month = Number(m[2]);
+    var year = Number(m[3]);
+    if (year >= 2400) year -= 543;
+    return Utilities.formatDate(new Date(year, month - 1, d), 'GMT+7', 'yyyy-MM-dd');
+  }
   var parsed = new Date(text);
-  if (!isNaN(parsed.getTime())) return Utilities.formatDate(parsed, 'GMT+7', 'yyyy-MM-dd');
+  if (!isNaN(parsed.getTime())) {
+    var parsedYear = parsed.getFullYear();
+    if (parsedYear >= 2400) parsed = new Date(parsedYear - 543, parsed.getMonth(), parsed.getDate());
+    return Utilities.formatDate(parsed, 'GMT+7', 'yyyy-MM-dd');
+  }
   return text;
 }
 
@@ -6841,8 +6865,32 @@ function haosV70Id_(prefix) { return prefix + '-' + Utilities.getUuid().substrin
 function haosV70Phone_(v) { return String(v || '').replace(/'/g, '').trim(); }
 function haosV70Date_(v) {
   if (!v) return '';
-  var d = v instanceof Date ? v : new Date(v);
+  if (v instanceof Date) {
+    var dateYear = v.getFullYear();
+    if (dateYear >= 2400) return Utilities.formatDate(new Date(dateYear - 543, v.getMonth(), v.getDate()), 'GMT+7', 'yyyy-MM-dd');
+    return Utilities.formatDate(v, 'GMT+7', 'yyyy-MM-dd');
+  }
+  var text = String(v || '').trim();
+  var m = text.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+  if (m) {
+    var y = Number(m[1]);
+    var mo = Number(m[2]);
+    var day = Number(m[3]);
+    if (y >= 2400) y -= 543;
+    return Utilities.formatDate(new Date(y, mo - 1, day), 'GMT+7', 'yyyy-MM-dd');
+  }
+  m = text.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
+  if (m) {
+    var d0 = Number(m[1]);
+    var month = Number(m[2]);
+    var year = Number(m[3]);
+    if (year >= 2400) year -= 543;
+    return Utilities.formatDate(new Date(year, month - 1, d0), 'GMT+7', 'yyyy-MM-dd');
+  }
+  var d = new Date(text);
   if (isNaN(d.getTime())) return String(v || '');
+  var parsedYear = d.getFullYear();
+  if (parsedYear >= 2400) d = new Date(parsedYear - 543, d.getMonth(), d.getDate());
   return Utilities.formatDate(d, 'GMT+7', 'yyyy-MM-dd');
 }
 function haosV70DateTime_(v) {
@@ -7464,8 +7512,9 @@ function getPublicITAssetDetailedDashboardV7112(auth) {
     } catch(ignore2) {}
     return {
       success:true,
-      version:'v70.113-itasset-category-report',
+      version:'v70.114-itasset-change-request',
       readOnly:true,
+      changeRequestEnabled:true,
       canManageIT:canManage,
       truncated:assets.length > detailedAssets.length,
       generatedAt:Utilities.formatDate(new Date(), 'GMT+7', 'yyyy-MM-dd HH:mm:ss'),
@@ -7499,7 +7548,7 @@ function getPublicITAssetDetailedDashboardV7112(auth) {
 }
 
 function bridgeWhitelistHealthCheckV7112() {
-  return {success:true, version:'v70.113-itasset-category-report', functions:['getPublicITAssetDetailedDashboardV7112']};
+  return {success:true, version:'v70.114-itasset-change-request', functions:['getPublicITAssetDetailedDashboardV7112']};
 }
 
 function getAllowedBridgeFunctions_() {
@@ -16364,3 +16413,180 @@ function bridgeWhitelistHealthCheckV790() {
     functions:['getUserNotesV790', 'saveUserNoteV790', 'toggleUserNotePinV790', 'archiveUserNoteV790', 'deleteUserNoteV790']
   };
 }
+
+// v70.114: Public IT Asset change request flow for user/head with IT approval.
+function getITAssetChangeRequestSheetV7114_() {
+  return getOrCreateSheet_('ITAssetChangeRequests', [
+    'Request ID','Asset ID','Asset Code','Asset Name',
+    'Requested By Phone','Requested By Name','Requested By Role','Requested By Department',
+    'Request Type','Fields JSON','Message','Status',
+    'Reviewer Phone','Reviewer Name','Reviewed At','Review Note',
+    'Created At','Updated At'
+  ], '#e0f2fe');
+}
+
+function haosV7114SafeJsonParse_(text, fallback) {
+  try { return JSON.parse(String(text || '')); } catch(e) { return fallback; }
+}
+
+function haosV7114ChangeRequestRowToObject_(r) {
+  return {
+    requestId:r[0] || '',
+    assetId:r[1] || '',
+    assetCode:r[2] || '',
+    assetName:r[3] || '',
+    requestedByPhone:haosV70Phone_(r[4]),
+    requestedByName:r[5] || '',
+    requestedByRole:r[6] || '',
+    requestedByDepartment:r[7] || '',
+    requestType:r[8] || 'Update',
+    fields:haosV7114SafeJsonParse_(r[9], {}),
+    fieldsJson:r[9] || '',
+    message:r[10] || '',
+    status:r[11] || 'Pending',
+    reviewerPhone:haosV70Phone_(r[12]),
+    reviewerName:r[13] || '',
+    reviewedAt:haosV70DateTime_(r[14]),
+    reviewNote:r[15] || '',
+    createdAt:haosV70DateTime_(r[16]),
+    updatedAt:haosV70DateTime_(r[17])
+  };
+}
+
+function haosV7114FindAssetById_(assetId) {
+  var sh = getITAssetSheetV70_();
+  var row = haosV70FindRowById_(sh, assetId, 1);
+  if (row <= 1) return null;
+  return {row:row, asset:itAssetRowToObjectV70_(sh.getRange(row, 1, 1, 29).getValues()[0])};
+}
+
+function haosV7114SanitizeAssetChangeFields_(fields) {
+  fields = fields || {};
+  var allowed = {
+    assetCode:true, assetNumber:true, assetName:true, category:true, brand:true, model:true,
+    serialNumber:true, spec:true, purchaseDate:true, fiscalYear:true, budgetSource:true, price:true,
+    vendor:true, warrantyStart:true, warrantyEnd:true, ownerDepartment:true, currentUserName:true,
+    currentUserPhone:true, location:true, status:true, condition:true, lastCheckedAt:true,
+    remark:true, photoUrl:true
+  };
+  var out = {};
+  Object.keys(fields).forEach(function(key) {
+    if (!allowed[key]) return;
+    var value = fields[key];
+    if (key === 'purchaseDate' || key === 'warrantyStart' || key === 'warrantyEnd' || key === 'lastCheckedAt') value = haosV7111NormalizeImportDate_(value);
+    if (key === 'currentUserPhone') value = haosV70Phone_(value);
+    out[key] = value == null ? '' : String(value);
+  });
+  return out;
+}
+
+function requestITAssetChangeV7114(payload, auth) {
+  try {
+    payload = payload || {};
+    var login = haosV7112PublicAssetLogin_(auth || {});
+    if (!login.success) return login;
+    var user = login.user || {};
+    var assetId = String(payload.assetId || '').trim();
+    var found = haosV7114FindAssetById_(assetId);
+    if (!found) return {success:false, message:'ไม่พบทรัพย์สินที่ต้องการขอแก้ไข'};
+    var fields = haosV7114SanitizeAssetChangeFields_(payload.fields || {});
+    var message = String(payload.message || '').trim();
+    if (!Object.keys(fields).length && !message) return {success:false, message:'กรุณาระบุข้อมูลที่ต้องการแก้ไขหรือเหตุผล'};
+
+    var sh = getITAssetChangeRequestSheetV7114_();
+    var now = haosV70Now_();
+    var requestId = haosV70Id_('ACR');
+    sh.appendRow([
+      requestId, found.asset.assetId || assetId, found.asset.assetCode || '', found.asset.assetName || '',
+      "'" + haosV70Phone_(user.phone), user.fullName || '', user.role || '', user.department || '',
+      'Update', JSON.stringify(fields), message, 'Pending',
+      '', '', '', '', now, now
+    ]);
+    try {
+      createNotificationsV732_(getITServiceStaffPhones_(), 'มีคำขอแก้ไขข้อมูลทรัพย์สิน IT: ' + (found.asset.assetName || found.asset.assetCode || assetId), 'IT Asset Change Request', requestId, 'ปกติ', {module:'itAsset', action:'openITAssetChangeRequests', createdBy:user.phone});
+    } catch(ignore) {}
+    try {
+      logAudit_(user.phone || '', user.fullName || '', 'REQUEST_IT_ASSET_CHANGE', 'ITAssetChangeRequest', requestId, found.asset.assetName || assetId, found.asset, {fields:fields, message:message});
+    } catch(ignore2) {}
+    return {success:true, message:'ส่งคำขอแก้ไขข้อมูลแล้ว รอ IT ตรวจอนุมัติ', requestId:requestId};
+  } catch(e) {
+    return {success:false, message:e.toString()};
+  }
+}
+
+function getITAssetChangeRequestsV7114(auth, status) {
+  try {
+    var login = haosV7112PublicAssetLogin_(auth || {});
+    if (!login.success) return login;
+    var user = login.user || {};
+    if (!haosV711ActorCanManageIT_(user)) return haosV711ITNoManageResponse_();
+    var wanted = String(status || 'Pending');
+    var data = getITAssetChangeRequestSheetV7114_().getDataRange().getValues();
+    var out = [];
+    for (var i = 1; i < data.length; i++) {
+      if (!data[i][0]) continue;
+      var item = haosV7114ChangeRequestRowToObject_(data[i]);
+      if (wanted && wanted !== 'All' && item.status !== wanted) continue;
+      out.push(item);
+    }
+    out.sort(function(a,b){ return String(b.createdAt || b.updatedAt).localeCompare(String(a.createdAt || a.updatedAt)); });
+    return {success:true, version:'v70.114-itasset-change-request', requests:out.slice(0, 100)};
+  } catch(e) {
+    return {success:false, message:e.toString()};
+  }
+}
+
+function reviewITAssetChangeRequestV7114(payload, auth) {
+  try {
+    payload = payload || {};
+    var login = haosV7112PublicAssetLogin_(auth || {});
+    if (!login.success) return login;
+    var user = login.user || {};
+    if (!haosV711ActorCanManageIT_(user)) return haosV711ITNoManageResponse_();
+    var requestId = String(payload.requestId || '').trim();
+    var approve = String(payload.decision || '').toLowerCase() === 'approved' || payload.approve === true;
+    var sh = getITAssetChangeRequestSheetV7114_();
+    var row = haosV70FindRowById_(sh, requestId, 1);
+    if (row <= 1) return {success:false, message:'ไม่พบคำขอแก้ไขนี้'};
+    var req = haosV7114ChangeRequestRowToObject_(sh.getRange(row, 1, 1, 18).getValues()[0]);
+    if (req.status !== 'Pending') return {success:false, message:'คำขอนี้ถูกตรวจแล้ว'};
+    var now = haosV70Now_();
+    if (approve) {
+      var found = haosV7114FindAssetById_(req.assetId);
+      if (!found) return {success:false, message:'ไม่พบทรัพย์สินต้นทางของคำขอ'};
+      var updated = found.asset || {};
+      Object.keys(req.fields || {}).forEach(function(key) { updated[key] = req.fields[key]; });
+      var saveRes = saveITAssetV70(updated, user);
+      if (!saveRes || !saveRes.success) return saveRes || {success:false, message:'บันทึกข้อมูลทรัพย์สินไม่สำเร็จ'};
+    }
+    var newStatus = approve ? 'Approved' : 'Rejected';
+    sh.getRange(row, 12, 1, 7).setValues([[newStatus, "'" + haosV70Phone_(user.phone), user.fullName || user.phone || '', now, payload.note || '', req.createdAt || now, now]]);
+    try {
+      createNotificationV732_(req.requestedByPhone, 'คำขอแก้ไขข้อมูลทรัพย์สิน IT "' + (req.assetName || req.assetCode || req.assetId) + '" ' + (approve ? 'ได้รับอนุมัติแล้ว' : 'ไม่ผ่านการอนุมัติ') + (payload.note ? ': ' + payload.note : ''), 'IT Asset Change Result', requestId, approve ? 'ปกติ' : 'ด่วน', {module:'itAsset', action:'openITAsset', createdBy:user.phone});
+    } catch(ignore) {}
+    try {
+      logAudit_(user.phone || '', user.fullName || '', approve ? 'APPROVE_IT_ASSET_CHANGE' : 'REJECT_IT_ASSET_CHANGE', 'ITAssetChangeRequest', requestId, req.assetName || req.assetId, req, {note:payload.note || ''});
+    } catch(ignore2) {}
+    return {success:true, message:approve ? 'อนุมัติและอัปเดตข้อมูลทรัพย์สินแล้ว' : 'ไม่อนุมัติคำขอแล้ว'};
+  } catch(e) {
+    return {success:false, message:e.toString()};
+  }
+}
+
+function bridgeWhitelistHealthCheckV7114() {
+  return {
+    success:true,
+    version:'v70.114-itasset-change-request',
+    functions:['requestITAssetChangeV7114','getITAssetChangeRequestsV7114','reviewITAssetChangeRequestV7114']
+  };
+}
+
+var haosV7114PrevGetAllowedBridgeFunctions_ = typeof getAllowedBridgeFunctions_ === 'function' ? getAllowedBridgeFunctions_ : null;
+getAllowedBridgeFunctions_ = function() {
+  var allowed = haosV7114PrevGetAllowedBridgeFunctions_ ? haosV7114PrevGetAllowedBridgeFunctions_() : {};
+  allowed.requestITAssetChangeV7114 = true;
+  allowed.getITAssetChangeRequestsV7114 = true;
+  allowed.reviewITAssetChangeRequestV7114 = true;
+  allowed.bridgeWhitelistHealthCheckV7114 = true;
+  return allowed;
+};
