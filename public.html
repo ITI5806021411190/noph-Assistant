@@ -1237,6 +1237,180 @@ body{background:radial-gradient(circle at 12% 10%,rgba(14,165,233,.20),transpare
   console.info('HAOS '+PATCH+' loaded');
 })();
 </script>
+<style id="haos-v70-112-public-itasset-detail-style">
+  .haos-v7112-auth-card{margin:18px 0;border:1px solid rgba(14,165,233,.28);border-radius:24px;background:linear-gradient(135deg,#f0f9ff,#ecfdf5);box-shadow:0 18px 48px rgba(15,23,42,.08);padding:18px}
+  .haos-v7112-auth-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+  .haos-v7112-auth-head h2{margin:0;color:#075985;font-weight:950;font-size:1.25rem}
+  .haos-v7112-auth-head p{margin:4px 0 0;color:#475569;font-weight:750}
+  .haos-v7112-form{display:grid;grid-template-columns:minmax(180px,1fr) minmax(150px,.7fr) auto;gap:10px;align-items:end}
+  .haos-v7112-field label{display:block;color:#334155;font-size:.82rem;font-weight:900;margin-bottom:5px}
+  .haos-v7112-field input,.haos-v7112-field select{width:100%;border:1px solid #cbd5e1;border-radius:16px;padding:12px 14px;font-weight:850;color:#0f172a;background:#fff}
+  .haos-v7112-primary{border:0;border-radius:16px;background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff;font-weight:950;padding:12px 18px;box-shadow:0 12px 30px rgba(37,99,235,.22)}
+  .haos-v7112-primary:disabled{opacity:.62;box-shadow:none}
+  .haos-v7112-shell{--asset-blue:#2563eb;--asset-green:#059669;--asset-warn:#f59e0b;--asset-danger:#ef4444}
+  .haos-v7112-detail-hero{border-radius:28px;background:linear-gradient(135deg,#0ea5e9,#2563eb 58%,#10b981);color:#fff;padding:24px;box-shadow:0 22px 70px rgba(37,99,235,.22)}
+  .haos-v7112-detail-hero h1{font-size:clamp(1.7rem,3vw,2.55rem);font-weight:950;margin:8px 0 6px}
+  .haos-v7112-detail-hero p{margin:0;color:rgba(255,255,255,.86);font-weight:800}
+  .haos-v7112-topline{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .haos-v7112-badge{display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:8px 12px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);font-weight:950}
+  .haos-v7112-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .haos-v7112-btn{border:1px solid rgba(255,255,255,.38);border-radius:14px;padding:10px 14px;font-weight:950;background:rgba(255,255,255,.14);color:#fff;text-decoration:none}
+  .haos-v7112-btn.light{background:#fff;color:#0f172a}
+  .haos-v7112-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}
+  .haos-v7112-kpi{border:1px solid rgba(148,163,184,.24);border-radius:20px;background:#fff;padding:16px;box-shadow:0 14px 38px rgba(15,23,42,.07)}
+  .haos-v7112-kpi span{display:block;color:#64748b;font-weight:850;font-size:.86rem}
+  .haos-v7112-kpi b{display:block;color:#0f172a;font-weight:950;font-size:2rem;line-height:1.05;margin-top:4px}
+  .haos-v7112-panel{border:1px solid rgba(148,163,184,.25);border-radius:24px;background:rgba(255,255,255,.96);box-shadow:0 18px 52px rgba(15,23,42,.08);overflow:hidden;margin-top:14px}
+  .haos-v7112-panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:16px 18px;border-bottom:1px solid rgba(148,163,184,.2);background:linear-gradient(135deg,#f8fafc,#eff6ff)}
+  .haos-v7112-panel-head h2{font-weight:950;font-size:1.18rem;margin:0;color:#0f172a}
+  .haos-v7112-panel-head small{display:block;color:#64748b;font-weight:800;margin-top:3px}
+  .haos-v7112-filters{display:grid;grid-template-columns:2fr repeat(4,1fr) auto;gap:10px;padding:14px 18px;border-bottom:1px solid rgba(148,163,184,.18);background:#f8fafc}
+  .haos-v7112-table-wrap{overflow:auto;max-height:68vh}
+  .haos-v7112-table{width:100%;border-collapse:separate;border-spacing:0}
+  .haos-v7112-table th{position:sticky;top:0;z-index:2;background:#eaf6ff;color:#0f3f64;text-align:left;font-weight:950;padding:12px;border-bottom:1px solid #dbeafe;white-space:nowrap}
+  .haos-v7112-table td{padding:12px;border-bottom:1px solid #e5e7eb;vertical-align:top;color:#0f172a;font-weight:760}
+  .haos-v7112-table tr:hover td{background:#f8fafc}
+  .haos-v7112-title{font-weight:950;color:#0b5ed7}
+  .haos-v7112-muted{color:#64748b;font-weight:780;font-size:.9rem}
+  .haos-v7112-pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:6px 10px;font-size:.8rem;font-weight:950;border:1px solid #dbeafe;background:#eff6ff;color:#1d4ed8;margin:2px}
+  .haos-v7112-pill.ok{background:#dcfce7;color:#047857;border-color:#bbf7d0}
+  .haos-v7112-pill.warn{background:#fef3c7;color:#b45309;border-color:#fde68a}
+  .haos-v7112-pill.danger{background:#fee2e2;color:#b91c1c;border-color:#fecaca}
+  .haos-v7112-detail-button{border:1px solid #0ea5e9;border-radius:14px;background:#fff;color:#0369a1;font-weight:950;padding:9px 12px}
+  .haos-v7112-empty{padding:36px;text-align:center;color:#64748b;font-weight:900}
+  .haos-v7112-license-list{display:flex;flex-wrap:wrap;gap:6px;max-width:360px}
+  .haos-v7112-modal-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;text-align:left}
+  .haos-v7112-modal-item{border:1px solid #e2e8f0;border-radius:14px;padding:10px;background:#f8fafc}
+  .haos-v7112-modal-item small{display:block;color:#64748b;font-weight:900;margin-bottom:2px}
+  .haos-v7112-modal-item b{display:block;color:#0f172a;font-weight:950;word-break:break-word}
+  .haos-v7112-modal-wide{grid-column:1/-1}
+  @media(max-width:980px){.haos-v7112-form,.haos-v7112-filters{grid-template-columns:1fr}.haos-v7112-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.haos-v7112-table{min-width:940px}}
+  @media(max-width:640px){.haos-v7112-kpis{grid-template-columns:1fr}.haos-v7112-modal-grid{grid-template-columns:1fr}.haos-v7112-detail-hero{border-radius:20px}}
+</style>
+<script id="haos-v70-112-public-itasset-detail-script">
+(function(){
+  const PATCH='v70.112-public-itasset-detail';
+  const params=new URLSearchParams(location.search);
+  if((params.get('module')||'')!=='itasset-dashboard')return;
+  const state={data:null,filtered:[]};
+  const months=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const num=v=>Number(v||0)||0;
+  const root=()=>location.origin&&location.origin!=='null'?location.origin:'';
+  function ensureStyle(){const id='haos-v70-112-public-itasset-detail-style';if(document.head.querySelector('#'+id+'-head'))return;const src=document.getElementById(id);if(!src)return;const style=document.createElement('style');style.id=id+'-head';style.textContent=src.textContent;document.head.appendChild(style);}
+  function gas(fn,args){return new Promise((resolve,reject)=>{try{if(!window.google||!google.script||!google.script.run)throw new Error('ไม่พบตัวเชื่อมต่อข้อมูล');google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run,args||[]);}catch(e){reject(e);}});}
+  function fmtDate(v){if(!v)return '-';const s=String(v);const d=/^\d{4}-\d{2}-\d{2}/.test(s)?new Date(s.substring(0,10)+'T00:00:00'):new Date(s);if(isNaN(d.getTime()))return s;const y=d.getFullYear()<2400?d.getFullYear()+543:d.getFullYear();return d.getDate()+' • '+months[d.getMonth()]+' • '+y;}
+  function fmtDateTime(v){if(!v)return '-';const s=String(v);const d=/^\d{4}-\d{2}-\d{2}/.test(s)?new Date(s.replace(' ','T')):new Date(s);if(isNaN(d.getTime()))return s;const hh=String(d.getHours()).padStart(2,'0');const mm=String(d.getMinutes()).padStart(2,'0');return fmtDate(d)+' '+hh+'.'+mm+' น.';}
+  function fmtMoney(v){const n=Number(String(v??'').replace(/,/g,''));return isNaN(n)||!v?esc(v||'-'):n.toLocaleString('th-TH',{maximumFractionDigits:2})+' บาท';}
+  function statusTone(text){const s=String(text||'').toLowerCase();if(/เสีย|ชำรุด|repair|หมด|expired|inactive/.test(s))return 'danger';if(/รอ|กำลัง|pending|warning|ใกล้/.test(s))return 'warn';if(/ใช้|active|พร้อม|ดี/.test(s))return 'ok';return '';}
+  function copyOptions(items){return (items||[]).map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>').join('');}
+  function injectAuthCard(){
+    ensureStyle();
+    if(document.getElementById('haosV7112AuthCard')||state.data)return;
+    const wrap=document.querySelector('.haos-v709-wrap');
+    if(!wrap)return;
+    const card=document.createElement('section');
+    card.id='haosV7112AuthCard';
+    card.className='haos-v7112-auth-card';
+    card.innerHTML='<div class="haos-v7112-auth-head"><div><h2><i class="bi bi-shield-lock"></i> ดูรายละเอียดทะเบียนทรัพย์สินแบบอ่านอย่างเดียว</h2><p>ล็อกอินด้วยบัญชี Health Assistant OS เพื่อดูข้อมูลทรัพย์สิน, Software License และประวัติที่เกี่ยวข้องโดยไม่เข้าเมนูหลัก</p></div><span class="haos-v7112-pill ok"><i class="bi bi-eye"></i> Read-only</span></div>'+
+      '<div class="haos-v7112-form"><div class="haos-v7112-field"><label>เบอร์โทร</label><input id="haosV7112Phone" inputmode="numeric" autocomplete="username" placeholder="เช่น 0868246621"></div><div class="haos-v7112-field"><label>PIN</label><input id="haosV7112Pin" type="password" autocomplete="current-password" placeholder="กรอก PIN"></div><button type="button" id="haosV7112LoginBtn" class="haos-v7112-primary"><i class="bi bi-box-arrow-in-right"></i> เข้าดูรายละเอียด</button></div>'+
+      '<div id="haosV7112LoginMsg" class="small fw-bold text-muted mt-2">ข้อมูลนี้เปิดให้เฉพาะผู้ที่มีบัญชีในระบบ และไม่สามารถเพิ่ม แก้ไข หรือลบจากหน้านี้ได้</div>';
+    const lock=document.querySelector('.haos-v709-lock');
+    if(lock)lock.insertAdjacentElement('beforebegin',card);else wrap.appendChild(card);
+    const savedPhone=sessionStorage.getItem('haos_public_itasset_phone')||'';
+    const phoneInput=document.getElementById('haosV7112Phone');
+    if(phoneInput)savedPhone&&(phoneInput.value=savedPhone);
+    document.getElementById('haosV7112LoginBtn')?.addEventListener('click',loginDetailed);
+  }
+  async function loginDetailed(){
+    const phone=(document.getElementById('haosV7112Phone')?.value||'').replace(/\D/g,'');
+    const pin=(document.getElementById('haosV7112Pin')?.value||'').trim();
+    const btn=document.getElementById('haosV7112LoginBtn');
+    const msg=document.getElementById('haosV7112LoginMsg');
+    if(!phone||!pin){msg.innerHTML='<span class="text-danger">กรุณาระบุเบอร์โทรและ PIN</span>';return;}
+    btn.disabled=true;btn.innerHTML='<span class="spinner-border spinner-border-sm"></span> กำลังตรวจสอบ...';
+    msg.textContent='กำลังโหลดข้อมูลรายละเอียดแบบอ่านอย่างเดียว...';
+    try{
+      const res=await gas('getPublicITAssetDetailedDashboardV7112',[{phone,pin,limit:1600}]);
+      if(!res||!res.success)throw new Error(res&&res.message?res.message:'เข้าสู่โหมดดูรายละเอียดไม่สำเร็จ');
+      sessionStorage.setItem('haos_public_itasset_phone',phone);
+      state.data=res;
+      renderDetailed(res);
+    }catch(e){
+      msg.innerHTML='<span class="text-danger">'+esc(e.message||String(e))+'</span>';
+      btn.disabled=false;btn.innerHTML='<i class="bi bi-box-arrow-in-right"></i> เข้าดูรายละเอียด';
+    }
+  }
+  function kpi(label,value,note,icon){return '<article class="haos-v7112-kpi"><span><i class="bi '+esc(icon)+'"></i> '+esc(label)+'</span><b>'+esc(value)+'</b><span>'+esc(note||'')+'</span></article>';}
+  function renderDetailed(data){
+    ensureStyle();
+    const d=data.dashboard||{};
+    document.body.innerHTML='<main class="haos-v709-shell haos-v7112-shell"><section class="haos-v709-wrap">'+
+      '<section class="haos-v7112-detail-hero"><div class="haos-v7112-topline"><span class="haos-v7112-badge"><i class="bi bi-hdd-network"></i> IT Asset / Software License</span><span class="haos-v7112-badge"><i class="bi bi-eye"></i> อ่านอย่างเดียว</span></div><h1>ทะเบียนทรัพย์สิน IT และ Software License</h1><p>เข้าสู่ระบบโดย '+esc((data.user||{}).fullName||'-')+' • '+esc((data.user||{}).department||'-')+' • อัปเดต '+esc(fmtDateTime(data.generatedAt))+'</p><div class="haos-v7112-actions"><a class="haos-v7112-btn light" href="'+esc(root()+'/')+'"><i class="bi bi-house"></i> กลับระบบหลัก</a><button class="haos-v7112-btn" type="button" onclick="location.reload()"><i class="bi bi-box-arrow-left"></i> ออกจากโหมดละเอียด</button></div></section>'+
+      '<section class="haos-v7112-kpis">'+
+      kpi('ทรัพย์สินทั้งหมด',d.totalAssets||data.assets.length,'รายการในทะเบียน','bi-pc-display')+
+      kpi('พร้อมใช้งาน',d.activeAssets||0,'สถานะใช้งานได้','bi-check-circle')+
+      kpi('License ทั้งหมด',d.totalLicenses||data.licenses.length,'สิทธิ์ใช้งานซอฟต์แวร์','bi-key')+
+      kpi('License ต้องติดตาม',d.expiringLicenses||data.alerts.length,'ใกล้หมดอายุ/หมดอายุ','bi-calendar2-exclamation')+
+      '</section>'+
+      '<section class="haos-v7112-panel"><header class="haos-v7112-panel-head"><div><h2><i class="bi bi-table"></i> รายการทรัพย์สินแบบละเอียด</h2><small id="haosV7112Count">กำลังเตรียมข้อมูล...</small></div><span class="haos-v7112-pill ok"><i class="bi bi-lock"></i> ไม่เปิดให้แก้ไขจากหน้านี้</span></header>'+
+      '<div class="haos-v7112-filters"><div class="haos-v7112-field"><input id="haosV7112Search" placeholder="ค้นหาชื่อทรัพย์สิน รหัส Serial ผู้ใช้ สถานที่..."></div><div class="haos-v7112-field"><select id="haosV7112Category"><option value="">ทุกหมวด</option>'+copyOptions(data.filters.categories)+'</select></div><div class="haos-v7112-field"><select id="haosV7112Status"><option value="">ทุกสถานะ</option>'+copyOptions(data.filters.statuses)+'</select></div><div class="haos-v7112-field"><select id="haosV7112Dept"><option value="">ทุกกลุ่มงาน</option>'+copyOptions(data.filters.departments)+'</select></div><div class="haos-v7112-field"><select id="haosV7112Location"><option value="">ทุกสถานที่</option>'+copyOptions(data.filters.locations)+'</select></div><button id="haosV7112Reset" class="haos-v7112-detail-button" type="button"><i class="bi bi-arrow-counterclockwise"></i></button></div>'+
+      '<div class="haos-v7112-table-wrap"><table class="haos-v7112-table"><thead><tr><th>ทรัพย์สิน</th><th>สเปก / Serial</th><th>ผู้ใช้ / สถานที่</th><th>สถานะ</th><th>License</th><th>จัดการ</th></tr></thead><tbody id="haosV7112Rows"></tbody></table></div></section>'+
+      '<footer class="haos-v709-footer">Public read-only IT Asset Dashboard • '+esc(PATCH)+'</footer></section></main>';
+    ['haosV7112Search','haosV7112Category','haosV7112Status','haosV7112Dept','haosV7112Location'].forEach(id=>document.getElementById(id)?.addEventListener('input',applyFilters));
+    document.getElementById('haosV7112Reset')?.addEventListener('click',()=>{['haosV7112Search','haosV7112Category','haosV7112Status','haosV7112Dept','haosV7112Location'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});applyFilters();});
+    document.getElementById('haosV7112Rows')?.addEventListener('click',e=>{const btn=e.target.closest('[data-asset-detail]');if(btn)showAssetDetail(btn.getAttribute('data-asset-detail'));});
+    applyFilters();
+  }
+  function applyFilters(){
+    const data=state.data;if(!data)return;
+    const q=(document.getElementById('haosV7112Search')?.value||'').toLowerCase().trim();
+    const cat=document.getElementById('haosV7112Category')?.value||'';
+    const st=document.getElementById('haosV7112Status')?.value||'';
+    const dept=document.getElementById('haosV7112Dept')?.value||'';
+    const loc=document.getElementById('haosV7112Location')?.value||'';
+    state.filtered=(data.assets||[]).filter(a=>{
+      const blob=[a.assetCode,a.assetNumber,a.assetName,a.category,a.brand,a.model,a.serialNumber,a.spec,a.ownerDepartment,a.currentUserName,a.currentUserPhone,a.location,a.status,a.condition].join(' ').toLowerCase();
+      return (!q||blob.includes(q))&&(!cat||a.category===cat)&&(!st||a.status===st)&&(!dept||a.ownerDepartment===dept)&&(!loc||a.location===loc);
+    });
+    renderRows();
+  }
+  function licensePills(a){const list=a.licenses||[];if(!list.length)return '<span class="haos-v7112-muted">ไม่มีข้อมูล License</span>';return '<div class="haos-v7112-license-list">'+list.slice(0,3).map(l=>'<span class="haos-v7112-pill '+statusTone(l.licenseStatus)+'"><i class="bi bi-key"></i>'+esc(l.softwareName||l.licenseName||'License')+'</span>').join('')+(list.length>3?'<span class="haos-v7112-pill">+'+(list.length-3)+'</span>':'')+'</div>';}
+  function renderRows(){
+    const tbody=document.getElementById('haosV7112Rows');if(!tbody)return;
+    const rows=state.filtered||[];
+    const count=document.getElementById('haosV7112Count');
+    if(count)count.textContent='แสดง '+rows.length+' จาก '+((state.data.assets||[]).length)+' รายการ'+(state.data.truncated?' • มีการตัดรายการเพื่อความเร็ว':'');
+    if(!rows.length){tbody.innerHTML='<tr><td colspan="6"><div class="haos-v7112-empty"><i class="bi bi-inbox"></i> ไม่พบรายการตามตัวกรอง</div></td></tr>';return;}
+    tbody.innerHTML=rows.map(a=>'<tr><td><div class="haos-v7112-title">'+esc(a.assetName||'-')+'</div><div class="haos-v7112-muted">'+esc([a.assetCode,a.assetNumber].filter(Boolean).join(' • ')||'ไม่มีรหัส')+'</div><div class="mt-1">'+(a.category?'<span class="haos-v7112-pill"><i class="bi bi-tag"></i>'+esc(a.category)+'</span>':'')+'</div></td>'+
+      '<td><b>'+esc([a.brand,a.model].filter(Boolean).join(' ')||'-')+'</b><div class="haos-v7112-muted">Serial: '+esc(a.serialNumber||'-')+'</div><div class="haos-v7112-muted">'+esc(a.spec||'')+'</div></td>'+
+      '<td><b>'+esc(a.currentUserName||'-')+'</b><div class="haos-v7112-muted">'+esc(a.ownerDepartment||'-')+'</div><div class="haos-v7112-muted"><i class="bi bi-geo-alt"></i> '+esc(a.location||'-')+'</div></td>'+
+      '<td><span class="haos-v7112-pill '+statusTone(a.status)+'">'+esc(a.status||'-')+'</span><br><span class="haos-v7112-pill '+statusTone(a.condition)+'">'+esc(a.condition||'-')+'</span><div class="haos-v7112-muted mt-1">ประกันถึง '+esc(fmtDate(a.warrantyEnd))+'</div></td>'+
+      '<td>'+licensePills(a)+'</td><td><button class="haos-v7112-detail-button" type="button" data-asset-detail="'+esc(a.assetId)+'"><i class="bi bi-eye"></i> รายละเอียด</button></td></tr>').join('');
+  }
+  function detailItem(label,value,wide){return '<div class="haos-v7112-modal-item '+(wide?'haos-v7112-modal-wide':'')+'"><small>'+esc(label)+'</small><b>'+esc(value||'-')+'</b></div>';}
+  function showAssetDetail(id){
+    const a=(state.data.assets||[]).find(x=>String(x.assetId)===String(id));if(!a)return;
+    const licenseHtml=(a.licenses||[]).length?'<div class="haos-v7112-modal-wide"><h5 class="fw-bold mt-2 mb-2">Software / License ที่ผูกกับเครื่องนี้</h5><div class="haos-v7112-modal-grid">'+a.licenses.map(l=>detailItem(l.softwareName||l.licenseName||'License',[l.licenseStatus,l.licenseType,l.expiryDate?('หมดอายุ '+fmtDate(l.expiryDate)):''].filter(Boolean).join(' • '),true)).join('')+'</div></div>':detailItem('Software / License','ยังไม่มีข้อมูล License ที่ผูกกับเครื่องนี้',true);
+    const html='<div class="haos-v7112-modal-grid">'+
+      detailItem('ชื่อทรัพย์สิน',a.assetName,true)+detailItem('รหัสทรัพย์สิน',a.assetCode)+detailItem('เลขครุภัณฑ์/GFMIS',a.assetNumber)+
+      detailItem('หมวด',a.category)+detailItem('ยี่ห้อ / รุ่น',[a.brand,a.model].filter(Boolean).join(' '))+detailItem('Serial Number',a.serialNumber)+
+      detailItem('สเปก',a.spec,true)+detailItem('ผู้ใช้ปัจจุบัน',a.currentUserName)+detailItem('เบอร์ผู้ใช้',a.currentUserPhone)+
+      detailItem('กลุ่มงานเจ้าของ',a.ownerDepartment)+detailItem('สถานที่',a.location)+detailItem('สถานะ',a.status)+detailItem('สภาพ',a.condition)+
+      detailItem('วันที่ได้มา',fmtDate(a.purchaseDate))+detailItem('ปีงบประมาณ',a.fiscalYear)+detailItem('แหล่งงบประมาณ',a.budgetSource)+detailItem('ราคา',fmtMoney(a.price))+
+      detailItem('ผู้ขาย',a.vendor)+detailItem('ประกันเริ่ม',fmtDate(a.warrantyStart))+detailItem('ประกันสิ้นสุด',fmtDate(a.warrantyEnd))+detailItem('ตรวจล่าสุด',fmtDate(a.lastCheckedAt))+
+      detailItem('หมายเหตุ',a.remark,true)+licenseHtml+'</div>';
+    if(window.Swal)Swal.fire({title:a.assetName||'รายละเอียดทรัพย์สิน',html:html,width:'980px',confirmButtonText:'ปิด',customClass:{popup:'text-start'}});
+    else alert((a.assetName||'รายละเอียดทรัพย์สิน')+'\n'+(a.spec||''));
+  }
+  ensureStyle();
+  const observer=new MutationObserver(()=>injectAuthCard());
+  observer.observe(document.documentElement,{childList:true,subtree:true});
+  window.addEventListener('load',()=>setTimeout(injectAuthCard,260));
+  if(document.readyState!=='loading')setTimeout(injectAuthCard,500);
+  console.info('HAOS '+PATCH+' loaded');
+})();
+</script>
 <style id="haos-v70-14-public-emeeting-style">
   .haos-v714p-shell{min-height:100vh;padding:26px 14px;background:radial-gradient(circle at top left,#dbeafe,transparent 34%),linear-gradient(135deg,#f8fafc,#ecfeff)}
   .haos-v714p-wrap{max-width:1120px;margin:0 auto}

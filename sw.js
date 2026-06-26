@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-111-help-chat-asset-overdue';
+const CACHE_NAME = 'haos-v70-112-public-itasset-detail';
 const CORE = [
   '/',
   '/index.html',
