@@ -4847,6 +4847,160 @@ function saveITAssetV70(asset, actor) {
   } catch(e) { return {success:false, message:e.toString()}; }
 }
 
+function haosV7111ImportValue_(raw, keys) {
+  raw = raw || {};
+  keys = Array.isArray(keys) ? keys : [];
+  for (var i = 0; i < keys.length; i++) {
+    var key = keys[i];
+    if (raw[key] !== undefined && raw[key] !== null && String(raw[key]).trim() !== '') return raw[key];
+  }
+  return '';
+}
+
+function haosV7111NormalizeImportDate_(value) {
+  if (!value) return '';
+  if (Object.prototype.toString.call(value) === '[object Date]' && !isNaN(value.getTime())) {
+    return Utilities.formatDate(value, 'GMT+7', 'yyyy-MM-dd');
+  }
+  var text = String(value || '').trim();
+  if (!text) return '';
+  var parsed = new Date(text);
+  if (!isNaN(parsed.getTime())) return Utilities.formatDate(parsed, 'GMT+7', 'yyyy-MM-dd');
+  return text;
+}
+
+function haosV7111NormalizeAssetImportRow_(raw, actor) {
+  raw = raw || {};
+  var damaged = [
+    haosV7111ImportValue_(raw, ['damaged', 'ชำรุด', 'รายการเสียหายใช้อยู่หรือไม่ได้ใช้']),
+    haosV7111ImportValue_(raw, ['deteriorated', 'เสื่อมสภาพ'])
+  ].map(function(v){ return String(v || '').trim(); }).filter(Boolean).join(' / ');
+  var ownerDept = haosV7111ImportValue_(raw, ['ownerDepartment', 'department', 'ผู้ใช้งาน', 'กลุ่มงาน']);
+  var detail = haosV7111ImportValue_(raw, ['spec', 'detail', 'รายละเอียด']);
+  var assetName = haosV7111ImportValue_(raw, ['assetName', 'รายการครุภัณฑ์', 'ชื่อทรัพย์สิน', 'ชื่อครุภัณฑ์']);
+  var status = haosV7111ImportValue_(raw, ['status', 'สถานะ']);
+  var condition = haosV7111ImportValue_(raw, ['condition', 'สภาพ']);
+  if (!status) status = damaged ? 'ชำรุด/รอตรวจสอบ' : 'ใช้งาน';
+  if (!condition) condition = damaged ? damaged : 'ดี';
+  return {
+    assetId: haosV7111ImportValue_(raw, ['assetId', 'Asset ID']),
+    assetCode: String(haosV7111ImportValue_(raw, ['assetCode', 'รหัสครุภัณฑ์', 'รหัสทรัพย์สิน']) || '').trim(),
+    assetNumber: String(haosV7111ImportValue_(raw, ['assetNumber', 'gfmisNumber', 'หมายเลขทรัพย์ในระบบ GFMIS']) || '').trim(),
+    assetName: String(assetName || '').trim(),
+    category: String(haosV7111ImportValue_(raw, ['category', 'ประเภทครุภัณฑ์', 'หมวด']) || '').trim(),
+    brand: String(haosV7111ImportValue_(raw, ['brand', 'ยี่ห้อ']) || '').trim(),
+    model: String(haosV7111ImportValue_(raw, ['model', 'รุ่น']) || '').trim(),
+    serialNumber: String(haosV7111ImportValue_(raw, ['serialNumber', 'serial', 'Serial Number', 'S/N']) || '').trim(),
+    spec: String(detail || '').trim(),
+    purchaseDate: haosV7111NormalizeImportDate_(haosV7111ImportValue_(raw, ['purchaseDate', 'วัน/เดือน/ปี', 'วันที่ได้มา'])),
+    fiscalYear: String(haosV7111ImportValue_(raw, ['fiscalYear', 'ปีงบประมาณ']) || '').trim(),
+    budgetSource: String(haosV7111ImportValue_(raw, ['budgetSource', 'แหล่งงบประมาณ']) || '').trim(),
+    price: haosV7111ImportValue_(raw, ['price', 'มูลค่าการได้มา', 'ราคา']),
+    vendor: String(haosV7111ImportValue_(raw, ['vendor', 'ผู้ขาย']) || '').trim(),
+    warrantyStart: haosV7111NormalizeImportDate_(haosV7111ImportValue_(raw, ['warrantyStart', 'เริ่มประกัน'])),
+    warrantyEnd: haosV7111NormalizeImportDate_(haosV7111ImportValue_(raw, ['warrantyEnd', 'หมดประกัน'])),
+    ownerDepartment: String(ownerDept || actor.department || '').trim(),
+    currentUserName: String(haosV7111ImportValue_(raw, ['currentUserName', 'ผู้ครอบครอง', 'ผู้ใช้ปัจจุบัน']) || '').trim(),
+    currentUserPhone: String(haosV7111ImportValue_(raw, ['currentUserPhone', 'เบอร์ผู้ใช้']) || '').trim(),
+    location: String(haosV7111ImportValue_(raw, ['location', 'สถานที่']) || '').trim(),
+    status: status,
+    condition: condition,
+    lastCheckedAt: haosV7111NormalizeImportDate_(haosV7111ImportValue_(raw, ['lastCheckedAt', 'วันที่ตรวจล่าสุด'])),
+    remark: [haosV7111ImportValue_(raw, ['remark', 'หมายเหตุ']), damaged].map(function(v){ return String(v || '').trim(); }).filter(Boolean).join(' | '),
+    photoUrl: String(haosV7111ImportValue_(raw, ['photoUrl', 'รูปภาพ']) || '').trim()
+  };
+}
+
+function importITAssetsV7111(rows, actor) {
+  try {
+    actor = actor || {};
+    if (!haosV711ActorCanManageIT_(actor)) return haosV711ITNoManageResponse_();
+    rows = Array.isArray(rows) ? rows : [];
+    if (!rows.length) return {success:false, message:'ไม่พบรายการสำหรับนำเข้า'};
+    if (rows.length > 800) rows = rows.slice(0, 800);
+
+    var sh = getITAssetSheetV70_();
+    var now = haosV70Now_();
+    sh.getRange('A:C').setNumberFormat('@');
+    sh.getRange('H:H').setNumberFormat('@');
+    var data = sh.getDataRange().getValues();
+    var byId = {}, byCode = {}, byNumber = {}, bySerial = {};
+    for (var i = 1; i < data.length; i++) {
+      var rowNo = i + 1;
+      var assetId = String(data[i][0] || '').trim();
+      var code = String(data[i][1] || '').replace(/'/g, '').trim();
+      var num = String(data[i][2] || '').replace(/'/g, '').trim();
+      var serial = String(data[i][7] || '').replace(/'/g, '').trim();
+      if (assetId) byId[assetId] = rowNo;
+      if (code) byCode[code] = rowNo;
+      if (num) byNumber[num] = rowNo;
+      if (serial) bySerial[serial] = rowNo;
+    }
+
+    var inserted = 0, updated = 0, skipped = 0;
+    rows.forEach(function(raw) {
+      var asset = haosV7111NormalizeAssetImportRow_(raw, actor);
+      if (!asset.assetName && !asset.assetCode && !asset.assetNumber && !asset.serialNumber) {
+        skipped++;
+        return;
+      }
+      var rowNo = (asset.assetId && byId[asset.assetId]) ||
+        (asset.assetCode && byCode[asset.assetCode]) ||
+        (asset.assetNumber && byNumber[asset.assetNumber]) ||
+        (asset.serialNumber && bySerial[asset.serialNumber]) || 0;
+      var old = rowNo > 1 ? itAssetRowToObjectV70_(sh.getRange(rowNo, 1, 1, 29).getValues()[0]) : {};
+      var id = old.assetId || asset.assetId || haosV70Id_('AST');
+      var out = [
+        id,
+        asset.assetCode ? "'" + asset.assetCode : '',
+        asset.assetNumber ? "'" + asset.assetNumber : '',
+        asset.assetName || old.assetName || '',
+        asset.category || old.category || '',
+        asset.brand || old.brand || '',
+        asset.model || old.model || '',
+        asset.serialNumber ? "'" + asset.serialNumber : (old.serialNumber || ''),
+        asset.spec || old.spec || '',
+        asset.purchaseDate || old.purchaseDate || '',
+        asset.fiscalYear || old.fiscalYear || '',
+        asset.budgetSource || old.budgetSource || '',
+        asset.price || old.price || '',
+        asset.vendor || old.vendor || '',
+        asset.warrantyStart || old.warrantyStart || '',
+        asset.warrantyEnd || old.warrantyEnd || '',
+        asset.ownerDepartment || old.ownerDepartment || actor.department || '',
+        asset.currentUserName || old.currentUserName || '',
+        asset.currentUserPhone ? "'" + haosV70Phone_(asset.currentUserPhone) : (old.currentUserPhone || ''),
+        asset.location || old.location || '',
+        asset.status || old.status || 'ใช้งาน',
+        asset.condition || old.condition || 'ดี',
+        asset.lastCheckedAt || old.lastCheckedAt || '',
+        asset.remark || old.remark || '',
+        asset.photoUrl || old.photoUrl || '',
+        old.createdAt || now,
+        now,
+        old.createdBy || actor.name || actor.phone || '',
+        actor.name || actor.phone || ''
+      ];
+      if (rowNo > 1) {
+        sh.getRange(rowNo, 1, 1, out.length).setValues([out]);
+        updated++;
+      } else {
+        sh.appendRow(out);
+        inserted++;
+        var newRow = sh.getLastRow();
+        if (asset.assetCode) byCode[asset.assetCode] = newRow;
+        if (asset.assetNumber) byNumber[asset.assetNumber] = newRow;
+        if (asset.serialNumber) bySerial[asset.serialNumber] = newRow;
+        byId[id] = newRow;
+      }
+    });
+    logAudit_(actor.phone || '', actor.name || '', 'IMPORT_IT_ASSETS', 'ITAssets', 'BULK', 'นำเข้าทะเบียนทรัพย์สิน IT', null, {inserted:inserted, updated:updated, skipped:skipped, total:rows.length});
+    return {success:true, inserted:inserted, updated:updated, skipped:skipped, total:rows.length, version:'v70.111-it-asset-import'};
+  } catch(e) {
+    return {success:false, message:e.toString()};
+  }
+}
+
 function saveITSoftwareLicenseV70(payload, actor) {
   try {
     payload = payload || {}; actor = actor || {};
@@ -4948,7 +5102,7 @@ function runITLicenseExpiryAlertV70(actorPhone) {
 }
 
 function bridgeWhitelistHealthCheckV70() {
-  return {success:true, version:'v70.10-it-permissions', functions:['getITAssetModuleDataV70','saveITAssetV70','saveITSoftwareLicenseV70','saveITRepairTicketV70','updateITRepairTicketStatusV70','runITLicenseExpiryAlertV70']};
+  return {success:true, version:'v70.10-it-permissions', functions:['getITAssetModuleDataV70','saveITAssetV70','importITAssetsV7111','saveITSoftwareLicenseV70','saveITRepairTicketV70','updateITRepairTicketStatusV70','runITLicenseExpiryAlertV70']};
 }
 
 
@@ -6993,7 +7147,7 @@ function runITLicenseExpiryAlertV70(actorPhone) {
 }
 
 function bridgeWhitelistHealthCheckV70() {
-  return {success:true, version:'v70-it-asset-repair', functions:['getITAssetModuleDataV70','saveITAssetV70','saveITSoftwareLicenseV70','saveITRepairTicketV70','updateITRepairTicketStatusV70','runITLicenseExpiryAlertV70']};
+  return {success:true, version:'v70-it-asset-repair', functions:['getITAssetModuleDataV70','saveITAssetV70','importITAssetsV7111','saveITSoftwareLicenseV70','saveITRepairTicketV70','updateITRepairTicketStatusV70','runITLicenseExpiryAlertV70']};
 }
 
 function getPublicITServicesDashboardV703(kind) {
@@ -7111,12 +7265,12 @@ function getAllowedBridgeFunctions_() {
     getMySignature:true, saveMySignature:true, getMySignatures:true, saveMySignatures:true,
     getDigitalHealthHeadInfo:true, getTeamReportStatusYesterdayV68:true, getHeadOfDepartmentV68:true, bridgeWhitelistHealthCheckV68:true,
     saveMyTelegramChatIdV686:true, testMyTelegramChatIdV686:true,
-    getITAssetModuleDataV70:true, saveITAssetV70:true, saveITSoftwareLicenseV70:true, saveITRepairTicketV70:true, updateITRepairTicketStatusV70:true, runITLicenseExpiryAlertV70:true, bridgeWhitelistHealthCheckV70:true,
+    getITAssetModuleDataV70:true, saveITAssetV70:true, importITAssetsV7111:true, saveITSoftwareLicenseV70:true, saveITRepairTicketV70:true, updateITRepairTicketStatusV70:true, runITLicenseExpiryAlertV70:true, bridgeWhitelistHealthCheckV70:true,
     getPublicITServicesDashboardV703:true, bridgeWhitelistHealthCheckV703:true,
     getCentralSupportContactsV712:true, bridgeWhitelistHealthCheckV712:true,
     getHelpSupportContactSettingsV713:true, saveHelpSupportContactSettingsV713:true,
     createHelpChatSessionV713:true, sendHelpChatMessageV713:true, getHelpChatMessagesV713:true,
-    getHelpChatInboxV713:true, closeHelpChatSessionV713:true, bridgeWhitelistHealthCheckV713:true,
+    getHelpChatInboxV713:true, closeHelpChatSessionV713:true, deleteHelpChatSessionV713:true, bridgeWhitelistHealthCheckV713:true,
     getEMeetingModuleDataV714:true, getEMeetingDetailV714:true, saveEMeetingV714:true,
     saveEMeetingAgendaV714:true, saveEMeetingParticipantsV714:true, saveEMeetingMinuteDecisionV714:true,
     setEMeetingLiveStateV714:true, createEMeetingMinutesV714:true, searchEMeetingArchiveV714:true,
@@ -7358,7 +7512,7 @@ function runITLicenseExpiryAlertV70(actorPhone) {
 }
 
 function bridgeWhitelistHealthCheckV70() {
-  return {success:true, version:'v70.11-it-permissions', functions:['getITAssetModuleDataV70','saveITAssetV70','saveITSoftwareLicenseV70','saveITRepairTicketV70','updateITRepairTicketStatusV70','runITLicenseExpiryAlertV70']};
+  return {success:true, version:'v70.111-it-asset-import', functions:['getITAssetModuleDataV70','saveITAssetV70','importITAssetsV7111','saveITSoftwareLicenseV70','saveITRepairTicketV70','updateITRepairTicketStatusV70','runITLicenseExpiryAlertV70']};
 }
 
 // ========================= v70.12: central help/support contacts =========================
@@ -7754,8 +7908,33 @@ function closeHelpChatSessionV713(sessionId, actorPhone) {
   }
 }
 
+function deleteHelpChatSessionV713(sessionId, actorPhone) {
+  try {
+    var session = haosV713FindSessionRow_(sessionId);
+    if (!session) return {success:false, message:'ไม่พบห้องแชท'};
+    var clean = haosV713CleanPhone_(actorPhone);
+    var owner = haosV713CleanPhone_(session.values[1]);
+    if (clean !== owner && !haosV713CanUseSupportInbox_(clean)) return {success:false, message:'ไม่มีสิทธิ์ลบห้องแชทนี้'};
+
+    var msgSh = haosV713ChatMessageSheet_();
+    var data = msgSh.getDataRange().getValues();
+    var deletedMessages = 0;
+    for (var i = data.length - 1; i >= 1; i--) {
+      if (String(data[i][1] || '') === String(sessionId || '')) {
+        msgSh.deleteRow(i + 1);
+        deletedMessages++;
+      }
+    }
+    session.sheet.deleteRow(session.row);
+    logAudit_(clean || '', getUserNameByPhone_(clean), 'DELETE_HELP_CHAT', 'HelpChatSessions', sessionId, 'ลบห้องแชท Help Center', null, {messages:deletedMessages});
+    return {success:true, deletedMessages:deletedMessages, message:'ลบห้องแชทแล้ว'};
+  } catch(e) {
+    return {success:false, message:e.toString()};
+  }
+}
+
 function bridgeWhitelistHealthCheckV713() {
-  return {success:true, version:'v70.13-support-chat', functions:['getHelpSupportContactSettingsV713','saveHelpSupportContactSettingsV713','createHelpChatSessionV713','sendHelpChatMessageV713','getHelpChatMessagesV713','getHelpChatInboxV713','closeHelpChatSessionV713']};
+  return {success:true, version:'v70.111-support-chat-delete-attachments', functions:['getHelpSupportContactSettingsV713','saveHelpSupportContactSettingsV713','createHelpChatSessionV713','sendHelpChatMessageV713','getHelpChatMessagesV713','getHelpChatInboxV713','closeHelpChatSessionV713','deleteHelpChatSessionV713']};
 }
 
 // ========================= v70.14: IT Services e-Meeting Manage =========================

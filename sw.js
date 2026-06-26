@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-109-help-live-legacy-cleanup';
+const CACHE_NAME = 'haos-v70-111-help-chat-asset-overdue';
 const CORE = [
   '/',
   '/index.html',
@@ -33,6 +33,7 @@ const CORE = [
   '/assets/js/modules/schedule-thai-list.js',
   '/assets/js/modules/schedule-multi-ranges.js',
   '/assets/js/modules/upcoming-agenda.js',
+  '/assets/js/modules/schedule-overdue-reminder.js',
   '/assets/js/modules/schedule-public-link.js',
   '/assets/js/modules/shared-workspace-core.js',
   '/assets/js/modules/shared-workspace-export.js',
@@ -40,6 +41,7 @@ const CORE = [
   '/assets/js/modules/shared-workspace-flow.js',
   '/assets/js/modules/shared-workspace-builder.js',
   '/assets/js/modules/help-live-chat.js?v=70109',
+  '/assets/js/modules/it-asset-import.js',
   '/assets/css/ai-document-summary.css',
   '/assets/js/modules/ai-document-summary.js',
   '/assets/css/e-office.css',

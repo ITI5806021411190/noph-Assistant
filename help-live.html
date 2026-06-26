@@ -424,10 +424,84 @@
       color: rgba(255, 255, 255, 0.78);
     }
 
+    .message-text {
+      white-space: pre-wrap;
+    }
+
+    .attachment-card {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      max-width: 100%;
+      margin-top: 8px;
+      border: 1px solid rgba(37, 99, 235, 0.22);
+      border-radius: 14px;
+      padding: 10px 12px;
+      background: #eff6ff;
+      color: #1e3a8a;
+      text-decoration: none;
+      font-weight: 950;
+      overflow-wrap: anywhere;
+    }
+
+    .attachment-card img {
+      width: 82px;
+      height: 62px;
+      object-fit: cover;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      background: #fff;
+    }
+
+    .bubble.admin .attachment-card {
+      border-color: rgba(255, 255, 255, 0.34);
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+    }
+
     .compose {
       padding: 14px;
       border-top: 1px solid var(--line);
       background: #fff;
+    }
+
+    .attachment-tools {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .attachment-preview {
+      min-height: 32px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-weight: 850;
+    }
+
+    .attachment-preview .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(14, 165, 233, 0.24);
+      border-radius: 999px;
+      padding: 7px 10px;
+      background: #f0f9ff;
+      color: #075985;
+    }
+
+    .attachment-preview button {
+      width: 28px;
+      height: 28px;
+      border: 0;
+      border-radius: 999px;
+      background: #fee2e2;
+      color: #b91c1c;
+      cursor: pointer;
+      font-weight: 950;
     }
 
     .compose-actions {
@@ -540,8 +614,16 @@
               </div>
               <div class="compose">
                 <textarea id="replyText" class="textarea" rows="3" placeholder="พิมพ์ข้อความตอบกลับผู้ใช้งาน..."></textarea>
+                <div class="attachment-tools">
+                  <input id="chatAttachmentInput" type="file" hidden accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.zip">
+                  <button class="btn outline" type="button" id="attachFileBtn">แนบไฟล์/รูป</button>
+                  <div id="attachmentPreview" class="attachment-preview"></div>
+                </div>
                 <div class="compose-actions">
-                  <button class="btn danger" type="button" id="closeSessionBtn">ปิดงานแชท</button>
+                  <div class="attachment-tools">
+                    <button class="btn danger" type="button" id="deleteSessionBtn">ลบแชท</button>
+                    <button class="btn danger" type="button" id="closeSessionBtn">ปิดงานแชท</button>
+                  </div>
                   <button class="btn primary" type="button" id="sendReplyBtn">ส่งตอบกลับ</button>
                 </div>
               </div>
@@ -573,6 +655,7 @@
         inboxLoaded: false,
         sessions: [],
         currentSessionId: "",
+        attachmentFile: null,
         inboxTimer: null
       };
 
@@ -634,6 +717,92 @@
 
       function loading(text) {
         return '<span class="loading"><span class="spinner"></span>' + esc(text || "กำลังโหลด...") + "</span>";
+      }
+
+      function formatBytes(size) {
+        size = Number(size || 0);
+        if (!size) return "";
+        if (size < 1024) return size + " B";
+        if (size < 1024 * 1024) return Math.round(size / 1024) + " KB";
+        return (size / 1024 / 1024).toFixed(1) + " MB";
+      }
+
+      function clearAttachment() {
+        state.attachmentFile = null;
+        const input = $("chatAttachmentInput");
+        const preview = $("attachmentPreview");
+        if (input) input.value = "";
+        if (preview) preview.innerHTML = "";
+      }
+
+      function setAttachmentFile(file) {
+        const preview = $("attachmentPreview");
+        if (!file) {
+          clearAttachment();
+          return;
+        }
+        const maxBytes = 2.8 * 1024 * 1024;
+        if (file.size > maxBytes) {
+          clearAttachment();
+          alert("ไฟล์ใหญ่เกินไปสำหรับส่งผ่านแชท กรุณาแนบไฟล์ไม่เกิน 2.8 MB หรือวางลิงก์ Google Drive แทน");
+          return;
+        }
+        state.attachmentFile = file;
+        if (preview) {
+          preview.innerHTML = '<span class="chip">📎 ' + esc(file.name) + (file.size ? " · " + esc(formatBytes(file.size)) : "") + ' <button type="button" id="clearAttachmentBtn" aria-label="ลบไฟล์แนบ">×</button></span>';
+          const clearBtn = $("clearAttachmentBtn");
+          if (clearBtn) clearBtn.addEventListener("click", clearAttachment);
+        }
+      }
+
+      function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result || "").split(",")[1] || "");
+          reader.onerror = () => reject(reader.error || new Error("อ่านไฟล์ไม่สำเร็จ"));
+          reader.readAsDataURL(file);
+        });
+      }
+
+      async function uploadAttachment(file) {
+        const base64 = await fileToBase64(file);
+        const res = await gas("uploadFileToDrive", [base64, file.name, file.type || "application/octet-stream"]);
+        if (!res || !res.success || !res.url) throw new Error((res && res.message) || "อัปโหลดไฟล์ไม่สำเร็จ");
+        return { name: file.name, size: file.size, mime: file.type || "", url: res.url };
+      }
+
+      function attachmentMessage(fileInfo, note) {
+        return "__HAOS_ATTACHMENT_V1__" + JSON.stringify({
+          name: fileInfo.name || "ไฟล์แนบ",
+          url: fileInfo.url || "",
+          mime: fileInfo.mime || "",
+          size: fileInfo.size || 0,
+          note: note || ""
+        });
+      }
+
+      function parseAttachmentMessage(text) {
+        text = String(text || "");
+        if (!text.startsWith("__HAOS_ATTACHMENT_V1__")) return null;
+        try {
+          return JSON.parse(text.replace("__HAOS_ATTACHMENT_V1__", ""));
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function linkify(text) {
+        return esc(text).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+      }
+
+      function renderMessageContent(raw) {
+        const attachment = parseAttachmentMessage(raw);
+        if (!attachment) return '<div class="message-text">' + linkify(raw || "") + "</div>";
+        const note = attachment.note ? '<div class="message-text">' + linkify(attachment.note) + "</div>" : "";
+        const isImage = /^image\//i.test(attachment.mime || "");
+        const thumb = isImage ? '<img src="' + esc(attachment.url || "") + '" alt="' + esc(attachment.name || "รูปภาพ") + '">' : '<span>📎</span>';
+        const meta = attachment.size ? " · " + esc(formatBytes(attachment.size)) : "";
+        return note + '<a class="attachment-card" href="' + esc(attachment.url || "#") + '" target="_blank" rel="noopener">' + thumb + '<span>' + esc(attachment.name || "ไฟล์แนบ") + meta + "</span></a>";
       }
 
       function setStatus(id, text, type) {
@@ -823,7 +992,7 @@
             ? (res.messages || []).map((message) => [
               '<div class="bubble ', message.isAdmin ? "admin" : "user", '">',
                 '<div class="meta">', esc(message.senderName || "-"), " • ", esc(dateTimeText(message.timestamp)), "</div>",
-                esc(message.message || ""),
+                renderMessageContent(message.message || ""),
               "</div>"
             ].join("")).join("")
             : '<div class="empty">ยังไม่มีข้อความในห้องนี้</div>';
@@ -836,18 +1005,33 @@
       async function sendReply() {
         const input = $("replyText");
         const message = clean(input.value);
-        if (!state.currentSessionId || !message) return;
+        const file = state.attachmentFile;
+        if (!state.currentSessionId || (!message && !file)) return;
         input.disabled = true;
+        const sendBtn = $("sendReplyBtn");
+        if (sendBtn) sendBtn.disabled = true;
         try {
-          const res = await gas("sendHelpChatMessageV713", [state.currentSessionId, state.actor, message]);
+          let finalMessage = message;
+          if (file) {
+            if (sendBtn) sendBtn.textContent = "กำลังอัปโหลด...";
+            const uploaded = await uploadAttachment(file);
+            finalMessage = attachmentMessage(uploaded, message);
+          }
+          if (sendBtn) sendBtn.textContent = "กำลังส่ง...";
+          const res = await gas("sendHelpChatMessageV713", [state.currentSessionId, state.actor, finalMessage]);
           if (!res || !res.success) throw new Error((res && res.message) || "ส่งข้อความไม่สำเร็จ");
           input.value = "";
+          clearAttachment();
           await selectSession(state.currentSessionId, true);
           await loadInbox(false);
         } catch (err) {
           alert("ส่งข้อความไม่สำเร็จ\n" + (err.message || String(err)));
         } finally {
           input.disabled = false;
+          if (sendBtn) {
+            sendBtn.disabled = false;
+            sendBtn.textContent = "ส่งตอบกลับ";
+          }
           input.focus();
         }
       }
@@ -864,6 +1048,22 @@
           await loadInbox(true);
         } catch (err) {
           alert("ปิดห้องแชทไม่สำเร็จ\n" + (err.message || String(err)));
+        }
+      }
+
+      async function deleteSession() {
+        if (!state.currentSessionId) return;
+        if (!confirm("ลบห้องแชทนี้พร้อมข้อความทั้งหมดใช่ไหม? การลบแล้วจะย้อนกลับไม่ได้")) return;
+        try {
+          const res = await gas("deleteHelpChatSessionV713", [state.currentSessionId, state.actor.phone]);
+          if (!res || !res.success) throw new Error((res && res.message) || "ลบห้องแชทไม่สำเร็จ");
+          state.currentSessionId = "";
+          $("chatHeader").textContent = "เลือกห้องแชทเพื่อดูข้อความ";
+          $("messageList").innerHTML = '<div class="empty">ยังไม่ได้เลือกห้องแชท</div>';
+          clearAttachment();
+          await loadInbox(true);
+        } catch (err) {
+          alert("ลบห้องแชทไม่สำเร็จ\n" + (err.message || String(err)));
         }
       }
 
@@ -894,8 +1094,11 @@
         $("saveSettingsBtn").addEventListener("click", saveSettings);
         $("refreshBtn").addEventListener("click", refreshActive);
         $("refreshInboxBtn").addEventListener("click", () => loadInbox(true));
+        $("attachFileBtn").addEventListener("click", () => $("chatAttachmentInput").click());
+        $("chatAttachmentInput").addEventListener("change", (event) => setAttachmentFile(event.target.files && event.target.files[0]));
         $("sendReplyBtn").addEventListener("click", sendReply);
         $("closeSessionBtn").addEventListener("click", closeSession);
+        $("deleteSessionBtn").addEventListener("click", deleteSession);
         $("sessionList").addEventListener("click", (event) => {
           const btn = event.target.closest("[data-session-id]");
           if (btn) selectSession(btn.dataset.sessionId);
