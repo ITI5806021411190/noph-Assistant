@@ -7240,7 +7240,7 @@ function bridgeWhitelistHealthCheckV703() {
   return {success:true, version:'v70.3-public-it-services', functions:['getPublicITServicesDashboardV703']};
 }
 
-// ========================= v70.112: Public IT Asset detailed read-only dashboard =========================
+// ========================= v70.112-v70.113: Public IT Asset detailed read-only dashboard + category report =========================
 function haosV7112PublicAssetLogin_(auth) {
   auth = auth || {};
   var phone = '';
@@ -7341,6 +7341,69 @@ function haosV7112BuildAssetLicenseDetails_(software, licenses, maps) {
   return byAsset;
 }
 
+function haosV7113SmartAssetCategory_(asset) {
+  asset = asset || {};
+  var text = [
+    asset.assetName,
+    asset.category,
+    asset.brand,
+    asset.model,
+    asset.spec,
+    asset.remark
+  ].join(' ').toLowerCase();
+  if (/printer|print|เครื่องพิมพ์|ปริ้น|เลเซอร์|inkjet|dot matrix/.test(text)) return 'เครื่องพิมพ์ / Printer';
+  if (/ups|เครื่องสำรองไฟ|สำรองไฟ|ไฟฟ้าสำรอง|battery backup/.test(text)) return 'UPS / ไฟฟ้าสำรอง';
+  if (/switch|router|access point|wireless|wifi|wi-fi|network|hub|lan|สวิตช์|เราเตอร์|เครือข่าย|กระจายสัญญาณ/.test(text)) return 'อุปกรณ์เครือข่าย';
+  if (/scanner|scan|สแกนเนอร์|เครื่องสแกน|สแกน/.test(text)) return 'Scanner';
+  if (/server|storage|nas|san|backup storage|จัดเก็บข้อมูล/.test(text)) return 'Server / Storage';
+  if (/monitor|display|จอภาพ|จอคอม|จอรับสัญญาณภาพ/.test(text)) return 'จอภาพ / Monitor';
+  if (/projector|โปรเจคเตอร์|โปรเจ็กเตอร์|เครื่องฉาย/.test(text)) return 'Projector';
+  if (/notebook|laptop|โน้ตบุ๊ก|โน๊ตบุ๊ก|คอมพิวเตอร์ชนิดพกพา|พกพา/.test(text)) return 'Notebook';
+  if (/desktop|pc|computer|คอมพิวเตอร์|all in one|aio|ตั้งโต๊ะ/.test(text)) return 'คอมพิวเตอร์ตั้งโต๊ะ / PC';
+  return 'อื่นๆ / ต้องจัดหมวดเพิ่ม';
+}
+
+function haosV7113SumAssetValue_(assets) {
+  return (assets || []).reduce(function(sum, a) {
+    var raw = String((a && a.price) || '').replace(/,/g, '').trim();
+    var value = Number(raw);
+    return sum + (isNaN(value) ? 0 : value);
+  }, 0);
+}
+
+function haosV7113TopCountList_(countMap, limit) {
+  return Object.keys(countMap || {}).map(function(key) {
+    return {name:key, count:countMap[key] || 0};
+  }).sort(function(a, b) {
+    return (b.count || 0) - (a.count || 0) || String(a.name).localeCompare(String(b.name));
+  }).slice(0, limit || 8);
+}
+
+function haosV7113BuildExecutiveSummary_(assets, licenses, alerts, tickets) {
+  var categoryCounts = haosV7112CountBy_(assets || [], 'smartCategory');
+  var rawCategoryCounts = haosV7112CountBy_(assets || [], 'category');
+  var statusCounts = haosV7112CountBy_(assets || [], 'status');
+  var conditionCounts = haosV7112CountBy_(assets || [], 'condition');
+  var departmentCounts = haosV7112CountBy_(assets || [], 'ownerDepartment');
+  var needsAttention = (assets || []).filter(function(a) {
+    var s = [a.status, a.condition].join(' ').toLowerCase();
+    return /ชำรุด|เสีย|เสื่อม|ไม่ใช้|ซ่อม|inactive|repair|broken/.test(s);
+  }).length;
+  return {
+    totalAssets:(assets || []).length,
+    totalLicenses:(licenses || []).length,
+    totalValue:haosV7113SumAssetValue_(assets || []),
+    needsAttention:needsAttention,
+    alertCount:(alerts || []).length,
+    ticketCount:(tickets || []).length,
+    topCategories:haosV7113TopCountList_(categoryCounts, 10),
+    rawCategories:haosV7113TopCountList_(rawCategoryCounts, 10),
+    topDepartments:haosV7113TopCountList_(departmentCounts, 8),
+    status:statusCounts,
+    condition:conditionCounts
+  };
+}
+
 function getPublicITAssetDetailedDashboardV7112(auth) {
   try {
     var login = haosV7112PublicAssetLogin_(auth || {});
@@ -7359,12 +7422,14 @@ function getPublicITAssetDetailedDashboardV7112(auth) {
     var licenseByAsset = haosV7112BuildAssetLicenseDetails_(software, licenses, maps);
     var detailedAssets = assets.slice(0, limit).map(function(a) {
       var linkedLicenses = licenseByAsset[a.assetId] || [];
+      var smartCategory = haosV7113SmartAssetCategory_(a);
       return {
         assetId:a.assetId || '',
         assetCode:a.assetCode || '',
         assetNumber:a.assetNumber || '',
         assetName:a.assetName || '',
         category:a.category || '',
+        smartCategory:smartCategory,
         brand:a.brand || '',
         model:a.model || '',
         serialNumber:a.serialNumber || '',
@@ -7399,7 +7464,7 @@ function getPublicITAssetDetailedDashboardV7112(auth) {
     } catch(ignore2) {}
     return {
       success:true,
-      version:'v70.112-public-itasset-detail',
+      version:'v70.113-itasset-category-report',
       readOnly:true,
       canManageIT:canManage,
       truncated:assets.length > detailedAssets.length,
@@ -7409,12 +7474,15 @@ function getPublicITAssetDetailedDashboardV7112(auth) {
       counts:{
         assetStatus:haosV7112CountBy_(assets, 'status'),
         assetCategory:haosV7112CountBy_(assets, 'category'),
+        assetSmartCategory:haosV7112CountBy_(detailedAssets, 'smartCategory'),
         assetDepartment:haosV7112CountBy_(assets, 'ownerDepartment'),
         assetLocation:haosV7112CountBy_(assets, 'location'),
         licenseStatus:haosV7112CountBy_(licenses, 'licenseStatus')
       },
+      executiveSummary:haosV7113BuildExecutiveSummary_(detailedAssets, licenses, alerts, tickets),
       filters:{
         categories:haosV7112Unique_(assets, 'category'),
+        smartCategories:haosV7112Unique_(detailedAssets, 'smartCategory'),
         statuses:haosV7112Unique_(assets, 'status'),
         departments:haosV7112Unique_(assets, 'ownerDepartment'),
         locations:haosV7112Unique_(assets, 'location')
@@ -7431,7 +7499,7 @@ function getPublicITAssetDetailedDashboardV7112(auth) {
 }
 
 function bridgeWhitelistHealthCheckV7112() {
-  return {success:true, version:'v70.112-public-itasset-detail', functions:['getPublicITAssetDetailedDashboardV7112']};
+  return {success:true, version:'v70.113-itasset-category-report', functions:['getPublicITAssetDetailedDashboardV7112']};
 }
 
 function getAllowedBridgeFunctions_() {

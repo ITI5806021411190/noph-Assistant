@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-112-public-itasset-detail';
+const CACHE_NAME = 'haos-v70-113-itasset-category-report';
 const CORE = [
   '/',
   '/index.html',
