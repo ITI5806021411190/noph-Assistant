@@ -1278,11 +1278,14 @@ body{background:radial-gradient(circle at 12% 10%,rgba(14,165,233,.20),transpare
   .haos-v7112-pill.danger{background:#fee2e2;color:#b91c1c;border-color:#fecaca}
   .haos-v7112-detail-button{border:1px solid #0ea5e9;border-radius:14px;background:#fff;color:#0369a1;font-weight:950;padding:9px 12px}
   .haos-v7112-change-button{border-color:#f59e0b;color:#92400e;background:#fffbeb}
+  .haos-v7112-edit-button{border-color:#059669;color:#047857;background:#ecfdf5}
   .haos-v7112-review-button{border-color:#10b981;color:#047857;background:#ecfdf5}
   .haos-v7112-action-stack{display:flex;flex-direction:column;gap:8px}
+  .haos-v7112-index{width:64px;text-align:center;font-weight:950;color:#0369a1}
   .haos-v7112-empty{padding:36px;text-align:center;color:#64748b;font-weight:900}
   .haos-v7112-license-list{display:flex;flex-wrap:wrap;gap:6px;max-width:360px}
   .haos-v7112-modal-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;text-align:left}
+  .haos-v7112-detail-toolbar{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:14px}
   .haos-v7112-modal-item{border:1px solid #e2e8f0;border-radius:14px;padding:10px;background:#f8fafc}
   .haos-v7112-modal-item small{display:block;color:#64748b;font-weight:900;margin-bottom:2px}
   .haos-v7112-modal-item b{display:block;color:#0f172a;font-weight:950;word-break:break-word}
@@ -1312,7 +1315,7 @@ body{background:radial-gradient(circle at 12% 10%,rgba(14,165,233,.20),transpare
 </style>
 <script id="haos-v70-112-public-itasset-detail-script">
 (function(){
-  const PATCH='v70.114-itasset-change-request';
+  const PATCH='v70.115-public-itasset-manager-edit';
   const params=new URLSearchParams(location.search);
   if((params.get('module')||'')!=='itasset-dashboard')return;
   const state={data:null,filtered:[],auth:null};
@@ -1369,6 +1372,16 @@ body{background:radial-gradient(circle at 12% 10%,rgba(14,165,233,.20),transpare
     card.innerHTML='<div class="haos-v7112-auth-head"><div><h2><i class="bi bi-shield-lock"></i> ดูรายละเอียดทะเบียนทรัพย์สินแบบอ่านอย่างเดียว</h2><p>ล็อกอินด้วยบัญชี Health Assistant OS เพื่อดูข้อมูลทรัพย์สิน, Software License และประวัติที่เกี่ยวข้องโดยไม่เข้าเมนูหลัก</p></div><span class="haos-v7112-pill ok"><i class="bi bi-eye"></i> Read-only</span></div>'+
       '<div class="haos-v7112-form"><div class="haos-v7112-field"><label>เบอร์โทร</label><input id="haosV7112Phone" inputmode="numeric" autocomplete="username" placeholder="เช่น 0868246621"></div><div class="haos-v7112-field"><label>PIN</label><input id="haosV7112Pin" type="password" autocomplete="current-password" placeholder="กรอก PIN"></div><button type="button" id="haosV7112LoginBtn" class="haos-v7112-primary"><i class="bi bi-box-arrow-in-right"></i> เข้าดูรายละเอียด</button></div>'+
       '<div id="haosV7112LoginMsg" class="small fw-bold text-muted mt-2">ข้อมูลนี้เปิดให้เฉพาะผู้ที่มีบัญชีในระบบ และไม่สามารถเพิ่ม แก้ไข หรือลบจากหน้านี้ได้</div>';
+    const authTitle=card.querySelector('.haos-v7112-auth-head h2');
+    const authDesc=card.querySelector('.haos-v7112-auth-head p');
+    const authBadge=card.querySelector('.haos-v7112-auth-head .haos-v7112-pill');
+    const authBtn=card.querySelector('#haosV7112LoginBtn');
+    const authMsg=card.querySelector('#haosV7112LoginMsg');
+    if(authTitle)authTitle.innerHTML='<i class="bi bi-shield-lock"></i> เข้าสู่ระบบ Public IT Asset Portal';
+    if(authDesc)authDesc.textContent='ใช้บัญชี Health Assistant OS เพื่อดูรายละเอียด ขอแก้ไข หรือจัดการทะเบียนทรัพย์สินตามสิทธิ์ของคุณ';
+    if(authBadge)authBadge.innerHTML='<i class="bi bi-person-check"></i> ตามสิทธิ์ผู้ใช้';
+    if(authBtn)authBtn.innerHTML='<i class="bi bi-box-arrow-in-right"></i> เข้าสู่ระบบ Public Portal';
+    if(authMsg)authMsg.textContent='User/Head ส่งคำขอแก้ไขได้ ส่วน IT Manager/Admin/Super Admin สามารถแก้ไขจริงจากหน้านี้ได้';
     const lock=document.querySelector('.haos-v709-lock');
     if(lock)lock.insertAdjacentElement('beforebegin',card);else wrap.appendChild(card);
     const savedPhone=sessionStorage.getItem('haos_public_itasset_phone')||'';
@@ -1382,8 +1395,8 @@ body{background:radial-gradient(circle at 12% 10%,rgba(14,165,233,.20),transpare
     const btn=document.getElementById('haosV7112LoginBtn');
     const msg=document.getElementById('haosV7112LoginMsg');
     if(!phone||!pin){msg.innerHTML='<span class="text-danger">กรุณาระบุเบอร์โทรและ PIN</span>';return;}
-    btn.disabled=true;btn.innerHTML='<span class="spinner-border spinner-border-sm"></span> กำลังตรวจสอบ...';
-    msg.textContent='กำลังโหลดข้อมูลรายละเอียดแบบอ่านอย่างเดียว...';
+    btn.disabled=true;btn.innerHTML='<span class="spinner-border spinner-border-sm"></span> กำลังเข้าสู่ระบบ...';
+    msg.textContent='กำลังโหลด Public IT Asset Portal...';
     try{
       const res=await gas('getPublicITAssetDetailedDashboardV7112',[{phone,pin,limit:1600}]);
       if(!res||!res.success)throw new Error(res&&res.message?res.message:'เข้าสู่โหมดดูรายละเอียดไม่สำเร็จ');
@@ -1393,7 +1406,7 @@ body{background:radial-gradient(circle at 12% 10%,rgba(14,165,233,.20),transpare
       renderDetailed(res);
     }catch(e){
       msg.innerHTML='<span class="text-danger">'+esc(e.message||String(e))+'</span>';
-      btn.disabled=false;btn.innerHTML='<i class="bi bi-box-arrow-in-right"></i> เข้าดูรายละเอียด';
+      btn.disabled=false;btn.innerHTML='<i class="bi bi-box-arrow-in-right"></i> เข้าสู่ระบบ Public Portal';
     }
   }
   function kpi(label,value,note,icon){return '<article class="haos-v7112-kpi"><span><i class="bi '+esc(icon)+'"></i> '+esc(label)+'</span><b>'+esc(value)+'</b><span>'+esc(note||'')+'</span></article>';}
@@ -1402,6 +1415,7 @@ body{background:radial-gradient(circle at 12% 10%,rgba(14,165,233,.20),transpare
     const d=data.dashboard||{};
     const x=data.executiveSummary||{};
     const managerButton=data.canManageIT?'<button id="haosV7114Requests" class="haos-v7112-detail-button haos-v7112-review-button" type="button"><i class="bi bi-list-check"></i> คำขอแก้ไขรอตรวจ</button>':'';
+    const assetModePill=data.canManageIT?'<span class="haos-v7112-pill ok"><i class="bi bi-pencil-square"></i> แก้ไขจริงได้ตามสิทธิ์</span>':'<span class="haos-v7112-pill warn"><i class="bi bi-send-check"></i> ขอแก้ไขได้ แต่ต้องรอ IT อนุมัติ</span>';
     document.body.innerHTML='<main class="haos-v709-shell haos-v7112-shell"><section class="haos-v709-wrap">'+
       '<div id="haosV7112ReportArea"><section class="haos-v7112-detail-hero"><div class="haos-v7112-topline"><span class="haos-v7112-badge"><i class="bi bi-hdd-network"></i> IT Asset / Software License</span><span class="haos-v7112-badge"><i class="bi bi-send-check"></i> ขอแก้ไขผ่าน IT</span></div><h1>ทะเบียนทรัพย์สิน IT และ Software License</h1><p>เข้าสู่ระบบโดย '+esc((data.user||{}).fullName||'-')+' • '+esc((data.user||{}).department||'-')+' • อัปเดต '+esc(fmtDateTime(data.generatedAt))+'</p><div class="haos-v7112-actions"><a class="haos-v7112-btn light" href="'+esc(root()+'/')+'"><i class="bi bi-house"></i> กลับระบบหลัก</a><button class="haos-v7112-btn" type="button" onclick="location.reload()"><i class="bi bi-box-arrow-left"></i> ออกจากโหมดละเอียด</button></div></section>'+
       '<section class="haos-v7112-kpis">'+
@@ -1411,10 +1425,10 @@ body{background:radial-gradient(circle at 12% 10%,rgba(14,165,233,.20),transpare
       kpi('License ต้องติดตาม',d.expiringLicenses||data.alerts.length,'ใกล้หมดอายุ/หมดอายุ','bi-calendar2-exclamation')+
       '</section>'+
       '<section class="haos-v7112-panel"><header class="haos-v7112-panel-head"><div><h2><i class="bi bi-clipboard-data"></i> รายงานสรุปผู้บริหาร</h2><small>แยกหมวดอัตโนมัติจากชื่อรายการและรายละเอียด เพื่อให้รายงานเห็นภาพจริงมากกว่า category ต้นทาง</small></div><div class="haos-v7112-report-actions"><button id="haosV7112Print" class="haos-v7112-detail-button" type="button"><i class="bi bi-printer"></i> พิมพ์ / Save PDF</button><button id="haosV7112Image" class="haos-v7112-detail-button" type="button"><i class="bi bi-image"></i> ดาวน์โหลดรูปภาพ</button><button id="haosV7112Csv" class="haos-v7112-detail-button" type="button"><i class="bi bi-filetype-csv"></i> Export CSV</button>'+managerButton+'</div></header><div class="haos-v7112-summary-grid"><div class="haos-v7112-report-card"><h3>หมวดย่อยทรัพย์สิน</h3>'+barRows(x.topCategories||[],x.totalAssets||data.assets.length)+'</div><div class="haos-v7112-report-card"><h3>สถานะและสภาพ</h3>'+compactStatusChips(x.status||{})+'<h3 class="mt-3">ต้องติดตาม</h3><div class="haos-v7112-chip-grid"><span class="haos-v7112-pill warn">ทรัพย์สิน '+esc(x.needsAttention||0)+' รายการ</span><span class="haos-v7112-pill warn">License/Alert '+esc(x.alertCount||0)+' รายการ</span><span class="haos-v7112-pill">มูลค่ารวม '+esc(fmtMoney(x.totalValue||0))+'</span></div></div></div></section>'+
-      '<section class="haos-v7112-panel"><header class="haos-v7112-panel-head"><div><h2><i class="bi bi-table"></i> รายการทรัพย์สินแบบละเอียด</h2><small id="haosV7112Count">กำลังเตรียมข้อมูล...</small></div><span class="haos-v7112-pill warn"><i class="bi bi-send-check"></i> ขอแก้ไขได้ แต่ต้องรอ IT อนุมัติ</span></header>'+
+      '<section class="haos-v7112-panel"><header class="haos-v7112-panel-head"><div><h2><i class="bi bi-table"></i> รายการทรัพย์สินแบบละเอียด</h2><small id="haosV7112Count">กำลังเตรียมข้อมูล...</small></div>'+assetModePill+'</header>'+
       '<div class="haos-v7112-filters"><div class="haos-v7112-field"><input id="haosV7112Search" placeholder="ค้นหาชื่อทรัพย์สิน รหัส Serial ผู้ใช้ สถานที่..."></div><div class="haos-v7112-field"><select id="haosV7112Category"><option value="">ทุกหมวดย่อย</option>'+copyOptions((data.filters||{}).smartCategories||[])+'</select></div><div class="haos-v7112-field"><select id="haosV7112RawCategory"><option value="">ทุกประเภทต้นทาง</option>'+copyOptions((data.filters||{}).categories||[])+'</select></div><div class="haos-v7112-field"><select id="haosV7112Status"><option value="">ทุกสถานะ</option>'+copyOptions(data.filters.statuses)+'</select></div><div class="haos-v7112-field"><select id="haosV7112Dept"><option value="">ทุกกลุ่มงาน</option>'+copyOptions(data.filters.departments)+'</select></div><div class="haos-v7112-field"><select id="haosV7112Location"><option value="">ทุกสถานที่</option>'+copyOptions(data.filters.locations)+'</select></div><button id="haosV7112Reset" class="haos-v7112-detail-button" type="button"><i class="bi bi-arrow-counterclockwise"></i></button></div>'+
-      '<div class="haos-v7112-table-wrap"><table class="haos-v7112-table"><thead><tr><th>ทรัพย์สิน</th><th>สเปก / Serial</th><th>ผู้ใช้ / สถานที่</th><th>สถานะ</th><th>License</th><th>จัดการ</th></tr></thead><tbody id="haosV7112Rows"></tbody></table></div></section>'+
-      '</div><footer class="haos-v709-footer">Public read-only IT Asset Dashboard • '+esc(PATCH)+'</footer></section></main>';
+      '<div class="haos-v7112-table-wrap"><table class="haos-v7112-table"><thead><tr><th class="haos-v7112-index">#</th><th>ทรัพย์สิน</th><th>สเปก / Serial</th><th>ผู้ใช้ / สถานที่</th><th>สถานะ</th><th>License</th><th>จัดการ</th></tr></thead><tbody id="haosV7112Rows"></tbody></table></div></section>'+
+      '</div><footer class="haos-v709-footer">Public IT Asset Portal • '+esc(PATCH)+'</footer></section></main>';
     ['haosV7112Search','haosV7112Category','haosV7112RawCategory','haosV7112Status','haosV7112Dept','haosV7112Location'].forEach(id=>document.getElementById(id)?.addEventListener('input',applyFilters));
     document.getElementById('haosV7112Print')?.addEventListener('click',printReport);
     document.getElementById('haosV7112Image')?.addEventListener('click',downloadReportImage);
@@ -1426,6 +1440,8 @@ body{background:radial-gradient(circle at 12% 10%,rgba(14,165,233,.20),transpare
       if(detail){showAssetDetail(detail.getAttribute('data-asset-detail'));return;}
       const change=e.target.closest('[data-asset-change]');
       if(change)openAssetChangeRequest(change.getAttribute('data-asset-change'));
+      const edit=e.target.closest('[data-asset-edit]');
+      if(edit)openAssetEditForm(edit.getAttribute('data-asset-edit'));
     });
     applyFilters();
   }
@@ -1449,16 +1465,32 @@ body{background:radial-gradient(circle at 12% 10%,rgba(14,165,233,.20),transpare
     const rows=state.filtered||[];
     const count=document.getElementById('haosV7112Count');
     if(count)count.textContent='แสดง '+rows.length+' จาก '+((state.data.assets||[]).length)+' รายการ'+(state.data.truncated?' • มีการตัดรายการเพื่อความเร็ว':'');
-    if(!rows.length){tbody.innerHTML='<tr><td colspan="6"><div class="haos-v7112-empty"><i class="bi bi-inbox"></i> ไม่พบรายการตามตัวกรอง</div></td></tr>';return;}
-    tbody.innerHTML=rows.map(a=>'<tr><td><div class="haos-v7112-title">'+esc(a.assetName||'-')+'</div><div class="haos-v7112-muted">'+esc([a.assetCode,a.assetNumber].filter(Boolean).join(' • ')||'ไม่มีรหัส')+'</div><div class="mt-1"><span class="haos-v7112-pill ok"><i class="bi bi-tags"></i>'+esc(a.smartCategory||'อื่นๆ')+'</span>'+(a.category?'<span class="haos-v7112-pill"><i class="bi bi-tag"></i>ต้นทาง: '+esc(a.category)+'</span>':'')+'</div></td>'+
+    if(!rows.length){tbody.innerHTML='<tr><td colspan="7"><div class="haos-v7112-empty"><i class="bi bi-inbox"></i> ไม่พบรายการตามตัวกรอง</div></td></tr>';return;}
+    tbody.innerHTML=rows.map((a,idx)=>'<tr><td class="haos-v7112-index">'+(idx+1)+'</td><td><div class="haos-v7112-title">'+esc(a.assetName||'-')+'</div><div class="haos-v7112-muted">'+esc([a.assetCode,a.assetNumber].filter(Boolean).join(' • ')||'ไม่มีรหัส')+'</div><div class="mt-1"><span class="haos-v7112-pill ok"><i class="bi bi-tags"></i>'+esc(a.smartCategory||'อื่นๆ')+'</span>'+(a.category?'<span class="haos-v7112-pill"><i class="bi bi-tag"></i>ต้นทาง: '+esc(a.category)+'</span>':'')+'</div></td>'+
       '<td><b>'+esc([a.brand,a.model].filter(Boolean).join(' ')||'-')+'</b><div class="haos-v7112-muted">Serial: '+esc(a.serialNumber||'-')+'</div><div class="haos-v7112-muted">'+esc(a.spec||'')+'</div></td>'+
       '<td><b>'+esc(a.currentUserName||'-')+'</b><div class="haos-v7112-muted">'+esc(a.ownerDepartment||'-')+'</div><div class="haos-v7112-muted"><i class="bi bi-geo-alt"></i> '+esc(a.location||'-')+'</div></td>'+
       '<td><span class="haos-v7112-pill '+statusTone(a.status)+'">'+esc(a.status||'-')+'</span><br><span class="haos-v7112-pill '+statusTone(a.condition)+'">'+esc(a.condition||'-')+'</span><div class="haos-v7112-muted mt-1">ประกันถึง '+esc(fmtDate(a.warrantyEnd))+'</div></td>'+
-      '<td>'+licensePills(a)+'</td><td><div class="haos-v7112-action-stack"><button class="haos-v7112-detail-button" type="button" data-asset-detail="'+esc(a.assetId)+'"><i class="bi bi-eye"></i> รายละเอียด</button><button class="haos-v7112-detail-button haos-v7112-change-button" type="button" data-asset-change="'+esc(a.assetId)+'"><i class="bi bi-send"></i> ขอแก้ไข</button></div></td></tr>').join('');
+      '<td>'+licensePills(a)+'</td><td><div class="haos-v7112-action-stack"><button class="haos-v7112-detail-button" type="button" data-asset-detail="'+esc(a.assetId)+'"><i class="bi bi-eye"></i> รายละเอียด</button>'+(state.data?.canManageIT?'<button class="haos-v7112-detail-button haos-v7112-edit-button" type="button" data-asset-edit="'+esc(a.assetId)+'"><i class="bi bi-pencil-square"></i> แก้ไขจริง</button>':'<button class="haos-v7112-detail-button haos-v7112-change-button" type="button" data-asset-change="'+esc(a.assetId)+'"><i class="bi bi-send"></i> ขอแก้ไข</button>')+'</div></td></tr>').join('');
   }
   function detailItem(label,value,wide){return '<div class="haos-v7112-modal-item '+(wide?'haos-v7112-modal-wide':'')+'"><small>'+esc(label)+'</small><b>'+esc(value||'-')+'</b></div>';}
+  function assetById(id){return (state.data?.assets||[]).find(x=>String(x.assetId)===String(id));}
+  function assetPairs(a){return [
+    ['ชื่อทรัพย์สิน',a.assetName],['รหัสทรัพย์สิน',a.assetCode],['เลขครุภัณฑ์/GFMIS',a.assetNumber],
+    ['หมวดย่อย',a.smartCategory],['ประเภทต้นทาง',a.category],['ยี่ห้อ/รุ่น',[a.brand,a.model].filter(Boolean).join(' ')],
+    ['Serial Number',a.serialNumber],['สเปก',a.spec],['ผู้ใช้ปัจจุบัน',a.currentUserName],['เบอร์ผู้ใช้',a.currentUserPhone],
+    ['กลุ่มงานเจ้าของ',a.ownerDepartment],['สถานที่',a.location],['สถานะ',a.status],['สภาพ',a.condition],
+    ['วันที่ได้มา',fmtDate(a.purchaseDate)],['ปีงบประมาณ',a.fiscalYear],['แหล่งงบประมาณ',a.budgetSource],
+    ['ราคา',fmtMoney(a.price)],['ผู้ขาย',a.vendor],['ประกันเริ่ม',fmtDate(a.warrantyStart)],['ประกันสิ้นสุด',fmtDate(a.warrantyEnd)],
+    ['ตรวจล่าสุด',fmtDate(a.lastCheckedAt)],['หมายเหตุ',a.remark]
+  ];} 
+  function assetDetailText(a){return assetPairs(a).map(([k,v])=>k+': '+(v||'-')).join('\n')+'\nSoftware/License: '+((a.licenses||[]).map(l=>[l.softwareName||l.licenseName||'License',l.licenseStatus,l.expiryDate?('หมดอายุ '+fmtDate(l.expiryDate)):''].filter(Boolean).join(' • ')).join('; ')||'-');}
+  async function copyAssetDetail(id){const a=assetById(id);if(!a)return;const text=assetDetailText(a);try{await navigator.clipboard.writeText(text);if(window.Swal)Swal.fire('คัดลอกแล้ว','คัดลอกรายละเอียดรายการนี้เรียบร้อย','success');}catch(e){const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();if(window.Swal)Swal.fire('คัดลอกแล้ว','คัดลอกรายละเอียดรายการนี้เรียบร้อย','success');}}
+  function exportAssetCsv(id){const a=assetById(id);if(!a)return;const headers=assetPairs(a).map(x=>x[0]);const values=assetPairs(a).map(x=>x[1]);downloadBlob('haos-it-asset-'+(a.assetCode||a.assetId||fileStamp())+'.csv','text/csv;charset=utf-8','\ufeff'+headers.map(csvEscape).join(',')+'\r\n'+values.map(csvEscape).join(','));}
+  function assetPrintableHtml(a){return '<html><head><title>'+esc(a.assetName||'IT Asset')+'</title><style>body{font-family:Arial,"Noto Sans Thai",sans-serif;margin:28px;color:#0f172a}h1{font-size:24px;margin:0 0 8px}.muted{color:#64748b;font-weight:700;margin-bottom:18px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.item{border:1px solid #dbeafe;border-radius:12px;padding:10px}.item small{display:block;color:#64748b;font-weight:800}.item b{display:block;font-size:15px;white-space:pre-wrap}.wide{grid-column:1/-1}@media print{button{display:none}}</style></head><body><h1>'+esc(a.assetName||'-')+'</h1><div class="muted">Health Assistant OS • IT Asset / Software License</div><div class="grid">'+assetPairs(a).map(([k,v])=>'<div class="item '+(String(v||'').length>70?'wide':'')+'"><small>'+esc(k)+'</small><b>'+esc(v||'-')+'</b></div>').join('')+'</div><script>setTimeout(function(){window.print()},300)<\/script></body></html>';}
+  function printAssetDetail(id){const a=assetById(id);if(!a)return;const w=window.open('','_blank','width=980,height=760');if(!w){if(window.Swal)Swal.fire('เปิดหน้าพิมพ์ไม่ได้','เบราว์เซอร์บล็อก popup กรุณาอนุญาต popup ชั่วคราว','warning');return;}w.document.open();w.document.write(assetPrintableHtml(a));w.document.close();}
+  function downloadAssetImage(id){const a=assetById(id);if(!a)return;const width=1200;const rows=assetPairs(a);const extraHeight=rows.reduce((sum,row)=>sum+Math.floor(String(row[1]||'').length/70)*30,0);const height=280+Math.ceil(rows.length/2)*92+extraHeight;const html='<div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,Noto Sans Thai,sans-serif;background:#fff;color:#0f172a;width:'+width+'px;box-sizing:border-box;padding:34px"><div style="border-radius:28px;background:linear-gradient(135deg,#0ea5e9,#2563eb,#10b981);color:white;padding:28px"><div style="font-size:18px;font-weight:900">Health Assistant OS • IT Asset</div><div style="font-size:34px;font-weight:950;margin-top:8px">'+esc(a.assetName||'-')+'</div><div style="font-size:18px;font-weight:800;opacity:.9;margin-top:6px">'+esc([a.assetCode,a.assetNumber].filter(Boolean).join(' • ')||'-')+'</div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px">'+rows.map(([k,v])=>'<div style="border:1px solid #dbeafe;border-radius:16px;padding:14px;background:#f8fafc"><div style="font-size:14px;color:#64748b;font-weight:900">'+esc(k)+'</div><div style="font-size:18px;font-weight:950;white-space:pre-wrap">'+esc(v||'-')+'</div></div>').join('')+'</div></div>';const svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+width+'" height="'+height+'"><foreignObject width="100%" height="100%">'+html+'</foreignObject></svg>';const img=new Image();img.onload=()=>{const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,width,height);ctx.drawImage(img,0,0);canvas.toBlob(blob=>{if(!blob)return;const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download='haos-it-asset-'+(a.assetCode||a.assetId||fileStamp())+'.png';document.body.appendChild(link);link.click();setTimeout(()=>{URL.revokeObjectURL(url);link.remove();},300);},'image/png');};img.onerror=()=>window.Swal?Swal.fire('ดาวน์โหลดรูปภาพไม่สำเร็จ','ลองใช้ปุ่มพิมพ์ / Save PDF แทนได้ครับ','warning'):alert('ดาวน์โหลดรูปภาพไม่สำเร็จ');img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);}
   function showAssetDetail(id){
-    const a=(state.data.assets||[]).find(x=>String(x.assetId)===String(id));if(!a)return;
+    const a=assetById(id);if(!a)return;
     const licenseHtml=(a.licenses||[]).length?'<div class="haos-v7112-modal-wide"><h5 class="fw-bold mt-2 mb-2">Software / License ที่ผูกกับเครื่องนี้</h5><div class="haos-v7112-modal-grid">'+a.licenses.map(l=>detailItem(l.softwareName||l.licenseName||'License',[l.licenseStatus,l.licenseType,l.expiryDate?('หมดอายุ '+fmtDate(l.expiryDate)):''].filter(Boolean).join(' • '),true)).join('')+'</div></div>':detailItem('Software / License','ยังไม่มีข้อมูล License ที่ผูกกับเครื่องนี้',true);
     const html='<div class="haos-v7112-modal-grid">'+
       detailItem('ชื่อทรัพย์สิน',a.assetName,true)+detailItem('รหัสทรัพย์สิน',a.assetCode)+detailItem('เลขครุภัณฑ์/GFMIS',a.assetNumber)+
@@ -1467,8 +1499,8 @@ body{background:radial-gradient(circle at 12% 10%,rgba(14,165,233,.20),transpare
       detailItem('กลุ่มงานเจ้าของ',a.ownerDepartment)+detailItem('สถานที่',a.location)+detailItem('สถานะ',a.status)+detailItem('สภาพ',a.condition)+
       detailItem('วันที่ได้มา',fmtDate(a.purchaseDate))+detailItem('ปีงบประมาณ',a.fiscalYear)+detailItem('แหล่งงบประมาณ',a.budgetSource)+detailItem('ราคา',fmtMoney(a.price))+
       detailItem('ผู้ขาย',a.vendor)+detailItem('ประกันเริ่ม',fmtDate(a.warrantyStart))+detailItem('ประกันสิ้นสุด',fmtDate(a.warrantyEnd))+detailItem('ตรวจล่าสุด',fmtDate(a.lastCheckedAt))+
-      detailItem('หมายเหตุ',a.remark,true)+licenseHtml+'</div><div class="mt-3 text-end"><button id="haosV7114DetailChange" class="haos-v7112-detail-button haos-v7112-change-button" type="button"><i class="bi bi-send"></i> ขอแก้ไขข้อมูลนี้</button></div>';
-    if(window.Swal)Swal.fire({title:a.assetName||'รายละเอียดทรัพย์สิน',html:html,width:'980px',confirmButtonText:'ปิด',customClass:{popup:'text-start'},didOpen:()=>{document.getElementById('haosV7114DetailChange')?.addEventListener('click',()=>openAssetChangeRequest(a.assetId));}});
+      detailItem('หมายเหตุ',a.remark,true)+licenseHtml+'</div><div class="haos-v7112-detail-toolbar"><button id="haosV7115CopyDetail" class="haos-v7112-detail-button" type="button"><i class="bi bi-clipboard"></i> คัดลอก</button><button id="haosV7115ExportDetail" class="haos-v7112-detail-button" type="button"><i class="bi bi-filetype-csv"></i> ส่งออก</button><button id="haosV7115PrintDetail" class="haos-v7112-detail-button" type="button"><i class="bi bi-printer"></i> พิมพ์</button><button id="haosV7115ImageDetail" class="haos-v7112-detail-button" type="button"><i class="bi bi-image"></i> ดาวน์โหลดรูปภาพ</button><button id="haosV7114DetailChange" class="haos-v7112-detail-button '+(state.data?.canManageIT?'haos-v7112-edit-button':'haos-v7112-change-button')+'" type="button"><i class="bi '+(state.data?.canManageIT?'bi-pencil-square':'bi-send')+'"></i> '+(state.data?.canManageIT?'แก้ไขจริง':'ขอแก้ไขข้อมูลนี้')+'</button></div>';
+    if(window.Swal)Swal.fire({title:a.assetName||'รายละเอียดทรัพย์สิน',html:html,width:'980px',confirmButtonText:'ปิด',customClass:{popup:'text-start'},didOpen:()=>{document.getElementById('haosV7115CopyDetail')?.addEventListener('click',()=>copyAssetDetail(a.assetId));document.getElementById('haosV7115ExportDetail')?.addEventListener('click',()=>exportAssetCsv(a.assetId));document.getElementById('haosV7115PrintDetail')?.addEventListener('click',()=>printAssetDetail(a.assetId));document.getElementById('haosV7115ImageDetail')?.addEventListener('click',()=>downloadAssetImage(a.assetId));document.getElementById('haosV7114DetailChange')?.addEventListener('click',()=>state.data?.canManageIT?openAssetEditForm(a.assetId):openAssetChangeRequest(a.assetId));}});
     else alert((a.assetName||'รายละเอียดทรัพย์สิน')+'\n'+(a.spec||''));
   }
   function changeInput(id,label,value,type){
@@ -1529,6 +1561,81 @@ body{background:radial-gradient(circle at 12% 10%,rgba(14,165,233,.20),transpare
         }catch(e){Swal.showValidationMessage(e.message||String(e));return false;}
       }
     }).then(result=>{if(result.isConfirmed)Swal.fire('ส่งคำขอแล้ว',result.value?.message||'รอ IT ตรวจอนุมัติ','success');});
+  }
+  function openAssetEditForm(id){
+    const a=assetById(id);if(!a)return;
+    if(!window.Swal){alert('ต้องใช้ SweetAlert สำหรับแก้ไขข้อมูล');return;}
+    if(!state.auth){Swal.fire('กรุณาเข้าสู่ระบบใหม่','ระบบไม่พบ session สำหรับยืนยันตัวตน','warning');return;}
+    if(!state.data?.canManageIT){openAssetChangeRequest(id);return;}
+    const html='<div class="haos-v7112-change-grid">'+
+      detailItem('โหมดแก้ไขจริง','เฉพาะ IT Manager / Admin / Super Admin เท่านั้น',true)+
+      changeInput('haosV7115Name','ชื่อทรัพย์สิน',a.assetName)+
+      changeInput('haosV7115Code','รหัสทรัพย์สิน',a.assetCode)+
+      changeInput('haosV7115Number','เลขครุภัณฑ์/GFMIS',a.assetNumber)+
+      changeInput('haosV7115Category','ประเภทต้นทาง',a.category)+
+      changeInput('haosV7115Brand','ยี่ห้อ',a.brand)+
+      changeInput('haosV7115Model','รุ่น',a.model)+
+      changeInput('haosV7115Serial','Serial Number',a.serialNumber)+
+      changeInput('haosV7115Spec','สเปก',a.spec,'textarea')+
+      changeInput('haosV7115Purchase','วันที่ได้มา',a.purchaseDate)+
+      changeInput('haosV7115Fiscal','ปีงบประมาณ',a.fiscalYear)+
+      changeInput('haosV7115Budget','แหล่งงบประมาณ',a.budgetSource)+
+      changeInput('haosV7115Price','ราคา',a.price)+
+      changeInput('haosV7115Vendor','ผู้ขาย',a.vendor)+
+      changeInput('haosV7115WarrantyStart','ประกันเริ่ม',a.warrantyStart)+
+      changeInput('haosV7115WarrantyEnd','ประกันสิ้นสุด',a.warrantyEnd)+
+      changeInput('haosV7115User','ผู้ใช้ปัจจุบัน',a.currentUserName)+
+      changeInput('haosV7115Phone','เบอร์ผู้ใช้',a.currentUserPhone)+
+      changeInput('haosV7115Dept','กลุ่มงานเจ้าของ',a.ownerDepartment)+
+      changeInput('haosV7115Location','สถานที่',a.location)+
+      changeSelect('haosV7115Status','สถานะ',a.status,['ใช้งาน','รอตรวจสอบ','ส่งซ่อม','ชำรุด/รอตรวจสอบ','จำหน่าย','สูญหาย','ไม่ใช้งาน'])+
+      changeSelect('haosV7115Condition','สภาพ',a.condition,['ดี','พอใช้','ชำรุด','เสื่อมสภาพ','รอตรวจสอบ'])+
+      changeInput('haosV7115Checked','ตรวจล่าสุด',a.lastCheckedAt)+
+      changeInput('haosV7115Photo','รูปภาพ URL',a.photoUrl)+
+      changeInput('haosV7115Remark','หมายเหตุ',a.remark,'textarea')+
+      '</div><div class="small text-danger mt-2 text-start">การบันทึกนี้จะเปลี่ยนข้อมูลจริงทันทีและบันทึก Audit Log</div>';
+    Swal.fire({
+      title:'แก้ไขข้อมูลทรัพย์สินจริง',
+      html:html,
+      width:'1020px',
+      confirmButtonText:'บันทึกข้อมูลจริง',
+      showCancelButton:true,
+      cancelButtonText:'ยกเลิก',
+      confirmButtonColor:'#059669',
+      showLoaderOnConfirm:true,
+      allowOutsideClick:()=>!Swal.isLoading(),
+      preConfirm:async()=>{
+        const map=[
+          ['assetName','haosV7115Name'],['assetCode','haosV7115Code'],['assetNumber','haosV7115Number'],['category','haosV7115Category'],
+          ['brand','haosV7115Brand'],['model','haosV7115Model'],['serialNumber','haosV7115Serial'],['spec','haosV7115Spec'],
+          ['purchaseDate','haosV7115Purchase'],['fiscalYear','haosV7115Fiscal'],['budgetSource','haosV7115Budget'],['price','haosV7115Price'],
+          ['vendor','haosV7115Vendor'],['warrantyStart','haosV7115WarrantyStart'],['warrantyEnd','haosV7115WarrantyEnd'],
+          ['currentUserName','haosV7115User'],['currentUserPhone','haosV7115Phone'],['ownerDepartment','haosV7115Dept'],['location','haosV7115Location'],
+          ['status','haosV7115Status'],['condition','haosV7115Condition'],['lastCheckedAt','haosV7115Checked'],['photoUrl','haosV7115Photo'],['remark','haosV7115Remark']
+        ];
+        const fields={};
+        map.forEach(([key,elId])=>{
+          const val=(document.getElementById(elId)?.value||'').trim();
+          if(val!==String(a[key]||''))fields[key]=val;
+        });
+        if(!fields.assetName && !a.assetName){Swal.showValidationMessage('กรุณาระบุชื่อทรัพย์สิน');return false;}
+        if(!Object.keys(fields).length){Swal.showValidationMessage('ยังไม่มีข้อมูลที่เปลี่ยนแปลง');return false;}
+        try{
+          const res=await gas('savePublicITAssetV7115',[{assetId:a.assetId,fields},state.auth]);
+          if(!res||!res.success)throw new Error(res&&res.message?res.message:'บันทึกข้อมูลจริงไม่สำเร็จ');
+          return res;
+        }catch(e){Swal.showValidationMessage(e.message||String(e));return false;}
+      }
+    }).then(result=>{
+      if(!result.isConfirmed)return;
+      const updated=result.value?.asset;
+      if(updated){
+        const idx=(state.data.assets||[]).findIndex(x=>String(x.assetId)===String(updated.assetId));
+        if(idx>=0)state.data.assets[idx]=Object.assign({},state.data.assets[idx],updated);
+        applyFilters();
+      }
+      Swal.fire('บันทึกแล้ว',result.value?.message||'อัปเดตข้อมูลทรัพย์สินเรียบร้อย','success');
+    });
   }
   function assetChangeFieldLabels(){
     return {assetCode:'รหัสทรัพย์สิน',assetNumber:'เลขครุภัณฑ์/GFMIS',assetName:'ชื่อทรัพย์สิน',category:'ประเภท',brand:'ยี่ห้อ',model:'รุ่น',serialNumber:'Serial Number',spec:'สเปก',purchaseDate:'วันที่ได้มา',fiscalYear:'ปีงบประมาณ',budgetSource:'แหล่งงบประมาณ',price:'ราคา',vendor:'ผู้ขาย',warrantyStart:'ประกันเริ่ม',warrantyEnd:'ประกันสิ้นสุด',ownerDepartment:'กลุ่มงานเจ้าของ',currentUserName:'ผู้ใช้ปัจจุบัน',currentUserPhone:'เบอร์ผู้ใช้',location:'สถานที่',status:'สถานะ',condition:'สภาพ',lastCheckedAt:'ตรวจล่าสุด',remark:'หมายเหตุ',photoUrl:'รูปภาพ'};

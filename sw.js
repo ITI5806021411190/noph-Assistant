@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-114-itasset-change-request';
+const CACHE_NAME = 'haos-v70-115-public-itasset-manager-edit';
 const CORE = [
   '/',
   '/index.html',

@@ -6893,6 +6893,32 @@ function haosV70Date_(v) {
   if (parsedYear >= 2400) d = new Date(parsedYear - 543, d.getMonth(), d.getDate());
   return Utilities.formatDate(d, 'GMT+7', 'yyyy-MM-dd');
 }
+function haosV7115InferAssetBeYear_(fiscalYear, assetNumber) {
+  var text = String(fiscalYear || '').trim();
+  var m = text.match(/(\d{4})/);
+  if (m) {
+    var y4 = Number(m[1]);
+    if (y4 >= 2400) return y4;
+    if (y4 >= 2000 && y4 < 2400) return y4 + 543;
+  }
+  m = text.match(/(?:^|\D)(\d{2})(?:\D|$)/);
+  if (m) return 2500 + Number(m[1]);
+  m = String(assetNumber || '').match(/\/\s*(\d{2})(?:\D|$)/);
+  if (m) return 2500 + Number(m[1]);
+  return 0;
+}
+function haosV7115CorrectAssetDateByFiscal_(dateValue, fiscalYear, assetNumber) {
+  var normalized = haosV70Date_(dateValue);
+  var m = String(normalized || '').match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (!m) return normalized;
+  var ceYear = Number(m[1]);
+  var beYear = ceYear < 2400 ? ceYear + 543 : ceYear;
+  var inferredBeYear = haosV7115InferAssetBeYear_(fiscalYear, assetNumber);
+  if (inferredBeYear >= 2520 && beYear >= 2400 && beYear < 2520 && Math.abs(inferredBeYear - beYear) >= 20) {
+    return Utilities.formatDate(new Date(inferredBeYear - 543, Number(m[2]) - 1, Number(m[3])), 'GMT+7', 'yyyy-MM-dd');
+  }
+  return normalized;
+}
 function haosV70DateTime_(v) {
   if (!v) return '';
   var d = v instanceof Date ? v : new Date(v);
@@ -6950,9 +6976,11 @@ function getITRepairUpdateSheetV70_() {
 }
 
 function itAssetRowToObjectV70_(r) {
+  var purchaseDate = haosV70Date_(r[9]);
+  purchaseDate = haosV7115CorrectAssetDateByFiscal_(purchaseDate, r[10], (r[2] || r[1] || ''));
   return {
     assetId:r[0]||'', assetCode:r[1]||'', assetNumber:r[2]||'', assetName:r[3]||'', category:r[4]||'',
-    brand:r[5]||'', model:r[6]||'', serialNumber:r[7]||'', spec:r[8]||'', purchaseDate:haosV70Date_(r[9]),
+    brand:r[5]||'', model:r[6]||'', serialNumber:r[7]||'', spec:r[8]||'', purchaseDate:purchaseDate,
     fiscalYear:r[10]||'', budgetSource:r[11]||'', price:r[12]||'', vendor:r[13]||'', warrantyStart:haosV70Date_(r[14]),
     warrantyEnd:haosV70Date_(r[15]), ownerDepartment:r[16]||'', currentUserName:r[17]||'',
     currentUserPhone:haosV70Phone_(r[18]), location:r[19]||'', status:r[20]||'ใช้งาน', condition:r[21]||'ดี',
@@ -7482,7 +7510,7 @@ function getPublicITAssetDetailedDashboardV7112(auth) {
         model:a.model || '',
         serialNumber:a.serialNumber || '',
         spec:a.spec || '',
-        purchaseDate:a.purchaseDate || '',
+        purchaseDate:haosV7115CorrectAssetDateByFiscal_(a.purchaseDate, a.fiscalYear, a.assetNumber || a.assetCode) || '',
         fiscalYear:a.fiscalYear || '',
         budgetSource:a.budgetSource || '',
         price:a.price || '',
@@ -7512,8 +7540,9 @@ function getPublicITAssetDetailedDashboardV7112(auth) {
     } catch(ignore2) {}
     return {
       success:true,
-      version:'v70.114-itasset-change-request',
-      readOnly:true,
+      version:'v70.115-public-itasset-manager-edit',
+      readOnly:!canManage,
+      editable:canManage,
       changeRequestEnabled:true,
       canManageIT:canManage,
       truncated:assets.length > detailedAssets.length,
@@ -16588,5 +16617,75 @@ getAllowedBridgeFunctions_ = function() {
   allowed.getITAssetChangeRequestsV7114 = true;
   allowed.reviewITAssetChangeRequestV7114 = true;
   allowed.bridgeWhitelistHealthCheckV7114 = true;
+  return allowed;
+};
+
+// ========================= v70.115: Public IT Asset manager edit =========================
+function haosV7115NormalizeAssetFieldsForSave_(fields, baseAsset) {
+  fields = haosV7114SanitizeAssetChangeFields_(fields || {});
+  baseAsset = baseAsset || {};
+  if (fields.purchaseDate) {
+    fields.purchaseDate = haosV7115CorrectAssetDateByFiscal_(fields.purchaseDate, fields.fiscalYear || baseAsset.fiscalYear, fields.assetNumber || baseAsset.assetNumber || baseAsset.assetCode);
+  }
+  if (fields.warrantyStart) fields.warrantyStart = haosV7111NormalizeImportDate_(fields.warrantyStart);
+  if (fields.warrantyEnd) fields.warrantyEnd = haosV7111NormalizeImportDate_(fields.warrantyEnd);
+  if (fields.lastCheckedAt) fields.lastCheckedAt = haosV7111NormalizeImportDate_(fields.lastCheckedAt);
+  return fields;
+}
+
+function savePublicITAssetV7115(payload, auth) {
+  try {
+    payload = payload || {};
+    var login = haosV7112PublicAssetLogin_(auth || {});
+    if (!login.success) return login;
+    var user = login.user || {};
+    if (!haosV711ActorCanManageIT_(user)) return haosV711ITNoManageResponse_();
+    var assetId = String(payload.assetId || '').trim();
+    var found = haosV7114FindAssetById_(assetId);
+    if (!found) return {success:false, message:'ไม่พบรายการทรัพย์สินที่ต้องการแก้ไข'};
+    var before = found.asset || {};
+    var fields = haosV7115NormalizeAssetFieldsForSave_(payload.fields || {}, before);
+    if (!Object.keys(fields).length) return {success:false, message:'ไม่มีข้อมูลที่ต้องแก้ไข'};
+    var updated = {};
+    Object.keys(before).forEach(function(key){ updated[key] = before[key]; });
+    Object.keys(fields).forEach(function(key){ updated[key] = fields[key]; });
+    updated.assetId = before.assetId || assetId;
+    updated.createdAt = before.createdAt || updated.createdAt || '';
+    updated.createdBy = before.createdBy || updated.createdBy || '';
+    var saveRes = saveITAssetV70(updated, {
+      phone:user.phone || '',
+      name:user.fullName || user.name || user.phone || '',
+      role:user.role || '',
+      department:user.department || ''
+    });
+    if (!saveRes || !saveRes.success) return saveRes || {success:false, message:'บันทึกข้อมูลทรัพย์สินไม่สำเร็จ'};
+    var refreshed = haosV7114FindAssetById_(assetId);
+    try {
+      logAudit_(user.phone || '', user.fullName || '', 'PUBLIC_MANAGER_UPDATE_IT_ASSET', 'ITAsset', assetId, before.assetName || assetId, before, {fields:fields});
+    } catch(ignore) {}
+    return {
+      success:true,
+      version:'v70.115-public-itasset-manager-edit',
+      message:'บันทึกข้อมูลทรัพย์สินเรียบร้อย',
+      asset:refreshed ? refreshed.asset : updated
+    };
+  } catch(e) {
+    return {success:false, message:e.toString()};
+  }
+}
+
+function bridgeWhitelistHealthCheckV7115() {
+  return {
+    success:true,
+    version:'v70.115-public-itasset-manager-edit',
+    functions:['getPublicITAssetDetailedDashboardV7112','savePublicITAssetV7115','requestITAssetChangeV7114']
+  };
+}
+
+var haosV7115PrevGetAllowedBridgeFunctions_ = typeof getAllowedBridgeFunctions_ === 'function' ? getAllowedBridgeFunctions_ : null;
+getAllowedBridgeFunctions_ = function() {
+  var allowed = haosV7115PrevGetAllowedBridgeFunctions_ ? haosV7115PrevGetAllowedBridgeFunctions_() : {};
+  allowed.savePublicITAssetV7115 = true;
+  allowed.bridgeWhitelistHealthCheckV7115 = true;
   return allowed;
 };
