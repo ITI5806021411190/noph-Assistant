@@ -6893,6 +6893,15 @@ function haosV70Date_(v) {
   if (parsedYear >= 2400) d = new Date(parsedYear - 543, d.getMonth(), d.getDate());
   return Utilities.formatDate(d, 'GMT+7', 'yyyy-MM-dd');
 }
+function haosV7116AssetDateHint_(asset) {
+  if (Array.isArray(asset)) return asset.join(' ');
+  asset = asset || {};
+  return [
+    asset.assetCode, asset.assetNumber, asset.assetName, asset.category,
+    asset.smartCategory, asset.spec, asset.fiscalYear
+  ].filter(function(v){ return v !== null && v !== undefined && String(v).trim() !== ''; }).join(' ');
+}
+
 function haosV7115InferAssetBeYear_(fiscalYear, assetNumber) {
   var text = String(fiscalYear || '').trim();
   var m = text.match(/(\d{4})/);
@@ -6903,12 +6912,30 @@ function haosV7115InferAssetBeYear_(fiscalYear, assetNumber) {
   }
   m = text.match(/(?:^|\D)(\d{2})(?:\D|$)/);
   if (m) return 2500 + Number(m[1]);
-  m = String(assetNumber || '').match(/\/\s*(\d{2})(?:\D|$)/);
+  var hint = String(assetNumber || '');
+  m = hint.match(/\/\s*(\d{2})(?:\D|$)/);
+  if (m) return 2500 + Number(m[1]);
+  m = hint.match(/(?:ปี|พ\.ศ\.|พศ|งบ|งปม)\s*(\d{2})(?:\D|$)/i);
   if (m) return 2500 + Number(m[1]);
   return 0;
 }
 function haosV7115CorrectAssetDateByFiscal_(dateValue, fiscalYear, assetNumber) {
   var normalized = haosV70Date_(dateValue);
+  if (!String(normalized || '').match(/^\d{4}-\d{1,2}-\d{1,2}$/)) {
+    var rawText = String(dateValue || normalized || '').trim();
+    var thaiMonths = {
+      'มกราคม':1,'ม.ค.':1,'มค':1,'กุมภาพันธ์':2,'ก.พ.':2,'กพ':2,'มีนาคม':3,'มี.ค.':3,'มีค':3,
+      'เมษายน':4,'เม.ย.':4,'เมย':4,'พฤษภาคม':5,'พ.ค.':5,'พค':5,'มิถุนายน':6,'มิ.ย.':6,'มิย':6,
+      'กรกฎาคม':7,'ก.ค.':7,'กค':7,'สิงหาคม':8,'ส.ค.':8,'สค':8,'กันยายน':9,'ก.ย.':9,'กย':9,
+      'ตุลาคม':10,'ต.ค.':10,'ตค':10,'พฤศจิกายน':11,'พ.ย.':11,'พย':11,'ธันวาคม':12,'ธ.ค.':12,'ธค':12
+    };
+    var tm = rawText.match(/^(\d{1,2})\s*(?:•|\s)\s*([ก-๙.]+)\s*(?:•|\s)\s*(\d{4})/);
+    if (tm && thaiMonths[tm[2]]) {
+      var ty = Number(tm[3]);
+      if (ty >= 2400) ty -= 543;
+      normalized = Utilities.formatDate(new Date(ty, thaiMonths[tm[2]] - 1, Number(tm[1])), 'GMT+7', 'yyyy-MM-dd');
+    }
+  }
   var m = String(normalized || '').match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
   if (!m) return normalized;
   var ceYear = Number(m[1]);
@@ -6977,7 +7004,7 @@ function getITRepairUpdateSheetV70_() {
 
 function itAssetRowToObjectV70_(r) {
   var purchaseDate = haosV70Date_(r[9]);
-  purchaseDate = haosV7115CorrectAssetDateByFiscal_(purchaseDate, r[10], (r[2] || r[1] || ''));
+  purchaseDate = haosV7115CorrectAssetDateByFiscal_(purchaseDate, r[10], haosV7116AssetDateHint_([r[1], r[2], r[3], r[4], r[8], r[10]]));
   return {
     assetId:r[0]||'', assetCode:r[1]||'', assetNumber:r[2]||'', assetName:r[3]||'', category:r[4]||'',
     brand:r[5]||'', model:r[6]||'', serialNumber:r[7]||'', spec:r[8]||'', purchaseDate:purchaseDate,
@@ -7510,7 +7537,7 @@ function getPublicITAssetDetailedDashboardV7112(auth) {
         model:a.model || '',
         serialNumber:a.serialNumber || '',
         spec:a.spec || '',
-        purchaseDate:haosV7115CorrectAssetDateByFiscal_(a.purchaseDate, a.fiscalYear, a.assetNumber || a.assetCode) || '',
+        purchaseDate:haosV7115CorrectAssetDateByFiscal_(a.purchaseDate, a.fiscalYear, haosV7116AssetDateHint_(a)) || '',
         fiscalYear:a.fiscalYear || '',
         budgetSource:a.budgetSource || '',
         price:a.price || '',
@@ -7540,7 +7567,7 @@ function getPublicITAssetDetailedDashboardV7112(auth) {
     } catch(ignore2) {}
     return {
       success:true,
-      version:'v70.115-public-itasset-manager-edit',
+      version:'v70.116-itasset-date-export-main',
       readOnly:!canManage,
       editable:canManage,
       changeRequestEnabled:true,
@@ -7700,12 +7727,18 @@ function haosV711ActorCanManageIT_(actor) {
 function getITAssetModuleDataV70(phone, role, department) {
   try {
     var assets = getAllITAssetsV70_();
+    assets = assets.map(function(a) {
+      a = a || {};
+      if (!a.smartCategory) a.smartCategory = haosV7113SmartAssetCategory_(a);
+      return a;
+    });
     var software = getAllITSoftwareV70_();
     var licenses = getAllITLicensesV70_();
     var maps = getAllITAssetSoftwareMapsV70_();
     var tickets = getAllITRepairTicketsV70_();
     var alerts = buildITLicenseAlertsV70_(licenses, software);
     var canManage = haosV711ActorCanManageIT_({phone:phone || '', role:role || '', department:department || ''});
+    var executiveSummary = haosV7113BuildExecutiveSummary_(assets, licenses, alerts, tickets);
     return {
       success:true,
       assets:assets,
@@ -7715,8 +7748,16 @@ function getITAssetModuleDataV70(phone, role, department) {
       tickets:tickets,
       alerts:alerts,
       dashboard:buildITAssetDashboardV70_(assets, licenses, tickets, alerts),
+      executiveSummary:executiveSummary,
+      filters:{
+        smartCategories:haosV7112Unique_(assets, 'smartCategory'),
+        categories:haosV7112Unique_(assets, 'category'),
+        statuses:haosV7112Unique_(assets, 'status'),
+        departments:haosV7112Unique_(assets, 'ownerDepartment'),
+        locations:haosV7112Unique_(assets, 'location')
+      },
       permissions:{canAddAsset:true, canCreateRepair:true, canManageIT:canManage},
-      version:'v70.11-permissions'
+      version:'v70.116-itasset-date-main-public-alignment'
     };
   } catch(e) {
     logError_(phone || '', 'getITAssetModuleDataV70', e, null);
@@ -16625,7 +16666,15 @@ function haosV7115NormalizeAssetFieldsForSave_(fields, baseAsset) {
   fields = haosV7114SanitizeAssetChangeFields_(fields || {});
   baseAsset = baseAsset || {};
   if (fields.purchaseDate) {
-    fields.purchaseDate = haosV7115CorrectAssetDateByFiscal_(fields.purchaseDate, fields.fiscalYear || baseAsset.fiscalYear, fields.assetNumber || baseAsset.assetNumber || baseAsset.assetCode);
+    fields.purchaseDate = haosV7115CorrectAssetDateByFiscal_(fields.purchaseDate, fields.fiscalYear || baseAsset.fiscalYear, haosV7116AssetDateHint_({
+      assetCode:fields.assetCode || baseAsset.assetCode,
+      assetNumber:fields.assetNumber || baseAsset.assetNumber,
+      assetName:fields.assetName || baseAsset.assetName,
+      category:fields.category || baseAsset.category,
+      smartCategory:fields.smartCategory || baseAsset.smartCategory,
+      spec:fields.spec || baseAsset.spec,
+      fiscalYear:fields.fiscalYear || baseAsset.fiscalYear
+    }));
   }
   if (fields.warrantyStart) fields.warrantyStart = haosV7111NormalizeImportDate_(fields.warrantyStart);
   if (fields.warrantyEnd) fields.warrantyEnd = haosV7111NormalizeImportDate_(fields.warrantyEnd);
@@ -16665,7 +16714,7 @@ function savePublicITAssetV7115(payload, auth) {
     } catch(ignore) {}
     return {
       success:true,
-      version:'v70.115-public-itasset-manager-edit',
+      version:'v70.116-itasset-date-export-main',
       message:'บันทึกข้อมูลทรัพย์สินเรียบร้อย',
       asset:refreshed ? refreshed.asset : updated
     };
@@ -16677,7 +16726,7 @@ function savePublicITAssetV7115(payload, auth) {
 function bridgeWhitelistHealthCheckV7115() {
   return {
     success:true,
-    version:'v70.115-public-itasset-manager-edit',
+    version:'v70.116-itasset-date-export-main',
     functions:['getPublicITAssetDetailedDashboardV7112','savePublicITAssetV7115','requestITAssetChangeV7114']
   };
 }
