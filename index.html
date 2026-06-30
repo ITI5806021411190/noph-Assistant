@@ -19722,7 +19722,7 @@ console.info('HAOS '+PATCH+' loaded');
 </style>
 <script id="haos-v70-117-schedule-multilink-script">
 (function(){
-  const PATCH='v70.117-schedule-multilink-actions';
+  const PATCH='v70.118-schedule-popup-stable-actions';
   if(window.__HAOS_V7117_SCHEDULE_MULTILINK__)return;
   window.__HAOS_V7117_SCHEDULE_MULTILINK__=true;
   const $=id=>document.getElementById(id);
@@ -19986,21 +19986,35 @@ console.info('HAOS '+PATCH+' loaded');
   function actionButton(cls,icon,label,action,id){
     return `<button type="button" class="btn ${cls} btn-sm" onclick="haosScheduleDetailActionV7117('${esc(action)}','${esc(id)}')"><i class="bi ${icon}"></i> ${esc(label)}</button>`;
   }
+  let detailOpenStateV7117={id:'',at:0};
   function showDetailOverlay(id){
     const item=itemById(id);
     if(!item)return typeof Swal!=='undefined'?Swal.fire('ไม่พบข้อมูล','กรุณาโหลดรายการใหม่อีกครั้ง','warning'):undefined;
-    populateBaseDetail(item);
-    $('haosScheduleDetailBackdropV7117')?.remove();
     const itemId=item.publicId||item.id||idOf(item);
+    const key=String(itemId||id||'');
+    const current=$('haosScheduleDetailBackdropV7117');
+    if(current&&current.dataset.scheduleId===key){
+      current.style.zIndex='2147483647';
+      current.classList.add('haos-v7117-detail-stable');
+      return current;
+    }
+    const now=Date.now();
+    if(current&&detailOpenStateV7117.id===key&&now-detailOpenStateV7117.at<650){
+      current.style.zIndex='2147483647';
+      return current;
+    }
+    detailOpenStateV7117={id:key,at:now};
+    populateBaseDetail(item);
+    current?.remove();
     const title=item.__title||item.eventName||item.title||'-';
     const status=item.__status||item.workStatus||item.status||'-';
     const location=item.__location||item.location||item.eventLocation||'-';
     const details=item.details||item.detail||item.description||'-';
-    const html=`<div id="haosScheduleDetailBackdropV7117" class="haos-v7117-detail-backdrop" onclick="if(event.target.id==='haosScheduleDetailBackdropV7117')this.remove()">
-      <article class="haos-v7117-detail-card" id="haosScheduleDetailCaptureV7117">
+    const html=`<div id="haosScheduleDetailBackdropV7117" class="haos-v7117-detail-backdrop haos-v7117-detail-stable" data-schedule-id="${esc(key)}" onclick="if(event.target.id==='haosScheduleDetailBackdropV7117'){event.stopPropagation();this.remove()}">
+      <article class="haos-v7117-detail-card" id="haosScheduleDetailCaptureV7117" onclick="event.stopPropagation()">
         <header class="haos-v7117-detail-head">
           <div><h3><i class="bi bi-calendar-event"></i> ${esc(title)}</h3><div class="small opacity-75 mt-1">${esc(timeText(item))}</div></div>
-          <button type="button" class="haos-v7117-detail-close" onclick="document.getElementById('haosScheduleDetailBackdropV7117')?.remove()">×</button>
+          <button type="button" class="haos-v7117-detail-close" onclick="event.stopPropagation();document.getElementById('haosScheduleDetailBackdropV7117')?.remove()">×</button>
         </header>
         <div class="haos-v7117-detail-body">
           <div class="haos-v7117-info-grid">
@@ -20057,11 +20071,8 @@ console.info('HAOS '+PATCH+' loaded');
 
   const oldView=window.viewScheduleDetail;
   if(typeof oldView==='function')window.viewScheduleDetail=function(id){
-    const hasSwal=!!document.querySelector('.swal2-container.swal2-shown');
-    if(hasSwal)return showDetailOverlay(id);
-    const result=oldView.apply(this,arguments);
-    setTimeout(()=>{const item=itemById(id);if(item)populateBaseDetail(item);},90);
-    return result;
+    if(itemById(id))return showDetailOverlay(id);
+    return oldView.apply(this,arguments);
   };
   window.showSchedulePopupDetailV749=showDetailOverlay;
   window.showSchedulePopupDetailV782=showDetailOverlay;
@@ -20069,7 +20080,12 @@ console.info('HAOS '+PATCH+' loaded');
 
   function boot(){
     ensureFormUi();
+    const bindThaiList=()=>{
+      if(window.HAOS&&window.HAOS.scheduleThaiList)window.HAOS.scheduleThaiList.showDetail=showDetailOverlay;
+    };
+    bindThaiList();
     setTimeout(ensureFormUi,700);
+    [300,900,1700,2600].forEach(t=>setTimeout(bindThaiList,t));
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});
   else boot();

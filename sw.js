@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-117-schedule-multilink-actions';
+const CACHE_NAME = 'haos-v70-118-schedule-popup-stable-actions';
 const CORE = [
   '/',
   '/index.html',
