@@ -1298,6 +1298,37 @@ function applyScheduleCalendarReminder_(event, leadTime) {
   return minutes;
 }
 
+function haosScheduleFirstUrlV7117_(value) {
+  var text = String(value || '').trim();
+  if (!text) return '';
+  try {
+    if (text.charAt(0) === '[' || text.charAt(0) === '{') {
+      var parsed = JSON.parse(text);
+      var arr = Array.isArray(parsed) ? parsed : [parsed];
+      for (var i = 0; i < arr.length; i++) {
+        var u = arr[i] && (arr[i].url || arr[i].href || arr[i].link || arr[i].value);
+        if (u) return String(u).trim();
+      }
+    }
+  } catch (ignore) {}
+  var parts = text.split(/\r?\n|,(?=\s*https?:\/\/)/);
+  for (var j = 0; j < parts.length; j++) {
+    var line = String(parts[j] || '').trim();
+    if (!line) continue;
+    if (line.indexOf('||') >= 0) {
+      var bits = line.split('||').map(function(x) { return String(x || '').trim(); });
+      for (var k = 0; k < bits.length; k++) {
+        if (/^https?:\/\//i.test(bits[k])) return bits[k];
+      }
+      if (bits.length > 1) return bits[1];
+    }
+    var match = line.match(/https?:\/\/\S+/i);
+    if (match) return match[0];
+    return line;
+  }
+  return '';
+}
+
 function syncToGoogleCalendar(data, existingEventId) {
   try {
     var cal = CalendarApp.getDefaultCalendar();
@@ -1306,7 +1337,7 @@ function syncToGoogleCalendar(data, existingEventId) {
     if (isNaN(start.getTime()) || isNaN(end.getTime())) return 'Error';
     var title = data.eventName || data.topic || 'Health Assistant OS Event';
     var desc = 'รายละเอียด: ' + (data.details || data.otherLocation || '-') + '\nสถานะ: ' + (data.workStatus || data.status || '-') + '\nสร้าง/ซิงก์ผ่าน Health Assistant OS';
-    var loc = data.location || data.meetingLink || data.roomName || data.otherLocation || '';
+    var loc = data.location || haosScheduleFirstUrlV7117_(data.meetingLink) || data.roomName || data.otherLocation || '';
     var leadTime = data.leadTime || data.notifyLeadTime || data.notifyLeadMinutes || data.reminderMinutes || 15;
     var ev = null;
     if (existingEventId && existingEventId !== 'Error') { try { ev = cal.getEventById(existingEventId); } catch(ignore) {} }
@@ -1418,7 +1449,7 @@ function mergeScheduleFileUrlsV707_(oldValue, newValue) {
   var seen = {};
   var out = [];
   [oldValue, newValue].forEach(function(value) {
-    String(value || '').split(/\n|,/).forEach(function(url) {
+    String(value || '').split(/\r?\n|,(?=\s*https?:\/\/)/).forEach(function(url) {
       url = String(url || '').trim();
       if (!url || seen[url]) return;
       seen[url] = true;
@@ -1472,7 +1503,9 @@ function updateScheduleV2(data) {
         } catch(calErr) { if (calSyncCol) sheet.getRange(i + 1, calSyncCol).setValue('Error: ' + calErr); }
         
         // ถ้ามีการอัปโหลดไฟล์ใหม่ ให้ทับของเดิม ถ้าไม่มี ให้ใช้ File URL เดิมต่อไป
-        if (data.fileUrl && data.fileUrl !== "") {
+        if (data.fileUrlReplace === true) {
+          sheet.getRange(i + 1, 15).setValue(data.fileUrl || "");
+        } else if (data.fileUrl && data.fileUrl !== "") {
           sheet.getRange(i + 1, 15).setValue(mergeScheduleFileUrlsV707_(sheetData[i][14], data.fileUrl));
         }
 

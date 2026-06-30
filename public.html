@@ -190,6 +190,59 @@ body{background:radial-gradient(circle at 12% 10%,rgba(14,165,233,.20),transpare
         return '<a href="' + escapeHtmlPublicV706(u) + '" target="_blank" rel="noopener" class="btn btn-sm btn-light border text-primary"><i class="bi bi-paperclip"></i> เปิดไฟล์แนบ ' + (i + 1) + '</a>';
       }).join('') + '</div>';
     }
+    function parsePublicLinkItemsV7117(v) {
+      const raw = String(v || '').trim();
+      if (!raw) return [];
+      let tokens = [];
+      try {
+        if (raw[0] === '[' || raw[0] === '{') {
+          const parsed = JSON.parse(raw);
+          tokens = Array.isArray(parsed) ? parsed : [parsed];
+        }
+      } catch (e) {}
+      if (!tokens.length) tokens = raw.split(/\r?\n|,(?=\s*https?:\/\/)/).map(s => s.trim()).filter(Boolean);
+      const seen = new Set();
+      return tokens.map(function(item) {
+        if (item && typeof item === 'object') {
+          return { label: String(item.label || item.name || item.title || '').trim(), url: String(item.url || item.href || item.link || item.value || '').trim() };
+        }
+        const line = String(item || '').trim();
+        if (!line) return null;
+        if (line.indexOf('||') >= 0) {
+          const parts = line.split('||').map(function(x) { return String(x || '').trim(); });
+          const firstIsUrl = /^https?:\/\//i.test(parts[0] || '');
+          return firstIsUrl ? { url: parts[0], label: parts.slice(1).join(' || ') } : { label: parts[0], url: parts.slice(1).join(' || ') };
+        }
+        const match = line.match(/https?:\/\/\S+/i);
+        if (match && match[0] !== line) return { label: line.replace(match[0], '').replace(/[|:-]+/g, ' ').trim(), url: match[0] };
+        return { label: '', url: line };
+      }).filter(function(item) {
+        if (!item || !item.url) return false;
+        const key = (item.label + '|' + item.url).toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+    function renderPublicLinkButtonsV7117(v, icon, fallbackLabel) {
+      const items = parsePublicLinkItemsV7117(v);
+      if (!items.length) return '';
+      return '<div class="d-flex flex-column gap-2">' + items.map(function(item, i) {
+        const label = item.label || (fallbackLabel + ' ' + (i + 1));
+        return '<a href="' + escapeHtmlPublicV706(item.url) + '" target="_blank" rel="noopener" class="btn btn-sm btn-light border text-primary text-start"><i class="bi ' + icon + '"></i> ' + escapeHtmlPublicV706(label) + '<div class="small text-muted text-break">' + escapeHtmlPublicV706(item.url) + '</div></a>';
+      }).join('') + '</div>';
+    }
+    function renderPublicFileLinksV7117(v) {
+      return renderPublicLinkButtonsV7117(v, 'bi-paperclip', 'เอกสารประกอบ');
+    }
+    function renderPublicMeetingLinksV7117(v) {
+      return renderPublicLinkButtonsV7117(v, 'bi-camera-video', 'ลิงก์ประชุม');
+    }
+    const renderPublicFileLinksLegacyV7117 = renderPublicFileLinksV706;
+    renderPublicFileLinksV706 = function(v) {
+      return renderPublicFileLinksV7117(v) || renderPublicFileLinksLegacyV7117(v);
+    };
+
     function renderPublicScheduleMetaV706(data) {
       const head = document.getElementById('psEventName')?.closest('.mb-3');
       if (!head) return;
@@ -248,7 +301,7 @@ body{background:radial-gradient(circle at 12% 10%,rgba(14,165,233,.20),transpare
           document.getElementById('psLocation').innerText = data.location || '-';
           document.getElementById('psDetails').innerText = data.details || '-';
           document.getElementById('psExpiry').innerText = data.expiresAt ? ('ลิงก์นี้หมดอายุ: ' + haosPublicDate(data.expiresAt)) : 'ลิงก์นี้ไม่มีวันหมดอายุ';
-          document.getElementById('psLink').innerHTML = data.meetingLink ? `<a href="${data.meetingLink}" target="_blank" class="text-break">${data.meetingLink}</a>` : '-';
+          document.getElementById('psLink').innerHTML = renderPublicMeetingLinksV7117(data.meetingLink) || '-';
           document.getElementById('psFile').innerHTML = renderPublicFileLinksV706(data.fileUrl) || 'ไม่มีเอกสารแนบ';
           renderPublicScheduleMetaV706(data);
         } else {

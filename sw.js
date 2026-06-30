@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-116-itasset-date-export-main';
+const CACHE_NAME = 'haos-v70-117-schedule-multilink-actions';
 const CORE = [
   '/',
   '/index.html',
