@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-120-schedule-itasset-fixes';
+const CACHE_NAME = 'haos-v70-121-itasset-pagination-import-audit';
 const CORE = [
   '/',
   '/index.html',

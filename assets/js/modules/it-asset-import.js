@@ -1,7 +1,11 @@
 (function () {
-  const PATCH = 'v70.120-it-asset-tools';
+  const PATCH = 'v70.121-it-asset-pagination-import-audit';
   if (window.__HAOS_IT_ASSET_IMPORT__) return;
   window.__HAOS_IT_ASSET_IMPORT__ = true;
+
+  const PAGE_SIZE = 20;
+  let assetPageV7121 = 1;
+  let lastAssetFilterKeyV7121 = '';
 
   const esc = value => String(value ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
   const clean = value => String(value ?? '').replace(/\s+/g, ' ').trim();
@@ -113,7 +117,10 @@
         '</div>');
       ['itAssetDeptV7120', 'itAssetLocationV7120', 'itAssetYearV7120', 'itAssetYearSortV7120'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.addEventListener('change', () => window.renderITAssetsV70 && window.renderITAssetsV70());
+        if (el) el.addEventListener('change', () => {
+          assetPageV7121 = 1;
+          window.renderITAssetsV70 && window.renderITAssetsV70();
+        });
       });
       document.getElementById('itAssetExportV7120')?.addEventListener('click', exportVisibleAssets);
       document.getElementById('itAssetPrintV7120')?.addEventListener('click', printVisibleAssets);
@@ -159,6 +166,70 @@
     return list;
   }
 
+  function assetFilterKey() {
+    return [
+      clean(document.getElementById('itAssetSearchV70')?.value).toLowerCase(),
+      document.getElementById('itAssetSmartCategoryV7116')?.value || '',
+      document.getElementById('itAssetCategoryV70')?.value || '',
+      document.getElementById('itAssetStatusV70')?.value || '',
+      document.getElementById('itAssetDeptV7120')?.value || '',
+      document.getElementById('itAssetLocationV7120')?.value || '',
+      document.getElementById('itAssetYearV7120')?.value || '',
+      document.getElementById('itAssetYearSortV7120')?.value || ''
+    ].join('\u001e');
+  }
+
+  function ensureAssetPager() {
+    const panel = document.getElementById('itAssetPanelV70');
+    const tableWrap = panel && panel.querySelector('.table-responsive');
+    if (!panel || !tableWrap) return null;
+    let pager = document.getElementById('itAssetPagerV7121');
+    if (!pager) {
+      tableWrap.insertAdjacentHTML('afterend', '<div id="itAssetPagerV7121" class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3 small"></div>');
+      pager = document.getElementById('itAssetPagerV7121');
+    }
+    return pager;
+  }
+
+  function renderAssetPager(total) {
+    const pager = ensureAssetPager();
+    if (!pager) return;
+    if (!total || total <= PAGE_SIZE) {
+      pager.innerHTML = total ? '<div class="text-muted fw-bold">แสดง ' + total + ' รายการทั้งหมด</div>' : '';
+      return;
+    }
+    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    assetPageV7121 = Math.min(Math.max(1, assetPageV7121), totalPages);
+    const start = ((assetPageV7121 - 1) * PAGE_SIZE) + 1;
+    const end = Math.min(assetPageV7121 * PAGE_SIZE, total);
+    const first = Math.max(1, assetPageV7121 - 2);
+    const last = Math.min(totalPages, assetPageV7121 + 2);
+    const pageButtons = [];
+    for (let page = first; page <= last; page++) {
+      pageButtons.push('<button type="button" class="btn btn-sm ' + (page === assetPageV7121 ? 'btn-primary' : 'btn-outline-primary') + ' fw-bold" data-it-asset-page="' + page + '">' + page + '</button>');
+    }
+    pager.innerHTML =
+      '<div class="text-muted fw-bold">แสดง ' + start + '-' + end + ' จาก ' + total + ' รายการ</div>' +
+      '<div class="d-flex align-items-center gap-2 flex-wrap">' +
+        '<button type="button" class="btn btn-sm btn-outline-secondary fw-bold" data-it-asset-page="' + (assetPageV7121 - 1) + '" ' + (assetPageV7121 <= 1 ? 'disabled' : '') + '>ก่อนหน้า</button>' +
+        pageButtons.join('') +
+        '<button type="button" class="btn btn-sm btn-outline-secondary fw-bold" data-it-asset-page="' + (assetPageV7121 + 1) + '" ' + (assetPageV7121 >= totalPages ? 'disabled' : '') + '>ถัดไป</button>' +
+      '</div>';
+    pager.querySelectorAll('[data-it-asset-page]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const page = Number(btn.dataset.itAssetPage || 1);
+        if (!page || page === assetPageV7121) return;
+        assetPageV7121 = Math.min(Math.max(1, page), totalPages);
+        renderEnhancedAssetRows();
+      });
+    });
+  }
+
+  window.setITAssetPageV7121 = function (page) {
+    assetPageV7121 = Number(page) || 1;
+    renderEnhancedAssetRows();
+  };
+
   function renderEnhancedAssetRows() {
     installAssetTools();
     const tbody = document.getElementById('itAssetTableV70');
@@ -166,24 +237,35 @@
     const data = assetState();
     if (!Array.isArray(data.assets) || !data.assets.length) return;
     const list = visibleAssets();
+    const filterKey = assetFilterKey();
+    if (filterKey !== lastAssetFilterKeyV7121) {
+      assetPageV7121 = 1;
+      lastAssetFilterKeyV7121 = filterKey;
+    }
     window.haosITAssetVisibleRowsV7120 = list;
     if (!list.length) {
       tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">ไม่พบข้อมูลตามตัวกรอง</td></tr>';
+      renderAssetPager(0);
       return;
     }
-    tbody.innerHTML = list.map((a, idx) => {
+    const totalPages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+    assetPageV7121 = Math.min(Math.max(1, assetPageV7121), totalPages);
+    const offset = (assetPageV7121 - 1) * PAGE_SIZE;
+    const pageRows = list.slice(offset, offset + PAGE_SIZE);
+    tbody.innerHTML = pageRows.map((a, idx) => {
       const code = a.assetCode || a.assetNumber || '-';
       const category = a.smartCategory || a.category || '-';
       const ownerDept = a.ownerDepartment || a.department || '';
       const place = a.location || a.installLocation || '-';
       return '<tr>' +
-        '<td><div class="fw-bold text-primary">' + esc(a.assetName || '-') + '</div><small class="text-muted">' + esc((idx + 1) + '. ' + code) + ' • ' + esc(category) + '</small><br><small>' + esc([a.brand, a.model, a.serialNumber].filter(Boolean).join(' / ')) + '</small></td>' +
+        '<td><div class="fw-bold text-primary">' + esc(a.assetName || '-') + '</div><small class="text-muted">' + esc((offset + idx + 1) + '. ' + code) + ' • ' + esc(category) + '</small><br><small>' + esc([a.brand, a.model, a.serialNumber].filter(Boolean).join(' / ')) + '</small></td>' +
         '<td><b>' + esc(a.currentUserName || '-') + '</b><br><small class="text-muted">' + esc(ownerDept) + ' • ' + esc(place) + '</small></td>' +
         '<td>' + statusBadge(a.status) + '<br><small class="text-muted">' + esc(a.condition || '') + '</small><br><small class="text-muted">ได้มา ' + esc(assetDateText(a.purchaseDate || a.acquiredDate)) + '</small></td>' +
         '<td><span class="badge bg-info">' + licenseCount(a.assetId) + ' license</span><br><small class="text-muted">มูลค่า ' + esc(a.price || '-') + '</small><br><small class="text-muted">ประกันถึง ' + esc(assetDateText(a.warrantyEnd)) + '</small></td>' +
         '<td class="text-end"><button class="btn btn-sm btn-outline-primary" onclick="openITAssetDetailV70(\'' + esc(a.assetId) + '\')"><i class="bi bi-eye"></i></button> <button class="btn btn-sm btn-outline-warning text-dark" onclick="openITAssetFormV70(\'' + esc(a.assetId) + '\')"><i class="bi bi-pencil"></i></button> <button class="btn btn-sm btn-outline-danger" onclick="openITRepairTicketFormV70(\'' + esc(a.assetId) + '\')"><i class="bi bi-tools"></i></button></td>' +
       '</tr>';
     }).join('');
+    renderAssetPager(list.length);
   }
 
   function csvCell(value) {
@@ -330,6 +412,16 @@
         deteriorated: pick(obj, ['รายการเสียหายใช้อยู่หรือไม่ได้ใช้ เสื่อมสภาพ', 'เสื่อมสภาพ']),
         remark: sheetName && /โปรแกรม/i.test(sheetName) ? 'นำเข้าจากชีตโปรแกรมคอมพิวเตอร์' : ''
       };
+      if (!clean(asset.assetCode) && row.length > 1) asset.assetCode = row[1];
+      if (!clean(asset.assetNumber) && row.length > 2) asset.assetNumber = row[2];
+      if (!clean(asset.assetName) && row.length > 3) asset.assetName = row[3];
+      if (!clean(asset.spec) && row.length > 4) asset.spec = row[4];
+      if (!clean(asset.category) && row.length > 5) asset.category = row[5];
+      if (!clean(asset.purchaseDate) && row.length > 8) asset.purchaseDate = formatDateValue(row[8]);
+      if (!clean(asset.price) && row.length > 9) asset.price = row[9];
+      if (!clean(asset.ownerDepartment) && row.length > 10) asset.ownerDepartment = row[10];
+      if (!clean(asset.damaged) && row.length > 12) asset.damaged = row[12];
+      if (!clean(asset.deteriorated) && row.length > 13) asset.deteriorated = row[13];
       if (clean(asset.assetName) || clean(asset.assetCode) || clean(asset.assetNumber)) out.push(asset);
     }
     return out;
@@ -342,7 +434,10 @@
     const rows = [];
     workbook.SheetNames.forEach(name => {
       const sheet = workbook.Sheets[name];
-      rows.push(...parseSheetRows(sheet, name));
+      const parsed = parseSheetRows(sheet, name);
+      rows.push(...parsed);
+      rows._haosSheetSummary = rows._haosSheetSummary || [];
+      rows._haosSheetSummary.push({ name, count: parsed.length });
     });
     return rows;
   }
@@ -362,11 +457,16 @@
         Swal.fire({ title: 'กำลังอ่านไฟล์...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         const rows = await readWorkbook(file);
         if (!rows.length) throw new Error('ไม่พบรายการทรัพย์สินในไฟล์นี้');
+        const sheetSummary = (rows._haosSheetSummary || [])
+          .map(item => '<li><b>' + esc(item.name) + '</b>: ' + esc(item.count) + ' รายการ</li>')
+          .join('');
         const sample = rows.slice(0, 6).map((row, index) => '<tr><td>' + (index + 1) + '</td><td>' + esc(row.assetCode || '-') + '</td><td>' + esc(row.assetName || '-') + '</td><td>' + esc(row.ownerDepartment || '-') + '</td></tr>').join('');
         const confirm = await Swal.fire({
           icon: 'question',
           title: 'นำเข้าทะเบียนทรัพย์สิน IT',
-          html: '<div class="text-start"><p>พบรายการที่อ่านได้ <b>' + rows.length + '</b> รายการ ระบบจะเพิ่มใหม่หรืออัปเดตรายการเดิมจากรหัสครุภัณฑ์ / เลข GFMIS / Serial</p><div class="table-responsive"><table class="table table-sm"><thead><tr><th>#</th><th>รหัส</th><th>รายการ</th><th>หน่วยงาน</th></tr></thead><tbody>' + sample + '</tbody></table></div></div>',
+          html: '<div class="text-start"><p>พบรายการที่อ่านได้ <b>' + rows.length + '</b> รายการ ระบบจะเพิ่มใหม่หรืออัปเดตรายการเดิมจากรหัสครุภัณฑ์ / เลข GFMIS / Serial</p>' +
+            (sheetSummary ? '<div class="alert alert-info py-2 mb-2"><div class="fw-bold mb-1">สรุปจากแต่ละชีต</div><ul class="mb-0 ps-3">' + sheetSummary + '</ul></div>' : '') +
+            '<div class="table-responsive"><table class="table table-sm"><thead><tr><th>#</th><th>รหัส</th><th>รายการ</th><th>หน่วยงาน</th></tr></thead><tbody>' + sample + '</tbody></table></div></div>',
           width: 760,
           showCancelButton: true,
           confirmButtonText: 'เริ่มนำเข้า',

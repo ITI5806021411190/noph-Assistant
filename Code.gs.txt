@@ -4890,6 +4890,14 @@ function haosV7111ImportValue_(raw, keys) {
   return '';
 }
 
+function haosV7111ImportKey_(value) {
+  var text = String(value || '').replace(/'/g, '').trim();
+  if (!text) return '';
+  if (/^[-–—]+$/.test(text)) return '';
+  if (/^(n\/a|na|null|none|undefined)$/i.test(text)) return '';
+  return text;
+}
+
 function haosV7111NormalizeImportDate_(value) {
   if (!value) return '';
   if (Object.prototype.toString.call(value) === '[object Date]' && !isNaN(value.getTime())) {
@@ -4941,13 +4949,13 @@ function haosV7111NormalizeAssetImportRow_(raw, actor) {
   if (!condition) condition = damaged ? damaged : 'ดี';
   return {
     assetId: haosV7111ImportValue_(raw, ['assetId', 'Asset ID']),
-    assetCode: String(haosV7111ImportValue_(raw, ['assetCode', 'รหัสครุภัณฑ์', 'รหัสทรัพย์สิน']) || '').trim(),
-    assetNumber: String(haosV7111ImportValue_(raw, ['assetNumber', 'gfmisNumber', 'หมายเลขทรัพย์ในระบบ GFMIS']) || '').trim(),
+    assetCode: haosV7111ImportKey_(haosV7111ImportValue_(raw, ['assetCode', 'รหัสครุภัณฑ์', 'รหัสทรัพย์สิน'])),
+    assetNumber: haosV7111ImportKey_(haosV7111ImportValue_(raw, ['assetNumber', 'gfmisNumber', 'หมายเลขทรัพย์ในระบบ GFMIS'])),
     assetName: String(assetName || '').trim(),
     category: String(haosV7111ImportValue_(raw, ['category', 'ประเภทครุภัณฑ์', 'หมวด']) || '').trim(),
     brand: String(haosV7111ImportValue_(raw, ['brand', 'ยี่ห้อ']) || '').trim(),
     model: String(haosV7111ImportValue_(raw, ['model', 'รุ่น']) || '').trim(),
-    serialNumber: String(haosV7111ImportValue_(raw, ['serialNumber', 'serial', 'Serial Number', 'S/N']) || '').trim(),
+    serialNumber: haosV7111ImportKey_(haosV7111ImportValue_(raw, ['serialNumber', 'serial', 'Serial Number', 'S/N'])),
     spec: String(detail || '').trim(),
     purchaseDate: haosV7111NormalizeImportDate_(haosV7111ImportValue_(raw, ['purchaseDate', 'วัน/เดือน/ปี', 'วันที่ได้มา'])),
     fiscalYear: String(haosV7111ImportValue_(raw, ['fiscalYear', 'ปีงบประมาณ']) || '').trim(),
@@ -4985,9 +4993,9 @@ function importITAssetsV7111(rows, actor) {
     for (var i = 1; i < data.length; i++) {
       var rowNo = i + 1;
       var assetId = String(data[i][0] || '').trim();
-      var code = String(data[i][1] || '').replace(/'/g, '').trim();
-      var num = String(data[i][2] || '').replace(/'/g, '').trim();
-      var serial = String(data[i][7] || '').replace(/'/g, '').trim();
+      var code = haosV7111ImportKey_(data[i][1]);
+      var num = haosV7111ImportKey_(data[i][2]);
+      var serial = haosV7111ImportKey_(data[i][7]);
       if (assetId) byId[assetId] = rowNo;
       if (code) byCode[code] = rowNo;
       if (num) byNumber[num] = rowNo;
