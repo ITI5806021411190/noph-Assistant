@@ -9864,7 +9864,7 @@ HAOS v68.6 FINISHING FIX
     try{
       const res=await gasV70('getITAssetModuleDataV70',[u.phone||'',u.role||'',u.department||'']);
       if(!res||!res.success) throw new Error(res&&res.message?res.message:'โหลดข้อมูลไม่สำเร็จ');
-      state.assets=res.assets||[]; state.software=res.software||[]; state.licenses=res.licenses||[]; state.maps=res.maps||[]; state.tickets=res.tickets||[]; state.alerts=res.alerts||[]; state.dashboard=res.dashboard||{};
+      state.assets=res.assets||[]; state.software=res.software||[]; state.licenses=res.licenses||[]; state.maps=res.maps||[]; state.tickets=res.tickets||[]; state.alerts=res.alerts||[]; state.dashboard=res.dashboard||{}; window.haosITAssetStateV7120=state;
       renderITAssetDashboardV70(); renderITAssetsV70(); renderITRepairDashboardV70(); renderITRepairTicketsV70();
     }catch(err){Swal.fire('โหลดข้อมูล IT Asset ไม่สำเร็จ',err.message||String(err),'error');}
   };
@@ -19722,7 +19722,7 @@ console.info('HAOS '+PATCH+' loaded');
 </style>
 <script id="haos-v70-117-schedule-multilink-script">
 (function(){
-  const PATCH='v70.119-schedule-action-stability';
+  const PATCH='v70.120-schedule-actions-unblocked';
   if(window.__HAOS_V7117_SCHEDULE_MULTILINK__)return;
   window.__HAOS_V7117_SCHEDULE_MULTILINK__=true;
   const $=id=>document.getElementById(id);
@@ -19741,7 +19741,10 @@ console.info('HAOS '+PATCH+' loaded');
     const seen=new Set();
     return list.filter(item=>{const key=idOf(item)||JSON.stringify([item.eventName,item.startTime,item.rawStartTime]);if(seen.has(key))return false;seen.add(key);return true;});
   }
-  function itemById(id){return allSchedules().find(item=>String(idOf(item))===String(id));}
+  function itemById(id){
+    const target=String(id||'');
+    return allSchedules().find(item=>[idOf(item),item?.id,item?.publicId,item?.eventId,item?.scheduleId].some(x=>String(x||'')===target));
+  }
 
   function parseLinkToken(token){
     if(token&&typeof token==='object'){
@@ -20045,7 +20048,7 @@ console.info('HAOS '+PATCH+' loaded');
     if(!item)return;
     populateBaseDetail(item);
     const overlay=$('haosScheduleDetailBackdropV7117');
-    if(['qr','viewPublic','public','revoke'].includes(action)&&overlay)overlay.style.zIndex='2147483000';
+    if(['qr','viewPublic','public','revoke','copy'].includes(action)&&overlay)overlay.style.zIndex='2147482000';
     if(action==='copy'){
       navigator.clipboard?.writeText(detailText(item,false)).then(()=>Swal.fire({icon:'success',title:'คัดลอกข้อความแล้ว',timer:1400,showConfirmButton:false})).catch(()=>Swal.fire('คัดลอกข้อความ',`<pre class="text-start small">${esc(detailText(item,false))}</pre>`,'info'));
     }else if(action==='print'){
@@ -20086,19 +20089,14 @@ console.info('HAOS '+PATCH+' loaded');
         if(!btn)return;
         const code=btn.getAttribute('onclick')||'';
         if(!/(editSchedule|handleDelete|viewScheduleDetail|showSchedulePopupDetail|openScheduleDetail|haosScheduleDetailActionV7117)/.test(code))return;
-        ev.stopPropagation();
         if(/(editSchedule|handleDelete)/.test(code)){
           const now=Date.now();
-          window.__haosScheduleActionBusyUntilV7119=now+900;
-          const last=Number(btn.dataset.haosActionAt||0);
-          if(now-last<700){
-            ev.preventDefault();
-            if(typeof ev.stopImmediatePropagation==='function')ev.stopImmediatePropagation();
-            return false;
-          }
+          window.__haosScheduleActionBusyUntilV7119=now+450;
           btn.dataset.haosActionAt=String(now);
+        }else if(/(viewScheduleDetail|showSchedulePopupDetail|openScheduleDetail|haosScheduleDetailActionV7117)/.test(code)){
+          window.__haosScheduleActionBusyUntilV7119=Date.now()+260;
         }
-      },true);
+      },false);
     }
     const wrap=(name,delay)=>{
       const fn=window[name];
@@ -20131,18 +20129,18 @@ console.info('HAOS '+PATCH+' loaded');
       const now=Date.now();
       lastArgs=arguments;
       lastThis=this;
-      const actionHot=now<Number(window.__haosScheduleActionBusyUntilV7119||0)||!!document.querySelector('.action-menu button:hover,.action-menu button:focus,.haos-v782-actions button:hover,.haos-v782-actions button:focus');
+      const actionHot=now<Number(window.__haosScheduleActionBusyUntilV7119||0);
       if(running||now-lastRun<120||actionHot){
         if(!timer){
           timer=setTimeout(function(){
             timer=null;
-            const stillHot=Date.now()<Number(window.__haosScheduleActionBusyUntilV7119||0)||!!document.querySelector('.action-menu button:hover,.action-menu button:focus,.haos-v782-actions button:hover,.haos-v782-actions button:focus');
+            const stillHot=Date.now()<Number(window.__haosScheduleActionBusyUntilV7119||0);
             if(stillHot){
-              timer=setTimeout(function(){timer=null;wrapped.apply(lastThis,lastArgs);},180);
+              timer=setTimeout(function(){timer=null;wrapped.apply(lastThis,lastArgs);},90);
               return;
             }
             wrapped.apply(lastThis,lastArgs);
-          },actionHot?220:140);
+          },actionHot?90:120);
         }
         return;
       }

@@ -1,5 +1,5 @@
 (function () {
-  const PATCH = 'v70.111-it-asset-import';
+  const PATCH = 'v70.120-it-asset-tools';
   if (window.__HAOS_IT_ASSET_IMPORT__) return;
   window.__HAOS_IT_ASSET_IMPORT__ = true;
 
@@ -35,6 +35,209 @@
         google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn].apply(google.script.run, args || []);
       } catch (e) { reject(e); }
     });
+  }
+
+  const assetState = () => window.haosITAssetStateV7120 || window.haosITV702Data || window.haosITV703Data || { assets: [], maps: [] };
+
+  function assetDateText(value) {
+    try {
+      if (!value) return '-';
+      if (window.HAOSDateDisplay && window.HAOSDateDisplay.date) return window.HAOSDateDisplay.date(value);
+      return clean(value) || '-';
+    } catch (e) {
+      return clean(value) || '-';
+    }
+  }
+
+  function assetYear(value) {
+    const raw = clean(value);
+    if (!raw) return '';
+    const m = raw.match(/(25\d{2}|20\d{2}|19\d{2})/);
+    if (m) {
+      let y = Number(m[1]);
+      if (y && y < 2400) y += 543;
+      return y ? String(y) : '';
+    }
+    const normalized = raw.replace(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/, (_, d, mo, y) => {
+      let yy = Number(y);
+      if (yy < 100) yy += yy > 40 ? 2500 : 2000;
+      if (yy > 2400) yy -= 543;
+      return `${yy}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    });
+    const d = new Date(normalized);
+    if (!Number.isNaN(d.getTime())) return String(d.getFullYear() + 543);
+    return '';
+  }
+
+  function fillSelect(id, values) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const current = el.value;
+    const uniq = [...new Set((values || []).map(clean).filter(Boolean))]
+      .sort((a, b) => String(a).localeCompare(String(b), 'th'));
+    const signature = uniq.join('\u001f');
+    if (el.dataset.haosOptionsSignature === signature) return;
+    el.dataset.haosOptionsSignature = signature;
+    el.innerHTML = '<option value="">ทั้งหมด</option>' + uniq.map(v => '<option value="' + esc(v) + '">' + esc(v) + '</option>').join('');
+    if (uniq.includes(current)) el.value = current;
+  }
+
+  function statusBadge(value) {
+    if (typeof window.statusBadgeV70 === 'function') return window.statusBadgeV70(value);
+    const text = clean(value) || 'ไม่ระบุ';
+    let cls = 'info';
+    if (/ใช้งาน|Active|Resolved|Closed|ดำเนินการแล้ว/.test(text)) cls = 'ok';
+    if (/ซ่อม|Waiting|Expiring|New|Assigned|In Progress|รอ/.test(text)) cls = 'warn';
+    if (/ชำรุด|Expired|Cancelled|เสีย|หมดอายุ/.test(text)) cls = 'bad';
+    return '<span class="haos-v70-status ' + cls + '">' + esc(text) + '</span>';
+  }
+
+  function licenseCount(assetId) {
+    const data = assetState();
+    return (data.maps || []).filter(m => String(m.assetId) === String(assetId) && m.activationStatus !== 'Removed').length;
+  }
+
+  function installAssetTools() {
+    const panel = document.getElementById('itAssetPanelV70');
+    const filter = panel && panel.querySelector('.haos-v70-filter');
+    const row = filter && filter.querySelector('.row.g-2.align-items-end');
+    if (!panel || !filter || !row) return;
+    if (!document.getElementById('itAssetExtraFiltersV7120')) {
+      row.insertAdjacentHTML('afterend',
+        '<div id="itAssetExtraFiltersV7120" class="row g-2 align-items-end mt-2">' +
+          '<div class="col-md-3"><label class="small fw-bold text-muted">กลุ่มงาน</label><select id="itAssetDeptV7120" class="form-select"></select></div>' +
+          '<div class="col-md-3"><label class="small fw-bold text-muted">สถานที่ติดตั้ง</label><select id="itAssetLocationV7120" class="form-select"></select></div>' +
+          '<div class="col-md-2"><label class="small fw-bold text-muted">ปีที่ได้มา</label><select id="itAssetYearV7120" class="form-select"></select></div>' +
+          '<div class="col-md-2"><label class="small fw-bold text-muted">เรียงปีที่ได้มา</label><select id="itAssetYearSortV7120" class="form-select"><option value="">ค่าเดิม</option><option value="desc">มากไปน้อย</option><option value="asc">น้อยไปมาก</option></select></div>' +
+          '<div class="col-md-2 d-flex gap-2 flex-wrap align-items-end"><button type="button" id="itAssetExportV7120" class="btn btn-outline-primary fw-bold flex-fill"><i class="bi bi-download"></i> Export</button><button type="button" id="itAssetPrintV7120" class="btn btn-outline-secondary fw-bold flex-fill"><i class="bi bi-printer"></i> พิมพ์</button><button type="button" id="itAssetImageV7120" class="btn btn-outline-info fw-bold flex-fill"><i class="bi bi-image"></i> รูปภาพ</button></div>' +
+        '</div>');
+      ['itAssetDeptV7120', 'itAssetLocationV7120', 'itAssetYearV7120', 'itAssetYearSortV7120'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', () => window.renderITAssetsV70 && window.renderITAssetsV70());
+      });
+      document.getElementById('itAssetExportV7120')?.addEventListener('click', exportVisibleAssets);
+      document.getElementById('itAssetPrintV7120')?.addEventListener('click', printVisibleAssets);
+      document.getElementById('itAssetImageV7120')?.addEventListener('click', downloadAssetImage);
+    }
+    const data = assetState();
+    const assets = data.assets || [];
+    fillSelect('itAssetDeptV7120', assets.map(a => a.ownerDepartment || a.department));
+    fillSelect('itAssetLocationV7120', assets.map(a => a.location || a.installLocation));
+    fillSelect('itAssetYearV7120', assets.map(a => assetYear(a.purchaseDate || a.acquiredDate)));
+  }
+
+  function visibleAssets() {
+    const data = assetState();
+    const assets = data.assets || [];
+    const q = clean(document.getElementById('itAssetSearchV70')?.value).toLowerCase();
+    const smart = document.getElementById('itAssetSmartCategoryV7116')?.value || '';
+    const cat = document.getElementById('itAssetCategoryV70')?.value || '';
+    const st = document.getElementById('itAssetStatusV70')?.value || '';
+    const dept = document.getElementById('itAssetDeptV7120')?.value || '';
+    const loc = document.getElementById('itAssetLocationV7120')?.value || '';
+    const year = document.getElementById('itAssetYearV7120')?.value || '';
+    const yearSort = document.getElementById('itAssetYearSortV7120')?.value || '';
+    const list = assets.filter(a => {
+      const ay = assetYear(a.purchaseDate || a.acquiredDate);
+      const ownerDept = clean(a.ownerDepartment || a.department);
+      const place = clean(a.location || a.installLocation);
+      return (!smart || a.smartCategory === smart)
+        && (!cat || a.category === cat)
+        && (!st || a.status === st)
+        && (!dept || ownerDept === dept)
+        && (!loc || place === loc)
+        && (!year || ay === year)
+        && (!q || clean(Object.values(a).join(' ')).toLowerCase().includes(q));
+    });
+    if (yearSort) {
+      list.sort((a, b) => {
+        const av = Number(assetYear(a.purchaseDate || a.acquiredDate) || 0);
+        const bv = Number(assetYear(b.purchaseDate || b.acquiredDate) || 0);
+        return yearSort === 'asc' ? av - bv : bv - av;
+      });
+    }
+    return list;
+  }
+
+  function renderEnhancedAssetRows() {
+    installAssetTools();
+    const tbody = document.getElementById('itAssetTableV70');
+    if (!tbody) return;
+    const data = assetState();
+    if (!Array.isArray(data.assets) || !data.assets.length) return;
+    const list = visibleAssets();
+    window.haosITAssetVisibleRowsV7120 = list;
+    if (!list.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">ไม่พบข้อมูลตามตัวกรอง</td></tr>';
+      return;
+    }
+    tbody.innerHTML = list.map((a, idx) => {
+      const code = a.assetCode || a.assetNumber || '-';
+      const category = a.smartCategory || a.category || '-';
+      const ownerDept = a.ownerDepartment || a.department || '';
+      const place = a.location || a.installLocation || '-';
+      return '<tr>' +
+        '<td><div class="fw-bold text-primary">' + esc(a.assetName || '-') + '</div><small class="text-muted">' + esc((idx + 1) + '. ' + code) + ' • ' + esc(category) + '</small><br><small>' + esc([a.brand, a.model, a.serialNumber].filter(Boolean).join(' / ')) + '</small></td>' +
+        '<td><b>' + esc(a.currentUserName || '-') + '</b><br><small class="text-muted">' + esc(ownerDept) + ' • ' + esc(place) + '</small></td>' +
+        '<td>' + statusBadge(a.status) + '<br><small class="text-muted">' + esc(a.condition || '') + '</small><br><small class="text-muted">ได้มา ' + esc(assetDateText(a.purchaseDate || a.acquiredDate)) + '</small></td>' +
+        '<td><span class="badge bg-info">' + licenseCount(a.assetId) + ' license</span><br><small class="text-muted">มูลค่า ' + esc(a.price || '-') + '</small><br><small class="text-muted">ประกันถึง ' + esc(assetDateText(a.warrantyEnd)) + '</small></td>' +
+        '<td class="text-end"><button class="btn btn-sm btn-outline-primary" onclick="openITAssetDetailV70(\'' + esc(a.assetId) + '\')"><i class="bi bi-eye"></i></button> <button class="btn btn-sm btn-outline-warning text-dark" onclick="openITAssetFormV70(\'' + esc(a.assetId) + '\')"><i class="bi bi-pencil"></i></button> <button class="btn btn-sm btn-outline-danger" onclick="openITRepairTicketFormV70(\'' + esc(a.assetId) + '\')"><i class="bi bi-tools"></i></button></td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function csvCell(value) {
+    return '"' + String(value ?? '').replace(/"/g, '""') + '"';
+  }
+
+  function exportVisibleAssets() {
+    const list = visibleAssets();
+    const headers = ['ลำดับ', 'รหัสทรัพย์สิน', 'ชื่อทรัพย์สิน', 'หมวด', 'กลุ่มงาน', 'สถานที่ติดตั้ง', 'ผู้ใช้งาน', 'สถานะ', 'วันที่ได้มา', 'ปีที่ได้มา', 'มูลค่า', 'Serial'];
+    const rows = list.map((a, i) => [
+      i + 1,
+      a.assetCode || a.assetNumber || '',
+      a.assetName || '',
+      a.smartCategory || a.category || '',
+      a.ownerDepartment || a.department || '',
+      a.location || a.installLocation || '',
+      a.currentUserName || '',
+      a.status || '',
+      assetDateText(a.purchaseDate || a.acquiredDate),
+      assetYear(a.purchaseDate || a.acquiredDate),
+      a.price || '',
+      a.serialNumber || ''
+    ]);
+    const csv = '\ufeff' + [headers, ...rows].map(row => row.map(csvCell).join(',')).join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'haos-it-assets-' + Date.now() + '.csv';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+
+  function printVisibleAssets() {
+    const list = visibleAssets();
+    const rows = list.map((a, i) => '<tr><td>' + (i + 1) + '</td><td>' + esc(a.assetCode || a.assetNumber || '-') + '</td><td>' + esc(a.assetName || '-') + '</td><td>' + esc(a.smartCategory || a.category || '-') + '</td><td>' + esc(a.ownerDepartment || a.department || '-') + '</td><td>' + esc(a.location || a.installLocation || '-') + '</td><td>' + esc(a.status || '-') + '</td><td>' + esc(assetDateText(a.purchaseDate || a.acquiredDate)) + '</td></tr>').join('');
+    const html = '<!doctype html><html><head><meta charset="utf-8"><title>IT Assets</title><style>body{font-family:Tahoma,Arial,sans-serif;padding:24px;color:#0f172a}h1{font-size:22px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #cbd5e1;padding:7px;text-align:left}th{background:#e0f2fe}</style></head><body><h1>ทะเบียนทรัพย์สิน IT และ Software License</h1><p>จำนวน ' + list.length + ' รายการ</p><table><thead><tr><th>#</th><th>รหัส</th><th>ชื่อทรัพย์สิน</th><th>หมวด</th><th>กลุ่มงาน</th><th>สถานที่</th><th>สถานะ</th><th>วันที่ได้มา</th></tr></thead><tbody>' + rows + '</tbody></table></body></html>';
+    const w = window.open('', '_blank');
+    if (!w) return;
+    w.document.write(html);
+    w.document.close();
+    setTimeout(() => { try { w.print(); } catch (e) {} }, 350);
+  }
+
+  async function downloadAssetImage() {
+    const target = document.querySelector('#itAssetPanelV70 .table-responsive') || document.getElementById('itAssetPanelV70');
+    if (!target || typeof window.html2canvas !== 'function') {
+      Swal.fire('ยังไม่พร้อม', 'ไม่พบเครื่องมือสร้างรูปภาพ กรุณาลองใหม่อีกครั้ง', 'warning');
+      return;
+    }
+    const canvas = await window.html2canvas(target, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = 'haos-it-assets-' + Date.now() + '.png';
+    a.click();
   }
 
   function ensureXlsx() {
@@ -198,6 +401,7 @@
       target.insertBefore(btn, target.firstChild);
     }
     btn.style.display = canManageIT() ? '' : 'none';
+    installAssetTools();
   }
 
   function wrap(name) {
@@ -205,7 +409,10 @@
     if (typeof fn !== 'function' || fn.__haosImportWrapped) return;
     const wrapped = function () {
       const result = fn.apply(this, arguments);
-      Promise.resolve(result).finally(() => setTimeout(installButton, 250));
+      Promise.resolve(result).finally(() => setTimeout(() => {
+        installButton();
+        if (name === 'renderITAssetsV70' || name === 'loadITAssetModuleV70' || name === 'openITAssetModuleV70') renderEnhancedAssetRows();
+      }, 250));
       return result;
     };
     wrapped.__haosImportWrapped = true;
@@ -215,6 +422,20 @@
   function boot() {
     installButton();
     ['openITAssetModuleV70', 'loadITAssetModuleV70', 'renderITAssetsV70'].forEach(wrap);
+    const reset = window.resetITAssetFiltersV70;
+    if (typeof reset === 'function' && !reset.__haosV7120Wrapped) {
+      window.resetITAssetFiltersV70 = function () {
+        ['itAssetDeptV7120', 'itAssetLocationV7120', 'itAssetYearV7120', 'itAssetYearSortV7120'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = '';
+        });
+        const out = reset.apply(this, arguments);
+        setTimeout(renderEnhancedAssetRows, 80);
+        return out;
+      };
+      window.resetITAssetFiltersV70.__haosV7120Wrapped = true;
+    }
+    setTimeout(renderEnhancedAssetRows, 900);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });

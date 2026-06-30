@@ -264,13 +264,14 @@
     </div>`;
   }
 
+  let lastAgendaMarkup = '';
   function render() {
     ensureTab();
     LOOKAHEAD_DAYS = readLookaheadDays();
     const body = $('upcomingAgendaBodyV787');
     if (!body) return;
     const data = getAgenda();
-    body.innerHTML = `
+    const markup = `
       <div class="haos-v787-hero">
         <div>
           <span class="haos-v787-kicker"><i class="bi bi-calendar2-check"></i> กำหนดการวันนี้และใกล้ถึง</span>
@@ -291,6 +292,10 @@
       <div id="agendaTodaySectionV787">${renderSection('กำหนดการวันนี้', 'bi-sun', data.todayItems, 'วันนี้ยังไม่มีกำหนดการ')}</div>
       <div id="agendaUpcomingSectionV787">${renderSection(`กำหนดการที่จะถึงในอีก ${LOOKAHEAD_DAYS} วัน`, 'bi-hourglass-split', data.upcomingItems, 'ยังไม่มีกำหนดการใกล้ถึง')}</div>
     `;
+    if (lastAgendaMarkup !== markup) {
+      body.innerHTML = markup;
+      lastAgendaMarkup = markup;
+    }
     updateHeroCard(data);
     injectAgendaNotifications();
   }

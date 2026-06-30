@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-119-schedule-action-stability';
+const CACHE_NAME = 'haos-v70-120-schedule-itasset-fixes';
 const CORE = [
   '/',
   '/index.html',
