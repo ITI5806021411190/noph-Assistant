@@ -19722,7 +19722,7 @@ console.info('HAOS '+PATCH+' loaded');
 </style>
 <script id="haos-v70-117-schedule-multilink-script">
 (function(){
-  const PATCH='v70.118-schedule-popup-stable-actions';
+  const PATCH='v70.119-schedule-action-stability';
   if(window.__HAOS_V7117_SCHEDULE_MULTILINK__)return;
   window.__HAOS_V7117_SCHEDULE_MULTILINK__=true;
   const $=id=>document.getElementById(id);
@@ -20078,14 +20078,94 @@ console.info('HAOS '+PATCH+' loaded');
   window.showSchedulePopupDetailV782=showDetailOverlay;
   window.openScheduleDetailFromPopupV749=showDetailOverlay;
 
+  function installScheduleActionGuardV7118(){
+    if(!document.documentElement.dataset.haosScheduleActionGuardV7118){
+      document.documentElement.dataset.haosScheduleActionGuardV7118='1';
+      document.addEventListener('click',function(ev){
+        const btn=ev.target&&ev.target.closest&&ev.target.closest('.action-menu button,.haos-v782-actions button,.haos-v7117-actionbar button');
+        if(!btn)return;
+        const code=btn.getAttribute('onclick')||'';
+        if(!/(editSchedule|handleDelete|viewScheduleDetail|showSchedulePopupDetail|openScheduleDetail|haosScheduleDetailActionV7117)/.test(code))return;
+        ev.stopPropagation();
+        if(/(editSchedule|handleDelete)/.test(code)){
+          const now=Date.now();
+          window.__haosScheduleActionBusyUntilV7119=now+900;
+          const last=Number(btn.dataset.haosActionAt||0);
+          if(now-last<700){
+            ev.preventDefault();
+            if(typeof ev.stopImmediatePropagation==='function')ev.stopImmediatePropagation();
+            return false;
+          }
+          btn.dataset.haosActionAt=String(now);
+        }
+      },true);
+    }
+    const wrap=(name,delay)=>{
+      const fn=window[name];
+      if(typeof fn!=='function'||fn.__haosV7118ActionGuard)return;
+      const wrapped=function(id){
+        const key=name+':'+String(id||'');
+        const now=Date.now();
+        window.__haosScheduleActionGuardStateV7118=window.__haosScheduleActionGuardStateV7118||{};
+        const last=window.__haosScheduleActionGuardStateV7118[key]||0;
+        if(now-last<delay)return;
+        window.__haosScheduleActionGuardStateV7118[key]=now;
+        window.__haosScheduleActionBusyUntilV7119=now+900;
+        if(name==='editSchedule'){
+          ['haosScheduleDetailBackdropV7117','haosScheduleDetailBackdropV782','haosScheduleDetailBackdropV749'].forEach(x=>$(x)?.remove());
+        }
+        return fn.apply(this,arguments);
+      };
+      wrapped.__haosV7118ActionGuard=true;
+      wrapped.__haosOriginal=fn;
+      window[name]=wrapped;
+    };
+    wrap('editSchedule',900);
+    wrap('handleDelete',1200);
+  }
+  function installScheduleRenderDebounceV7119(){
+    const fn=window.renderUnifiedScheduleV702;
+    if(typeof fn!=='function'||fn.__haosV7119RenderDebounce)return;
+    let timer=null,lastArgs=null,lastThis=null,running=false,lastRun=0;
+    const wrapped=function(){
+      const now=Date.now();
+      lastArgs=arguments;
+      lastThis=this;
+      const actionHot=now<Number(window.__haosScheduleActionBusyUntilV7119||0)||!!document.querySelector('.action-menu button:hover,.action-menu button:focus,.haos-v782-actions button:hover,.haos-v782-actions button:focus');
+      if(running||now-lastRun<120||actionHot){
+        if(!timer){
+          timer=setTimeout(function(){
+            timer=null;
+            const stillHot=Date.now()<Number(window.__haosScheduleActionBusyUntilV7119||0)||!!document.querySelector('.action-menu button:hover,.action-menu button:focus,.haos-v782-actions button:hover,.haos-v782-actions button:focus');
+            if(stillHot){
+              timer=setTimeout(function(){timer=null;wrapped.apply(lastThis,lastArgs);},180);
+              return;
+            }
+            wrapped.apply(lastThis,lastArgs);
+          },actionHot?220:140);
+        }
+        return;
+      }
+      running=true;
+      lastRun=now;
+      try{return fn.apply(this,arguments);}
+      finally{setTimeout(()=>{running=false;},80);}
+    };
+    wrapped.__haosV7119RenderDebounce=true;
+    wrapped.__haosOriginal=fn;
+    window.renderUnifiedScheduleV702=wrapped;
+  }
+
   function boot(){
     ensureFormUi();
     const bindThaiList=()=>{
       if(window.HAOS&&window.HAOS.scheduleThaiList)window.HAOS.scheduleThaiList.showDetail=showDetailOverlay;
     };
+    installScheduleActionGuardV7118();
+    installScheduleRenderDebounceV7119();
     bindThaiList();
     setTimeout(ensureFormUi,700);
-    [300,900,1700,2600].forEach(t=>setTimeout(bindThaiList,t));
+    [300,900,1700,2600].forEach(t=>setTimeout(()=>{installScheduleActionGuardV7118();installScheduleRenderDebounceV7119();bindThaiList();},t));
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});
   else boot();
