@@ -4895,6 +4895,7 @@ function haosV7111ImportKey_(value) {
   if (!text) return '';
   if (/^[-–—]+$/.test(text)) return '';
   if (/^(n\/a|na|null|none|undefined)$/i.test(text)) return '';
+  if (/^(ต่ำกว่าเกณฑ์|ต่ํากว่าเกณฑ์|ไม่มี|ไม่ระบุ|ไม่ทราบ|blank)$/i.test(text)) return '';
   return text;
 }
 
@@ -5003,16 +5004,27 @@ function importITAssetsV7111(rows, actor) {
     }
 
     var inserted = 0, updated = 0, skipped = 0;
+    var matchedById = 0, matchedByCode = 0, matchedByNumber = 0, matchedBySerial = 0;
     rows.forEach(function(raw) {
       var asset = haosV7111NormalizeAssetImportRow_(raw, actor);
       if (!asset.assetName && !asset.assetCode && !asset.assetNumber && !asset.serialNumber) {
         skipped++;
         return;
       }
-      var rowNo = (asset.assetId && byId[asset.assetId]) ||
-        (asset.assetCode && byCode[asset.assetCode]) ||
-        (asset.assetNumber && byNumber[asset.assetNumber]) ||
-        (asset.serialNumber && bySerial[asset.serialNumber]) || 0;
+      var rowNo = 0;
+      if (asset.assetId && byId[asset.assetId]) {
+        rowNo = byId[asset.assetId];
+        matchedById++;
+      } else if (asset.assetCode) {
+        rowNo = byCode[asset.assetCode] || 0;
+        if (rowNo) matchedByCode++;
+      } else if (asset.assetNumber && byNumber[asset.assetNumber]) {
+        rowNo = byNumber[asset.assetNumber];
+        matchedByNumber++;
+      } else if (asset.serialNumber && bySerial[asset.serialNumber]) {
+        rowNo = bySerial[asset.serialNumber];
+        matchedBySerial++;
+      }
       var old = rowNo > 1 ? itAssetRowToObjectV70_(sh.getRange(rowNo, 1, 1, 29).getValues()[0]) : {};
       var id = old.assetId || asset.assetId || haosV70Id_('AST');
       var out = [
@@ -5048,6 +5060,10 @@ function importITAssetsV7111(rows, actor) {
       ];
       if (rowNo > 1) {
         sh.getRange(rowNo, 1, 1, out.length).setValues([out]);
+        if (asset.assetCode) byCode[asset.assetCode] = rowNo;
+        if (asset.assetNumber) byNumber[asset.assetNumber] = rowNo;
+        if (asset.serialNumber) bySerial[asset.serialNumber] = rowNo;
+        byId[id] = rowNo;
         updated++;
       } else {
         sh.appendRow(out);
@@ -5059,8 +5075,8 @@ function importITAssetsV7111(rows, actor) {
         byId[id] = newRow;
       }
     });
-    logAudit_(actor.phone || '', actor.name || '', 'IMPORT_IT_ASSETS', 'ITAssets', 'BULK', 'นำเข้าทะเบียนทรัพย์สิน IT', null, {inserted:inserted, updated:updated, skipped:skipped, total:rows.length});
-    return {success:true, inserted:inserted, updated:updated, skipped:skipped, total:rows.length, version:'v70.111-it-asset-import'};
+    logAudit_(actor.phone || '', actor.name || '', 'IMPORT_IT_ASSETS', 'ITAssets', 'BULK', 'นำเข้าทะเบียนทรัพย์สิน IT', null, {inserted:inserted, updated:updated, skipped:skipped, total:rows.length, matchedById:matchedById, matchedByCode:matchedByCode, matchedByNumber:matchedByNumber, matchedBySerial:matchedBySerial});
+    return {success:true, inserted:inserted, updated:updated, skipped:skipped, total:rows.length, matchedById:matchedById, matchedByCode:matchedByCode, matchedByNumber:matchedByNumber, matchedBySerial:matchedBySerial, version:'v70.122-it-asset-import-primary-code'};
   } catch(e) {
     return {success:false, message:e.toString()};
   }
