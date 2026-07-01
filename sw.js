@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-121-itasset-pagination-import-audit';
+const CACHE_NAME = 'haos-v70-123-itasset-category-override';
 const CORE = [
   '/',
   '/index.html',

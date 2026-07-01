@@ -1,11 +1,12 @@
 (function () {
-  const PATCH = 'v70.121-it-asset-pagination-import-audit';
+  const PATCH = 'v70.123-it-asset-category-override';
   if (window.__HAOS_IT_ASSET_IMPORT__) return;
   window.__HAOS_IT_ASSET_IMPORT__ = true;
 
   const PAGE_SIZE = 20;
   let assetPageV7121 = 1;
   let lastAssetFilterKeyV7121 = '';
+  const selectedAssetIdsV7123 = new Set();
 
   const esc = value => String(value ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
   const clean = value => String(value ?? '').replace(/\s+/g, ' ').trim();
@@ -101,6 +102,161 @@
     return (data.maps || []).filter(m => String(m.assetId) === String(assetId) && m.activationStatus !== 'Removed').length;
   }
 
+  function categoryOptions() {
+    const data = assetState();
+    const defaults = [
+      'คอมพิวเตอร์ตั้งโต๊ะ / PC',
+      'Notebook',
+      'เครื่องพิมพ์ / Printer',
+      'Scanner',
+      'จอภาพ / Monitor',
+      'อุปกรณ์เครือข่าย',
+      'Server / Storage',
+      'UPS / ไฟฟ้าสำรอง',
+      'Projector',
+      'Software / License',
+      'อุปกรณ์ต่อพ่วง / Accessory',
+      'อื่นๆ / ต้องจัดหมวดเพิ่ม'
+    ];
+    const values = [
+      ...(data.categoryOverrideOptions || data.filters?.categoryOverrideOptions || []),
+      ...defaults,
+      ...(data.assets || []).flatMap(a => [a.smartCategory, a.autoSmartCategory, a.manualCategory, a.category])
+    ];
+    return [...new Set(values.map(clean).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'th'));
+  }
+
+  function categorySelectHtml(id, selected) {
+    const options = categoryOptions();
+    const current = clean(selected);
+    const hasCurrent = current && !options.includes(current);
+    return '<select id="' + esc(id) + '" class="form-select">' +
+      '<option value="">ใช้หมวดที่ระบบจัดให้อัตโนมัติ</option>' +
+      (hasCurrent ? '<option value="' + esc(current) + '" selected>' + esc(current) + '</option>' : '') +
+      options.map(v => '<option value="' + esc(v) + '"' + (v === current ? ' selected' : '') + '>' + esc(v) + '</option>').join('') +
+      '</select>';
+  }
+
+  function assetById(assetId) {
+    const data = assetState();
+    return (data.assets || []).find(a => String(a.assetId) === String(assetId));
+  }
+
+  function syncAssetsAfterCategoryOverride(assetIds, manualCategory, cleared) {
+    const ids = new Set((assetIds || []).map(String));
+    [window.haosITAssetStateV7120, window.haosITV702Data, window.haosITV703Data].forEach(data => {
+      if (!data || !Array.isArray(data.assets)) return;
+      data.assets.forEach(asset => {
+        if (!ids.has(String(asset.assetId))) return;
+        const autoCategory = asset.autoSmartCategory || asset.smartCategory || asset.category || '';
+        asset.autoSmartCategory = asset.autoSmartCategory || autoCategory;
+        if (cleared || !manualCategory) {
+          asset.manualCategory = '';
+          asset.categoryOverridden = false;
+          asset.smartCategory = asset.autoSmartCategory || asset.category || '';
+          asset.finalCategory = asset.smartCategory;
+        } else {
+          asset.manualCategory = manualCategory;
+          asset.categoryOverridden = true;
+          asset.smartCategory = manualCategory;
+          asset.finalCategory = manualCategory;
+        }
+      });
+    });
+  }
+
+  async function saveCategoryOverride(assetIds, manualCategory, note) {
+    const ids = (assetIds || []).map(String).filter(Boolean);
+    const res = await gas('saveITAssetCategoryOverrideV7123', [{
+      assetIds: ids,
+      manualCategory: clean(manualCategory),
+      note: clean(note),
+      clearOverride: !clean(manualCategory)
+    }, actor()]);
+    if (!res || !res.success) throw new Error(res?.message || 'บันทึกหมวดย่อยไม่สำเร็จ');
+    syncAssetsAfterCategoryOverride(ids, clean(manualCategory), !!res.cleared);
+    return res;
+  }
+
+  window.openITAssetCategoryOverrideV7123 = async function (assetId) {
+    if (!canManageIT()) {
+      await Swal.fire('ไม่มีสิทธิ์', 'ใช้ได้เฉพาะผู้มีสิทธิ์จัดการทะเบียนทรัพย์สิน IT', 'warning');
+      return;
+    }
+    const asset = assetById(assetId);
+    if (!asset) {
+      await Swal.fire('ไม่พบรายการ', 'ไม่พบทรัพย์สินที่ต้องการแก้หมวดย่อย', 'warning');
+      return;
+    }
+    const result = await Swal.fire({
+      title: 'แก้หมวดย่อยทรัพย์สิน',
+      html: '<div class="text-start">' +
+        '<div class="alert alert-info py-2"><b>' + esc(asset.assetName || '-') + '</b><br><small>' + esc(asset.assetCode || asset.assetNumber || '-') + '</small></div>' +
+        '<label class="small fw-bold text-muted">หมวดที่ระบบจัดให้</label><input class="form-control mb-2" value="' + esc(asset.autoSmartCategory || asset.smartCategory || '-') + '" disabled>' +
+        '<label class="small fw-bold text-muted">หมวดย่อยที่ต้องการใช้จริง</label>' + categorySelectHtml('itAssetManualCategoryV7123', asset.manualCategory || (asset.categoryOverridden ? asset.smartCategory : '')) +
+        '<label class="small fw-bold text-muted mt-2">หมายเหตุ</label><textarea id="itAssetCategoryNoteV7123" class="form-control" rows="3" placeholder="เช่น ระบบเดาจากชื่อรายการผิด / จัดตามการใช้งานจริง">' + esc(asset.categoryOverrideNote || '') + '</textarea>' +
+        '<div class="form-text">ถ้าเลือก “ใช้หมวดที่ระบบจัดให้อัตโนมัติ” ระบบจะล้างการแก้หมวดเองของรายการนี้</div>' +
+      '</div>',
+      width: 640,
+      showCancelButton: true,
+      confirmButtonText: 'บันทึกหมวดย่อย',
+      cancelButtonText: 'ยกเลิก',
+      preConfirm: () => ({
+        manualCategory: document.getElementById('itAssetManualCategoryV7123')?.value || '',
+        note: document.getElementById('itAssetCategoryNoteV7123')?.value || ''
+      })
+    });
+    if (!result.isConfirmed) return;
+    try {
+      Swal.fire({ title: 'กำลังบันทึกหมวดย่อย...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      await saveCategoryOverride([assetId], result.value.manualCategory, result.value.note);
+      await Swal.fire({ icon: 'success', title: 'บันทึกหมวดย่อยแล้ว', timer: 1100, showConfirmButton: false });
+      selectedAssetIdsV7123.delete(String(assetId));
+      renderEnhancedAssetRows();
+    } catch (err) {
+      Swal.fire('ผิดพลาด', err.message || String(err), 'error');
+    }
+  };
+
+  window.openITAssetBulkCategoryOverrideV7123 = async function () {
+    if (!canManageIT()) {
+      await Swal.fire('ไม่มีสิทธิ์', 'ใช้ได้เฉพาะผู้มีสิทธิ์จัดการทะเบียนทรัพย์สิน IT', 'warning');
+      return;
+    }
+    const ids = [...selectedAssetIdsV7123].filter(id => assetById(id));
+    if (!ids.length) {
+      await Swal.fire('ยังไม่ได้เลือกรายการ', 'ติ๊กเลือกรายการทรัพย์สินที่ต้องการแก้หมวดย่อยก่อนครับ', 'info');
+      return;
+    }
+    const result = await Swal.fire({
+      title: 'แก้หมวดย่อยหลายรายการ',
+      html: '<div class="text-start">' +
+        '<div class="alert alert-warning py-2">กำลังแก้หมวดย่อย <b>' + ids.length + '</b> รายการ</div>' +
+        '<label class="small fw-bold text-muted">หมวดย่อยที่ต้องการใช้จริง</label>' + categorySelectHtml('itAssetBulkManualCategoryV7123', '') +
+        '<label class="small fw-bold text-muted mt-2">หมายเหตุ</label><textarea id="itAssetBulkCategoryNoteV7123" class="form-control" rows="3" placeholder="หมายเหตุสำหรับการแก้หมวดครั้งนี้"></textarea>' +
+        '<div class="form-text">ถ้าเลือก “ใช้หมวดที่ระบบจัดให้อัตโนมัติ” ระบบจะล้างหมวดที่แก้เองของรายการที่เลือกทั้งหมด</div>' +
+      '</div>',
+      width: 640,
+      showCancelButton: true,
+      confirmButtonText: 'บันทึกทั้งหมด',
+      cancelButtonText: 'ยกเลิก',
+      preConfirm: () => ({
+        manualCategory: document.getElementById('itAssetBulkManualCategoryV7123')?.value || '',
+        note: document.getElementById('itAssetBulkCategoryNoteV7123')?.value || ''
+      })
+    });
+    if (!result.isConfirmed) return;
+    try {
+      Swal.fire({ title: 'กำลังบันทึกหมวดย่อย...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      await saveCategoryOverride(ids, result.value.manualCategory, result.value.note);
+      selectedAssetIdsV7123.clear();
+      await Swal.fire({ icon: 'success', title: 'บันทึกหมวดย่อยแล้ว', timer: 1100, showConfirmButton: false });
+      renderEnhancedAssetRows();
+    } catch (err) {
+      Swal.fire('ผิดพลาด', err.message || String(err), 'error');
+    }
+  };
+
   function installAssetTools() {
     const panel = document.getElementById('itAssetPanelV70');
     const filter = panel && panel.querySelector('.haos-v70-filter');
@@ -113,7 +269,7 @@
           '<div class="col-md-3"><label class="small fw-bold text-muted">สถานที่ติดตั้ง</label><select id="itAssetLocationV7120" class="form-select"></select></div>' +
           '<div class="col-md-2"><label class="small fw-bold text-muted">ปีที่ได้มา</label><select id="itAssetYearV7120" class="form-select"></select></div>' +
           '<div class="col-md-2"><label class="small fw-bold text-muted">เรียงปีที่ได้มา</label><select id="itAssetYearSortV7120" class="form-select"><option value="">ค่าเดิม</option><option value="desc">มากไปน้อย</option><option value="asc">น้อยไปมาก</option></select></div>' +
-          '<div class="col-md-2 d-flex gap-2 flex-wrap align-items-end"><button type="button" id="itAssetExportV7120" class="btn btn-outline-primary fw-bold flex-fill"><i class="bi bi-download"></i> Export</button><button type="button" id="itAssetPrintV7120" class="btn btn-outline-secondary fw-bold flex-fill"><i class="bi bi-printer"></i> พิมพ์</button><button type="button" id="itAssetImageV7120" class="btn btn-outline-info fw-bold flex-fill"><i class="bi bi-image"></i> รูปภาพ</button></div>' +
+          '<div class="col-md-3 d-flex gap-2 flex-wrap align-items-end"><button type="button" id="itAssetBulkCategoryV7123" class="btn btn-outline-success fw-bold flex-fill"><i class="bi bi-tags"></i> แก้หมวด</button><button type="button" id="itAssetExportV7120" class="btn btn-outline-primary fw-bold flex-fill"><i class="bi bi-download"></i> Export</button><button type="button" id="itAssetPrintV7120" class="btn btn-outline-secondary fw-bold flex-fill"><i class="bi bi-printer"></i> พิมพ์</button><button type="button" id="itAssetImageV7120" class="btn btn-outline-info fw-bold flex-fill"><i class="bi bi-image"></i> รูปภาพ</button></div>' +
         '</div>');
       ['itAssetDeptV7120', 'itAssetLocationV7120', 'itAssetYearV7120', 'itAssetYearSortV7120'].forEach(id => {
         const el = document.getElementById(id);
@@ -122,10 +278,13 @@
           window.renderITAssetsV70 && window.renderITAssetsV70();
         });
       });
+      document.getElementById('itAssetBulkCategoryV7123')?.addEventListener('click', () => window.openITAssetBulkCategoryOverrideV7123?.());
       document.getElementById('itAssetExportV7120')?.addEventListener('click', exportVisibleAssets);
       document.getElementById('itAssetPrintV7120')?.addEventListener('click', printVisibleAssets);
       document.getElementById('itAssetImageV7120')?.addEventListener('click', downloadAssetImage);
     }
+    const bulkCategoryBtn = document.getElementById('itAssetBulkCategoryV7123');
+    if (bulkCategoryBtn) bulkCategoryBtn.style.display = canManageIT() ? '' : 'none';
     const data = assetState();
     const assets = data.assets || [];
     fillSelect('itAssetDeptV7120', assets.map(a => a.ownerDepartment || a.department));
@@ -254,17 +413,30 @@
     const pageRows = list.slice(offset, offset + PAGE_SIZE);
     tbody.innerHTML = pageRows.map((a, idx) => {
       const code = a.assetCode || a.assetNumber || '-';
-      const category = a.smartCategory || a.category || '-';
+      const category = a.smartCategory || a.finalCategory || a.category || '-';
       const ownerDept = a.ownerDepartment || a.department || '';
       const place = a.location || a.installLocation || '-';
+      const manage = canManageIT();
+      const selected = selectedAssetIdsV7123.has(String(a.assetId)) ? ' checked' : '';
+      const selectBox = manage ? '<input class="form-check-input me-2" type="checkbox" data-it-asset-select="' + esc(a.assetId) + '"' + selected + ' title="เลือกเพื่อแก้หมวดหลายรายการ">' : '';
+      const manualBadge = a.categoryOverridden ? ' <span class="badge bg-success-subtle text-success border border-success-subtle">แก้หมวดเอง</span>' : '';
+      const categoryAction = manage ? ' <button type="button" class="btn btn-sm btn-outline-success" onclick="openITAssetCategoryOverrideV7123(\'' + esc(a.assetId) + '\')" title="แก้หมวดย่อย"><i class="bi bi-tags"></i></button>' : '';
       return '<tr>' +
-        '<td><div class="fw-bold text-primary">' + esc(a.assetName || '-') + '</div><small class="text-muted">' + esc((offset + idx + 1) + '. ' + code) + ' • ' + esc(category) + '</small><br><small>' + esc([a.brand, a.model, a.serialNumber].filter(Boolean).join(' / ')) + '</small></td>' +
+        '<td><div class="d-flex align-items-start gap-1"><div>' + selectBox + '</div><div class="flex-grow-1"><div class="fw-bold text-primary">' + esc(a.assetName || '-') + '</div><small class="text-muted">' + esc((offset + idx + 1) + '. ' + code) + ' • ' + esc(category) + manualBadge + '</small><br><small>' + esc([a.brand, a.model, a.serialNumber].filter(Boolean).join(' / ')) + '</small></div></div></td>' +
         '<td><b>' + esc(a.currentUserName || '-') + '</b><br><small class="text-muted">' + esc(ownerDept) + ' • ' + esc(place) + '</small></td>' +
         '<td>' + statusBadge(a.status) + '<br><small class="text-muted">' + esc(a.condition || '') + '</small><br><small class="text-muted">ได้มา ' + esc(assetDateText(a.purchaseDate || a.acquiredDate)) + '</small></td>' +
         '<td><span class="badge bg-info">' + licenseCount(a.assetId) + ' license</span><br><small class="text-muted">มูลค่า ' + esc(a.price || '-') + '</small><br><small class="text-muted">ประกันถึง ' + esc(assetDateText(a.warrantyEnd)) + '</small></td>' +
-        '<td class="text-end"><button class="btn btn-sm btn-outline-primary" onclick="openITAssetDetailV70(\'' + esc(a.assetId) + '\')"><i class="bi bi-eye"></i></button> <button class="btn btn-sm btn-outline-warning text-dark" onclick="openITAssetFormV70(\'' + esc(a.assetId) + '\')"><i class="bi bi-pencil"></i></button> <button class="btn btn-sm btn-outline-danger" onclick="openITRepairTicketFormV70(\'' + esc(a.assetId) + '\')"><i class="bi bi-tools"></i></button></td>' +
+        '<td class="text-end">' + categoryAction + ' <button class="btn btn-sm btn-outline-primary" onclick="openITAssetDetailV70(\'' + esc(a.assetId) + '\')"><i class="bi bi-eye"></i></button> <button class="btn btn-sm btn-outline-warning text-dark" onclick="openITAssetFormV70(\'' + esc(a.assetId) + '\')"><i class="bi bi-pencil"></i></button> <button class="btn btn-sm btn-outline-danger" onclick="openITRepairTicketFormV70(\'' + esc(a.assetId) + '\')"><i class="bi bi-tools"></i></button></td>' +
       '</tr>';
     }).join('');
+    tbody.querySelectorAll('[data-it-asset-select]').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const id = String(cb.dataset.itAssetSelect || '');
+        if (!id) return;
+        if (cb.checked) selectedAssetIdsV7123.add(id);
+        else selectedAssetIdsV7123.delete(id);
+      });
+    });
     renderAssetPager(list.length);
   }
 
