@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-123-itasset-category-override';
+const CACHE_NAME = 'haos-v70-124-itasset-master-data-normalize';
 const CORE = [
   '/',
   '/index.html',

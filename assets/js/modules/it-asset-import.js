@@ -1,5 +1,5 @@
 (function () {
-  const PATCH = 'v70.123-it-asset-category-override';
+  const PATCH = 'v70.124-itasset-master-data-normalize';
   if (window.__HAOS_IT_ASSET_IMPORT__) return;
   window.__HAOS_IT_ASSET_IMPORT__ = true;
 
@@ -99,7 +99,12 @@
 
   function licenseCount(assetId) {
     const data = assetState();
-    return (data.maps || []).filter(m => String(m.assetId) === String(assetId) && m.activationStatus !== 'Removed').length;
+    const mapped = (data.maps || []).filter(m => String(m.assetId) === String(assetId) && m.activationStatus !== 'Removed').length;
+    if (mapped) return mapped;
+    const asset = (data.assets || []).find(a => String(a.assetId) === String(assetId));
+    const text = [asset?.assetName, asset?.category, asset?.smartCategory, asset?.spec].map(clean).join(' ').toLowerCase();
+    if (/software|license|โปรแกรม|ซอฟ/.test(text)) return 1;
+    return 0;
   }
 
   function categoryOptions() {
@@ -529,11 +534,50 @@
 
   function formatDateValue(value) {
     if (!value) return '';
-    if (value instanceof Date && !isNaN(value)) {
-      const pad = n => String(n).padStart(2, '0');
-      return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}`;
+    const pad = n => String(n).padStart(2, '0');
+    const normalizeYear = y => {
+      let year = Number(y);
+      if (!Number.isFinite(year)) return 0;
+      if (year >= 0 && year < 100) year += 2500;
+      if (year >= 2400) year -= 543;
+      return year;
+    };
+    const ymd = (y, m, d) => {
+      const year = normalizeYear(y);
+      const month = Number(m);
+      const day = Number(d);
+      if (!year || month < 1 || month > 12 || day < 1 || day > 31) return '';
+      return `${year}-${pad(month)}-${pad(day)}`;
+    };
+    if (typeof value === 'number' && value > 20000) {
+      const epoch = Date.UTC(1899, 11, 30);
+      const dt = new Date(epoch + Math.floor(value) * 86400000);
+      return ymd(dt.getUTCFullYear(), dt.getUTCMonth() + 1, dt.getUTCDate());
     }
-    return clean(value);
+    if (value instanceof Date && !isNaN(value)) {
+      return ymd(value.getFullYear(), value.getMonth() + 1, value.getDate());
+    }
+    const text = clean(value);
+    let m = text.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+    if (m) return ymd(m[1], m[2], m[3]) || text;
+    m = text.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})/);
+    if (m) return ymd(m[3], m[2], m[1]) || text;
+    return text;
+  }
+
+  function cleanImportRemark(value) {
+    const text = clean(value);
+    if (!text) return '';
+    if (/^[✓✔✅]+$/.test(text)) return '';
+    if (/นำเข้าจากชีตโปรแกรมคอมพิวเตอร์/.test(text)) return '';
+    return text;
+  }
+
+  function markerText(value, label) {
+    const text = clean(value);
+    if (!text) return '';
+    if (/^[✓✔✅]+$/.test(text)) return label;
+    return text;
   }
 
   function isBlankRow(row) {
@@ -582,7 +626,12 @@
         ownerDepartment: pick(obj, ['ผู้ใช้งาน', 'กลุ่มงาน']),
         damaged: pick(obj, ['รายการเสียหายใช้อยู่หรือไม่ได้ใช้ ชำรุด', 'ชำรุด']),
         deteriorated: pick(obj, ['รายการเสียหายใช้อยู่หรือไม่ได้ใช้ เสื่อมสภาพ', 'เสื่อมสภาพ']),
-        remark: sheetName && /โปรแกรม/i.test(sheetName) ? 'นำเข้าจากชีตโปรแกรมคอมพิวเตอร์' : ''
+        lost: pick(obj, ['รายการเสียหายใช้อยู่หรือไม่ได้ใช้ สูญไป', 'สูญไป']),
+        unused: pick(obj, ['รายการเสียหายใช้อยู่หรือไม่ได้ใช้ ไม่ใช้', 'ไม่ใช้']),
+        activeMarker: pick(obj, ['รายการเสียหายใช้อยู่หรือไม่ได้ใช้ ใช้อยู่', 'ใช้อยู่']),
+        quantity: pick(obj, ['จำนวน หน่วย', 'จำนวน']),
+        unit: pick(obj, ['หน่วยนับ', 'หน่วย']),
+        remark: cleanImportRemark(pick(obj, ['หมายเหตุ', 'Remark']))
       };
       if (!clean(asset.assetCode) && row.length > 1) asset.assetCode = row[1];
       if (!clean(asset.assetNumber) && row.length > 2) asset.assetNumber = row[2];
@@ -594,6 +643,17 @@
       if (!clean(asset.ownerDepartment) && row.length > 10) asset.ownerDepartment = row[10];
       if (!clean(asset.damaged) && row.length > 12) asset.damaged = row[12];
       if (!clean(asset.deteriorated) && row.length > 13) asset.deteriorated = row[13];
+      if (!clean(asset.lost) && row.length > 14) asset.lost = row[14];
+      if (!clean(asset.unused) && row.length > 15) asset.unused = row[15];
+      if (!clean(asset.activeMarker) && row.length > 16) asset.activeMarker = row[16];
+      if (!clean(asset.remark) && row.length > 17) asset.remark = cleanImportRemark(row[17]);
+      asset.damaged = markerText(asset.damaged, 'ชำรุด');
+      asset.deteriorated = markerText(asset.deteriorated, 'เสื่อมสภาพ');
+      asset.lost = markerText(asset.lost, 'สูญหาย');
+      asset.unused = markerText(asset.unused, 'ไม่ได้ใช้');
+      asset.activeMarker = markerText(asset.activeMarker, 'ใช้อยู่');
+      if (!clean(asset.quantity) && row.length > 6) asset.quantity = row[6];
+      if (!clean(asset.unit) && row.length > 7) asset.unit = row[7];
       if (clean(asset.assetName) || clean(asset.assetCode) || clean(asset.assetNumber)) out.push(asset);
     }
     return out;
