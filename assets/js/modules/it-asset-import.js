@@ -1,5 +1,5 @@
 (function () {
-  const PATCH = 'v70.124-itasset-master-data-normalize';
+  const PATCH = 'v70.125-itasset-custom-category-input';
   if (window.__HAOS_IT_ASSET_IMPORT__) return;
   window.__HAOS_IT_ASSET_IMPORT__ = true;
 
@@ -139,7 +139,15 @@
       '<option value="">ใช้หมวดที่ระบบจัดให้อัตโนมัติ</option>' +
       (hasCurrent ? '<option value="' + esc(current) + '" selected>' + esc(current) + '</option>' : '') +
       options.map(v => '<option value="' + esc(v) + '"' + (v === current ? ' selected' : '') + '>' + esc(v) + '</option>').join('') +
-      '</select>';
+      '</select>' +
+      '<input id="' + esc(id + 'Custom') + '" class="form-control mt-2" placeholder="พิมพ์หมวดย่อยใหม่เอง เช่น Tablet / iPad, กล้อง, อุปกรณ์ประชุม">' +
+      '<div class="form-text">เลือกจากรายการเดิม หรือพิมพ์หมวดย่อยใหม่ในช่องนี้ ถ้าพิมพ์ไว้ระบบจะใช้ค่าที่พิมพ์เป็นหลัก</div>';
+  }
+
+  function readManualCategory(id) {
+    const custom = clean(document.getElementById(id + 'Custom')?.value || '');
+    if (custom) return custom;
+    return document.getElementById(id)?.value || '';
   }
 
   function assetById(assetId) {
@@ -207,7 +215,7 @@
       confirmButtonText: 'บันทึกหมวดย่อย',
       cancelButtonText: 'ยกเลิก',
       preConfirm: () => ({
-        manualCategory: document.getElementById('itAssetManualCategoryV7123')?.value || '',
+        manualCategory: readManualCategory('itAssetManualCategoryV7123'),
         note: document.getElementById('itAssetCategoryNoteV7123')?.value || ''
       })
     });
@@ -246,7 +254,7 @@
       confirmButtonText: 'บันทึกทั้งหมด',
       cancelButtonText: 'ยกเลิก',
       preConfirm: () => ({
-        manualCategory: document.getElementById('itAssetBulkManualCategoryV7123')?.value || '',
+        manualCategory: readManualCategory('itAssetBulkManualCategoryV7123'),
         note: document.getElementById('itAssetBulkCategoryNoteV7123')?.value || ''
       })
     });

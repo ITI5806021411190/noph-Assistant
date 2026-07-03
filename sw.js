@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-124-itasset-master-data-normalize';
+const CACHE_NAME = 'haos-v70-125-itasset-custom-category-input';
 const CORE = [
   '/',
   '/index.html',
@@ -41,7 +41,7 @@ const CORE = [
   '/assets/js/modules/shared-workspace-flow.js',
   '/assets/js/modules/shared-workspace-builder.js',
   '/assets/js/modules/help-live-chat.js?v=70109',
-  '/assets/js/modules/it-asset-import.js',
+  '/assets/js/modules/it-asset-import.js?v=70125',
   '/assets/css/ai-document-summary.css',
   '/assets/js/modules/ai-document-summary.js',
   '/assets/css/e-office.css',

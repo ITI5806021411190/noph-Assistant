@@ -14,6 +14,7 @@ Patch v70.124 adjusts the IT Asset and Software License data pipeline so imports
 ## Files Changed
 
 - `Code.gs.txt`
+- `index.html`
 - `assets/js/modules/it-asset-import.js`
 - `public.html`
 - `sw.js`
