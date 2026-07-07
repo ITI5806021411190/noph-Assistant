@@ -17088,3 +17088,233 @@ getAllowedBridgeFunctions_ = function() {
   allowed.bridgeWhitelistHealthCheckV7123 = true;
   return allowed;
 };
+
+/* v70.126: Workspace AI Designer Phase 1
+ * Adds a normalized fieldConfig draft for the shared workspace AI helper.
+ * Rollback: remove this block and assets/js/modules/shared-workspace-ai-designer.js.
+ */
+function haosV7126NormalizeWorkspaceAiType_(value, fallback) {
+  var raw = String(value || fallback || 'table').trim().toLowerCase();
+  var map = {
+    online_form: 'form',
+    light_table: 'table',
+    sheet: 'google_sheet',
+    form_google: 'google_form',
+    googleform: 'google_form',
+    googlesheet: 'google_sheet',
+    test: 'quiz',
+    exam: 'quiz'
+  };
+  var normalized = map[raw] || raw;
+  var valid = {table:true, checklist:true, form:true, quiz:true, google_sheet:true, google_form:true};
+  return valid[normalized] ? normalized : (fallback || 'table');
+}
+
+function haosV7126Bool_(value, fallback) {
+  if (value === true || value === false) return value;
+  if (value === null || typeof value === 'undefined' || value === '') return !!fallback;
+  var text = String(value).trim().toLowerCase();
+  if (/^(true|yes|y|1|on|required|require|required field)$/i.test(text)) return true;
+  if (/^(false|no|n|0|off|optional)$/i.test(text)) return false;
+  return !!fallback;
+}
+
+function haosV7126SplitOptions_(value) {
+  var arr = Array.isArray(value) ? value : String(value || '').split(/[,|]/);
+  var seen = {};
+  var out = [];
+  arr.forEach(function(item) {
+    var text = String(item || '').replace(/\s+/g, ' ').trim();
+    var key = text.toLowerCase();
+    if (!text || seen[key]) return;
+    seen[key] = true;
+    out.push(text);
+  });
+  return out;
+}
+
+function haosV7126InferWorkspaceFieldType_(label, options, requested) {
+  var raw = String(requested || '').trim().toLowerCase();
+  var mapped = {
+    select: 'dropdown',
+    dropdownlist: 'dropdown',
+    choice: 'radio',
+    single_choice: 'radio',
+    single: 'radio',
+    multiple_choice: 'checkbox',
+    multi_choice: 'checkbox',
+    multiple: 'checkbox',
+    checklist: 'checkbox',
+    longtext: 'textarea',
+    paragraph: 'textarea',
+    photo: 'image',
+    picture: 'image',
+    file: 'image',
+    upload: 'image'
+  }[raw] || raw;
+  var valid = {text:true, textarea:true, dropdown:true, radio:true, checkbox:true, image:true};
+  if (valid[mapped]) return mapped;
+  var lower = String(label || '').toLowerCase();
+  if (/photo|image|picture|file|upload|attachment/.test(lower)) return 'image';
+  if (/detail|description|note|comment|remark|feedback|opinion/.test(lower)) return 'textarea';
+  if (options && options.length) return /multiple|many|checkbox/.test(lower) ? 'checkbox' : 'dropdown';
+  return 'text';
+}
+
+function haosV7126ParseWorkspaceFieldSpec_(value) {
+  var text = String(value || '').trim();
+  if (!text) return {};
+  var parts = text.split('|').map(function(part) { return String(part || '').trim(); }).filter(Boolean);
+  var label = parts[0] || text;
+  var type = '';
+  var options = [];
+  var required = false;
+  for (var i = 1; i < parts.length; i++) {
+    var part = parts[i];
+    if (/^(text|textarea|dropdown|radio|checkbox|image|select|choice|photo|file)$/i.test(part)) {
+      type = part;
+    } else if (/required|must|yes|true|1/i.test(part)) {
+      required = true;
+    } else if (part.indexOf(',') >= 0) {
+      options = haosV7126SplitOptions_(part);
+    }
+  }
+  var match = label.match(/^(.*?)\s*\((.*?)\)\s*$/);
+  if (match) {
+    label = String(match[1] || '').trim();
+    if (!options.length) options = haosV7126SplitOptions_(match[2]);
+  }
+  return {label: label, type: type, options: options, required: required};
+}
+
+function haosV7126NormalizeWorkspaceField_(field, index, workspaceType) {
+  var source = {};
+  if (typeof field === 'string') source = haosV7126ParseWorkspaceFieldSpec_(field);
+  else if (field && typeof field === 'object') source = field;
+  var label = String(source.label || source.name || source.title || source.question || source.header || source.column || ('Field ' + (index + 1))).replace(/\s+/g, ' ').trim();
+  var options = haosV7126SplitOptions_(source.options || source.choices || source.choiceList || source.values);
+  var type = haosV7126InferWorkspaceFieldType_(label, options, source.type || source.fieldType || source.inputType);
+  var required = haosV7126Bool_(source.required, workspaceType === 'form' || workspaceType === 'quiz');
+  var notQuiz = workspaceType === 'quiz' ? haosV7126Bool_(source.notQuiz || source.skipQuiz || source.excludeFromScore, false) : true;
+  var correct = source.correctAnswer || source.answer || source.correct || source.key || '';
+  if (Array.isArray(correct)) correct = correct.join(', ');
+  var points = Number(source.points || source.score || source.weight || 1);
+  if (!isFinite(points) || points <= 0) points = 1;
+  if (!options.length && (type === 'dropdown' || type === 'radio' || type === 'checkbox')) options = ['Option 1', 'Option 2'];
+  if (workspaceType === 'quiz' && !notQuiz && !correct && options.length) correct = options[0];
+  return {
+    label: label,
+    type: type,
+    required: required,
+    options: options,
+    notQuiz: !!notQuiz,
+    correctAnswer: correct,
+    points: points,
+    description: String(source.description || source.helpText || source.hint || '').trim(),
+    section: String(source.section || source.group || '').trim(),
+    logic: source.logic || source.branching || null
+  };
+}
+
+function haosV7126WorkspaceFieldSpec_(field) {
+  var spec = field.label || '';
+  if (field.type && field.type !== 'text') spec += ' | ' + field.type;
+  if (field.options && field.options.length) spec += ' | ' + field.options.join(', ');
+  if (field.required) spec += ' | required';
+  return spec;
+}
+
+function haosV7126NormalizeWorkspaceAiDraft_(data, requestedType) {
+  data = data || {};
+  var workspaceType = haosV7126NormalizeWorkspaceAiType_(data.workspaceType || data.type || requestedType, requestedType || 'table');
+  var fields = [];
+  if (Array.isArray(data.fieldConfig)) fields = data.fieldConfig;
+  else if (Array.isArray(data.fields)) fields = data.fields;
+  else if (Array.isArray(data.questions)) fields = data.questions;
+  else if (Array.isArray(data.columns)) fields = data.columns;
+  fields = fields.map(function(field, index) {
+    return haosV7126NormalizeWorkspaceField_(field, index, workspaceType);
+  }).filter(function(field) { return !!field.label; });
+  if (!fields.length) {
+    fields = [
+      haosV7126NormalizeWorkspaceField_({label:'Name', type:'text', required:true}, 0, workspaceType),
+      haosV7126NormalizeWorkspaceField_({label:'Details', type:'textarea', required:false}, 1, workspaceType)
+    ];
+  }
+  var columns = fields.map(function(field) { return haosV7126WorkspaceFieldSpec_(field); });
+  var sampleRows = Array.isArray(data.sampleRows) ? data.sampleRows : [];
+  if (!sampleRows.length && Array.isArray(data.rows)) sampleRows = data.rows;
+  if (!sampleRows.length) {
+    sampleRows = [fields.map(function(field) {
+      if (field.type === 'checkbox') return field.options && field.options.length ? field.options[0] : 'Yes';
+      if ((field.type === 'dropdown' || field.type === 'radio') && field.options && field.options.length) return field.options[0];
+      if (field.type === 'image') return '';
+      return '';
+    })];
+  }
+  return {
+    title: String(data.title || data.name || 'AI Workspace Draft').trim(),
+    description: String(data.description || data.summary || '').trim(),
+    workspaceType: workspaceType,
+    columns: columns,
+    fieldConfig: fields,
+    sampleRows: sampleRows,
+    logicTips: data.logicTips || data.logic || data.branching || '',
+    rawAi: data
+  };
+}
+
+function haosV7126BuildWorkspaceDesignerPrompt_(workspaceType, sourceKind) {
+  return [
+    'You are a form and collaborative workspace designer for a Thai public-health office system.',
+    'Return JSON only. Do not use markdown. Use Thai text for user-facing titles, descriptions, field labels, options, and hints.',
+    'Target workspaceType: ' + workspaceType + '. Source kind: ' + sourceKind + '.',
+    'Design a practical workspace that can be edited by the user before saving.',
+    'Supported workspaceType values: table, checklist, form, quiz, google_sheet, google_form.',
+    'Supported field types: text, textarea, dropdown, radio, checkbox, image.',
+    'Use dropdown/radio/checkbox when choices are useful. Checkbox means the respondent can select multiple choices.',
+    'For quiz workspace, only scoring questions need correctAnswer and points. Non-scoring profile fields must set notQuiz=true.',
+    'If branching logic is useful, put a short explanation in logicTips and optional per-field logic object. Do not require database changes.',
+    'JSON schema:',
+    '{"title":"","description":"","workspaceType":"' + workspaceType + '","fieldConfig":[{"label":"","type":"text|textarea|dropdown|radio|checkbox|image","required":true,"options":[],"notQuiz":true,"correctAnswer":"","points":1,"description":"","section":"","logic":null}],"sampleRows":[[]],"logicTips":""}'
+  ].join('\n');
+}
+
+function analyzeWorkspaceText(text, workspaceType) {
+  try {
+    var cleanText = String(text || '').trim();
+    if (!cleanText) return { success:false, message:'No text to analyze.' };
+    var type = haosV7126NormalizeWorkspaceAiType_(workspaceType || 'table', 'table');
+    var prompt = haosV7126BuildWorkspaceDesignerPrompt_(type, 'text') + '\n\nInput:\n' + cleanText;
+    var ai = fetchGeminiAI(prompt, null, null, { jsonMode:true, taskType:'text' });
+    if (!ai.success) return ai;
+    var parsed = parseGeminiJson_(ai.text);
+    var draft = haosV7126NormalizeWorkspaceAiDraft_(parsed, type);
+    return { success:true, data:draft, raw:ai.text, modelUsed:ai.model, version:'v70.126-workspace-ai-designer-phase1' };
+  } catch(e) {
+    return { success:false, message:'Workspace AI designer failed: ' + e.toString(), version:'v70.126-workspace-ai-designer-phase1' };
+  }
+}
+
+function processWorkspaceDocument(base64Data, fileName, mimeType, workspaceType) {
+  try {
+    var type = haosV7126NormalizeWorkspaceAiType_(workspaceType || 'table', 'table');
+    var prompt = haosV7126BuildWorkspaceDesignerPrompt_(type, 'file') +
+      '\n\nRead the attached file/image and design the workspace from it. File name: ' + String(fileName || '');
+    var ai = fetchGeminiAI(prompt, base64Data, mimeType, { jsonMode:true, taskType:'file' });
+    if (!ai.success) return ai;
+    var parsed = parseGeminiJson_(ai.text);
+    var draft = haosV7126NormalizeWorkspaceAiDraft_(parsed, type);
+    return { success:true, data:draft, raw:ai.text, modelUsed:ai.model, version:'v70.126-workspace-ai-designer-phase1' };
+  } catch(e) {
+    return { success:false, message:'Workspace AI file designer failed: ' + e.toString(), version:'v70.126-workspace-ai-designer-phase1' };
+  }
+}
+
+function haosV7126WorkspaceAiDesignerPatchStatus() {
+  return {
+    success:true,
+    version:'v70.126-workspace-ai-designer-phase1',
+    functions:['analyzeWorkspaceText', 'processWorkspaceDocument']
+  };
+}

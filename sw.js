@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-125-itasset-custom-category-input';
+const CACHE_NAME = 'haos-v70-126-workspace-ai-designer-phase1';
 const CORE = [
   '/',
   '/index.html',
@@ -40,6 +40,7 @@ const CORE = [
   '/assets/css/shared-workspace-flow.css',
   '/assets/js/modules/shared-workspace-flow.js',
   '/assets/js/modules/shared-workspace-builder.js',
+  '/assets/js/modules/shared-workspace-ai-designer.js',
   '/assets/js/modules/help-live-chat.js?v=70109',
   '/assets/js/modules/it-asset-import.js?v=70125',
   '/assets/css/ai-document-summary.css',
