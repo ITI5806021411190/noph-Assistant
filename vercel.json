@@ -2,21 +2,15 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
-    {
-      "source": "/jigsaw",
-      "destination": "/jigsaw/index.html"
-    },
-    {
-      "source": "/jigsaw/",
-      "destination": "/jigsaw/index.html"
-    },
-    {
-      "source": "/remote",
-      "destination": "/remote.html"
-    },
-    {
-      "source": "/public",
-      "destination": "/public.html"
-    }
+    { "source": "/popular-vote", "destination": "/popular-vote/index.html" },
+    { "source": "/popular-vote/", "destination": "/popular-vote/index.html" },
+    { "source": "/popular-vote/stage", "destination": "/popular-vote/stage/index.html" },
+    { "source": "/popular-vote/stage/", "destination": "/popular-vote/stage/index.html" },
+    { "source": "/popular-vote/admin", "destination": "/popular-vote/admin/index.html" },
+    { "source": "/popular-vote/admin/", "destination": "/popular-vote/admin/index.html" },
+    { "source": "/jigsaw", "destination": "/jigsaw/index.html" },
+    { "source": "/jigsaw/", "destination": "/jigsaw/index.html" },
+    { "source": "/remote", "destination": "/remote.html" },
+    { "source": "/public", "destination": "/public.html" }
   ]
 }

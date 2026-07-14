@@ -1,0 +1,97 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAnonymous() {
+      return isSignedIn()
+        && request.auth.token.firebase.sign_in_provider == "anonymous";
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && request.auth.token.email == "wongnazaipot@gmail.com"
+        && request.auth.token.email_verified == true;
+    }
+
+    function eventPath(eventId) {
+      return /databases/$(database)/documents/events/$(eventId);
+    }
+
+    function pollPath(eventId, pollId) {
+      return /databases/$(database)/documents/events/$(eventId)/polls/$(pollId);
+    }
+
+    function candidatePath(eventId, pollId, candidateId) {
+      return /databases/$(database)/documents/events/$(eventId)/polls/$(pollId)/candidates/$(candidateId);
+    }
+
+    function isPollOpen(eventId, pollId) {
+      return exists(pollPath(eventId, pollId))
+        && get(pollPath(eventId, pollId)).data.status == "open";
+    }
+
+    function candidateIsValid(eventId, pollId) {
+      return request.resource.data.candidateId is string
+        && request.resource.data.candidateId.size() > 0
+        && exists(candidatePath(eventId, pollId, request.resource.data.candidateId))
+        && get(candidatePath(eventId, pollId, request.resource.data.candidateId)).data.active == true
+        && request.resource.data.candidateNumber == get(candidatePath(eventId, pollId, request.resource.data.candidateId)).data.number;
+    }
+
+    function validVoteCreate(eventId, pollId, voteId) {
+      return isAnonymous()
+        && voteId == request.auth.uid
+        && !exists(/databases/$(database)/documents/events/$(eventId)/polls/$(pollId)/votes/$(voteId))
+        && request.resource.data.keys().hasOnly([
+          "voterUid",
+          "pollId",
+          "candidateId",
+          "candidateNumber",
+          "createdAt",
+          "clientVersion"
+        ])
+        && request.resource.data.keys().hasAll([
+          "voterUid",
+          "pollId",
+          "candidateId",
+          "candidateNumber",
+          "createdAt",
+          "clientVersion"
+        ])
+        && request.resource.data.voterUid == request.auth.uid
+        && request.resource.data.pollId == pollId
+        && request.resource.data.createdAt == request.time
+        && isPollOpen(eventId, pollId)
+        && candidateIsValid(eventId, pollId);
+    }
+
+    match /events/{eventId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+
+      match /polls/{pollId} {
+        allow read: if isSignedIn();
+        allow create, update, delete: if isAdmin();
+
+        match /candidates/{candidateId} {
+          allow read: if isSignedIn();
+          allow create, update, delete: if isAdmin();
+        }
+
+        match /votes/{voteId} {
+          allow read: if isAdmin() || (isSignedIn() && voteId == request.auth.uid);
+          allow create: if validVoteCreate(eventId, pollId, voteId);
+          allow update: if false;
+          allow delete: if isAdmin();
+        }
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
