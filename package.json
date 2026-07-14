@@ -5,5 +5,13 @@
   "type": "module",
   "dependencies": {
     "pg": "^8.0.0"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.1",
+    "firebase": "^12.16.0",
+    "firebase-tools": "^15.23.0"
+  },
+  "scripts": {
+    "test:popular-vote:rules": "firebase emulators:exec --only firestore \"node tests/popular-vote/firestore-rules.test.mjs\""
   }
 }

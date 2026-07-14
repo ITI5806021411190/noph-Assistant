@@ -1,34 +1,74 @@
 # Popular Vote Test Results
 
-## Local static checks
+## Dependency install
 
-- [x] `node --check popular-vote/assets/js/core.js`
-- [x] `node --check popular-vote/assets/js/participant.js`
-- [x] `node --check popular-vote/assets/js/stage.js`
-- [x] `node --check popular-vote/assets/js/admin.js`
-- [x] `node --check assets/js/modules/popular-vote-module.js`
-- [x] `node --check tests/popular-vote/firestore-rules.test.mjs`
-- [x] JSON parse check for `vercel.json`, `firebase.json`, `firestore.indexes.json`, `docs/popular-vote/install-manifest.json`
-- [x] Mock load test with 2,000 in-memory voters, 20 candidates, and duplicate UID guard
+Installed dev dependencies:
 
-## Manual test checklist
+- `firebase@12.16.0`
+- `@firebase/rules-unit-testing@5.0.1`
+- `firebase-tools@15.23.0`
 
-- [ ] HAOS main app still opens and `/api/gas` is unchanged
-- [ ] IT Services Hub shows Popular Vote card only for Admin/Super Admin
-- [ ] Participant route signs in anonymously
-- [ ] Feature flag disabled page does not initialize Firebase/listeners
-- [ ] Ready status shows waiting screen
-- [ ] Open poll shows candidate gallery and one vote can be confirmed
-- [ ] Duplicate vote shows already-voted state
-- [ ] Closed status stops new votes
-- [ ] Admin login allows only `wongnazaipot@gmail.com`
-- [ ] Stage login allows only `wongnazaipot@gmail.com`
-- [ ] Stage realtime updates without sorting positions in live mode
-- [ ] Result mode ranks by score and supports ties
-- [ ] Export CSV downloads correctly
-- [ ] Reset votes requires confirm and typing `RESET`
+Portable Java runtime used for local emulator test only:
 
-## Not run in this session
+- `OpenJDK Runtime Environment Temurin-21.0.11+10`
+- path: `%TEMP%\haos-jre21\jdk-21.0.11+10-jre\bin\java.exe`
 
-- Firestore emulator rules test was not executed because Firebase emulator dependencies are not installed locally.
-- No production Firebase load test was run by design.
+## Commands run
+
+```powershell
+& 'C:\Users\Worawong\.cache\codex-runtimes\codex-primary-runtime\dependencies\bin\fallback\pnpm.cmd' add -D firebase @firebase/rules-unit-testing firebase-tools
+```
+
+```powershell
+& 'C:\Users\Worawong\.cache\codex-runtimes\codex-primary-runtime\dependencies\bin\fallback\pnpm.cmd' install --offline
+```
+
+```powershell
+$env:PATH = 'C:\Users\Worawong\AppData\Local\Temp\haos-jre21\jdk-21.0.11+10-jre\bin;C:\Users\Worawong\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin;' + $env:PATH
+$env:XDG_CONFIG_HOME = Join-Path $env:TEMP 'haos-firebase-config'
+$env:XDG_CACHE_HOME = Join-Path $env:TEMP 'haos-firebase-cache'
+$env:FIREBASE_CLI_DISABLE_UPDATE_CHECK = 'true'
+New-Item -ItemType Directory -Force -Path $env:XDG_CONFIG_HOME | Out-Null
+New-Item -ItemType Directory -Force -Path $env:XDG_CACHE_HOME | Out-Null
+& .\node_modules\.bin\firebase.cmd emulators:exec --only firestore "node tests/popular-vote/firestore-rules.test.mjs"
+```
+
+## Final emulator result
+
+- Passed: 25
+- Failed: 0
+- Total: 25
+
+## Security cases covered
+
+- unauthenticated user cannot read event
+- anonymous user can read event
+- anonymous user can read poll
+- anonymous user can read active candidate
+- admin can create event
+- admin can update poll
+- non-admin google user cannot update event
+- unverified admin email cannot update event
+- anonymous user can create one valid vote for own uid
+- anonymous user can read own vote
+- anonymous user cannot read another user's vote
+- anonymous user cannot create vote with another document id
+- anonymous user cannot create vote with mismatched voterUid
+- anonymous user cannot create vote with mismatched pollId
+- anonymous user cannot create vote when poll is closed
+- anonymous user cannot create vote for missing candidate
+- anonymous user cannot create vote for inactive candidate
+- anonymous user cannot create vote with mismatched candidateNumber
+- anonymous user cannot create vote with extra fields
+- anonymous user cannot update existing vote
+- anonymous user cannot delete own vote
+- anonymous user cannot overwrite duplicate vote
+- google user cannot create participant vote
+- admin can read any vote
+- admin can delete vote for reset
+
+## Not done
+
+- Firestore Rules were not deployed.
+- Branch was not merged to main.
+- No production Firebase load test was run.
