@@ -1,0 +1,21 @@
+{
+  "poll": {
+    "id": "child-photo",
+    "title": "โหวตภาพถ่ายตอนเด็ก",
+    "description": "เลือกภาพถ่ายตอนเด็กที่ประทับใจที่สุด",
+    "durationSeconds": 300,
+    "totalEligibleVoters": 0
+  },
+  "candidates": [
+    { "candidateId": "child-01", "number": 1, "displayNumber": "01", "title": "ผู้เข้าประกวดหมายเลข 1", "subtitle": "ภาพถ่ายตอนเด็ก", "imageUrl": "/popular-vote/assets/images/placeholder-child.svg", "active": true, "sortOrder": 1 },
+    { "candidateId": "child-02", "number": 2, "displayNumber": "02", "title": "ผู้เข้าประกวดหมายเลข 2", "subtitle": "ภาพถ่ายตอนเด็ก", "imageUrl": "/popular-vote/assets/images/placeholder-child.svg", "active": true, "sortOrder": 2 },
+    { "candidateId": "child-03", "number": 3, "displayNumber": "03", "title": "ผู้เข้าประกวดหมายเลข 3", "subtitle": "ภาพถ่ายตอนเด็ก", "imageUrl": "/popular-vote/assets/images/placeholder-child.svg", "active": true, "sortOrder": 3 },
+    { "candidateId": "child-04", "number": 4, "displayNumber": "04", "title": "ผู้เข้าประกวดหมายเลข 4", "subtitle": "ภาพถ่ายตอนเด็ก", "imageUrl": "/popular-vote/assets/images/placeholder-child.svg", "active": true, "sortOrder": 4 },
+    { "candidateId": "child-05", "number": 5, "displayNumber": "05", "title": "ผู้เข้าประกวดหมายเลข 5", "subtitle": "ภาพถ่ายตอนเด็ก", "imageUrl": "/popular-vote/assets/images/placeholder-child.svg", "active": true, "sortOrder": 5 },
+    { "candidateId": "child-06", "number": 6, "displayNumber": "06", "title": "ผู้เข้าประกวดหมายเลข 6", "subtitle": "ภาพถ่ายตอนเด็ก", "imageUrl": "/popular-vote/assets/images/placeholder-child.svg", "active": true, "sortOrder": 6 },
+    { "candidateId": "child-07", "number": 7, "displayNumber": "07", "title": "ผู้เข้าประกวดหมายเลข 7", "subtitle": "ภาพถ่ายตอนเด็ก", "imageUrl": "/popular-vote/assets/images/placeholder-child.svg", "active": true, "sortOrder": 7 },
+    { "candidateId": "child-08", "number": 8, "displayNumber": "08", "title": "ผู้เข้าประกวดหมายเลข 8", "subtitle": "ภาพถ่ายตอนเด็ก", "imageUrl": "/popular-vote/assets/images/placeholder-child.svg", "active": true, "sortOrder": 8 },
+    { "candidateId": "child-09", "number": 9, "displayNumber": "09", "title": "ผู้เข้าประกวดหมายเลข 9", "subtitle": "ภาพถ่ายตอนเด็ก", "imageUrl": "/popular-vote/assets/images/placeholder-child.svg", "active": true, "sortOrder": 9 },
+    { "candidateId": "child-10", "number": 10, "displayNumber": "10", "title": "ผู้เข้าประกวดหมายเลข 10", "subtitle": "ภาพถ่ายตอนเด็ก", "imageUrl": "/popular-vote/assets/images/placeholder-child.svg", "active": true, "sortOrder": 10 }
+  ]
+}

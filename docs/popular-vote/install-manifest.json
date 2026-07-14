@@ -1,0 +1,19 @@
+{
+  "module": "popular-vote",
+  "version": "v70.128-popular-vote-firestore",
+  "firebaseProjectId": "haos-back-to-school-vote-2569",
+  "eventId": "back-to-school-2569",
+  "adminEmail": "wongnazaipot@gmail.com",
+  "routes": [
+    "/popular-vote/",
+    "/popular-vote/stage/",
+    "/popular-vote/admin/"
+  ],
+  "featureFlag": "ENABLE_POPULAR_VOTE",
+  "usesMainDatabase": false,
+  "usesGoogleAppsScript": false,
+  "usesFirebaseStorage": false,
+  "usesFirebaseFunctions": false,
+  "usesFirebaseHosting": false,
+  "requiresFirestoreRulesDeploy": true
+}

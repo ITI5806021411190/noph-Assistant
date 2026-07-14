@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-127-jigsaw-module-route';
+const CACHE_NAME = 'haos-v70-128-popular-vote';
 const CORE = [
   '/',
   '/index.html',
@@ -44,6 +44,7 @@ const CORE = [
   '/assets/js/modules/help-live-chat.js?v=70109',
   '/assets/js/modules/it-asset-import.js?v=70125',
   '/assets/js/modules/jigsaw-module.js',
+  '/assets/js/modules/popular-vote-module.js',
   '/assets/css/ai-document-summary.css',
   '/assets/js/modules/ai-document-summary.js',
   '/assets/css/e-office.css',
@@ -59,7 +60,7 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(caches.keys().then(keys => Promise.all(
     keys
-      .filter(k => k !== CACHE_NAME && !k.startsWith('haos-jigsaw-'))
+      .filter(k => k !== CACHE_NAME && !k.startsWith('haos-jigsaw-') && !k.startsWith('haos-popular-vote-'))
       .map(k => caches.delete(k))
   )));
   self.clients.claim();
@@ -69,6 +70,7 @@ self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   if (url.pathname.startsWith('/api/')) return;
   if (url.pathname === '/jigsaw' || url.pathname.startsWith('/jigsaw/')) return;
+  if (url.pathname === '/popular-vote' || url.pathname.startsWith('/popular-vote/')) return;
   event.respondWith(
     fetch(event.request).then(response => {
       if (!response || !response.ok) return response;
