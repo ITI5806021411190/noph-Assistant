@@ -1,0 +1,64 @@
+{
+  "module": "jigsaw-game",
+  "version": "v70.127-jigsaw-game-module",
+  "publicRoute": "/jigsaw/",
+  "createdFiles": [
+    "jigsaw/index.html",
+    "jigsaw/icon.svg",
+    "jigsaw/manifest.webmanifest",
+    "jigsaw/sw.js",
+    "assets/js/modules/jigsaw-module.js",
+    "docs/jigsaw/INSTALL.md",
+    "docs/jigsaw/UNINSTALL.md",
+    "docs/jigsaw/CHANGED_FILES.md",
+    "docs/jigsaw/TEST_RESULTS.md",
+    "docs/jigsaw/install-manifest.json",
+    "scripts/remove-jigsaw-module.mjs"
+  ],
+  "modifiedFiles": [
+    "index.html",
+    "sw.js",
+    "vercel.json"
+  ],
+  "addedRoutes": [
+    "/jigsaw/",
+    "/jigsaw"
+  ],
+  "addedMenuEntries": [
+    {
+      "id": "jigsaw_game",
+      "name": "เกม Jigsaw ทายภาพ",
+      "description": "กิจกรรม Back to School • 7 รอบ • กระดาน 5×5",
+      "icon": "🧩",
+      "defaultRoles": [
+        "Admin",
+        "Super Admin"
+      ]
+    }
+  ],
+  "addedFeatureFlags": [
+    "ENABLE_JIGSAW_GAME"
+  ],
+  "addedRewrites": [
+    {
+      "source": "/jigsaw",
+      "destination": "/jigsaw/index.html"
+    },
+    {
+      "source": "/jigsaw/",
+      "destination": "/jigsaw/index.html"
+    }
+  ],
+  "serviceWorkerScope": "/jigsaw/",
+  "serviceWorkerCacheName": "haos-jigsaw-game-v1",
+  "rootServiceWorkerChanged": true,
+  "backendChanged": false,
+  "databaseChanged": false,
+  "apiChanged": false,
+  "authChanged": false,
+  "environmentChanged": false,
+  "commitSha": null,
+  "branch": null,
+  "notes": "Branch creation was not possible in this folder because git status reports this is not a git repository."
+}
+

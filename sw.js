@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-126-workspace-ai-designer-phase1';
+const CACHE_NAME = 'haos-v70-127-jigsaw-module-route';
 const CORE = [
   '/',
   '/index.html',
@@ -43,6 +43,7 @@ const CORE = [
   '/assets/js/modules/shared-workspace-ai-designer.js',
   '/assets/js/modules/help-live-chat.js?v=70109',
   '/assets/js/modules/it-asset-import.js?v=70125',
+  '/assets/js/modules/jigsaw-module.js',
   '/assets/css/ai-document-summary.css',
   '/assets/js/modules/ai-document-summary.js',
   '/assets/css/e-office.css',
@@ -56,13 +57,18 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 self.addEventListener('activate', event => {
-  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))));
+  event.waitUntil(caches.keys().then(keys => Promise.all(
+    keys
+      .filter(k => k !== CACHE_NAME && !k.startsWith('haos-jigsaw-'))
+      .map(k => caches.delete(k))
+  )));
   self.clients.claim();
 });
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
   if (url.pathname.startsWith('/api/')) return;
+  if (url.pathname === '/jigsaw' || url.pathname.startsWith('/jigsaw/')) return;
   event.respondWith(
     fetch(event.request).then(response => {
       if (!response || !response.ok) return response;
