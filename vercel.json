@@ -3,6 +3,14 @@
   "trailingSlash": false,
   "rewrites": [
     {
+      "source": "/jigsaw",
+      "destination": "/jigsaw/index.html"
+    },
+    {
+      "source": "/jigsaw/",
+      "destination": "/jigsaw/index.html"
+    },
+    {
       "source": "/remote",
       "destination": "/remote.html"
     },
