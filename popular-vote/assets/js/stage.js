@@ -17,6 +17,7 @@ import {
   qrImageUrl,
   normalizePoll,
   normalizeCandidates,
+  imageFallbackAttrs,
   votesFromSnapshot,
   calcScores,
   rankScores,
@@ -83,7 +84,7 @@ function listenPoll(pollId) {
   const { db } = initFirebase();
   const r = refs(db);
   state.unsub.push(fb.onSnapshot(fb.query(r.candidatesCol(pollId), fb.where("active", "==", true), fb.orderBy("sortOrder")), snap => {
-    state.candidates = normalizeCandidates(snap);
+    state.candidates = normalizeCandidates(snap, pollId);
     scheduleRender();
   }, err => showFatal(root, err)));
   state.unsub.push(fb.onSnapshot(r.votesCol(pollId), snap => {
@@ -148,7 +149,7 @@ function renderLive(scores) {
     <div class="pv-live-grid">
       ${scores.map(s => `
         <article class="pv-live-item">
-          <img src="${esc(s.imageUrl)}" alt="${esc(s.title)}">
+          <img src="${esc(s.imageUrl)}" alt="${esc(s.title)}" ${imageFallbackAttrs(s.pollId || state.pollId)}>
           <strong>${esc(s.displayNumber)} ${esc(s.title)}</strong>
           <p>${s.votes} คะแนน</p>
           <div class="pv-bar"><span style="width:${Math.min(100, s.percent)}%"></span></div>
@@ -165,7 +166,7 @@ function renderResult(ranked) {
       ${ranked.map(s => `
         <article class="pv-rank-item">
           <span class="pv-rank">${s.rank}</span>
-          <img src="${esc(s.imageUrl)}" alt="${esc(s.title)}">
+          <img src="${esc(s.imageUrl)}" alt="${esc(s.title)}" ${imageFallbackAttrs(s.pollId || state.pollId)}>
           <div><strong>${esc(s.displayNumber)} ${esc(s.title)}</strong><p>${esc(s.subtitle)}</p><div class="pv-bar"><span style="width:${Math.min(100, s.percent)}%"></span></div></div>
           <strong>${s.votes} คะแนน · ${s.percent}%</strong>
         </article>

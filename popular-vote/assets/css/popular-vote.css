@@ -105,6 +105,28 @@ img { max-width: 100%; display: block; }
 .pv-admin-card { padding: 20px; }
 .pv-field { display: grid; gap: 6px; font-weight: 800; }
 .pv-field input, .pv-field select { min-height: 46px; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 12px; background: #fff; }
+.pv-help-box {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px dashed #7dd3fc;
+  border-radius: 16px;
+  background: #f0f9ff;
+  color: #075985;
+  font-weight: 750;
+}
+.pv-help-box code {
+  display: inline-block;
+  padding: 3px 7px;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  background: #fff;
+  color: #1d4ed8;
+}
+.is-missing-image {
+  object-fit: contain !important;
+  background: #f8fafc;
+}
 .pv-score-row { display: grid; grid-template-columns: 72px 1fr auto; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid #e2e8f0; }
 .pv-score-thumb { width: 64px; height: 64px; border-radius: 14px; object-fit: cover; background: #f1f5f9; }
 .pv-bar { height: 16px; border-radius: 999px; background: #dbeafe; overflow: hidden; }
