@@ -30,7 +30,7 @@ import {
   formatDateTime,
   formatCountdown,
   safeUnsubscribe
-} from "./core.js";
+} from "./core.js?v=70130";
 
 const root = document.getElementById("app");
 let state = {

@@ -1,6 +1,6 @@
 {
   "module": "popular-vote",
-  "version": "v70.128-popular-vote-firestore",
+  "version": "v70.130-popular-vote-cache-bust",
   "firebaseProjectId": "haos-back-to-school-vote-2569",
   "eventId": "back-to-school-2569",
   "adminEmail": "wongnazaipot@gmail.com",

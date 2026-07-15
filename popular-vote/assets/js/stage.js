@@ -24,7 +24,7 @@ import {
   formatCountdown,
   formatDateTime,
   safeUnsubscribe
-} from "./core.js";
+} from "./core.js?v=70130";
 
 const root = document.getElementById("app");
 let state = { user: null, event: null, pollId: null, poll: null, polls: {}, candidates: [], votes: [], hideQr: false, unsub: [], renderTimer: null, tick: null };
