@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-130-popular-vote-cache-bust';
+const CACHE_NAME = 'haos-v70-131-popular-vote-admin-state-fix';
 const CORE = [
   '/',
   '/index.html',
@@ -44,7 +44,7 @@ const CORE = [
   '/assets/js/modules/help-live-chat.js?v=70109',
   '/assets/js/modules/it-asset-import.js?v=70125',
   '/assets/js/modules/jigsaw-module.js',
-  '/assets/js/modules/popular-vote-module.js?v=70130',
+  '/assets/js/modules/popular-vote-module.js?v=70131',
   '/assets/css/ai-document-summary.css',
   '/assets/js/modules/ai-document-summary.js',
   '/assets/css/e-office.css',

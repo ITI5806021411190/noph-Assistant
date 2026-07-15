@@ -14,7 +14,7 @@ import {
   imageFallbackAttrs,
   formatCountdown,
   safeUnsubscribe
-} from "./core.js?v=70130";
+} from "./core.js?v=70131";
 
 const root = document.getElementById("app");
 let state = {
@@ -218,7 +218,7 @@ function listenPoll(pollId) {
     state.poll = normalizePoll(pollId, snap.exists() ? snap.data() : {});
     render();
   }, err => showFatal(root, err)));
-  state.unsub.push(fb.onSnapshot(fb.query(r.candidatesCol(pollId), fb.where("active", "==", true), fb.orderBy("sortOrder")), snap => {
+  state.unsub.push(fb.onSnapshot(fb.query(r.candidatesCol(pollId), fb.orderBy("sortOrder")), snap => {
     state.candidates = normalizeCandidates(snap, pollId);
     render();
   }, err => showFatal(root, err)));

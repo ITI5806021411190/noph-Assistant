@@ -1,5 +1,5 @@
 (function () {
-  const PATCH = "v70.130-popular-vote-cache-bust";
+  const PATCH = "v70.131-popular-vote-admin-state-fix";
   const MODULE_ID = "popular_vote";
   const FLAG = "ENABLE_POPULAR_VOTE";
 

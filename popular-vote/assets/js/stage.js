@@ -24,7 +24,7 @@ import {
   formatCountdown,
   formatDateTime,
   safeUnsubscribe
-} from "./core.js?v=70130";
+} from "./core.js?v=70131";
 
 const root = document.getElementById("app");
 let state = { user: null, event: null, pollId: null, poll: null, polls: {}, candidates: [], votes: [], hideQr: false, unsub: [], renderTimer: null, tick: null };
@@ -83,7 +83,7 @@ function listenPoll(pollId) {
   if (!pollId) return scheduleRender();
   const { db } = initFirebase();
   const r = refs(db);
-  state.unsub.push(fb.onSnapshot(fb.query(r.candidatesCol(pollId), fb.where("active", "==", true), fb.orderBy("sortOrder")), snap => {
+  state.unsub.push(fb.onSnapshot(fb.query(r.candidatesCol(pollId), fb.orderBy("sortOrder")), snap => {
     state.candidates = normalizeCandidates(snap, pollId);
     scheduleRender();
   }, err => showFatal(root, err)));

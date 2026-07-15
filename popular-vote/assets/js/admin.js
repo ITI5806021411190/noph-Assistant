@@ -30,7 +30,7 @@ import {
   formatDateTime,
   formatCountdown,
   safeUnsubscribe
-} from "./core.js?v=70130";
+} from "./core.js?v=70131";
 
 const root = document.getElementById("app");
 let state = {
@@ -43,7 +43,9 @@ let state = {
   busy: false,
   unsub: [],
   renderTimer: null,
-  tick: null
+  tick: null,
+  hasManualPollSelection: false,
+  autoSeededPolls: {}
 };
 
 function login() {
@@ -85,7 +87,9 @@ function listenAdmin() {
   const r = refs(db);
   state.unsub.push(fb.onSnapshot(r.eventRef, snap => {
     state.event = snap.exists() ? { id: snap.id, ...snap.data() } : { ...DEFAULT_EVENT };
-    if (state.event.activePoll && state.event.activePoll !== state.selectedPoll) state.selectedPoll = state.event.activePoll;
+    if (!state.hasManualPollSelection && state.event.activePoll && state.event.activePoll !== state.selectedPoll) {
+      state.selectedPoll = state.event.activePoll;
+    }
     listenPollData();
     scheduleRender();
   }, err => showFatal(root, err)));
@@ -93,6 +97,7 @@ function listenAdmin() {
     const polls = {};
     snap.docs.forEach(d => { polls[d.id] = normalizePoll(d.id, d.data()); });
     state.polls = polls;
+    maybeAutoSeedOpenPoll(state.selectedPoll);
     scheduleRender();
   }, err => showFatal(root, err)));
   state.tick = setInterval(scheduleRender, 1000);
@@ -106,6 +111,7 @@ function listenPollData() {
   const r = refs(db);
   state.unsub.push(fb.onSnapshot(fb.query(r.candidatesCol(pollId), fb.orderBy("sortOrder")), snap => {
     state.candidates = normalizeCandidates(snap, pollId);
+    maybeAutoSeedOpenPoll(pollId);
     scheduleRender();
   }, err => showFatal(root, err)));
   state.unsub.push(fb.onSnapshot(r.votesCol(pollId), snap => {
@@ -116,7 +122,32 @@ function listenPollData() {
 
 function scheduleRender() {
   clearTimeout(state.renderTimer);
-  state.renderTimer = setTimeout(render, 250);
+  state.renderTimer = setTimeout(() => {
+    if (shouldDeferRender()) {
+      scheduleRender();
+      return;
+    }
+    render();
+  }, 250);
+}
+
+function shouldDeferRender() {
+  if (state.busy) return true;
+  const active = document.activeElement;
+  if (!active || !root.contains(active)) return false;
+  if (active.id === "pvPollSelect") return false;
+  return active.matches?.("input, select, textarea");
+}
+
+function maybeAutoSeedOpenPoll(pollId) {
+  if (!pollId || state.candidates.length) return;
+  if (state.autoSeededPolls[pollId]) return;
+  const poll = state.polls[pollId] || {};
+  if (poll.status !== "open") return;
+  state.autoSeededPolls[pollId] = true;
+  ensureActiveCandidates(pollId).then(count => {
+    if (count) scheduleRender();
+  }).catch(err => console.warn("[Popular Vote] auto seed failed", err));
 }
 
 function pollOptions() {
@@ -248,6 +279,7 @@ function renderScores(ranked) {
 function bind() {
   root.querySelector("#pvSignOut")?.addEventListener("click", () => fb.signOut(initFirebase().auth));
   root.querySelector("#pvPollSelect")?.addEventListener("change", event => {
+    state.hasManualPollSelection = true;
     state.selectedPoll = event.target.value;
     listenPollData();
     render();
@@ -284,10 +316,10 @@ function meta() {
   return { updatedAt: fb.serverTimestamp(), updatedBy: state.user?.email || "admin" };
 }
 
-async function seedCurrentPoll() {
+async function seedCurrentPoll(options = {}) {
   const { db } = initFirebase();
   const r = refs(db);
-  const pollId = state.selectedPoll;
+  const pollId = options.pollId || state.selectedPoll;
   const candidateCount = candidateCountInput();
   const seed = await loadSeed(pollId);
   const candidates = buildCandidates(pollId, candidateCount, seed.candidates || []);
@@ -316,7 +348,17 @@ async function seedCurrentPoll() {
     }
   });
   await batch.commit();
-  alert(`อัปเดตรายชื่อ/รูปของหมวดนี้แล้ว ${candidateCount} รายการ`);
+  if (!options.silent) alert(`อัปเดตรายชื่อ/รูปของหมวดนี้แล้ว ${candidateCount} รายการ`);
+  return candidateCount;
+}
+
+async function ensureActiveCandidates(pollId) {
+  const { db } = initFirebase();
+  const r = refs(db);
+  const snap = await fb.getDocs(r.candidatesCol(pollId));
+  const hasActive = snap.docs.some(docSnap => docSnap.data()?.active !== false);
+  if (hasActive) return 0;
+  return seedCurrentPoll({ pollId, silent: true });
 }
 
 async function savePollSettings() {
@@ -331,11 +373,13 @@ async function savePollSettings() {
 
 async function setActivePoll(pollId) {
   const { db } = initFirebase();
+  await ensureActiveCandidates(pollId);
   await fb.setDoc(refs(db).eventRef, { activePoll: pollId, updatedAt: fb.serverTimestamp(), updatedBy: state.user.email }, { merge: true });
 }
 
 async function openPoll(pollId) {
   await savePollSettings();
+  await ensureActiveCandidates(pollId);
   const { db } = initFirebase();
   const r = refs(db);
   const durationSeconds = Math.max(10, Number(root.querySelector("#pvDuration")?.value || state.polls[pollId]?.durationSeconds || 300));
