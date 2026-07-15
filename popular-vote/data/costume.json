@@ -4,18 +4,14 @@
     "title": "โหวตการแต่งกายตามธีม",
     "description": "เลือกการแต่งกาย Back to School ที่โดดเด่นที่สุด",
     "durationSeconds": 300,
-    "totalEligibleVoters": 0
+    "totalEligibleVoters": 0,
+    "candidateCount": 5
   },
   "candidates": [
-    { "candidateId": "costume-01", "number": 1, "displayNumber": "01", "title": "ผู้เข้าประกวดหมายเลข 1", "subtitle": "แต่งกายตามธีม", "imageUrl": "/popular-vote/assets/images/placeholder-costume.svg", "active": true, "sortOrder": 1 },
-    { "candidateId": "costume-02", "number": 2, "displayNumber": "02", "title": "ผู้เข้าประกวดหมายเลข 2", "subtitle": "แต่งกายตามธีม", "imageUrl": "/popular-vote/assets/images/placeholder-costume.svg", "active": true, "sortOrder": 2 },
-    { "candidateId": "costume-03", "number": 3, "displayNumber": "03", "title": "ผู้เข้าประกวดหมายเลข 3", "subtitle": "แต่งกายตามธีม", "imageUrl": "/popular-vote/assets/images/placeholder-costume.svg", "active": true, "sortOrder": 3 },
-    { "candidateId": "costume-04", "number": 4, "displayNumber": "04", "title": "ผู้เข้าประกวดหมายเลข 4", "subtitle": "แต่งกายตามธีม", "imageUrl": "/popular-vote/assets/images/placeholder-costume.svg", "active": true, "sortOrder": 4 },
-    { "candidateId": "costume-05", "number": 5, "displayNumber": "05", "title": "ผู้เข้าประกวดหมายเลข 5", "subtitle": "แต่งกายตามธีม", "imageUrl": "/popular-vote/assets/images/placeholder-costume.svg", "active": true, "sortOrder": 5 },
-    { "candidateId": "costume-06", "number": 6, "displayNumber": "06", "title": "ผู้เข้าประกวดหมายเลข 6", "subtitle": "แต่งกายตามธีม", "imageUrl": "/popular-vote/assets/images/placeholder-costume.svg", "active": true, "sortOrder": 6 },
-    { "candidateId": "costume-07", "number": 7, "displayNumber": "07", "title": "ผู้เข้าประกวดหมายเลข 7", "subtitle": "แต่งกายตามธีม", "imageUrl": "/popular-vote/assets/images/placeholder-costume.svg", "active": true, "sortOrder": 7 },
-    { "candidateId": "costume-08", "number": 8, "displayNumber": "08", "title": "ผู้เข้าประกวดหมายเลข 8", "subtitle": "แต่งกายตามธีม", "imageUrl": "/popular-vote/assets/images/placeholder-costume.svg", "active": true, "sortOrder": 8 },
-    { "candidateId": "costume-09", "number": 9, "displayNumber": "09", "title": "ผู้เข้าประกวดหมายเลข 9", "subtitle": "แต่งกายตามธีม", "imageUrl": "/popular-vote/assets/images/placeholder-costume.svg", "active": true, "sortOrder": 9 },
-    { "candidateId": "costume-10", "number": 10, "displayNumber": "10", "title": "ผู้เข้าประกวดหมายเลข 10", "subtitle": "แต่งกายตามธีม", "imageUrl": "/popular-vote/assets/images/placeholder-costume.svg", "active": true, "sortOrder": 10 }
+    { "candidateId": "costume-01", "number": 1, "displayNumber": "01", "title": "ผู้เข้าประกวดหมายเลข 1", "subtitle": "แต่งกายตามธีม", "imageUrl": "/popular-vote/assets/costume/01.png", "active": true, "sortOrder": 1 },
+    { "candidateId": "costume-02", "number": 2, "displayNumber": "02", "title": "ผู้เข้าประกวดหมายเลข 2", "subtitle": "แต่งกายตามธีม", "imageUrl": "/popular-vote/assets/costume/02.png", "active": true, "sortOrder": 2 },
+    { "candidateId": "costume-03", "number": 3, "displayNumber": "03", "title": "ผู้เข้าประกวดหมายเลข 3", "subtitle": "แต่งกายตามธีม", "imageUrl": "/popular-vote/assets/costume/03.png", "active": true, "sortOrder": 3 },
+    { "candidateId": "costume-04", "number": 4, "displayNumber": "04", "title": "ผู้เข้าประกวดหมายเลข 4", "subtitle": "แต่งกายตามธีม", "imageUrl": "/popular-vote/assets/costume/04.png", "active": true, "sortOrder": 4 },
+    { "candidateId": "costume-05", "number": 5, "displayNumber": "05", "title": "ผู้เข้าประกวดหมายเลข 5", "subtitle": "แต่งกายตามธีม", "imageUrl": "/popular-vote/assets/costume/05.png", "active": true, "sortOrder": 5 }
   ]
 }

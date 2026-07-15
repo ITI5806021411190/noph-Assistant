@@ -25,7 +25,7 @@ import {
   Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-export const VERSION = "v70.128-popular-vote-firestore";
+export const VERSION = "v70.129-popular-vote-easy-images";
 export const FIREBASE_SDK_VERSION = "10.12.5";
 export const EVENT_ID = "back-to-school-2569";
 export const ADMIN_EMAIL = "wongnazaipot@gmail.com";
@@ -56,7 +56,9 @@ export const DEFAULT_POLLS = {
     status: "draft",
     showLiveResults: false,
     durationSeconds: 300,
-    totalEligibleVoters: 0
+    totalEligibleVoters: 0,
+    candidateCount: 5,
+    candidateSubtitle: "ภาพถ่ายตอนเด็ก"
   },
   costume: {
     id: "costume",
@@ -65,7 +67,9 @@ export const DEFAULT_POLLS = {
     status: "draft",
     showLiveResults: false,
     durationSeconds: 300,
-    totalEligibleVoters: 0
+    totalEligibleVoters: 0,
+    candidateCount: 5,
+    candidateSubtitle: "แต่งกายตามธีม"
   }
 };
 
@@ -139,6 +143,77 @@ export function esc(value) {
 export function cleanText(value, fallback = "-") {
   const text = String(value == null ? "" : value).trim();
   return text || fallback;
+}
+
+export function padCandidateNumber(number) {
+  return String(Math.max(1, Number(number || 1))).padStart(2, "0");
+}
+
+export function placeholderImageUrl(pollId = "child-photo") {
+  return pollId === "costume"
+    ? "/popular-vote/assets/images/placeholder-costume.svg"
+    : "/popular-vote/assets/images/placeholder-child.svg";
+}
+
+export function candidateAssetUrl(pollId, number) {
+  return `/popular-vote/assets/${pollId}/${padCandidateNumber(number)}.png`;
+}
+
+export function imageFallbackAttrs(pollId = "child-photo") {
+  const placeholder = placeholderImageUrl(pollId);
+  return `onerror="const s=Number(this.dataset.fallbackStep||0);const e=['.jpg','.jpeg','.webp'];if(s<e.length){this.dataset.fallbackStep=String(s+1);this.src=this.src.replace(/\\.(png|jpg|jpeg|webp)(\\?.*)?$/i,e[s]+'$2');}else{this.onerror=null;this.src='${placeholder}';this.classList.add('is-missing-image')}"`;
+}
+
+function inferPollId(row = {}, fallbackPollId = "") {
+  if (fallbackPollId) return fallbackPollId;
+  const id = String(row.pollId || row.candidateId || "");
+  if (id.startsWith("costume-")) return "costume";
+  if (id.startsWith("child-")) return "child-photo";
+  return "child-photo";
+}
+
+function candidateNumberFrom(row = {}) {
+  const direct = Number(row.number || row.sortOrder || 0);
+  if (direct > 0) return direct;
+  const match = String(row.displayNumber || row.candidateId || "").match(/(\d+)$/);
+  return match ? Number(match[1]) : 0;
+}
+
+function isPlaceholderUrl(value) {
+  return /\/popular-vote\/assets\/images\/placeholder-(child|costume)\.svg/i.test(String(value || ""));
+}
+
+function resolveCandidateImageUrl(row = {}, pollId, number) {
+  const raw = String(row.imageUrl || "").trim();
+  if (raw && !isPlaceholderUrl(raw)) return raw;
+  return candidateAssetUrl(pollId, number || candidateNumberFrom(row) || 1);
+}
+
+export function buildCandidate(pollId, number, seed = {}) {
+  const displayNumber = padCandidateNumber(seed.displayNumber || number);
+  const defaults = DEFAULT_POLLS[pollId] || {};
+  return {
+    candidateId: seed.candidateId || `${pollId}-${displayNumber}`,
+    pollId,
+    number: Number(number),
+    displayNumber,
+    title: cleanText(seed.title, `ผู้เข้าประกวดหมายเลข ${Number(number)}`),
+    subtitle: cleanText(seed.subtitle, defaults.candidateSubtitle || defaults.title || ""),
+    imageUrl: candidateAssetUrl(pollId, number),
+    active: true,
+    sortOrder: Number(seed.sortOrder || number)
+  };
+}
+
+export function buildCandidates(pollId, count = 5, seeds = []) {
+  const safeCount = Math.max(1, Math.min(99, Number(count || 5)));
+  const seedByNumber = new Map(
+    (Array.isArray(seeds) ? seeds : []).map(seed => [candidateNumberFrom(seed), seed])
+  );
+  return Array.from({ length: safeCount }, (_, index) => {
+    const number = index + 1;
+    return buildCandidate(pollId, number, seedByNumber.get(number) || {});
+  });
 }
 
 export function disabledPage(root) {
@@ -234,22 +309,27 @@ export function normalizePoll(pollId, data = {}) {
   return { ...(DEFAULT_POLLS[pollId] || {}), ...data, id: data.id || pollId };
 }
 
-export function normalizeCandidates(snapshotOrArray) {
+export function normalizeCandidates(snapshotOrArray, pollId = "") {
   const rows = Array.isArray(snapshotOrArray)
     ? snapshotOrArray
     : snapshotOrArray.docs.map(d => ({ candidateId: d.id, ...d.data() }));
   return rows
     .filter(row => row && row.active !== false)
-    .map(row => ({
-      candidateId: cleanText(row.candidateId || row.id),
-      number: Number(row.number || row.sortOrder || 0),
-      displayNumber: cleanText(row.displayNumber || row.number || row.sortOrder || ""),
-      title: cleanText(row.title, "ผู้เข้าประกวด"),
-      subtitle: cleanText(row.subtitle, ""),
-      imageUrl: cleanText(row.imageUrl, "/popular-vote/assets/images/placeholder-child.svg"),
-      active: row.active !== false,
-      sortOrder: Number(row.sortOrder || row.number || 999)
-    }))
+    .map(row => {
+      const resolvedPollId = inferPollId(row, pollId);
+      const number = candidateNumberFrom(row);
+      return {
+        candidateId: cleanText(row.candidateId || row.id),
+        pollId: resolvedPollId,
+        number,
+        displayNumber: cleanText(row.displayNumber || number || row.sortOrder || ""),
+        title: cleanText(row.title, "ผู้เข้าประกวด"),
+        subtitle: cleanText(row.subtitle, ""),
+        imageUrl: resolveCandidateImageUrl(row, resolvedPollId, number),
+        active: row.active !== false,
+        sortOrder: Number(row.sortOrder || number || 999)
+      };
+    })
     .sort((a, b) => (a.sortOrder - b.sortOrder) || (a.number - b.number));
 }
 
@@ -285,7 +365,7 @@ export function rankScores(scores) {
 }
 
 export async function loadSeed(pollId) {
-  const res = await fetch(`/popular-vote/data/${pollId}.json?v=70128`, { cache: "no-store" });
+  const res = await fetch(`/popular-vote/data/${pollId}.json?v=70129`, { cache: "no-store" });
   if (!res.ok) throw new Error(`โหลด seed ${pollId} ไม่สำเร็จ`);
   return res.json();
 }

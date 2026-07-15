@@ -1,12 +1,12 @@
 # Popular Vote Install
 
-โมดูลนี้เพิ่ม Popular Vote สำหรับงาน Back to School โดยใช้ Firebase Firestore แยกจากฐานข้อมูลหลักของ Health Assistant OS
+โมดูล Popular Vote ใช้ Firebase Firestore แยกจากฐานข้อมูลหลักของ Health Assistant OS
 
 ## Routes
 
 - `/popular-vote/` หน้าผู้ร่วมโหวต ใช้ Anonymous Auth
-- `/popular-vote/stage/` หน้าจอเวที ใช้ Google Sign-in เฉพาะ `wongnazaipot@gmail.com`
-- `/popular-vote/admin/` แผงควบคุม ใช้ Google Sign-in เฉพาะ `wongnazaipot@gmail.com`
+- `/popular-vote/stage/` หน้าเวที ใช้ Google Sign-in เฉพาะผู้ดูแล
+- `/popular-vote/admin/` แผงควบคุม ใช้ Google Sign-in เฉพาะผู้ดูแล
 
 ## Deploy ขั้นต่ำ
 
@@ -18,7 +18,7 @@
 3. Firebase Console: เปิด Authentication providers
    - Anonymous
    - Google
-4. Deploy Firestore rules ด้วย Firebase CLI เมื่อตรวจแล้ว
+4. Deploy Firestore rules ด้วย Firebase CLI เมื่อทดสอบแล้ว
 
 ```bash
 firebase use haos-back-to-school-vote-2569
@@ -27,11 +27,14 @@ firebase deploy --only firestore:rules
 
 ## First run
 
-1. เปิด `/popular-vote/admin/`
-2. Login ด้วย `wongnazaipot@gmail.com`
-3. กด `Seed / อัปเดตรายชื่อ`
+1. วางรูปผู้เข้าประกวด:
+   - ภาพถ่ายตอนเด็ก: `popular-vote/assets/child-photo/01.png`, `02.png`, ...
+   - แต่งกายตามธีม: `popular-vote/assets/costume/01.png`, `02.png`, ...
+2. เปิด `/popular-vote/admin/`
+3. Login ด้วยบัญชีผู้ดูแล
 4. เลือกหมวด `child-photo` หรือ `costume`
-5. ตั้งเวลา/จำนวนผู้มีสิทธิ์
-6. กด `เปิดโหวต`
-7. เปิด `/popular-vote/stage/` บนจอ projector
-8. ให้ผู้เข้าร่วมสแกน QR จาก stage
+5. ตั้ง `จำนวนผู้เข้าประกวด`
+6. กด `อัปเดตรายชื่อ/รูปหมวดนี้`
+7. ตั้งเวลา/จำนวนผู้มีสิทธิ์ แล้วกด `เปิดโหวต`
+8. เปิด `/popular-vote/stage/` บนจอ projector
+9. ให้ผู้ร่วมงานสแกน QR จาก stage เพื่อโหวต

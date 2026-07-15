@@ -20,6 +20,8 @@ import {
   qrImageUrl,
   copyText,
   loadSeed,
+  buildCandidates,
+  imageFallbackAttrs,
   normalizePoll,
   normalizeCandidates,
   votesFromSnapshot,
@@ -61,7 +63,15 @@ function boot() {
       state.unsub = [];
       if (!user) return login();
       if (!isAdminUser(user)) {
-        root.innerHTML = `<section class="pv-page pv-page-narrow"><div class="pv-empty pv-empty-danger"><h1>ไม่มีสิทธิ์จัดการ Popular Vote</h1><p>บัญชีนี้ไม่ใช่ ${esc("wongnazaipot@gmail.com")}</p><button class="pv-btn pv-btn-primary" id="pvSignOut">ออกจากระบบ</button></div></section>`;
+        root.innerHTML = `
+          <section class="pv-page pv-page-narrow">
+            <div class="pv-empty pv-empty-danger">
+              <h1>ไม่มีสิทธิ์จัดการ Popular Vote</h1>
+              <p>บัญชีนี้ไม่ใช่ ${esc("wongnazaipot@gmail.com")}</p>
+              <button class="pv-btn pv-btn-primary" id="pvSignOut">ออกจากระบบ</button>
+            </div>
+          </section>
+        `;
         root.querySelector("#pvSignOut")?.addEventListener("click", () => fb.signOut(auth));
         return;
       }
@@ -95,7 +105,7 @@ function listenPollData() {
   const { db } = initFirebase();
   const r = refs(db);
   state.unsub.push(fb.onSnapshot(fb.query(r.candidatesCol(pollId), fb.orderBy("sortOrder")), snap => {
-    state.candidates = normalizeCandidates(snap);
+    state.candidates = normalizeCandidates(snap, pollId);
     scheduleRender();
   }, err => showFatal(root, err)));
   state.unsub.push(fb.onSnapshot(r.votesCol(pollId), snap => {
@@ -113,8 +123,28 @@ function pollOptions() {
   return POLL_IDS.map(id => `<option value="${esc(id)}" ${state.selectedPoll === id ? "selected" : ""}>${esc(state.polls[id]?.title || DEFAULT_POLLS[id]?.title || id)}</option>`).join("");
 }
 
+function candidateCountValue(poll) {
+  return Math.max(1, Math.min(99, Number(poll?.candidateCount || DEFAULT_POLLS[state.selectedPoll]?.candidateCount || 5)));
+}
+
+function candidateCountInput() {
+  return Math.max(1, Math.min(99, Number(root.querySelector("#pvCandidateCount")?.value || 5)));
+}
+
+function imageFolderHint(pollId) {
+  const next = Array.from({ length: Math.min(6, candidateCountInput()) }, (_, index) => `${String(index + 1).padStart(2, "0")}.png`).join(", ");
+  return `
+    <div class="pv-help-box">
+      <strong>รูปของหมวดนี้ให้วางไว้ที่</strong>
+      <code>popular-vote/assets/${esc(pollId)}/</code>
+      <span>ตั้งชื่อไฟล์ตามหมายเลข เช่น <code>${esc(next)}</code> แล้วกด “อัปเดตรายชื่อ/รูปหมวดนี้” ระบบจะจับรูปตามหมายเลขให้อัตโนมัติ</span>
+    </div>
+  `;
+}
+
 function render() {
   const poll = state.polls[state.selectedPoll] || DEFAULT_POLLS[state.selectedPoll] || {};
+  const candidateCount = candidateCountValue(poll);
   const scores = calcScores(state.candidates, state.votes);
   const ranked = rankScores(scores);
   root.innerHTML = `
@@ -123,7 +153,7 @@ function render() {
         <div>
           <div class="pv-kicker">Popular Vote Admin</div>
           <h1>Back to School Popular Vote</h1>
-          <p>ควบคุมหมวดโหวต จอเวที QR และ export คะแนน โดยไม่แตะฐานข้อมูลหลัก HAOS</p>
+          <p>จัดการหมวดโหวต รูปผู้เข้าประกวด เวที QR และผลคะแนนแบบ Realtime</p>
         </div>
         <div class="pv-toolbar">
           <a class="pv-btn pv-btn-light" href="/">กลับ HAOS</a>
@@ -131,6 +161,7 @@ function render() {
           <button class="pv-btn pv-btn-light" id="pvSignOut">ออกจาก Google</button>
         </div>
       </header>
+
       <section class="pv-panel">
         <div class="pv-section-head">
           <div>
@@ -139,6 +170,7 @@ function render() {
           </div>
           <span class="pv-status pv-status-${esc(poll.status || "draft")}">${esc(poll.status || "draft")}</span>
         </div>
+
         <div class="pv-grid pv-grid-2">
           <div class="pv-card pv-admin-card">
             <h2>กิจกรรมและหมวดโหวต</h2>
@@ -147,7 +179,7 @@ function render() {
                 <select id="pvPollSelect">${pollOptions()}</select>
               </label>
               <div class="pv-toolbar">
-                <button class="pv-btn pv-btn-primary" data-action="seedAll">Seed / อัปเดตรายชื่อ</button>
+                <button class="pv-btn pv-btn-primary" data-action="seedAll">อัปเดตรายชื่อ/รูปหมวดนี้</button>
                 <button class="pv-btn pv-btn-green" data-action="openPoll">เปิดโหวต</button>
                 <button class="pv-btn pv-btn-amber" data-action="closePoll">ปิดโหวต</button>
                 <button class="pv-btn pv-btn-outline" data-action="setActive">ตั้งเป็นหมวดปัจจุบัน</button>
@@ -160,11 +192,14 @@ function render() {
               <div class="pv-grid pv-grid-3">
                 <label class="pv-field">เวลาโหวต (วินาที)<input id="pvDuration" type="number" min="10" value="${Number(poll.durationSeconds || 300)}"></label>
                 <label class="pv-field">จำนวนผู้มีสิทธิ์<input id="pvEligible" type="number" min="0" value="${Number(poll.totalEligibleVoters || 0)}"></label>
+                <label class="pv-field">จำนวนผู้เข้าประกวด<input id="pvCandidateCount" type="number" min="1" max="99" value="${candidateCount}"></label>
                 <label class="pv-field">Live results<select id="pvShowLive"><option value="false" ${poll.showLiveResults ? "" : "selected"}>ซ่อน</option><option value="true" ${poll.showLiveResults ? "selected" : ""}>แสดง</option></select></label>
               </div>
+              ${imageFolderHint(state.selectedPoll)}
               <button class="pv-btn pv-btn-primary" data-action="savePollSettings">บันทึกตั้งค่า Poll</button>
             </div>
           </div>
+
           <div class="pv-card pv-admin-card pv-qr-card">
             <h2>QR และลิงก์</h2>
             <img src="${qrImageUrl(participantUrl(), 360)}" alt="QR Code">
@@ -177,11 +212,13 @@ function render() {
           </div>
         </div>
       </section>
+
       <section class="pv-grid pv-grid-3" style="margin-top:16px;">
         <div class="pv-stat"><span>หมวดปัจจุบัน</span><strong>${esc(state.event?.activePoll || "-")}</strong></div>
         <div class="pv-stat"><span>คะแนนในหมวดนี้</span><strong>${state.votes.length}</strong></div>
         <div class="pv-stat"><span>ปิดใน</span><strong>${poll.closesAt ? formatCountdown(poll.closesAt) : "--:--"}</strong></div>
       </section>
+
       <section class="pv-panel">
         <div class="pv-section-head">
           <div><h2>คะแนนแบบ Realtime</h2><p>${esc(poll.title || state.selectedPoll)} · อัปเดตล่าสุด ${formatDateTime(new Date())}</p></div>
@@ -198,10 +235,10 @@ function render() {
 }
 
 function renderScores(ranked) {
-  if (!ranked.length) return `<div class="pv-empty"><h2>ยังไม่มีรายชื่อผู้เข้าประกวด</h2><p>กด Seed / อัปเดตรายชื่อ เพื่อโหลดข้อมูลตัวอย่าง</p></div>`;
+  if (!ranked.length) return `<div class="pv-empty"><h2>ยังไม่มีรายชื่อผู้เข้าประกวด</h2><p>กำหนดจำนวนผู้เข้าประกวด แล้วกด “อัปเดตรายชื่อ/รูปหมวดนี้”</p></div>`;
   return `<div>${ranked.map(s => `
     <div class="pv-score-row">
-      <img class="pv-score-thumb" src="${esc(s.imageUrl)}" alt="${esc(s.title)}">
+      <img class="pv-score-thumb" src="${esc(s.imageUrl)}" alt="${esc(s.title)}" ${imageFallbackAttrs(s.pollId || state.selectedPoll)}>
       <div><strong>#${esc(s.displayNumber)} ${esc(s.title)}</strong><p class="pv-muted">อันดับ ${s.rank} · ${s.percent}%</p><div class="pv-bar"><span style="width:${Math.min(100, s.percent)}%"></span></div></div>
       <strong>${s.votes} คะแนน</strong>
     </div>
@@ -215,6 +252,10 @@ function bind() {
     listenPollData();
     render();
   });
+  root.querySelector("#pvCandidateCount")?.addEventListener("input", () => {
+    const box = root.querySelector(".pv-help-box");
+    if (box) box.outerHTML = imageFolderHint(state.selectedPoll);
+  });
   root.querySelectorAll("[data-action]").forEach(btn => btn.addEventListener("click", () => runAction(btn.dataset.action)));
   root.querySelectorAll("[data-mode]").forEach(btn => btn.addEventListener("click", () => setStageMode(btn.dataset.mode)));
 }
@@ -223,7 +264,7 @@ async function runAction(action) {
   try {
     if (state.busy) return;
     state.busy = true;
-    if (action === "seedAll") await seedAll();
+    if (action === "seedAll") await seedCurrentPoll();
     if (action === "openPoll") await openPoll(state.selectedPoll);
     if (action === "closePoll") await closePoll(state.selectedPoll);
     if (action === "setActive") await setActivePoll(state.selectedPoll);
@@ -243,20 +284,39 @@ function meta() {
   return { updatedAt: fb.serverTimestamp(), updatedBy: state.user?.email || "admin" };
 }
 
-async function seedAll() {
+async function seedCurrentPoll() {
   const { db } = initFirebase();
   const r = refs(db);
-  await fb.setDoc(r.eventRef, { ...DEFAULT_EVENT, updatedAt: fb.serverTimestamp(), updatedBy: state.user.email }, { merge: true });
-  for (const pollId of POLL_IDS) {
-    const seed = await loadSeed(pollId);
-    await fb.setDoc(r.pollRef(pollId), { ...DEFAULT_POLLS[pollId], ...(seed.poll || {}), ...meta() }, { merge: true });
-    const batch = fb.writeBatch(db);
-    normalizeCandidates(seed.candidates || []).forEach(candidate => {
-      batch.set(r.candidateRef(pollId, candidate.candidateId), { ...candidate, createdAt: fb.serverTimestamp(), updatedAt: fb.serverTimestamp() }, { merge: true });
-    });
-    await batch.commit();
-  }
-  alert("Seed รายชื่อและโครงสร้าง poll แล้ว");
+  const pollId = state.selectedPoll;
+  const candidateCount = candidateCountInput();
+  const seed = await loadSeed(pollId);
+  const candidates = buildCandidates(pollId, candidateCount, seed.candidates || []);
+  const activeIds = new Set(candidates.map(candidate => candidate.candidateId));
+
+  await fb.setDoc(r.eventRef, { ...DEFAULT_EVENT, ...(state.event || {}), updatedAt: fb.serverTimestamp(), updatedBy: state.user.email }, { merge: true });
+  await fb.setDoc(r.pollRef(pollId), {
+    ...DEFAULT_POLLS[pollId],
+    ...(seed.poll || {}),
+    candidateCount,
+    ...meta()
+  }, { merge: true });
+
+  const existing = await fb.getDocs(r.candidatesCol(pollId));
+  let batch = fb.writeBatch(db);
+  candidates.forEach(candidate => {
+    batch.set(r.candidateRef(pollId, candidate.candidateId), {
+      ...candidate,
+      createdAt: fb.serverTimestamp(),
+      updatedAt: fb.serverTimestamp()
+    }, { merge: true });
+  });
+  existing.docs.forEach(docSnap => {
+    if (!activeIds.has(docSnap.id)) {
+      batch.set(docSnap.ref, { active: false, updatedAt: fb.serverTimestamp(), updatedBy: state.user?.email || "admin" }, { merge: true });
+    }
+  });
+  await batch.commit();
+  alert(`อัปเดตรายชื่อ/รูปของหมวดนี้แล้ว ${candidateCount} รายการ`);
 }
 
 async function savePollSettings() {
@@ -264,8 +324,9 @@ async function savePollSettings() {
   const r = refs(db);
   const durationSeconds = Math.max(10, Number(root.querySelector("#pvDuration")?.value || 300));
   const totalEligibleVoters = Math.max(0, Number(root.querySelector("#pvEligible")?.value || 0));
+  const candidateCount = candidateCountInput();
   const showLiveResults = root.querySelector("#pvShowLive")?.value === "true";
-  await fb.setDoc(r.pollRef(state.selectedPoll), { durationSeconds, totalEligibleVoters, showLiveResults, ...meta() }, { merge: true });
+  await fb.setDoc(r.pollRef(state.selectedPoll), { durationSeconds, totalEligibleVoters, candidateCount, showLiveResults, ...meta() }, { merge: true });
 }
 
 async function setActivePoll(pollId) {

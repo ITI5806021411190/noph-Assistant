@@ -15,6 +15,8 @@
 
 - `popular-vote/data/child-photo.json`
 - `popular-vote/data/costume.json`
+- `popular-vote/assets/child-photo/01.png` ... `05.png`
+- `popular-vote/assets/costume/01.png` ... `05.png`
 - `popular-vote/assets/images/placeholder-child.svg`
 - `popular-vote/assets/images/placeholder-costume.svg`
 

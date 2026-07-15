@@ -11,6 +11,7 @@ import {
   showFatal,
   normalizePoll,
   normalizeCandidates,
+  imageFallbackAttrs,
   formatCountdown,
   safeUnsubscribe
 } from "./core.js";
@@ -116,7 +117,7 @@ function renderBody(status, canVote) {
       ${state.candidates.map(c => `
         <article class="pv-candidate ${state.selectedId === c.candidateId ? "is-selected" : ""}" data-id="${esc(c.candidateId)}">
           <button class="pv-image-button" data-preview="${esc(c.candidateId)}" type="button">
-            <img src="${esc(c.imageUrl)}" alt="${esc(c.title)}" loading="lazy">
+            <img src="${esc(c.imageUrl)}" alt="${esc(c.title)}" loading="lazy" ${imageFallbackAttrs(c.pollId || state.pollId)}>
           </button>
           <div class="pv-candidate-body">
             <span class="pv-number">${esc(c.displayNumber)}</span>
@@ -158,7 +159,7 @@ function showPreview(id) {
   overlay.className = "pv-lightbox";
   overlay.innerHTML = `
     <button class="pv-lightbox-close" type="button" aria-label="ปิด">×</button>
-    <img src="${esc(c.imageUrl)}" alt="${esc(c.title)}">
+    <img src="${esc(c.imageUrl)}" alt="${esc(c.title)}" ${imageFallbackAttrs(c.pollId || state.pollId)}>
     <div><strong>${esc(c.displayNumber)} ${esc(c.title)}</strong><p>${esc(c.subtitle)}</p></div>
   `;
   overlay.addEventListener("click", event => {
@@ -218,7 +219,7 @@ function listenPoll(pollId) {
     render();
   }, err => showFatal(root, err)));
   state.unsub.push(fb.onSnapshot(fb.query(r.candidatesCol(pollId), fb.where("active", "==", true), fb.orderBy("sortOrder")), snap => {
-    state.candidates = normalizeCandidates(snap);
+    state.candidates = normalizeCandidates(snap, pollId);
     render();
   }, err => showFatal(root, err)));
   state.unsub.push(fb.onSnapshot(r.voteRef(pollId, state.user.uid), snap => {
