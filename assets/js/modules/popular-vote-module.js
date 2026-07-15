@@ -1,5 +1,5 @@
 (function () {
-  const PATCH = "v70.128-popular-vote-firestore";
+  const PATCH = "v70.130-popular-vote-cache-bust";
   const MODULE_ID = "popular_vote";
   const FLAG = "ENABLE_POPULAR_VOTE";
 

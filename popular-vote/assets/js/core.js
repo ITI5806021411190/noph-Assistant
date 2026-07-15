@@ -25,7 +25,7 @@ import {
   Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-export const VERSION = "v70.129-popular-vote-easy-images";
+export const VERSION = "v70.130-popular-vote-cache-bust";
 export const FIREBASE_SDK_VERSION = "10.12.5";
 export const EVENT_ID = "back-to-school-2569";
 export const ADMIN_EMAIL = "wongnazaipot@gmail.com";
@@ -365,7 +365,7 @@ export function rankScores(scores) {
 }
 
 export async function loadSeed(pollId) {
-  const res = await fetch(`/popular-vote/data/${pollId}.json?v=70129`, { cache: "no-store" });
+  const res = await fetch(`/popular-vote/data/${pollId}.json?v=70130`, { cache: "no-store" });
   if (!res.ok) throw new Error(`โหลด seed ${pollId} ไม่สำเร็จ`);
   return res.json();
 }
