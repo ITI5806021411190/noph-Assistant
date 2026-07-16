@@ -6,7 +6,7 @@
   "display": "standalone",
   "background_color": "#eaf7ff",
   "theme_color": "#0755a5",
-  "description": "โมดูลเกม Jigsaw ทายภาพ 7 รอบ กระดาน 5×5 ของ Health Assistant OS",
+  "description": "โมดูลเกม Jigsaw ทายภาพที่กำหนดจำนวนรอบและเปลี่ยนรูปได้ กระดาน 5×5 ของ Health Assistant OS",
   "icons": [
     {
       "src": "./icon.svg",

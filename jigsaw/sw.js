@@ -1,5 +1,5 @@
-const CACHE_NAME = "haos-jigsaw-game-v1";
-const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg"];
+const CACHE_NAME = "haos-jigsaw-manager-v2";
+const ASSETS = ["./", "./index.html", "./game-manager.js", "./manifest.webmanifest", "./icon.svg"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
   self.skipWaiting();

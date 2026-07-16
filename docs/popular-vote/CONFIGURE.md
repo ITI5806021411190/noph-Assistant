@@ -22,7 +22,10 @@ window.HAOS_FEATURES.ENABLE_POPULAR_VOTE = false;
 
 ## Candidate images
 
-โมดูลนี้ไม่ใช้ Firebase Storage ให้เก็บรูปไว้ใน repo แล้ว deploy ขึ้น GitHub/Vercel ตามโฟลเดอร์นี้เท่านั้น:
+หน้า Admin รุ่นปัจจุบันรองรับ 2 วิธี:
+
+1. อัปโหลดหรือเปลี่ยนรูปจาก `/popular-vote/admin/` ระบบจะย่อรูปและเก็บใน Firebase Storage อัตโนมัติ
+2. ใช้รูปเดิมใน repo แล้ว deploy ขึ้น GitHub/Vercel ตามโฟลเดอร์ด้านล่าง
 
 ```text
 popular-vote/assets/child-photo/01.png
@@ -58,6 +61,25 @@ popular-vote/assets/costume/03.png
 - `popular-vote/data/costume.json`
 
 โดยทั่วไปไม่จำเป็นต้องแก้ไฟล์ JSON เอง ให้แก้รูปในโฟลเดอร์และตั้งจำนวนจากหน้า Admin แทน
+
+## Admin candidate manager
+
+หลังเข้าสู่ `/popular-vote/admin/` ด้วยบัญชีผู้ดูแล สามารถ:
+
+- เพิ่ม ลบ และเรียงลำดับผู้สมัคร
+- แก้หมายเลข ชื่อ คำอธิบาย และสถานะเปิดใช้งาน
+- เลือกรูปจากเครื่องและบันทึกผู้สมัครทั้งหมดในครั้งเดียว
+- เพิ่มหมวดใหม่ด้วยรหัสภาษาอังกฤษ เช่น `staff-choice`
+
+ห้ามลบผู้สมัครที่มีคะแนนอยู่ ระบบจะบังคับให้ปิดโหวตและล้างคะแนนของหมวดก่อนเพื่อป้องกันผลคะแนนหาย
+
+ก่อนใช้อัปโหลดรูปครั้งแรก ให้ deploy Storage Rules:
+
+```bash
+firebase deploy --only storage
+```
+
+ไฟล์ที่เกี่ยวข้องคือ `storage.rules` และ `firebase.json` รูปที่อัปโหลดถูกจำกัดไม่เกิน 5 MB หลังย่อ และเขียนได้เฉพาะบัญชี Admin ที่ยืนยันอีเมลแล้ว
 
 ## App Check
 

@@ -13,6 +13,14 @@
 - stage/admin เท่านั้นที่ฟัง collection `votes` ได้
 - ไม่มี aggregate counter doc เพื่อลด write contention
 
+## Candidate image uploads
+
+- รูปผู้สมัครเก็บใต้ `popular-vote/{eventId}/{pollId}/{candidateId}/` ใน Firebase Storage
+- เฉพาะบัญชี Admin ที่ `email_verified=true` เท่านั้นที่อัปโหลด แทนที่ หรือลบรูปได้
+- Storage Rules รับเฉพาะ JPEG, PNG และ WebP ขนาดไม่เกิน 5 MB
+- หน้า Admin ย่อรูปเป็น JPEG ก่อนอัปโหลด และลบไฟล์เก่าหลังบันทึก URL ใหม่สำเร็จ
+- รูปอ่านได้สาธารณะเพราะเป็นสื่อประชาสัมพันธ์ที่ต้องแสดงในหน้าลงคะแนน
+
 ## One vote per poll
 
 Vote document ใช้ anonymous UID เป็น document id:

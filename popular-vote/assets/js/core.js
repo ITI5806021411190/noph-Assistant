@@ -25,7 +25,7 @@ import {
   Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-export const VERSION = "v70.131-popular-vote-admin-state-fix";
+export const VERSION = "v70.132-popular-vote-admin-manager";
 export const FIREBASE_SDK_VERSION = "10.12.5";
 export const EVENT_ID = "back-to-school-2569";
 export const ADMIN_EMAIL = "wongnazaipot@gmail.com";
@@ -309,12 +309,12 @@ export function normalizePoll(pollId, data = {}) {
   return { ...(DEFAULT_POLLS[pollId] || {}), ...data, id: data.id || pollId };
 }
 
-export function normalizeCandidates(snapshotOrArray, pollId = "") {
+export function normalizeCandidates(snapshotOrArray, pollId = "", options = {}) {
   const rows = Array.isArray(snapshotOrArray)
     ? snapshotOrArray
     : snapshotOrArray.docs.map(d => ({ candidateId: d.id, ...d.data() }));
   return rows
-    .filter(row => row && row.active !== false)
+    .filter(row => row && (options.includeInactive || row.active !== false))
     .map(row => {
       const resolvedPollId = inferPollId(row, pollId);
       const number = candidateNumberFrom(row);
@@ -326,6 +326,7 @@ export function normalizeCandidates(snapshotOrArray, pollId = "") {
         title: cleanText(row.title, "ผู้เข้าประกวด"),
         subtitle: cleanText(row.subtitle, ""),
         imageUrl: resolveCandidateImageUrl(row, resolvedPollId, number),
+        storagePath: String(row.storagePath || "").trim(),
         active: row.active !== false,
         sortOrder: Number(row.sortOrder || number || 999)
       };
@@ -365,7 +366,7 @@ export function rankScores(scores) {
 }
 
 export async function loadSeed(pollId) {
-  const res = await fetch(`/popular-vote/data/${pollId}.json?v=70131`, { cache: "no-store" });
+  const res = await fetch(`/popular-vote/data/${pollId}.json?v=70132`, { cache: "no-store" });
   if (!res.ok) throw new Error(`โหลด seed ${pollId} ไม่สำเร็จ`);
   return res.json();
 }
