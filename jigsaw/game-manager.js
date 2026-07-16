@@ -5,7 +5,7 @@
   const DB_VERSION = 1;
   const STORE_NAME = "config";
   const CONFIG_KEY = "active-game";
-  const CONFIG_VERSION = 1;
+  const CONFIG_VERSION = 2;
   const MAX_IMAGE_DIMENSION = 1600;
   const IMAGE_QUALITY = 0.86;
 
@@ -22,9 +22,7 @@
     editorForm: document.getElementById("managerEditorForm"),
     editorTitle: document.getElementById("managerEditorTitle"),
     object: document.getElementById("managerObject"),
-    place: document.getElementById("managerPlace"),
     objectVariants: document.getElementById("managerObjectVariants"),
-    placeVariants: document.getElementById("managerPlaceVariants"),
     puzzleInput: document.getElementById("managerPuzzleImage"),
     answerInput: document.getElementById("managerAnswerImage"),
     puzzlePreview: document.getElementById("managerPuzzlePreview"),
@@ -63,15 +61,12 @@
 
   function normalizeRound(round, index) {
     const object = String(round && round.object || "").trim();
-    const place = String(round && round.place || "").trim();
     return {
       round: index + 1,
       puzzleImage: String(round && round.puzzleImage || ""),
       answerImage: String(round && round.answerImage || round && round.puzzleImage || ""),
       object,
-      place,
-      objectVariants: uniqueText([object].concat(Array.isArray(round && round.objectVariants) ? round.objectVariants : [])),
-      placeVariants: uniqueText([place].concat(Array.isArray(round && round.placeVariants) ? round.placeVariants : []))
+      objectVariants: uniqueText([object].concat(Array.isArray(round && round.objectVariants) ? round.objectVariants : []))
     };
   }
 
@@ -183,9 +178,7 @@
     const round = draftRounds[selectedRoundIndex];
     if (!round || ui.editorForm.hidden) return;
     round.object = ui.object.value.trim();
-    round.place = ui.place.value.trim();
     round.objectVariants = uniqueText([round.object].concat(splitVariants(ui.objectVariants.value)));
-    round.placeVariants = uniqueText([round.place].concat(splitVariants(ui.placeVariants.value)));
   }
 
   function renderRoundList() {
@@ -200,8 +193,8 @@
       <div class="manager-round ${index === selectedRoundIndex ? "selected" : ""}" data-index="${index}">
         <img class="manager-thumb" data-round-thumb="${index}" alt="ภาพรอบ ${index + 1}">
         <div class="manager-round-main" data-action="select" tabindex="0" role="button" aria-label="แก้ไขรอบ ${index + 1}">
-          <strong>รอบ ${index + 1}: ${escapeHtmlText(round.object || "ยังไม่ระบุสิ่งของ")}</strong>
-          <span>${escapeHtmlText(round.place || "ยังไม่ระบุสถานที่")}</span>
+          <strong>รอบ ${index + 1}: ${escapeHtmlText(round.object || "ยังไม่ระบุคำตอบ")}</strong>
+          <span>ยอมรับ ${(round.objectVariants || []).length} คำตอบ</span>
         </div>
         <div class="manager-round-actions">
           <button class="manager-mini" type="button" data-action="up" title="เลื่อนขึ้น" ${index === 0 ? "disabled" : ""}>↑</button>
@@ -224,9 +217,7 @@
     if (!round) return;
     ui.editorTitle.textContent = `แก้ไขรอบ ${selectedRoundIndex + 1}`;
     ui.object.value = round.object || "";
-    ui.place.value = round.place || "";
     ui.objectVariants.value = (round.objectVariants || []).join("\n");
-    ui.placeVariants.value = (round.placeVariants || []).join("\n");
     ui.puzzlePreview.src = round.puzzleImage || placeholderImage(selectedRoundIndex + 1);
     ui.answerPreview.src = round.answerImage || round.puzzleImage || placeholderImage(selectedRoundIndex + 1);
     ui.puzzleInput.value = "";
@@ -259,8 +250,7 @@
     if (!draftRounds.length) return "ต้องมีอย่างน้อย 1 รอบ";
     for (let i = 0; i < draftRounds.length; i++) {
       const round = draftRounds[i];
-      if (!round.object) return `กรุณาระบุสิ่งของในรอบ ${i + 1}`;
-      if (!round.place) return `กรุณาระบุสถานที่ในรอบ ${i + 1}`;
+      if (!round.object) return `กรุณาระบุคำตอบของภาพในรอบ ${i + 1}`;
       if (!round.puzzleImage) return `กรุณาเลือกภาพปริศนาในรอบ ${i + 1}`;
       if (!round.answerImage) return `กรุณาเลือกภาพเฉลยในรอบ ${i + 1}`;
     }
@@ -303,9 +293,7 @@
     const index = draftRounds.length;
     draftRounds.push(normalizeRound({
       object: "",
-      place: "",
       objectVariants: [],
-      placeVariants: [],
       puzzleImage: "",
       answerImage: ""
     }, index));
@@ -487,10 +475,10 @@
     target.click();
   });
 
-  [ui.object, ui.place, ui.objectVariants, ui.placeVariants].forEach(input => {
+  [ui.object, ui.objectVariants].forEach(input => {
     input.addEventListener("input", () => {
       commitEditorToDraft();
-      if (input === ui.object || input === ui.place) renderRoundList();
+      if (input === ui.object) renderRoundList();
     });
   });
 

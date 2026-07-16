@@ -1,10 +1,10 @@
-const CACHE_NAME = "haos-jigsaw-manager-v3";
+const CACHE_NAME = "haos-jigsaw-manager-v4";
 const BASE_PATH = "/jigsaw";
 const ASSETS = [
   "/jigsaw",
   "/jigsaw/index.html",
-  "/jigsaw/game-manager.js?v=3",
-  "/jigsaw/manifest.webmanifest?v=3",
+  "/jigsaw/game-manager.js?v=4",
+  "/jigsaw/manifest.webmanifest?v=4",
   "/jigsaw/icon.svg"
 ];
 self.addEventListener("install", event => {

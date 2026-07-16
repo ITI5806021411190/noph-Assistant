@@ -6,7 +6,7 @@
 <title>เกม Jigsaw ทายภาพ — Back to School</title>
 <meta name="theme-color" content="#0755a5">
 <meta name="description" content="เกม Jigsaw ทายภาพที่ผู้จัดเกมกำหนดจำนวนรอบและเปลี่ยนรูปได้">
-<link rel="manifest" href="/jigsaw/manifest.webmanifest?v=3">
+<link rel="manifest" href="/jigsaw/manifest.webmanifest?v=4">
 <style>
 :root{
   --navy:#072f6c;
@@ -305,13 +305,13 @@ body{
   <div class="setup-card">
     <div class="hero">
       <h1>เกม <span>Jigsaw</span> ทายภาพ</h1>
-      <p>Back to School • <span id="setupRoundSummary">7 รอบ</span> • กระดาน 5×5 • ต้องตอบถูกทั้ง “สิ่งของ” และ “สถานที่” จึงได้คะแนน</p>
+      <p>Back to School • <span id="setupRoundSummary">7 รอบ</span> • กระดาน 5×5 • ทายให้ถูกว่าภาพนี้คืออะไรเพื่อรับคะแนน</p>
     </div>
     <div class="setup-body">
       <div class="rules">
         <h2>🎯 วิธีเล่น</h2>
         <div class="rule"><div class="rule-icon">🧩</div><div><strong>เปิดชิ้นภาพทีละชิ้น</strong><br>พิธีกรคลิกชิ้นที่ต้องการ หรือกดสุ่มเปิด 1 ชิ้น</div></div>
-        <div class="rule"><div class="rule-icon">💬</div><div><strong>ตอบให้ครบ 2 ส่วน</strong><br>ระบุสิ่งของและสถานที่ให้ถูกต้องทั้งคู่</div></div>
+        <div class="rule"><div class="rule-icon">💬</div><div><strong>ทายว่าภาพนี้คืออะไร</strong><br>พิมพ์ชื่อสิ่งของหรือคำตอบที่ตรงกับภาพให้ถูกต้อง</div></div>
         <div class="rule"><div class="rule-icon">🏆</div><div><strong>เปิดน้อย ได้คะแนนมาก</strong><br>10 / 8 / 6 / 4 คะแนน ตามจำนวนชิ้นที่เปิดจากกระดาน 5×5</div></div>
         <div class="rule"><div class="rule-icon">⏱️</div><div><strong>มีตัวจับเวลา</strong><br>ตั้งต้น 60 วินาที และหยุด/เริ่มใหม่ได้</div></div>
       </div>
@@ -392,18 +392,14 @@ body{
       </section>
 
       <section class="panel answer-card">
-        <div class="panel-title"><span>💬 ส่งคำตอบ</span><span class="round-status">ถูกทั้งคู่จึงได้คะแนน</span></div>
+        <div class="panel-title"><span>💬 ส่งคำตอบ</span><span class="round-status">ตอบถูกเพื่อรับคะแนน</span></div>
         <div class="answer-body">
           <div class="selected-team-banner">
             <span>ทีมที่กำลังตอบ</span><strong id="selectedTeamName">ยังไม่ได้เลือกทีม</strong>
           </div>
           <div>
-            <label class="answer-label" for="objectAnswer">สิ่งของคืออะไร?</label>
-            <input id="objectAnswer" class="answer-input" autocomplete="off" placeholder="พิมพ์ชื่อสิ่งของ">
-          </div>
-          <div>
-            <label class="answer-label" for="placeAnswer">อยู่ที่ไหน?</label>
-            <input id="placeAnswer" class="answer-input" autocomplete="off" placeholder="พิมพ์ชื่อสถานที่">
+            <label class="answer-label" for="objectAnswer">ภาพนี้คืออะไร?</label>
+            <input id="objectAnswer" class="answer-input" autocomplete="off" placeholder="พิมพ์คำตอบ">
           </div>
           <div class="answer-actions">
             <button id="checkAnswer" class="primary">ตรวจคำตอบ</button>
@@ -441,8 +437,7 @@ body{
     <div class="answer-reveal">
       <div class="answer-photo-wrap"><img id="answerPhoto" class="answer-photo" alt="ภาพเฉลย"></div>
       <div class="answer-details">
-        <div class="answer-line"><small>📦 สิ่งของ</small><strong id="answerObject"></strong></div>
-        <div class="answer-line"><small>📍 สถานที่</small><strong id="answerPlace"></strong></div>
+        <div class="answer-line"><small>🧩 คำตอบ</small><strong id="answerObject"></strong></div>
         <button id="nextRound" class="primary next-btn">ไปยังรอบถัดไป →</button>
       </div>
     </div>
@@ -457,7 +452,7 @@ body{
         <h3>ลำดับการเล่น</h3>
         <p>1. เลือกทีมบนแถบคะแนน</p>
         <p>2. เปิดภาพทีละชิ้น หรือกดสุ่มเปิด</p>
-        <p>3. ให้ทีมตอบ “สิ่งของ” และ “สถานที่”</p>
+        <p>3. ให้ทีมทายว่าภาพนี้คืออะไร</p>
         <p>4. พิมพ์คำตอบแล้วกดตรวจ หรือกดให้คะแนนเอง</p>
         <p>5. เปิดเฉลย แล้วไปยังรอบถัดไป</p>
       </div>
@@ -483,7 +478,7 @@ body{
       <aside class="manager-sidebar">
         <div class="manager-note">
           การตั้งค่าจะบันทึกในเบราว์เซอร์เครื่องนี้และมีผลเมื่อเริ่มเกมใหม่
-          ใช้ปุ่มส่งออก/นำเข้าเมื่อต้องการย้ายชุดเกมไปเครื่องอื่น
+          ใช้ปุ่มส่งออก/นำเข้าเมื่อต้องการย้ายชุดเกมไปเครื่องอื่น เกมจะตรวจเฉพาะคำตอบของภาพเท่านั้น
         </div>
         <div class="manager-setting">
           <div>
@@ -504,20 +499,12 @@ body{
           <h3 id="managerEditorTitle" style="margin-top:0;color:var(--navy)">แก้ไขรอบ</h3>
           <div class="manager-editor-grid">
             <div class="manager-field">
-              <label for="managerObject">คำตอบ: สิ่งของ</label>
+              <label for="managerObject">คำตอบหลัก: ภาพนี้คืออะไร?</label>
               <input id="managerObject" type="text" maxlength="120" autocomplete="off">
             </div>
             <div class="manager-field">
-              <label for="managerPlace">คำตอบ: สถานที่</label>
-              <input id="managerPlace" type="text" maxlength="120" autocomplete="off">
-            </div>
-            <div class="manager-field">
-              <label for="managerObjectVariants">คำตอบสิ่งของที่ยอมรับ</label>
+              <label for="managerObjectVariants">คำตอบอื่นที่ยอมรับ</label>
               <textarea id="managerObjectVariants" placeholder="หนึ่งคำตอบต่อหนึ่งบรรทัด"></textarea>
-            </div>
-            <div class="manager-field">
-              <label for="managerPlaceVariants">คำตอบสถานที่ที่ยอมรับ</label>
-              <textarea id="managerPlaceVariants" placeholder="หนึ่งคำตอบต่อหนึ่งบรรทัด"></textarea>
             </div>
             <div class="manager-field manager-image-box">
               <label for="managerPuzzleImage">ภาพปริศนา</label>
@@ -635,7 +622,6 @@ function loadRound(){
   state.selectedTeam=null;
   $("selectedTeamName").textContent="ยังไม่ได้เลือกทีม";
   $("objectAnswer").value="";
-  $("placeAnswer").value="";
   clearFeedback();
 
   const round=ROUNDS[state.currentRound];
@@ -768,7 +754,7 @@ function awardSelectedTeam(){
   state.teams[state.selectedTeam].score += pts;
   state.roundAwarded=true;
   pauseTimer();
-  setFeedback("correct",`✅ ถูกต้องทั้งสิ่งของและสถานที่! <strong>${escapeHtml(state.teams[state.selectedTeam].name)}</strong> ได้ ${pts} คะแนน`);
+  setFeedback("correct",`✅ คำตอบถูกต้อง! <strong>${escapeHtml(state.teams[state.selectedTeam].name)}</strong> ได้ ${pts} คะแนน`);
   buildScoreboard();
   tone(660,0.12); setTimeout(()=>tone(880,0.16),130);
   return true;
@@ -779,26 +765,23 @@ function checkAnswer(){
   if(state.attempted.has(state.selectedTeam)){setFeedback("wrong","ทีมนี้ใช้สิทธิ์ตอบในรอบนี้แล้ว");return}
   const round=ROUNDS[state.currentRound];
   const objOk=matches($("objectAnswer").value,round.objectVariants);
-  const placeOk=matches($("placeAnswer").value,round.placeVariants);
-  if(objOk && placeOk){
+  if(objOk){
     awardSelectedTeam();
   }else{
     state.attempted.add(state.selectedTeam);
     buildScoreboard();
-    const miss = !objOk && !placeOk ? "ทั้งสิ่งของและสถานที่ยังไม่ถูกต้อง" : (!objOk ? "สิ่งของยังไม่ถูกต้อง" : "สถานที่ยังไม่ถูกต้อง");
-    setFeedback("wrong",`❌ ${miss} — ทีมอื่นสามารถตอบต่อได้`);
+    setFeedback("wrong","❌ คำตอบยังไม่ถูกต้อง — ทีมอื่นสามารถตอบต่อได้");
     tone(180,0.18);
   }
 }
 $("checkAnswer").addEventListener("click",checkAnswer);
 $("manualCorrect").addEventListener("click",()=>{
-  if(awardSelectedTeam()) setFeedback("correct",`✅ ผู้ดำเนินเกมยืนยันว่าตอบถูกทั้งสองส่วน ได้ ${currentPoints()} คะแนน`);
+  if(awardSelectedTeam()) setFeedback("correct",`✅ ผู้ดำเนินเกมยืนยันว่าตอบถูก ได้ ${currentPoints()} คะแนน`);
 });
 $("clearAnswer").addEventListener("click",()=>{
-  $("objectAnswer").value="";$("placeAnswer").value="";clearFeedback();$("objectAnswer").focus();
+  $("objectAnswer").value="";clearFeedback();$("objectAnswer").focus();
 });
-$("objectAnswer").addEventListener("keydown",e=>{if(e.key==="Enter")$("placeAnswer").focus()});
-$("placeAnswer").addEventListener("keydown",e=>{if(e.key==="Enter")checkAnswer()});
+$("objectAnswer").addEventListener("keydown",e=>{if(e.key==="Enter")checkAnswer()});
 
 function showAnswer(){
   const r=ROUNDS[state.currentRound];
@@ -807,7 +790,6 @@ function showAnswer(){
   $("answerModalTitle").textContent=`เฉลยรอบที่ ${r.round}`;
   $("answerPhoto").src=r.answerImage;
   $("answerObject").textContent=r.object;
-  $("answerPlace").textContent=r.place;
   $("answerModal").classList.add("show");
   revealAll();
 }
@@ -917,10 +899,10 @@ function confetti(){
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]))}
 
 if("serviceWorker" in navigator && /^https?:/.test(location.protocol)){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("/jigsaw/sw.js?v=3",{scope:"/jigsaw/"}).catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("/jigsaw/sw.js?v=4",{scope:"/jigsaw/"}).catch(()=>{}));
 }
 
 </script>
-<script src="/jigsaw/game-manager.js?v=3"></script>
+<script src="/jigsaw/game-manager.js?v=4"></script>
 </body>
 </html>
