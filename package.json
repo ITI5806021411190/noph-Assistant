@@ -12,6 +12,7 @@
     "firebase-tools": "^15.23.0"
   },
   "scripts": {
+    "test:jigsaw:manager": "node --test tests/jigsaw/manager-source.test.mjs",
     "test:popular-vote:admin": "node --test tests/popular-vote/admin-manager.test.mjs tests/popular-vote/admin-source.test.mjs",
     "test:popular-vote:rules": "firebase emulators:exec --only firestore \"node tests/popular-vote/firestore-rules.test.mjs\"",
     "test:popular-vote:storage-rules": "firebase emulators:exec --only storage \"node tests/popular-vote/storage-rules.test.mjs\"",

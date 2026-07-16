@@ -198,7 +198,7 @@
     }
     ui.roundList.innerHTML = draftRounds.map((round, index) => `
       <div class="manager-round ${index === selectedRoundIndex ? "selected" : ""}" data-index="${index}">
-        <img class="manager-thumb" src="${escapeHtmlText(round.puzzleImage)}" alt="ภาพรอบ ${index + 1}">
+        <img class="manager-thumb" data-round-thumb="${index}" alt="ภาพรอบ ${index + 1}">
         <div class="manager-round-main" data-action="select" tabindex="0" role="button" aria-label="แก้ไขรอบ ${index + 1}">
           <strong>รอบ ${index + 1}: ${escapeHtmlText(round.object || "ยังไม่ระบุสิ่งของ")}</strong>
           <span>${escapeHtmlText(round.place || "ยังไม่ระบุสถานที่")}</span>
@@ -210,6 +210,10 @@
           <button class="manager-mini danger" type="button" data-action="delete" title="ลบรอบ">✕</button>
         </div>
       </div>`).join("");
+    ui.roundList.querySelectorAll("[data-round-thumb]").forEach(image => {
+      const index = Number(image.dataset.roundThumb);
+      image.src = draftRounds[index]?.puzzleImage || placeholderImage(index + 1);
+    });
   }
 
   function loadEditor(index) {
@@ -231,17 +235,24 @@
   }
 
   function openManager() {
-    draftRounds = cloneRounds(roundLibrary);
-    draftActiveRoundCount = clampRoundCount(gameSettings.activeRoundCount, draftRounds.length);
-    selectedRoundIndex = 0;
-    setStatus("แก้ไขแล้วกด “บันทึกชุดเกม” เพื่อเก็บไว้ในเครื่องนี้");
-    loadEditor(0);
     ui.modal.classList.add("show");
-    ui.close.focus();
+    ui.modal.setAttribute("aria-busy", "true");
+    setStatus("กำลังเตรียมรายการรอบและรูปภาพ…");
+    requestAnimationFrame(() => {
+      if (!ui.modal.classList.contains("show")) return;
+      draftRounds = cloneRounds(roundLibrary);
+      draftActiveRoundCount = clampRoundCount(gameSettings.activeRoundCount, draftRounds.length);
+      selectedRoundIndex = 0;
+      setStatus("แก้ไขแล้วกด “บันทึกชุดเกม” เพื่อเก็บไว้ในเครื่องนี้");
+      loadEditor(0);
+      ui.modal.removeAttribute("aria-busy");
+      ui.close.focus();
+    });
   }
 
   function closeManager() {
     ui.modal.classList.remove("show");
+    ui.modal.removeAttribute("aria-busy");
   }
 
   function validateDraft() {
@@ -523,5 +534,6 @@
     }
   }
 
+  window.HAOS_JIGSAW_MANAGER_READY = true;
   initializeManager();
 })();

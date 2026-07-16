@@ -6,7 +6,7 @@
 <title>เกม Jigsaw ทายภาพ — Back to School</title>
 <meta name="theme-color" content="#0755a5">
 <meta name="description" content="เกม Jigsaw ทายภาพที่ผู้จัดเกมกำหนดจำนวนรอบและเปลี่ยนรูปได้">
-<link rel="manifest" href="./manifest.webmanifest">
+<link rel="manifest" href="/jigsaw/manifest.webmanifest?v=3">
 <style>
 :root{
   --navy:#072f6c;
@@ -917,10 +917,10 @@ function confetti(){
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]))}
 
 if("serviceWorker" in navigator && /^https?:/.test(location.protocol)){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("/jigsaw/sw.js?v=3",{scope:"/jigsaw/"}).catch(()=>{}));
 }
 
 </script>
-<script src="./game-manager.js"></script>
+<script src="/jigsaw/game-manager.js?v=3"></script>
 </body>
 </html>
