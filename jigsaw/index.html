@@ -261,6 +261,16 @@ body{
 .manager-status.error{color:var(--red)}
 .manager-empty{padding:30px;text-align:center;color:var(--muted)}
 .manager-hidden-input{display:none}
+.manager-head-actions{display:flex;align-items:center;gap:8px}
+.manager-lock-btn{border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.14);color:white;border-radius:12px;padding:9px 12px;font:inherit;font-weight:900}
+.pin-card{width:min(460px,94vw);overflow:hidden}
+.pin-body{padding:24px}
+.pin-intro{margin:0 0 16px;color:var(--muted);line-height:1.65}
+.pin-field label{display:block;margin-bottom:7px;color:var(--navy);font-weight:1000}
+.pin-field input{width:100%;border:2px solid #c8dce9;border-radius:14px;padding:13px 15px;background:white;color:var(--ink);font:inherit;font-size:1.25rem;text-align:center}
+.pin-field input:focus{outline:3px solid rgba(25,187,176,.2);border-color:var(--teal)}
+.pin-status{min-height:26px;margin:10px 0 0;color:var(--red);font-weight:800}
+.pin-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:10px}
 #endScreen{align-items:center;justify-content:center;padding:24px}
 .end-card{width:min(900px,96vw);padding:34px;border-radius:28px;background:white;box-shadow:var(--shadow);text-align:center}
 .trophy{font-size:6rem;animation:bob 1.6s ease-in-out infinite}
@@ -468,11 +478,35 @@ body{
   </div>
 </div>
 
+<div id="managerPinModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="managerPinTitle">
+  <div class="modal-card pin-card">
+    <div class="modal-head">
+      <h2 id="managerPinTitle">🔒 ยืนยันสิทธิ์ผู้จัดการเกม</h2>
+      <button id="cancelManagerPinTop" class="close-btn" type="button" aria-label="ปิดหน้าต่าง PIN">✕</button>
+    </div>
+    <form id="managerPinForm" class="pin-body">
+      <p class="pin-intro">กรอก PIN ผู้ดูแล 6 หลักเพื่อเปิดการจัดการรอบ คำตอบ และรูปภาพ สิทธิ์จะคงอยู่เฉพาะแท็บนี้จนกว่าจะปิดแท็บหรือล็อกอีกครั้ง</p>
+      <div class="pin-field">
+        <label for="managerPinInput">PIN ผู้จัดการเกม</label>
+        <input id="managerPinInput" type="password" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="off" placeholder="กรอกตัวเลข 6 หลัก" aria-describedby="managerPinStatus">
+      </div>
+      <div id="managerPinStatus" class="pin-status" role="status" aria-live="polite"></div>
+      <div class="pin-actions">
+        <button id="cancelManagerPin" class="action-btn ghost" type="button">ยกเลิก</button>
+        <button id="unlockGameManager" class="primary" type="submit">🔓 ปลดล็อก</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div id="gameManagerModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="gameManagerTitle">
   <div class="modal-card manager-card">
     <div class="modal-head">
       <h2 id="gameManagerTitle">⚙️ จัดการรอบและรูปภาพ Jigsaw</h2>
-      <button id="closeGameManager" class="close-btn" aria-label="ปิดตัวจัดการเกม">✕</button>
+      <div class="manager-head-actions">
+        <button id="lockGameManager" class="manager-lock-btn" type="button" title="ล็อกตัวจัดการเกมทันที">🔒 ล็อก</button>
+        <button id="closeGameManager" class="close-btn" type="button" aria-label="ปิดตัวจัดการเกม">✕</button>
+      </div>
     </div>
     <div class="manager-body">
       <aside class="manager-sidebar">
@@ -899,10 +933,10 @@ function confetti(){
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]))}
 
 if("serviceWorker" in navigator && /^https?:/.test(location.protocol)){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("/jigsaw/sw.js?v=4",{scope:"/jigsaw/"}).catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("/jigsaw/sw.js?v=5",{scope:"/jigsaw/"}).catch(()=>{}));
 }
 
 </script>
-<script src="/jigsaw/game-manager.js?v=4"></script>
+<script src="/jigsaw/game-manager.js?v=5"></script>
 </body>
 </html>

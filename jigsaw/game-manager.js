@@ -8,12 +8,26 @@
   const CONFIG_VERSION = 2;
   const MAX_IMAGE_DIMENSION = 1600;
   const IMAGE_QUALITY = 0.86;
+  const MANAGER_PIN_HASH = "ff98ef67b552532453d1ad8b1912a776ab1b30bf3814fa009b8ffe3c3e5b7efe";
+  const MANAGER_PIN_FALLBACK_HASH = 1535366779;
+  const MANAGER_UNLOCK_KEY = "haos-jigsaw-manager-unlocked-v1";
+  const MANAGER_ATTEMPT_KEY = "haos-jigsaw-manager-pin-attempts-v1";
+  const MANAGER_MAX_ATTEMPTS = 5;
+  const MANAGER_LOCK_DURATION_MS = 60 * 1000;
 
   const ui = {
     modal: document.getElementById("gameManagerModal"),
     openSetup: document.getElementById("openGameManagerSetup"),
     openGame: document.getElementById("openGameManagerGame"),
     close: document.getElementById("closeGameManager"),
+    lock: document.getElementById("lockGameManager"),
+    pinModal: document.getElementById("managerPinModal"),
+    pinForm: document.getElementById("managerPinForm"),
+    pinInput: document.getElementById("managerPinInput"),
+    pinStatus: document.getElementById("managerPinStatus"),
+    pinSubmit: document.getElementById("unlockGameManager"),
+    pinCancel: document.getElementById("cancelManagerPin"),
+    pinCancelTop: document.getElementById("cancelManagerPinTop"),
     roundCount: document.getElementById("managerRoundCount"),
     roundList: document.getElementById("managerRoundList"),
     addRound: document.getElementById("managerAddRound"),
@@ -223,6 +237,126 @@
     ui.puzzleInput.value = "";
     ui.answerInput.value = "";
     renderRoundList();
+  }
+
+  function readSessionValue(key) {
+    try {
+      return sessionStorage.getItem(key);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function writeSessionValue(key, value) {
+    try {
+      sessionStorage.setItem(key, value);
+    } catch (_) {}
+  }
+
+  function removeSessionValue(key) {
+    try {
+      sessionStorage.removeItem(key);
+    } catch (_) {}
+  }
+
+  function isManagerUnlocked() {
+    return readSessionValue(MANAGER_UNLOCK_KEY) === "1";
+  }
+
+  function readPinAttemptState() {
+    try {
+      const parsed = JSON.parse(readSessionValue(MANAGER_ATTEMPT_KEY) || "{}");
+      return {
+        failed: Math.max(0, Number(parsed.failed) || 0),
+        lockedUntil: Math.max(0, Number(parsed.lockedUntil) || 0)
+      };
+    } catch (_) {
+      return { failed: 0, lockedUntil: 0 };
+    }
+  }
+
+  function writePinAttemptState(state) {
+    writeSessionValue(MANAGER_ATTEMPT_KEY, JSON.stringify(state));
+  }
+
+  function fallbackPinHash(value) {
+    return Array.from(value).reduce((hash, character) => ((hash * 31) + character.charCodeAt(0)) % 2147483647, 17);
+  }
+
+  async function verifyManagerPin(value) {
+    if (!/^\d{6}$/.test(value)) return false;
+    if (window.crypto && window.crypto.subtle && window.TextEncoder) {
+      const bytes = new TextEncoder().encode(value);
+      const digest = await window.crypto.subtle.digest("SHA-256", bytes);
+      const hash = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+      return hash === MANAGER_PIN_HASH;
+    }
+    return fallbackPinHash(value) === MANAGER_PIN_FALLBACK_HASH;
+  }
+
+  function closePinPrompt() {
+    ui.pinModal.classList.remove("show");
+    ui.pinStatus.textContent = "";
+    ui.pinInput.value = "";
+  }
+
+  function showPinPrompt() {
+    const attemptState = readPinAttemptState();
+    const remainingMs = attemptState.lockedUntil - Date.now();
+    ui.pinInput.value = "";
+    ui.pinStatus.textContent = remainingMs > 0
+      ? `กรอกผิดหลายครั้ง กรุณารอ ${Math.ceil(remainingMs / 1000)} วินาทีแล้วลองใหม่`
+      : "";
+    ui.pinModal.classList.add("show");
+    window.setTimeout(() => ui.pinInput.focus(), 0);
+  }
+
+  function requestManagerAccess() {
+    if (isManagerUnlocked()) openManager();
+    else showPinPrompt();
+  }
+
+  async function handlePinSubmit(event) {
+    event.preventDefault();
+    const attemptState = readPinAttemptState();
+    const now = Date.now();
+    if (attemptState.lockedUntil > now) {
+      ui.pinStatus.textContent = `กรอกผิดหลายครั้ง กรุณารอ ${Math.ceil((attemptState.lockedUntil - now) / 1000)} วินาทีแล้วลองใหม่`;
+      return;
+    }
+
+    const value = ui.pinInput.value.trim();
+    if (!/^\d{6}$/.test(value)) {
+      ui.pinStatus.textContent = "กรุณากรอก PIN เป็นตัวเลขให้ครบ 6 หลัก";
+      ui.pinInput.focus();
+      return;
+    }
+
+    ui.pinSubmit.disabled = true;
+    ui.pinStatus.textContent = "กำลังตรวจสอบ PIN…";
+    try {
+      if (await verifyManagerPin(value)) {
+        writeSessionValue(MANAGER_UNLOCK_KEY, "1");
+        removeSessionValue(MANAGER_ATTEMPT_KEY);
+        closePinPrompt();
+        openManager();
+        return;
+      }
+
+      const failed = attemptState.failed + 1;
+      if (failed >= MANAGER_MAX_ATTEMPTS) {
+        writePinAttemptState({ failed: 0, lockedUntil: now + MANAGER_LOCK_DURATION_MS });
+        ui.pinStatus.textContent = "PIN ไม่ถูกต้องครบ 5 ครั้ง ระบบล็อกไว้ 60 วินาที";
+      } else {
+        writePinAttemptState({ failed, lockedUntil: 0 });
+        ui.pinStatus.textContent = `PIN ไม่ถูกต้อง เหลือลองได้อีก ${MANAGER_MAX_ATTEMPTS - failed} ครั้ง`;
+      }
+      ui.pinInput.select();
+    } catch (_) {
+      ui.pinStatus.textContent = "ตรวจสอบ PIN ไม่สำเร็จ กรุณาลองใหม่";
+    } finally {
+      ui.pinSubmit.disabled = false;
+    }
   }
 
   function openManager() {
@@ -436,9 +570,20 @@
     }
   }
 
-  ui.openSetup.addEventListener("click", openManager);
-  ui.openGame.addEventListener("click", openManager);
+  ui.openSetup.addEventListener("click", requestManagerAccess);
+  ui.openGame.addEventListener("click", requestManagerAccess);
   ui.close.addEventListener("click", closeManager);
+  ui.lock.addEventListener("click", () => {
+    removeSessionValue(MANAGER_UNLOCK_KEY);
+    closeManager();
+  });
+  ui.pinForm.addEventListener("submit", handlePinSubmit);
+  ui.pinCancel.addEventListener("click", closePinPrompt);
+  ui.pinCancelTop.addEventListener("click", closePinPrompt);
+  ui.pinModal.addEventListener("keydown", event => {
+    event.stopPropagation();
+    if (event.key === "Escape") closePinPrompt();
+  });
   ui.modal.addEventListener("click", event => {
     if (event.target === ui.modal) event.stopImmediatePropagation();
   }, true);

@@ -1,9 +1,9 @@
-const CACHE_NAME = "haos-jigsaw-manager-v4";
+const CACHE_NAME = "haos-jigsaw-manager-v5";
 const BASE_PATH = "/jigsaw";
 const ASSETS = [
   "/jigsaw",
   "/jigsaw/index.html",
-  "/jigsaw/game-manager.js?v=4",
+  "/jigsaw/game-manager.js?v=5",
   "/jigsaw/manifest.webmanifest?v=4",
   "/jigsaw/icon.svg"
 ];
