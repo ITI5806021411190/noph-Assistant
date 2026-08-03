@@ -1,5 +1,17 @@
 # Rollback Dashboard Builder MVP v70.132
 
+## Routing hotfix v70.133
+
+Vercel `cleanUrls` requires extensionless rewrite destinations. The routing hotfix changes the Dashboard Builder destination from `/dashboard-builder.html` to `/dashboard-builder` and aligns the Service Worker cache with that canonical URL.
+
+The hotfix changes only:
+
+- `vercel.json`
+- `sw.js`
+- `tests/dashboard-builder/dashboard-builder.test.mjs`
+
+It does not change Google Apps Script or any database sheet. To roll back only this hotfix, revert those three files to the preceding commit and push to `main`. No Google Apps Script deployment or database cleanup is required.
+
 Dashboard Builder is isolated from existing HAOS data. Its five sheets are created only after first use:
 
 - `DashboardProjects`

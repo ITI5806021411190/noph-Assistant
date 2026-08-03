@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-132-dashboard-builder-mvp';
+const CACHE_NAME = 'haos-v70-133-dashboard-builder-route-fix';
 const CORE = [
   '/',
   '/index.html',
@@ -7,8 +7,7 @@ const CORE = [
   '/remote.html',
   '/remote',
   '/help-live.html',
-  '/dashboard-builder.html',
-  '/it-services/dashboard-builder',
+  '/dashboard-builder',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
@@ -88,7 +87,7 @@ self.addEventListener('fetch', event => {
     }).catch(() => caches.match(event.request).then(r => {
       if (r) return r;
       if (url.pathname === '/it-services/dashboard-builder' || url.pathname.startsWith('/it-services/dashboard-builder/')) {
-        return caches.match('/dashboard-builder.html');
+        return caches.match('/dashboard-builder');
       }
       return caches.match('/index.html');
     }))

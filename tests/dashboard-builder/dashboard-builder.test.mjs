@@ -38,8 +38,10 @@ test('schema inference finds category and integer metrics', () => {
 
 test('standalone route and frontend assets are wired', () => {
   const vercel = JSON.parse(read('vercel.json'));
-  assert.ok(vercel.rewrites.some(item => item.source === '/it-services/dashboard-builder'));
-  assert.ok(vercel.rewrites.some(item => item.source === '/it-services/dashboard-builder/:path*'));
+  const dashboardRoutes = vercel.rewrites.filter(item => item.source === '/it-services/dashboard-builder' || item.source === '/it-services/dashboard-builder/:path*');
+  assert.equal(dashboardRoutes.length, 2);
+  assert.ok(dashboardRoutes.every(item => item.destination === '/dashboard-builder'));
+  assert.ok(dashboardRoutes.every(item => !item.destination.endsWith('.html')), 'cleanUrls destinations must omit .html');
   const index = read('index.html');
   assert.match(index, /dashboard-builder-entry\.js\?v=70132/);
   const page = read('dashboard-builder.html');
