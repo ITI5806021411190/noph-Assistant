@@ -17318,3 +17318,157 @@ function haosV7126WorkspaceAiDesignerPatchStatus() {
     functions:['analyzeWorkspaceText', 'processWorkspaceDocument']
   };
 }
+
+/* Dashboard Builder MVP v70.132
+ * Standalone builder with signed sessions, metadata, chunked datasets, versions and audit.
+ * Rollback: see docs/ROLLBACK_DASHBOARD_BUILDER_MVP.md.
+ */
+var HAOS_DB7132_PROJECT_HEADERS = ['Dashboard ID','Title','Description','Owner Phone','Owner Name','Department','Tags JSON','Status','Visibility','Shared Users JSON','Editors JSON','Dataset ID','Config JSON','Active','Created At','Updated At','Version','Created By','Updated By'];
+var HAOS_DB7132_DATASET_HEADERS = ['Dataset ID','Dashboard ID','Source Type','Source Name','Source URL','Sheet Name','Header Row','Schema JSON','Row Count','Chunk Count','Owner Phone','Created At','Updated At'];
+var HAOS_DB7132_DATA_HEADERS = ['Dataset ID','Chunk Index','Rows JSON','Row Count','Created At'];
+var HAOS_DB7132_VERSION_HEADERS = ['Version ID','Dashboard ID','Version','Snapshot JSON','Changed By Phone','Changed By Name','Created At'];
+var HAOS_DB7132_AUDIT_HEADERS = ['Audit ID','Dashboard ID','Dataset ID','Action','Actor Phone','Actor Name','Details JSON','Created At'];
+
+function haosDB7132Projects_(){ return getOrCreateSheet_('DashboardProjects', HAOS_DB7132_PROJECT_HEADERS, '#dbeafe'); }
+function haosDB7132Datasets_(){ return getOrCreateSheet_('DashboardDatasets', HAOS_DB7132_DATASET_HEADERS, '#dcfce7'); }
+function haosDB7132Data_(){ return getOrCreateSheet_('DashboardDataChunks', HAOS_DB7132_DATA_HEADERS, '#fef3c7'); }
+function haosDB7132Versions_(){ return getOrCreateSheet_('DashboardVersions', HAOS_DB7132_VERSION_HEADERS, '#ede9fe'); }
+function haosDB7132Audit_(){ return getOrCreateSheet_('DashboardAudit', HAOS_DB7132_AUDIT_HEADERS, '#fce7f3'); }
+function haosDB7132Id_(prefix){ return prefix + '-' + Utilities.getUuid().replace(/-/g,'').substring(0,16); }
+function haosDB7132Phone_(value){ return String(value || '').replace(/[^0-9]/g,''); }
+function haosDB7132Json_(value, fallback){ try { return JSON.parse(value || ''); } catch(e) { return fallback; } }
+function haosDB7132Text_(value, max){ return String(value == null ? '' : value).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,'').trim().substring(0,max || 2000); }
+function haosDB7132Bool_(value){ return value === true || String(value).toUpperCase() === 'TRUE'; }
+
+function haosDB7132ActorByPhone_(phone) {
+  phone = haosDB7132Phone_(phone);
+  var sheet = getDB().getSheetByName(SHEET_USERS);
+  if (!sheet || !phone) return null;
+  var data = sheet.getDataRange().getValues();
+  for (var i=1;i<data.length;i++) {
+    if (haosDB7132Phone_(data[i][0]) !== phone) continue;
+    var status = String(data[i][10] || data[i][6] || '').toLowerCase();
+    if (/inactive|disabled|rejected|ปิด/.test(status)) return null;
+    return {phone:phone,name:haosDB7132Text_(data[i][2],160),position:haosDB7132Text_(data[i][3],160),department:haosDB7132Text_(data[i][4],220),email:haosDB7132Text_(data[i][5],220),role:haosDB7132Text_(data[i][7],80)};
+  }
+  return null;
+}
+
+function haosDB7132IsAdmin_(actor){ return !!actor && /super\s*admin|admin/i.test(String(actor.role || '')); }
+function haosDB7132B64_(bytes){ return Utilities.base64EncodeWebSafe(bytes).replace(/=+$/,''); }
+function haosDB7132SessionSecret_(){ var props=PropertiesService.getScriptProperties();var secret=props.getProperty('DASHBOARD_BUILDER_SESSION_SECRET');if(!secret){secret=Utilities.getUuid()+Utilities.getUuid()+getVercelApiSecret_();props.setProperty('DASHBOARD_BUILDER_SESSION_SECRET',secret);}return secret; }
+function haosDB7132Sign_(body){ return haosDB7132B64_(Utilities.computeHmacSha256Signature(body,haosDB7132SessionSecret_())); }
+
+function createDashboardBuilderSessionV7132(phone) {
+  try {
+    var actor = haosDB7132ActorByPhone_(phone);
+    if (!actor) return {success:false,message:'ไม่พบบัญชีผู้ใช้งานที่เปิดใช้งาน'};
+    var payload = {phone:actor.phone,iat:new Date().getTime(),exp:new Date().getTime() + 12*60*60*1000,nonce:Utilities.getUuid().substring(0,12)};
+    var body = haosDB7132B64_(Utilities.newBlob(JSON.stringify(payload)).getBytes());
+    return {success:true,session:body+'.'+haosDB7132Sign_(body),expiresAt:payload.exp,actor:actor,version:'v70.132-dashboard-builder-mvp'};
+  } catch(e) { return {success:false,message:e.toString()}; }
+}
+
+function haosDB7132Session_(token) {
+  var parts=String(token||'').split('.');
+  if(parts.length!==2 || parts[1]!==haosDB7132Sign_(parts[0])) throw new Error('Dashboard session ไม่ถูกต้อง');
+  var payload=JSON.parse(Utilities.newBlob(Utilities.base64DecodeWebSafe(parts[0])).getDataAsString('UTF-8'));
+  if(!payload.exp || new Date().getTime()>Number(payload.exp)) throw new Error('Dashboard session หมดอายุ กรุณาเปิดจากระบบหลักอีกครั้ง');
+  var actor=haosDB7132ActorByPhone_(payload.phone);
+  if(!actor) throw new Error('บัญชีถูกปิดหรือไม่พบผู้ใช้งาน');
+  return actor;
+}
+
+function haosDB7132Find_(sheet,id){var values=sheet.getDataRange().getValues();for(var i=1;i<values.length;i++)if(String(values[i][0])===String(id))return {row:i+1,values:values[i]};return null;}
+function haosDB7132Project_(row, actor) {
+  var shared=haosDB7132Json_(row[9],[]).map(haosDB7132Phone_);var editors=haosDB7132Json_(row[10],[]).map(haosDB7132Phone_);var owner=haosDB7132Phone_(row[3]);
+  var isOwner=owner===actor.phone;var admin=haosDB7132IsAdmin_(actor);var canEdit=isOwner||admin||editors.indexOf(actor.phone)>=0;var visibility=String(row[8]||'private');
+  var canView=canEdit||visibility==='org'||(visibility==='group'&&String(row[5])===String(actor.department))||(visibility==='shared'&&shared.indexOf(actor.phone)>=0);
+  return {id:row[0],title:row[1],description:row[2],ownerPhone:owner,ownerName:row[4],department:row[5],tags:haosDB7132Json_(row[6],[]),status:row[7]||'draft',visibility:visibility,visibilityLabel:{private:'ส่วนตัว',group:'กลุ่มงาน',shared:'ผู้ใช้ที่ระบุ',org:'ทั้งหน่วยงาน'}[visibility]||visibility,sharedUsers:shared,editors:editors,datasetId:row[11],config:haosDB7132Json_(row[12],{widgets:[],filters:[]}),active:haosDB7132Bool_(row[13]),createdAt:row[14],updatedAt:row[15],version:Number(row[16]||1),isOwner:isOwner,canView:canView,canEdit:canEdit,canDelete:isOwner||admin};
+}
+function haosDB7132Dataset_(row){return {id:row[0],dashboardId:row[1],type:row[2],name:row[3],url:row[4],sheetName:row[5],headerRow:Number(row[6]||1),schema:haosDB7132Json_(row[7],[]),rowCount:Number(row[8]||0),chunkCount:Number(row[9]||0),ownerPhone:haosDB7132Phone_(row[10]),createdAt:row[11],updatedAt:row[12]};}
+function haosDB7132AuditWrite_(dashboardId,datasetId,action,actor,details){haosDB7132Audit_().appendRow([haosDB7132Id_('DBA'),dashboardId||'',datasetId||'',action,actor.phone,actor.name,JSON.stringify(details||{}),new Date()]);try{logAudit_(actor.phone,actor.name,'DASHBOARD_'+action,'DashboardBuilder',dashboardId||datasetId||'',action,null,details||{});}catch(ignore){}}
+function haosDB7132CanView_(project){if(!project.active||!project.canView)throw new Error('คุณไม่มีสิทธิ์ดู Dashboard นี้');}
+function haosDB7132CanEdit_(project){if(!project.active||!project.canEdit)throw new Error('คุณไม่มีสิทธิ์แก้ไข Dashboard นี้');}
+
+function haosDB7132List_(actor) {
+  var projects=haosDB7132Projects_().getDataRange().getValues();var datasets=haosDB7132Datasets_().getDataRange().getValues();var counts={};
+  for(var d=1;d<datasets.length;d++)counts[String(datasets[d][0])]=Number(datasets[d][8]||0);
+  var out=[];for(var i=1;i<projects.length;i++){var p=haosDB7132Project_(projects[i],actor);if(p.active&&p.canView){p.rowCount=counts[p.datasetId]||0;delete p.config;out.push(p);}}
+  return out.sort(function(a,b){return new Date(b.updatedAt).getTime()-new Date(a.updatedAt).getTime();});
+}
+
+function getDashboardBuilderBootstrapV7132(token) {
+  try {
+    var actor=haosDB7132Session_(token);var users=[];var data=getDB().getSheetByName(SHEET_USERS).getDataRange().getValues();
+    for(var i=1;i<data.length;i++){var phone=haosDB7132Phone_(data[i][0]);if(phone)users.push({phone:phone,name:haosDB7132Text_(data[i][2],160),department:haosDB7132Text_(data[i][4],220),role:haosDB7132Text_(data[i][7],80)});}
+    return {success:true,actor:actor,projects:haosDB7132List_(actor),users:users.slice(0,1000),limits:{fileMb:15,rows:20000,preview:500},version:'v70.132-dashboard-builder-mvp'};
+  } catch(e) { return {success:false,message:e.toString()}; }
+}
+
+function saveDashboardProjectV7132(token,payload) {
+  try {
+    var actor=haosDB7132Session_(token);payload=payload||{};var title=haosDB7132Text_(payload.title,160);if(!title)return {success:false,message:'กรุณาระบุชื่อ Dashboard'};
+    var sheet=haosDB7132Projects_();var found=payload.id?haosDB7132Find_(sheet,payload.id):null;var now=new Date();var projectId=found?String(found.values[0]):haosDB7132Id_('DB');var currentDatasetId=found?String(found.values[11]||''):'';var datasetId=haosDB7132Id_('DS');var before=null;var version=1;var owner=actor;
+    if(found){var existing=haosDB7132Project_(found.values,actor);haosDB7132CanEdit_(existing);before=found.values.slice();version=Number(found.values[16]||1)+1;owner={phone:existing.ownerPhone,name:existing.ownerName,department:existing.department};}
+    var visibility=['private','group','shared','org'].indexOf(String(payload.visibility))>=0?String(payload.visibility):'private';var status=['draft','active','archived'].indexOf(String(payload.status))>=0?String(payload.status):'draft';var shared=(payload.sharedUsers||[]).map(haosDB7132Phone_).filter(Boolean).slice(0,250);var editors=(payload.editors||[]).map(haosDB7132Phone_).filter(Boolean).slice(0,250);var config=payload.config||{widgets:[],filters:[]};
+    var configJson=JSON.stringify(config);var schemaJson=JSON.stringify((payload.schema||[]).slice(0,200));
+    if(configJson.length>30000)return {success:false,message:'โครง Dashboard ใหญ่เกินไป กรุณาลดจำนวน Widget'};
+    if(schemaJson.length>40000)return {success:false,message:'โครงสร้างคอลัมน์ใหญ่เกินไป กรุณาลดจำนวนคอลัมน์'};
+    var row=[projectId,title,haosDB7132Text_(payload.description,1200),"'"+owner.phone,owner.name,haosDB7132Text_(payload.department||owner.department,220),JSON.stringify((payload.tags||[]).slice(0,30)),status,visibility,JSON.stringify(shared),JSON.stringify(editors),currentDatasetId,configJson,true,found?found.values[14]:now,now,version,found?found.values[17]:actor.name,actor.name];
+    if(found)sheet.getRange(found.row,1,1,row.length).setValues([row]);else sheet.appendRow(row);
+    var dsSheet=haosDB7132Datasets_();dsSheet.appendRow([datasetId,projectId,'','','','',1,schemaJson,0,0,"'"+owner.phone,now,now]);
+    haosDB7132Versions_().appendRow([haosDB7132Id_('DBV'),projectId,version,JSON.stringify({title:title,description:payload.description||'',tags:payload.tags||[],status:status,visibility:visibility,sharedUsers:shared,editors:editors,config:config,previousDatasetId:currentDatasetId,stagedDatasetId:datasetId}),"'"+actor.phone,actor.name,now]);
+    haosDB7132AuditWrite_(projectId,datasetId,found?'UPDATE':'CREATE',actor,{title:title,version:version,before:before?true:false});
+    return {success:true,projectId:projectId,datasetId:datasetId,version:version};
+  } catch(e) { return {success:false,message:e.toString()}; }
+}
+
+function haosDB7132DeleteChunks_(datasetId){var sheet=haosDB7132Data_();for(var row=sheet.getLastRow();row>=2;row--)if(String(sheet.getRange(row,1).getValue())===String(datasetId))sheet.deleteRow(row);}
+function uploadDashboardDataChunkV7132(token,datasetId,chunkIndex,rows,reset) {
+  try {
+    var actor=haosDB7132Session_(token);var ds=haosDB7132Find_(haosDB7132Datasets_(),datasetId);if(!ds)throw new Error('ไม่พบชุดข้อมูล');var projectFound=haosDB7132Find_(haosDB7132Projects_(),ds.values[1]);if(!projectFound)throw new Error('ไม่พบ Dashboard');haosDB7132CanEdit_(haosDB7132Project_(projectFound.values,actor));
+    rows=Array.isArray(rows)?rows.slice(0,250):[];var json=JSON.stringify(rows);if(json.length>45000)throw new Error('ข้อมูลต่อชุดใหญ่เกินขีดจำกัดของ Google Sheets');if(reset)haosDB7132DeleteChunks_(datasetId);haosDB7132Data_().appendRow([datasetId,Number(chunkIndex||0),json,rows.length,new Date()]);return {success:true,count:rows.length};
+  } catch(e) { return {success:false,message:e.toString()}; }
+}
+
+function finalizeDashboardDatasetV7132(token,datasetId,rowCount,schema,source) {
+  try {
+    var actor=haosDB7132Session_(token);var sheet=haosDB7132Datasets_();var found=haosDB7132Find_(sheet,datasetId);if(!found)throw new Error('ไม่พบชุดข้อมูล');var project=haosDB7132Project_(haosDB7132Find_(haosDB7132Projects_(),found.values[1]).values,actor);haosDB7132CanEdit_(project);source=source||{};
+    var chunkData=haosDB7132Data_().getDataRange().getValues();var count=0;var uploadedRows=0;for(var i=1;i<chunkData.length;i++)if(String(chunkData[i][0])===String(datasetId)){count++;uploadedRows+=Number(chunkData[i][3]||0);}if(uploadedRows!==Math.min(Number(rowCount||0),20000))throw new Error('จำนวนข้อมูลที่อัปโหลดไม่ครบ กรุณาบันทึกใหม่');
+    var schemaJson=JSON.stringify((schema||[]).slice(0,200));if(schemaJson.length>40000)throw new Error('โครงสร้างคอลัมน์ใหญ่เกินไป');var row=[datasetId,found.values[1],haosDB7132Text_(source.type||'file',30),haosDB7132Text_(source.name,220),haosDB7132Text_(source.url,1000),haosDB7132Text_(source.sheetName,160),Number(source.headerRow||1),schemaJson,Math.min(Number(rowCount||0),20000),count,found.values[10]||("'"+actor.phone),found.values[11]||new Date(),new Date()];sheet.getRange(found.row,1,1,row.length).setValues([row]);var projectSheet=haosDB7132Projects_();var projectRow=haosDB7132Find_(projectSheet,project.id);if(projectRow){projectSheet.getRange(projectRow.row,12).setValue(datasetId);projectSheet.getRange(projectRow.row,16).setValue(new Date());}haosDB7132AuditWrite_(project.id,datasetId,'DATASET_UPDATE',actor,{rowCount:row[8],chunks:count,sourceType:row[2]});return {success:true,rowCount:row[8],chunkCount:count};
+  } catch(e) { return {success:false,message:e.toString()}; }
+}
+
+function haosDB7132Rows_(datasetId){var data=haosDB7132Data_().getDataRange().getValues();var chunks=[];for(var i=1;i<data.length;i++)if(String(data[i][0])===String(datasetId))chunks.push({index:Number(data[i][1]||0),rows:haosDB7132Json_(data[i][2],[])});chunks.sort(function(a,b){return a.index-b.index;});var rows=[];chunks.forEach(function(chunk){rows=rows.concat(chunk.rows);});return rows.slice(0,20000);}
+function getDashboardProjectV7132(token,projectId) {
+  try {var actor=haosDB7132Session_(token);var found=haosDB7132Find_(haosDB7132Projects_(),projectId);if(!found)throw new Error('ไม่พบ Dashboard');var project=haosDB7132Project_(found.values,actor);haosDB7132CanView_(project);var dsFound=haosDB7132Find_(haosDB7132Datasets_(),project.datasetId);var dataset=dsFound?haosDB7132Dataset_(dsFound.values):{schema:[]};project.source={type:dataset.type,name:dataset.name,url:dataset.url,sheetName:dataset.sheetName,headerRow:dataset.headerRow};project.schema=dataset.schema;project.rows=undefined;haosDB7132AuditWrite_(project.id,project.datasetId,'VIEW',actor,{});return {success:true,project:project,schema:dataset.schema,source:project.source,rows:haosDB7132Rows_(project.datasetId)};}catch(e){return {success:false,message:e.toString()};}
+}
+
+function deleteDashboardProjectV7132(token,projectId) {
+  try {var actor=haosDB7132Session_(token);var sheet=haosDB7132Projects_();var found=haosDB7132Find_(sheet,projectId);if(!found)throw new Error('ไม่พบ Dashboard');var project=haosDB7132Project_(found.values,actor);if(!project.canDelete)throw new Error('เฉพาะ Owner หรือ Admin ที่ลบได้');sheet.getRange(found.row,14).setValue(false);sheet.getRange(found.row,16).setValue(new Date());haosDB7132AuditWrite_(project.id,project.datasetId,'DELETE',actor,{});return {success:true};}catch(e){return {success:false,message:e.toString()};}
+}
+
+function duplicateDashboardProjectV7132(token,projectId) {
+  try {var actor=haosDB7132Session_(token);var loaded=getDashboardProjectV7132(token,projectId);if(!loaded.success)return loaded;var source=loaded.project;var copy={title:'สำเนา '+source.title,description:source.description,department:actor.department,tags:source.tags,status:'draft',visibility:'private',sharedUsers:[],editors:[],schema:loaded.schema,source:loaded.source,config:source.config};var saved=saveDashboardProjectV7132(token,copy);if(!saved.success)return saved;var rows=loaded.rows||[];var chunks=[];var current=[];for(var i=0;i<rows.length;i++){var candidate=current.concat([rows[i]]);if(current.length&&JSON.stringify(candidate).length>40000){chunks.push(current);current=[rows[i]];}else current=candidate;if(JSON.stringify(current).length>40000)throw new Error('มีข้อมูลหนึ่งแถวใหญ่เกินขีดจำกัด');}if(current.length)chunks.push(current);for(var c=0;c<chunks.length;c++){var up=uploadDashboardDataChunkV7132(token,saved.datasetId,c,chunks[c],c===0);if(!up.success)return up;}var finalized=finalizeDashboardDatasetV7132(token,saved.datasetId,rows.length,loaded.schema,loaded.source);if(!finalized.success)return finalized;haosDB7132AuditWrite_(saved.projectId,saved.datasetId,'DUPLICATE',actor,{sourceId:projectId});return {success:true,projectId:saved.projectId,title:copy.title};}catch(e){return {success:false,message:e.toString()};}
+}
+
+function importDashboardGoogleSheetV7132(token,url,sheetName,headerRow) {
+  try {haosDB7132Session_(token);var match=String(url||'').match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);if(!match)throw new Error('URL Google Sheets ไม่ถูกต้อง');var book=SpreadsheetApp.openById(match[1]);var sheet=sheetName?book.getSheetByName(sheetName):book.getSheets()[0];if(!sheet)throw new Error('ไม่พบชีตที่ระบุ');var values=sheet.getDataRange().getDisplayValues();var start=Math.max(0,Number(headerRow||1)-1);var header=values[start]||[];var used={};header=header.map(function(value,index){var base=haosDB7132Text_(value,160)||('คอลัมน์ '+(index+1));used[base]=(used[base]||0)+1;return used[base]===1?base:base+' ('+used[base]+')';});var rows=[];for(var r=start+1;r<values.length&&rows.length<20000;r++){var item={};var has=false;for(var c=0;c<header.length;c++){var value=haosDB7132Text_(values[r][c],5000);if(value)has=true;if(/^[=+\-@]/.test(value))value="'"+value;item[header[c]]=value;}if(has)rows.push(item);}return {success:true,rows:rows,sheetName:sheet.getName(),sheetNames:book.getSheets().map(function(s){return s.getName();}),truncated:values.length-start-1>20000};}catch(e){return {success:false,message:e.toString()};}
+}
+
+function haosDB7132FallbackConfig_(schema) {
+  schema=schema||[];var category='';var metric='';schema.forEach(function(column){if(!category&&/Category|Text/.test(column.type))category=column.name;if(!metric&&/Number|Integer|Decimal/.test(column.type))metric=column.name;});var id=function(){return haosDB7132Id_('W');};return {widgets:[{id:id(),type:'kpi',title:'จำนวนรายการทั้งหมด',aggregation:'count',metric:metric,width:3,order:0},{id:id(),type:'bar',title:'สรุปตาม '+(category||'หมวดหมู่'),dimension:category,metric:metric,aggregation:metric?'sum':'count',width:6,order:1},{id:id(),type:'table',title:'รายการข้อมูล',fields:schema.slice(0,8).map(function(c){return c.name;}),width:12,order:2,limit:20}],filters:category?[{field:category,type:'search',title:'ค้นหา '+category}]:[],theme:'haos'};
+}
+function suggestDashboardWithAIV7132(token,request) {
+  try {haosDB7132Session_(token);request=request||{};var fallback=haosDB7132FallbackConfig_(request.schema||[]);try{var prompt=['คุณเป็นนักออกแบบ dashboard ภาษาไทยสำหรับสำนักงานสาธารณสุข','ตอบ JSON เท่านั้น รูปแบบ {"widgets":[],"filters":[],"theme":"haos"}','widget type รองรับ kpi, bar, line, pie, table; width เป็น 3,4,6,8,12; aggregation เป็น count,distinct,sum,avg,min,max','ห้ามสร้างชื่อคอลัมน์ที่ไม่มีใน schema','ชื่อ Dashboard: '+haosDB7132Text_(request.title,160),'คำอธิบาย: '+haosDB7132Text_(request.description,800),'Schema: '+JSON.stringify(request.schema||[])].join('\n');var ai=fetchGeminiAI(prompt,null,null,{jsonMode:true,taskType:'text'});if(ai&&ai.success){var parsed=parseGeminiJson_(ai.text);if(parsed&&Array.isArray(parsed.widgets)&&parsed.widgets.length){parsed.widgets=parsed.widgets.slice(0,20).map(function(w,index){w.id=w.id||haosDB7132Id_('W');w.order=index;w.width=[3,4,6,8,12].indexOf(Number(w.width))>=0?Number(w.width):6;return w;});return {success:true,config:parsed,modelUsed:ai.model};}}}catch(ignore){}return {success:true,config:fallback,fallback:true};}catch(e){return {success:false,message:e.toString()};}
+}
+
+var haosV7132PrevGetAllowedBridgeFunctions_ = typeof getAllowedBridgeFunctions_ === 'function' ? getAllowedBridgeFunctions_ : null;
+getAllowedBridgeFunctions_ = function() {
+  var allowed = haosV7132PrevGetAllowedBridgeFunctions_ ? haosV7132PrevGetAllowedBridgeFunctions_() : {};
+  ['createDashboardBuilderSessionV7132','getDashboardBuilderBootstrapV7132','saveDashboardProjectV7132','uploadDashboardDataChunkV7132','finalizeDashboardDatasetV7132','getDashboardProjectV7132','deleteDashboardProjectV7132','duplicateDashboardProjectV7132','importDashboardGoogleSheetV7132','suggestDashboardWithAIV7132'].forEach(function(name){allowed[name]=true;});
+  return allowed;
+};
+
+function dashboardBuilderHealthCheckV7132(){return {success:true,version:'v70.132-dashboard-builder-mvp',sheets:['DashboardProjects','DashboardDatasets','DashboardDataChunks','DashboardVersions','DashboardAudit'],limits:{fileMb:15,rows:20000,preview:500}};}

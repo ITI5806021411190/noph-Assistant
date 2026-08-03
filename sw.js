@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-131-popular-vote-admin-state-fix';
+const CACHE_NAME = 'haos-v70-132-dashboard-builder-mvp';
 const CORE = [
   '/',
   '/index.html',
@@ -7,6 +7,8 @@ const CORE = [
   '/remote.html',
   '/remote',
   '/help-live.html',
+  '/dashboard-builder.html',
+  '/it-services/dashboard-builder',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
@@ -45,6 +47,12 @@ const CORE = [
   '/assets/js/modules/it-asset-import.js?v=70125',
   '/assets/js/modules/jigsaw-module.js',
   '/assets/js/modules/popular-vote-module.js?v=70131',
+  '/assets/js/modules/dashboard-builder-entry.js?v=70132',
+  '/assets/css/dashboard-builder.css?v=70132',
+  '/assets/css/dashboard-builder-enhancements.css?v=70132',
+  '/assets/js/dashboard-builder/data-connectors.js?v=70132',
+  '/assets/js/dashboard-builder/renderer.js?v=70132',
+  '/assets/js/dashboard-builder/app.js?v=70132',
   '/assets/css/ai-document-summary.css',
   '/assets/js/modules/ai-document-summary.js',
   '/assets/css/e-office.css',
@@ -77,6 +85,12 @@ self.addEventListener('fetch', event => {
       const copy = response.clone();
       caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy)).catch(() => {});
       return response;
-    }).catch(() => caches.match(event.request).then(r => r || caches.match('/index.html')))
+    }).catch(() => caches.match(event.request).then(r => {
+      if (r) return r;
+      if (url.pathname === '/it-services/dashboard-builder' || url.pathname.startsWith('/it-services/dashboard-builder/')) {
+        return caches.match('/dashboard-builder.html');
+      }
+      return caches.match('/index.html');
+    }))
   );
 });
