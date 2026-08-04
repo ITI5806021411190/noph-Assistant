@@ -13,6 +13,8 @@
     { "source": "/jigsaw/", "destination": "/jigsaw/index.html" },
     { "source": "/it-services/dashboard-builder", "destination": "/dashboard-builder" },
     { "source": "/it-services/dashboard-builder/:path*", "destination": "/dashboard-builder" },
+    { "source": "/dashboard/public", "destination": "/dashboard-public" },
+    { "source": "/dashboard/public/:token", "destination": "/dashboard-public" },
     { "source": "/remote", "destination": "/remote.html" },
     { "source": "/public", "destination": "/public.html" }
   ]

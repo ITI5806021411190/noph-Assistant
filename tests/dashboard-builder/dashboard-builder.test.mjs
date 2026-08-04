@@ -49,12 +49,35 @@ test('standalone route and frontend assets are wired', () => {
   assert.match(page, /data-step="5"/);
   assert.match(page, /data-list-scope="recent"/);
   assert.match(page, /id="dbGoogleHeaderRow"/);
+  assert.match(page, /dashboard-builder\/app\.js\?v=70134/);
+});
+
+test('public Dashboard route opens the standalone read-only viewer', () => {
+  const vercel = JSON.parse(read('vercel.json'));
+  const publicRoutes = vercel.rewrites.filter(item => item.source === '/dashboard/public' || item.source === '/dashboard/public/:token');
+  assert.equal(publicRoutes.length, 2);
+  assert.ok(publicRoutes.every(item => item.destination === '/dashboard-public'));
+  assert.ok(publicRoutes.every(item => !item.destination.endsWith('.html')), 'cleanUrls destinations must omit .html');
+  const page = read('dashboard-public.html');
+  assert.match(page, /id="dbPublicViewerCanvas"/);
+  assert.match(page, /id="dbPublicPinForm"/);
+  assert.match(page, /noindex,nofollow,noarchive/);
+  assert.doesNotMatch(page, /dbEditCurrent|dbSaveProject|dbDeleteProject/);
 });
 
 test('backend exposes signed session, permissions, datasets, versions and audit', () => {
   const code = read('Code.gs.txt');
   for (const marker of ['createDashboardBuilderSessionV7132','getDashboardBuilderBootstrapV7132','DashboardProjects','DashboardDatasets','DashboardDataChunks','DashboardVersions','DashboardAudit','haosDB7132CanView_','haosDB7132CanEdit_']) assert.match(code, new RegExp(marker));
   assert.match(code, /computeHmacSha256Signature/);
+});
+
+test('public sharing is isolated, signed, revocable and filters columns server-side', () => {
+  const code = read('Code.gs.txt');
+  for (const marker of ['DashboardPublicLinks','getDashboardPublicShareSettingsV7134','saveDashboardPublicShareV7134','getDashboardPublicBootstrapV7134','openDashboardPublicV7134','PUBLIC_REVOKE','PUBLIC_REGENERATE','PUBLIC_VIEW']) assert.match(code, new RegExp(marker));
+  assert.match(code, /computeHmacSha256Signature/);
+  assert.match(code, /visible\.forEach\(function\(name\)\{clean\[name\]=row\[name\]/);
+  assert.match(code, /defaultEnabled:false/);
+  assert.match(code, /project\.status!==['"]active['"]/);
 });
 
 test('dashboard renderer supports required MVP widgets', () => {
@@ -75,6 +98,27 @@ test('dashboard HTML has unique ids and app references existing controls', () =>
   const referenced = [...app.matchAll(/\$\('([^']+)'\)/g)].map(match => match[1]);
   const missing = [...new Set(referenced)].filter(id => !ids.includes(id));
   assert.deepEqual(missing, []);
+});
+
+test('public viewer HTML has unique ids and its script references existing controls', () => {
+  const page = read('dashboard-public.html');
+  const app = read('assets/js/dashboard-builder/public-viewer.js');
+  const ids = [...page.matchAll(/\sid="([^"]+)"/g)].map(match => match[1]);
+  assert.equal(new Set(ids).size, ids.length, 'duplicate public viewer HTML id found');
+  const referenced = [...app.matchAll(/\$\('([^']+)'\)/g)].map(match => match[1]);
+  const missing = [...new Set(referenced)].filter(id => !ids.includes(id));
+  assert.deepEqual(missing, []);
+  assert.match(app, /openDashboardPublicV7134/);
+  assert.match(app, /getDashboardPublicBootstrapV7134/);
+});
+
+test('Dashboard owner controls expose PIN, expiry, export and visible-column settings', () => {
+  const page = read('dashboard-builder.html');
+  const app = read('assets/js/dashboard-builder/app.js');
+  for (const id of ['dbPublicEnabled','dbPublicExpiresAt','dbPublicRequirePin','dbPublicPin','dbPublicAllowExport','dbPublicColumns','dbPublicRevoke','dbPublicRegenerate','dbPublicSave']) assert.match(page, new RegExp(`id="${id}"`));
+  assert.match(app, /data-project-public/);
+  assert.match(app, /saveDashboardPublicShareV7134/);
+  assert.match(app, /getDashboardPublicShareSettingsV7134/);
 });
 
 test('Google Sheets import supports sheet selection and custom header rows', () => {

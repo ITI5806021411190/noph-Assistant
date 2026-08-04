@@ -88,7 +88,7 @@ Both the frontend and Apps Script validate permissions. Frontend checks are for 
 - Table CSV export neutralizes formula-like values again before download.
 - Dashboard config, schema and data chunks are capped below the Google Sheets 50,000-character cell limit.
 - Google Sheets import uses the Apps Script deployer's access. A sheet the deployer cannot open is rejected.
-- Public anonymous dashboards, scheduled refresh and direct Access connections are outside this MVP.
+- Public anonymous dashboards were outside the original MVP. Optional read-only public sharing is added separately by Phase 6 (`v70.134`) and remains disabled by default.
 
 ## Files
 
@@ -106,7 +106,7 @@ Integration files changed: `Code.gs.txt`, `index.html`, `vercel.json`, `sw.js` a
 
 ## Known MVP constraints
 
-- Anonymous/public links are not implemented; every viewer must be an active HAOS user.
+- Authenticated viewing still follows the permissions above. Phase 6 optionally adds signed read-only public links with a column whitelist, PIN, expiry, export control and revoke/regenerate actions; see `docs/DASHBOARD_BUILDER_PUBLIC_SHARING.md`.
 - Scheduled refresh, external REST/database connectors and direct Microsoft Access import are not implemented.
 - Dashboard PDF/image export and server-side chart rendering are not implemented. Table data can be exported safely to CSV.
 - Upload parsing runs in the browser; the 15 MB and 20,000-row limits protect browser and Google Sheets performance.

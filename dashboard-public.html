@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>Public Dashboard | Health Assistant OS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="/assets/css/dashboard-builder.css?v=70134" rel="stylesheet">
+  <link href="/assets/css/dashboard-builder-enhancements.css?v=70134" rel="stylesheet">
+  <link href="/assets/css/dashboard-public.css?v=70134" rel="stylesheet">
+  <script>
+  (function(){
+    if(window.google&&google.script&&google.script.run)return;
+    function runner(ok,fail){return new Proxy({}, {get:function(_,name){if(name==='withSuccessHandler')return cb=>runner(cb,fail);if(name==='withFailureHandler')return cb=>runner(ok,cb);return function(){var args=[].slice.call(arguments);fetch('/api/gas',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fn:String(name),args:args})}).then(r=>r.json()).then(data=>{if(data&&data.__bridgeError)throw new Error(data.message||'API error');if(ok)ok(data);}).catch(err=>{if(fail)fail(err);});};}});}
+    window.google={script:{run:runner(null,null)}};
+  })();
+  </script>
+</head>
+<body class="db-public-body">
+  <main class="db-public-shell">
+    <header class="db-public-hero">
+      <div><div class="db-public-brand"><i class="bi bi-bar-chart-line-fill"></i> Health Assistant OS</div><h1>Public Dashboard</h1><p>ข้อมูลแบบอ่านอย่างเดียวที่เจ้าของ Dashboard อนุญาตให้เผยแพร่</p></div>
+      <div class="db-public-hero-actions"><button id="dbPublicViewerCopy" type="button"><i class="bi bi-link-45deg"></i> คัดลอกลิงก์</button><a href="/"><i class="bi bi-house-door"></i> เข้าสู่ HAOS</a></div>
+    </header>
+
+    <section id="dbPublicLoading" class="db-public-state"><div class="db-public-spinner" aria-hidden="true"></div><strong>กำลังตรวจสอบลิงก์...</strong><span>ระบบกำลังตรวจสถานะและสิทธิ์การเผยแพร่</span></section>
+
+    <section id="dbPublicGate" class="db-public-state db-hidden">
+      <div class="db-public-gate-icon"><i class="bi bi-shield-lock"></i></div><strong id="dbPublicGateTitle">Dashboard นี้ป้องกันด้วย PIN</strong><span>กรอก PIN ที่ได้รับจากเจ้าของ Dashboard</span>
+      <form id="dbPublicPinForm" class="db-public-pin-form"><label for="dbPublicPinInput">PIN ตัวเลข 4–8 หลัก</label><div><input id="dbPublicPinInput" class="db-input" type="password" inputmode="numeric" pattern="[0-9]{4,8}" maxlength="8" autocomplete="one-time-code" required><button id="dbPublicPinSubmit" class="db-btn primary" type="submit"><i class="bi bi-unlock"></i> เปิด Dashboard</button></div></form>
+    </section>
+
+    <section id="dbPublicError" class="db-public-state db-public-error db-hidden"><div class="db-public-gate-icon"><i class="bi bi-link-45deg"></i></div><strong id="dbPublicErrorTitle">เปิด Dashboard ไม่สำเร็จ</strong><span id="dbPublicErrorMessage"></span><a class="db-btn" href="/"><i class="bi bi-house-door"></i> กลับระบบหลัก</a></section>
+
+    <section id="dbPublicViewer" class="db-public-viewer db-hidden">
+      <div class="db-public-viewer-head"><div><div class="db-public-kicker"><i class="bi bi-globe2"></i> PUBLIC VIEW</div><h2 id="dbPublicViewerTitle"></h2><p id="dbPublicViewerDescription"></p><div id="dbPublicViewerMeta" class="db-public-meta"></div></div><button id="dbPublicExport" class="db-btn" type="button"><i class="bi bi-filetype-csv"></i> Export CSV</button></div>
+      <div id="dbPublicViewerFilters" class="db-public-filters"></div>
+      <div id="dbPublicViewerCanvas" class="db-dashboard db-public-canvas"></div>
+      <footer class="db-public-footer-note"><i class="bi bi-shield-check"></i><span>หน้านี้แสดงเฉพาะข้อมูลที่เจ้าของอนุญาต และไม่สามารถแก้ไขข้อมูลต้นฉบับได้</span></footer>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="/assets/js/dashboard-builder/renderer.js?v=70134"></script>
+  <script src="/assets/js/dashboard-builder/public-viewer.js?v=70134"></script>
+</body>
+</html>

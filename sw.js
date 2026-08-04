@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-133-dashboard-builder-route-fix';
+const CACHE_NAME = 'haos-v70-134-dashboard-public-sharing';
 const CORE = [
   '/',
   '/index.html',
@@ -8,6 +8,7 @@ const CORE = [
   '/remote',
   '/help-live.html',
   '/dashboard-builder',
+  '/dashboard-public',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
@@ -47,11 +48,13 @@ const CORE = [
   '/assets/js/modules/jigsaw-module.js',
   '/assets/js/modules/popular-vote-module.js?v=70131',
   '/assets/js/modules/dashboard-builder-entry.js?v=70132',
-  '/assets/css/dashboard-builder.css?v=70132',
-  '/assets/css/dashboard-builder-enhancements.css?v=70132',
-  '/assets/js/dashboard-builder/data-connectors.js?v=70132',
-  '/assets/js/dashboard-builder/renderer.js?v=70132',
-  '/assets/js/dashboard-builder/app.js?v=70132',
+  '/assets/css/dashboard-builder.css?v=70134',
+  '/assets/css/dashboard-builder-enhancements.css?v=70134',
+  '/assets/css/dashboard-public.css?v=70134',
+  '/assets/js/dashboard-builder/data-connectors.js?v=70134',
+  '/assets/js/dashboard-builder/renderer.js?v=70134',
+  '/assets/js/dashboard-builder/app.js?v=70134',
+  '/assets/js/dashboard-builder/public-viewer.js?v=70134',
   '/assets/css/ai-document-summary.css',
   '/assets/js/modules/ai-document-summary.js',
   '/assets/css/e-office.css',
@@ -88,6 +91,9 @@ self.addEventListener('fetch', event => {
       if (r) return r;
       if (url.pathname === '/it-services/dashboard-builder' || url.pathname.startsWith('/it-services/dashboard-builder/')) {
         return caches.match('/dashboard-builder');
+      }
+      if (url.pathname === '/dashboard/public' || url.pathname.startsWith('/dashboard/public/')) {
+        return caches.match('/dashboard-public');
       }
       return caches.match('/index.html');
     }))

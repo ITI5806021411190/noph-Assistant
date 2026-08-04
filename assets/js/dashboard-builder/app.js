@@ -1,9 +1,9 @@
 (function () {
   'use strict';
-  const VERSION='v70.132-dashboard-builder-mvp';
+  const VERSION='v70.134-dashboard-public-sharing';
   const $=id=>document.getElementById(id);
   const esc=value=>window.HAOSDashboardRenderer.esc(value);
-  const state={token:'',actor:{},projects:[],users:[],scope:'recent',step:1,workbook:null,rows:[],schema:[],source:{type:'file'},project:null,editingWidget:null,loading:false};
+  const state={token:'',actor:{},projects:[],users:[],scope:'recent',step:1,workbook:null,rows:[],schema:[],source:{type:'file'},project:null,editingWidget:null,loading:false,publicShare:null};
 
   function gas(fn,...args){return new Promise((resolve,reject)=>google.script.run.withSuccessHandler(resolve).withFailureHandler(error=>reject(error instanceof Error?error:new Error(String(error&&error.message||error))))[fn](...args));}
   function notify(icon,title,text){return window.Swal?Swal.fire({icon,title,text,confirmButtonText:'ตกลง'}):Promise.resolve(alert(`${title}\n${text||''}`));}
@@ -34,6 +34,18 @@
 
   function projectVisible(project){const query=$('dbSearch').value.trim().toLowerCase();const status=$('dbStatusFilter').value;const owner=$('dbOwnerFilter').value;if(query&&!`${project.title} ${project.description} ${(project.tags||[]).join(' ')}`.toLowerCase().includes(query))return false;if(status&&project.status!==status)return false;if(owner==='mine'&&!project.isOwner)return false;if(owner==='other'&&project.isOwner)return false;if(owner.indexOf('phone:')===0&&project.ownerPhone!==owner.slice(6))return false;if(state.scope==='mine'&&!project.isOwner)return false;if(state.scope==='shared'&&(project.isOwner||project.visibility!=='shared'))return false;if(state.scope==='group'&&project.visibility!=='group')return false;return true;}
   function renderProjects(){document.querySelectorAll('[data-list-scope]').forEach(button=>button.classList.toggle('active',button.dataset.listScope===state.scope));let list=state.projects.filter(projectVisible);if(state.scope==='recent')list=list.slice(0,8);$('dbProjectList').innerHTML=list.length?list.map(project=>`<article class="db-project"><div class="db-meta"><span class="db-pill">${esc(({draft:'ฉบับร่าง',active:'ใช้งาน',archived:'เก็บถาวร'})[project.status]||project.status)}</span><span>${esc(project.visibilityLabel||project.visibility)}</span></div><h3>${esc(project.title)}</h3><p>${esc(project.description||'ไม่มีคำอธิบาย')}</p><div class="db-meta"><span><i class="bi bi-person"></i> ${esc(project.ownerName)}</span><span><i class="bi bi-clock"></i> ${esc(formatDate(project.updatedAt))}</span><span>${Number(project.rowCount||0).toLocaleString('th-TH')} แถว</span></div><div class="db-project-actions"><button class="db-btn primary" data-project-view="${esc(project.id)}"><i class="bi bi-eye"></i> ดู</button>${project.canEdit?`<button class="db-btn" data-project-edit="${esc(project.id)}"><i class="bi bi-pencil"></i> แก้ไข</button><button class="db-btn" data-project-share="${esc(project.id)}"><i class="bi bi-share"></i> แชร์</button>`:''}<button class="db-btn" data-project-copy="${esc(project.id)}" title="ทำสำเนา"><i class="bi bi-copy"></i></button>${project.canDelete?`<button class="db-btn danger" data-project-delete="${esc(project.id)}" title="ลบ"><i class="bi bi-trash"></i></button>`:''}</div></article>`).join(''):'<div class="db-empty" style="grid-column:1/-1"><i class="bi bi-grid" style="font-size:44px"></i><strong>ยังไม่มี Dashboard ในรายการนี้</strong><span>กด “สร้าง Dashboard” เพื่อเริ่มจาก CSV, Excel หรือ Google Sheets</span></div>';}
+
+  const renderProjectsBase=renderProjects;
+  renderProjects=function(){
+    renderProjectsBase();
+    document.querySelectorAll('[data-project-view]').forEach(viewButton=>{
+      const project=state.projects.find(item=>String(item.id)===String(viewButton.dataset.projectView));
+      const actions=viewButton.closest('.db-project-actions');
+      if(!project||!project.canDelete||!actions||actions.querySelector('[data-project-public]'))return;
+      const button=document.createElement('button');button.className='db-btn';button.type='button';button.dataset.projectPublic=project.id;button.title='จัดการลิงก์สาธารณะ';button.innerHTML='<i class="bi bi-globe2"></i> Public';
+      const deleteButton=actions.querySelector('[data-project-delete]');actions.insertBefore(button,deleteButton||null);
+    });
+  };
 
   function freshProject(){return{id:'',title:'',description:'',department:state.actor.department||'',tags:[],status:'draft',visibility:'private',sharedUsers:[],editors:[],config:{widgets:[],filters:[]},dataset:{}};}
   function openWizard(project){state.project=project||freshProject();state.rows=project&&project.rows||[];state.schema=project&&project.schema||[];state.source=project&&project.source||{type:'file'};state.step=1;$('dbTitle').value=state.project.title||'';$('dbDescription').value=state.project.description||'';$('dbDepartment').value=state.project.department||state.actor.department||'';$('dbTags').value=(state.project.tags||[]).join(', ');$('dbStatus').value=state.project.status||'draft';$('dbVisibility').value=state.project.visibility||'private';$('dbSharedUsers').value=(state.project.sharedUsers||[]).join(', ');$('dbEditors').value=(state.project.editors||[]).join(', ');$('dbGoogleUrl').value=state.source.url||'';fillGoogleSheetOptions(state.source.sheetNames||[],state.source.sheetName||'');$('dbGoogleHeaderRow').value=Number(state.source.headerRow||1);refreshWizard();showView('dbWizardView');}
@@ -72,10 +84,54 @@
   async function deleteProject(id){if(!await confirmAction('ลบ Dashboard นี้?','ข้อมูลชุดนี้และประวัติรุ่นจะถูกปิดการใช้งาน'))return;try{const result=await gas('deleteDashboardProjectV7132',state.token,id);if(!result||!result.success)throw new Error(result&&result.message||'ลบไม่สำเร็จ');await reloadList();}catch(error){notify('error','ลบไม่สำเร็จ',error.message);}}
   async function openProjectForShare(id){try{const result=await gas('getDashboardProjectV7132',state.token,id);if(!result||!result.success)throw new Error(result&&result.message||'เปิดการแชร์ไม่สำเร็จ');const project=result.project;project.rows=result.rows||[];project.schema=result.schema||[];project.source=result.source||{};openWizard(project);state.step=5;refreshWizard();}catch(error){notify('error','เปิดการแชร์ไม่สำเร็จ',error.message);}}
 
+  const openProjectBase=openProject;
+  openProject=async function(id,edit){
+    await openProjectBase(id,edit);
+    if(!edit&&state.project&&String(state.project.id)===String(id))$('dbPublicShareCurrent').classList.toggle('db-hidden',!state.project.canDelete);
+  };
+
+  function toLocalDateTime(value){if(!value)return '';const date=new Date(value);if(Number.isNaN(date.getTime()))return '';const local=new Date(date.getTime()-date.getTimezoneOffset()*60000);return local.toISOString().slice(0,16);}
+  function publicUrl(path){return path?new URL(path,location.origin).href:'';}
+  function selectedPublicColumns(){return Array.from(document.querySelectorAll('[data-public-column]:checked')).map(input=>input.value);}
+  function renderPublicColumns(columns,selected){
+    const chosen=new Set((selected||[]).map(String));
+    $('dbPublicColumns').innerHTML=(columns||[]).map(name=>`<label class="db-public-column"><input type="checkbox" data-public-column value="${esc(name)}" ${chosen.has(String(name))?'checked':''}><span>${esc(name)}</span></label>`).join('')||'<div class="db-help">ยังไม่มีคอลัมน์ที่เผยแพร่ได้</div>';
+  }
+  function renderPublicQr(url){
+    $('dbPublicQr').innerHTML='';if(!url||!window.QRCode)return;
+    new QRCode($('dbPublicQr'),{text:url,width:190,height:190,colorDark:'#10243e',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+  }
+  function applyPublicSettings(settings){
+    state.publicShare=settings||{};const url=publicUrl(settings.publicPath);
+    $('dbPublicShareTitle').textContent=`ลิงก์สาธารณะ: ${settings.title||'Dashboard'}`;
+    $('dbPublicEnabled').checked=!!settings.enabled;$('dbPublicExpiresAt').value=toLocalDateTime(settings.expiresAt);$('dbPublicRequirePin').checked=!!settings.hasPin;$('dbPublicPin').value='';$('dbPublicPin').disabled=!settings.hasPin;$('dbPublicAllowExport').checked=!!settings.allowExport;
+    renderPublicColumns(settings.columns||[],settings.visibleColumns||[]);$('dbPublicLink').value=url;$('dbPublicCopyLink').disabled=!url;$('dbPublicOpenLink').disabled=!url;$('dbPublicRevoke').disabled=!settings.enabled;$('dbPublicRegenerate').disabled=!settings.enabled;
+    const access=settings.accessCount?` เปิดดู ${Number(settings.accessCount).toLocaleString('th-TH')} ครั้ง${settings.lastAccessAt?` • ล่าสุด ${formatDate(settings.lastAccessAt)}`:''}`:'';
+    $('dbPublicInfo').textContent=settings.enabled?`เปิดใช้งาน${settings.hasPin?' • มี PIN':''}${settings.expiresAt?` • หมดอายุ ${formatDate(settings.expiresAt)}`:''}${access}`:`ยังไม่ได้เปิดลิงก์สาธารณะ${settings.status!=='active'?' • Dashboard ต้องมีสถานะ “ใช้งาน”':''}`;
+    renderPublicQr(url);
+  }
+  async function openPublicShare(id){
+    try{
+      $('dbPublicShareModal').classList.add('show');$('dbPublicShareTitle').textContent='กำลังโหลดการตั้งค่าลิงก์สาธารณะ...';$('dbPublicColumns').innerHTML='<div class="db-loading"><strong>กำลังตรวจสิทธิ์...</strong></div>';
+      const result=await gas('getDashboardPublicShareSettingsV7134',state.token,id);if(!result||!result.success)throw new Error(result&&result.message||'โหลดการตั้งค่าไม่สำเร็จ');applyPublicSettings(result.settings);
+    }catch(error){$('dbPublicShareModal').classList.remove('show');notify('error','เปิดการตั้งค่าลิงก์ไม่สำเร็จ',error.message);}
+  }
+  async function savePublicShare(action){
+    if(!state.publicShare||!state.publicShare.dashboardId)return;
+    if(action==='revoke'&&!await confirmAction('ปิดลิงก์สาธารณะ?','ผู้ที่มีลิงก์เดิมจะเปิด Dashboard นี้ไม่ได้ทันที'))return;
+    if(action==='regenerate'&&!await confirmAction('สร้างลิงก์ใหม่?','ลิงก์เดิมจะถูกยกเลิกทันที และต้องส่งลิงก์ใหม่ให้ผู้ใช้งาน'))return;
+    const payload={action:action||'save',enabled:$('dbPublicEnabled').checked,expiresAt:$('dbPublicExpiresAt').value?new Date($('dbPublicExpiresAt').value).toISOString():'',requirePin:$('dbPublicRequirePin').checked,pin:$('dbPublicPin').value,allowExport:$('dbPublicAllowExport').checked,visibleColumns:selectedPublicColumns()};
+    const buttons=[$('dbPublicSave'),$('dbPublicRegenerate'),$('dbPublicRevoke')];buttons.forEach(button=>button.disabled=true);
+    try{const result=await gas('saveDashboardPublicShareV7134',state.token,state.publicShare.dashboardId,payload);if(!result||!result.success)throw new Error(result&&result.message||'บันทึกไม่สำเร็จ');applyPublicSettings(result.settings);notify('success',action==='revoke'?'ปิดลิงก์แล้ว':action==='regenerate'?'สร้างลิงก์ใหม่แล้ว':'บันทึกการตั้งค่าแล้ว',result.settings.publicPath?'พร้อมส่งลิงก์ให้ผู้ชม':'ลิงก์สาธารณะยังปิดอยู่');}
+    catch(error){notify('error','จัดการลิงก์ไม่สำเร็จ',error.message);applyPublicSettings(state.publicShare);}
+  }
+  async function copyPublicLink(){const value=$('dbPublicLink').value;if(!value)return;try{await navigator.clipboard.writeText(value);notify('success','คัดลอกลิงก์แล้ว','');}catch(_error){$('dbPublicLink').select();document.execCommand('copy');notify('success','คัดลอกลิงก์แล้ว','');}}
+
   document.addEventListener('click',event=>{
     const view=event.target.closest('[data-project-view]');if(view)return openProject(view.dataset.projectView,false);
     const edit=event.target.closest('[data-project-edit]');if(edit)return openProject(edit.dataset.projectEdit,true);
     const share=event.target.closest('[data-project-share]');if(share)return openProjectForShare(share.dataset.projectShare);
+    const publicShare=event.target.closest('[data-project-public]');if(publicShare)return openPublicShare(publicShare.dataset.projectPublic);
     const copy=event.target.closest('[data-project-copy]');if(copy)return duplicateProject(copy.dataset.projectCopy);
     const del=event.target.closest('[data-project-delete]');if(del)return deleteProject(del.dataset.projectDelete);
     const scope=event.target.closest('[data-list-scope]');if(scope){state.scope=scope.dataset.listScope;renderProjects();return;}
@@ -88,10 +144,12 @@
     const close=event.target.closest('[data-close-modal]');if(close)$(close.dataset.closeModal).classList.remove('show');
   });
   document.addEventListener('change',event=>{const enable=event.target.dataset.schemaEnable;if(enable!=null){state.schema[Number(enable)].enabled=event.target.checked;renderSchema();return;}const type=event.target.dataset.schemaType;if(type!=null)state.schema[Number(type)].type=event.target.value;const decimals=event.target.dataset.schemaDecimals;if(decimals!=null)state.schema[Number(decimals)].decimals=Number(event.target.value||0);const filter=event.target.dataset.viewFilter;if(filter!=null)HAOSDashboardRenderer.render($('dbViewerCanvas'),state.project,state.rows,{filters:currentViewerFilters()});});
+  $('dbPublicRequirePin').addEventListener('change',event=>{$('dbPublicPin').disabled=!event.target.checked;if(event.target.checked)$('dbPublicPin').focus();});
   document.addEventListener('input',event=>{const name=event.target.dataset.schemaName;if(name!=null)state.schema[Number(name)].name=event.target.value;if(['dbSearch','dbStatusFilter','dbOwnerFilter'].includes(event.target.id))renderProjects();if(event.target.dataset.viewFilter!=null){clearTimeout(state.filterTimer);state.filterTimer=setTimeout(()=>HAOSDashboardRenderer.render($('dbViewerCanvas'),state.project,state.rows,{filters:currentViewerFilters()}),180);}});
   $('dbCreateBtn').addEventListener('click',()=>openWizard());$('dbFile').addEventListener('change',handleFile);$('dbSheet').addEventListener('change',readWorkbookSheet);$('dbHeaderRow').addEventListener('change',readWorkbookSheet);$('dbImportGoogleBtn').addEventListener('click',importGoogle);$('dbNextStep').addEventListener('click',()=>{try{validateStep();state.step=Math.min(5,state.step+1);refreshWizard();}catch(error){notify('warning','ยังไปต่อไม่ได้',error.message);}});$('dbPrevStep').addEventListener('click',()=>{state.step=Math.max(1,state.step-1);refreshWizard();});$('dbCancelWizard').addEventListener('click',()=>showView('dbListView'));$('dbSaveProject').addEventListener('click',saveProject);$('dbConfirmWidget').addEventListener('click',saveWidget);$('dbAiSuggestBtn').addEventListener('click',aiSuggest);$('dbResetLayoutBtn').addEventListener('click',()=>{state.project.config=defaultConfig($('dbTemplate').value);renderEditor();});$('dbPreviewBtn').addEventListener('click',()=>{state.project.rows=state.rows;openProjectPreview();});$('dbBackList').addEventListener('click',()=>showView('dbListView'));$('dbEditCurrent').addEventListener('click',()=>openWizard({...state.project,rows:state.rows,schema:state.schema,source:state.project.source||{}}));$('dbRefreshDashboard').addEventListener('click',()=>state.project&&state.project.id&&openProject(state.project.id,false));$('dbExportCurrent').addEventListener('click',()=>{const rows=HAOSDashboardRenderer.filteredRows(state.rows,currentViewerFilters());const fields=state.schema.filter(column=>column.enabled!==false).map(column=>column.name);HAOSDashboardRenderer.downloadCsv(rows,fields,state.project.title||'dashboard-data');});$('dbRefreshBtn').addEventListener('click',()=>location.reload());
+  $('dbPublicShareCurrent').addEventListener('click',()=>state.project&&state.project.id&&openPublicShare(state.project.id));$('dbPublicSave').addEventListener('click',()=>savePublicShare('save'));$('dbPublicRegenerate').addEventListener('click',()=>savePublicShare('regenerate'));$('dbPublicRevoke').addEventListener('click',()=>savePublicShare('revoke'));$('dbPublicCopyLink').addEventListener('click',copyPublicLink);$('dbPublicOpenLink').addEventListener('click',()=>{const url=$('dbPublicLink').value;if(url)window.open(url,'_blank','noopener');});$('dbPublicSelectAll').addEventListener('click',()=>document.querySelectorAll('[data-public-column]').forEach(input=>{input.checked=true;}));$('dbPublicClearColumns').addEventListener('click',()=>document.querySelectorAll('[data-public-column]').forEach(input=>{input.checked=false;}));
   $('dbAddFilterBtn').addEventListener('click',()=>{const field=$('dbFilterField').value;if(!field)return;const type=$('dbFilterType').value;state.project.config.filters=state.project.config.filters||[];state.project.config.filters.push({field,type,title:field});renderEditor();});
   document.addEventListener('keydown',event=>{if(event.key==='Escape')document.querySelectorAll('.db-modal.show').forEach(modal=>modal.classList.remove('show'));});
-  function openProjectPreview(){const preview=window.open('','_blank');if(!preview)return notify('warning','เบราว์เซอร์ปิดกั้น Popup','กรุณาอนุญาต Popup แล้วลองใหม่');const previewRows=HAOSDashboardData.applySchema(state.rows,state.schema).slice(0,5000);preview.document.write(`<title>${esc(state.project.title||'Dashboard Preview')}</title><link href="/assets/css/dashboard-builder.css?v=70132" rel="stylesheet"><body><main class="db-shell"><section class="db-panel"><div class="db-toolbar"><strong>${esc(state.project.title||'Dashboard Preview')}</strong><span class="db-status">ตัวอย่างสูงสุด 5,000 แถว</span></div><div id="preview" class="db-dashboard" style="margin:18px"></div></section></main><script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"><\/script><script src="/assets/js/dashboard-builder/renderer.js?v=70132"><\/script><script>addEventListener('load',()=>HAOSDashboardRenderer.render(document.getElementById('preview'),${JSON.stringify(state.project).replace(/</g,'\\u003c')},${JSON.stringify(previewRows).replace(/</g,'\\u003c')},{}));<\/script>`);preview.document.close();}
+  function openProjectPreview(){const preview=window.open('','_blank');if(!preview)return notify('warning','เบราว์เซอร์ปิดกั้น Popup','กรุณาอนุญาต Popup แล้วลองใหม่');const previewRows=HAOSDashboardData.applySchema(state.rows,state.schema).slice(0,5000);preview.document.write(`<title>${esc(state.project.title||'Dashboard Preview')}</title><link href="/assets/css/dashboard-builder.css?v=70134" rel="stylesheet"><body><main class="db-shell"><section class="db-panel"><div class="db-toolbar"><strong>${esc(state.project.title||'Dashboard Preview')}</strong><span class="db-status">ตัวอย่างสูงสุด 5,000 แถว</span></div><div id="preview" class="db-dashboard" style="margin:18px"></div></section></main><script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"><\/script><script src="/assets/js/dashboard-builder/renderer.js?v=70134"><\/script><script>addEventListener('load',()=>HAOSDashboardRenderer.render(document.getElementById('preview'),${JSON.stringify(state.project).replace(/</g,'\\u003c')},${JSON.stringify(previewRows).replace(/</g,'\\u003c')},{}));<\/script>`);preview.document.close();}
   boot();console.info(`HAOS ${VERSION} loaded`);
 })();

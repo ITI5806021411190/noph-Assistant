@@ -57,3 +57,139 @@ textarea:focus-visible {
   .db-table-tools { align-items: stretch; flex-direction: column; }
   .db-table-tools .db-select { width: 100%; }
 }
+
+.db-public-share-dialog {
+  width: min(1040px, 100%);
+}
+
+.db-public-share-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(280px, .75fr);
+  gap: 18px;
+}
+
+.db-public-settings,
+.db-public-link-panel {
+  border: 1px solid var(--db-line);
+  border-radius: 8px;
+  padding: 18px;
+  background: #f8fbfe;
+}
+
+.db-public-link-panel {
+  align-self: start;
+  background: #fff;
+}
+
+.db-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  background: #ecfdf5;
+  cursor: pointer;
+}
+
+.db-switch-row span {
+  display: grid;
+  gap: 3px;
+}
+
+.db-switch-row small {
+  color: var(--db-muted);
+}
+
+.db-switch-row input,
+.db-check-label input {
+  width: 20px;
+  height: 20px;
+  accent-color: #0a9b70;
+  flex: 0 0 auto;
+}
+
+.db-check-label {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  gap: 9px;
+  font-weight: 700;
+}
+
+.db-public-column-actions,
+.db-public-link-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.db-public-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  max-height: 290px;
+  overflow: auto;
+  padding: 4px;
+}
+
+.db-public-column {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--db-line);
+  border-radius: 7px;
+  background: #fff;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.db-public-column input {
+  margin-top: 3px;
+  accent-color: var(--db-blue);
+}
+
+.db-public-qr {
+  display: grid;
+  min-height: 220px;
+  place-items: center;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px dashed var(--db-line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.db-public-qr:empty::before {
+  content: 'QR Code จะแสดงเมื่อเปิดลิงก์แล้ว';
+  color: var(--db-muted);
+  text-align: center;
+}
+
+.db-public-qr img,
+.db-public-qr canvas {
+  max-width: 100%;
+  height: auto !important;
+}
+
+.db-public-footer {
+  align-items: center;
+  border-top: 1px solid var(--db-line);
+  padding-top: 16px;
+}
+
+@media (max-width: 820px) {
+  .db-public-share-grid { grid-template-columns: 1fr; }
+  .db-public-columns { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 560px) {
+  .db-public-footer { align-items: stretch; flex-direction: column; }
+  .db-public-footer .db-grow { display: none; }
+  .db-public-footer .db-btn { width: 100%; }
+}
