@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-134-dashboard-public-sharing';
+const CACHE_NAME = 'haos-v70-135-dashboard-viewer-refresh';
 const CORE = [
   '/',
   '/index.html',
@@ -48,13 +48,15 @@ const CORE = [
   '/assets/js/modules/jigsaw-module.js',
   '/assets/js/modules/popular-vote-module.js?v=70131',
   '/assets/js/modules/dashboard-builder-entry.js?v=70132',
-  '/assets/css/dashboard-builder.css?v=70134',
-  '/assets/css/dashboard-builder-enhancements.css?v=70134',
-  '/assets/css/dashboard-public.css?v=70134',
-  '/assets/js/dashboard-builder/data-connectors.js?v=70134',
-  '/assets/js/dashboard-builder/renderer.js?v=70134',
-  '/assets/js/dashboard-builder/app.js?v=70134',
-  '/assets/js/dashboard-builder/public-viewer.js?v=70134',
+  '/assets/css/dashboard-builder.css?v=70135',
+  '/assets/css/dashboard-builder-enhancements.css?v=70135',
+  '/assets/css/dashboard-public.css?v=70135',
+  '/assets/css/dashboard-viewer.css?v=70135',
+  '/assets/js/dashboard-builder/data-connectors.js?v=70135',
+  '/assets/js/dashboard-builder/renderer.js?v=70135',
+  '/assets/js/dashboard-builder/app.js?v=70135',
+  '/assets/js/dashboard-builder/public-viewer.js?v=70135',
+  '/assets/js/dashboard-builder/viewer-ui.js?v=70135',
   '/assets/css/ai-document-summary.css',
   '/assets/js/modules/ai-document-summary.js',
   '/assets/css/e-office.css',

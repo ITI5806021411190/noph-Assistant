@@ -4,6 +4,23 @@
   const esc = value => String(value == null ? '' : value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[char]);
   const numeric = value => { const number = Number(String(value == null ? '' : value).replace(/,/g, '')); return Number.isFinite(number) ? number : 0; };
 
+  function activeFilterCount(filters) {
+    return (filters || []).filter(filter => {
+      const value = filter && filter.value;
+      if (Array.isArray(value)) return value.length > 0;
+      if (value && typeof value === 'object') return Object.values(value).some(item => String(item || '').trim() !== '');
+      return value === 0 || String(value || '').trim() !== '';
+    }).length;
+  }
+
+  function emitRendered(container, detail) {
+    container.dataset.totalRows = String(detail.totalRows);
+    container.dataset.visibleRows = String(detail.visibleRows);
+    container.dataset.widgetCount = String(detail.widgetCount);
+    container.dataset.activeFilters = String(detail.activeFilters);
+    container.dispatchEvent(new CustomEvent('haos:dashboard-rendered', {detail, bubbles:true}));
+  }
+
   function aggregate(rows, field, method) {
     const values = rows.map(row => row[field]).filter(value => value !== '' && value != null);
     if (method === 'count') return rows.length;
@@ -98,13 +115,19 @@
     const old = chartByBody.get(body); if (old) old.destroy();
     const type = widget.type === 'line' ? 'line' : widget.type === 'pie' ? 'doughnut' : 'bar';
     const palette = ['#1677ff','#0aa577','#f59e0b','#ef4444','#8b5cf6','#0891b2','#ec4899','#64748b'];
-    chartByBody.set(body, new Chart(body.querySelector('canvas'), {type,data:{labels:grouped.map(item=>item.label),datasets:[{label:widget.title || 'ข้อมูล',data:grouped.map(item=>item.value),backgroundColor:type==='doughnut'?palette:'#1677ff',borderColor:type==='line'?'#0aa577':undefined,borderWidth:2,tension:.25}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:type==='doughnut'}},scales:type==='doughnut'?{}:{y:{beginAtZero:true}}}}));
+    chartByBody.set(body, new Chart(body.querySelector('canvas'), {type,data:{labels:grouped.map(item=>item.label),datasets:[{label:widget.title || 'ข้อมูล',data:grouped.map(item=>item.value),backgroundColor:type==='doughnut'?palette:(type==='bar'?'#1483a3':'rgba(8,125,120,.14)'),borderColor:type==='line'?'#087d78':undefined,borderWidth:2,borderRadius:type==='bar'?5:0,tension:.25,fill:type==='line'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:type==='doughnut',position:'bottom'}},scales:type==='doughnut'?{}:{x:{grid:{display:false}},y:{beginAtZero:true,grid:{color:'rgba(92,112,128,.14)'}}}}}));
   }
 
   function render(container, project, rows, options) {
     options = options || {};
     const config = project.config || {widgets:[],filters:[]};
     const visibleRows = filteredRows(rows || [], options.filters || []);
+    emitRendered(container, {
+      totalRows: (rows || []).length,
+      visibleRows: visibleRows.length,
+      widgetCount: (config.widgets || []).length,
+      activeFilters: activeFilterCount(options.filters || [])
+    });
     container.innerHTML = '';
     if (!config.widgets || !config.widgets.length) { container.innerHTML = '<div class="db-empty"><strong>Dashboard ยังไม่มี Widget</strong><span>เปิดโหมดแก้ไขแล้วเพิ่ม KPI, กราฟ หรือตาราง</span></div>'; return; }
     const grid = document.createElement('div'); grid.className = 'db-widget-grid';
@@ -116,5 +139,5 @@
     });
     container.appendChild(grid);
   }
-  window.HAOSDashboardRenderer={render,aggregate,group,filteredRows,esc,csvCell,downloadCsv};
+  window.HAOSDashboardRenderer={render,aggregate,group,filteredRows,activeFilterCount,esc,csvCell,downloadCsv};
 })();

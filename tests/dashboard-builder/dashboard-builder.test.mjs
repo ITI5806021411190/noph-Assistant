@@ -49,7 +49,7 @@ test('standalone route and frontend assets are wired', () => {
   assert.match(page, /data-step="5"/);
   assert.match(page, /data-list-scope="recent"/);
   assert.match(page, /id="dbGoogleHeaderRow"/);
-  assert.match(page, /dashboard-builder\/app\.js\?v=70134/);
+  assert.match(page, /dashboard-builder\/app\.js\?v=70135/);
 });
 
 test('public Dashboard route opens the standalone read-only viewer', () => {
@@ -152,4 +152,23 @@ test('renderer filtering handles text, number, multi-select and date range', () 
   assert.equal(filter(rows,[{field:'score',type:'number',value:15}]).length,1);
   assert.equal(filter(rows,[{field:'group',type:'multi',value:['B']}]).length,1);
   assert.equal(filter(rows,[{field:'date',type:'date',value:{from:'2026-02-01',to:'2026-02-28'}}]).length,1);
+});
+
+test('Phase 6.1 viewer UI is shared by authenticated and public dashboards', () => {
+  const builder = read('dashboard-builder.html');
+  const publicPage = read('dashboard-public.html');
+  const viewerUi = read('assets/js/dashboard-builder/viewer-ui.js');
+  const viewerCss = read('assets/css/dashboard-viewer.css');
+  const renderer = read('assets/js/dashboard-builder/renderer.js');
+  for (const page of [builder, publicPage]) {
+    assert.match(page, /dashboard-viewer\.css\?v=70135/);
+    assert.match(page, /dashboard-builder\/viewer-ui\.js\?v=70135/);
+  }
+  assert.match(viewerUi, /data-viewer-filter-toggle/);
+  assert.match(viewerUi, /requestFullscreen/);
+  assert.match(viewerUi, /data-visible-rows/);
+  assert.match(viewerCss, /\.db-viewer-overview/);
+  assert.match(viewerCss, /@media print/);
+  assert.match(renderer, /haos:dashboard-rendered/);
+  assert.match(renderer, /activeFilterCount/);
 });

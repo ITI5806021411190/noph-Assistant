@@ -1,0 +1,252 @@
+:root {
+  --db-viewer-navy: #17324d;
+  --db-viewer-teal: #087d78;
+  --db-viewer-cyan: #1483a3;
+  --db-viewer-amber: #b56b0a;
+  --db-viewer-red: #b64045;
+  --db-viewer-bg: #f4f7f8;
+  --db-viewer-soft: #edf3f5;
+  --db-viewer-line: #d6e0e5;
+}
+
+.db-viewer-enhanced {
+  position: relative;
+  background: #fff;
+}
+
+.db-viewer-commandbar {
+  position: relative;
+  z-index: 4;
+  background: #fff;
+}
+
+.db-viewer-overview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-bottom: 1px solid var(--db-viewer-line);
+  background: #fff;
+}
+
+.db-viewer-stat {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 20px;
+  border-right: 1px solid var(--db-viewer-line);
+}
+
+.db-viewer-stat:last-child { border-right: 0; }
+
+.db-viewer-stat-icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  place-items: center;
+  border-radius: 7px;
+  color: #0b687d;
+  background: #e4f3f6;
+  font-size: 18px;
+}
+
+.db-viewer-stat:nth-child(2) .db-viewer-stat-icon { color: #176b50; background: #e5f4ed; }
+.db-viewer-stat:nth-child(3) .db-viewer-stat-icon { color: #8b5a10; background: #fff3d8; }
+.db-viewer-stat > span:last-child { display: grid; min-width: 0; }
+.db-viewer-stat small { color: var(--db-muted); font-size: 12px; }
+.db-viewer-stat strong { font-size: 20px; color: var(--db-viewer-navy); }
+.db-viewer-stat strong em { color: var(--db-muted); font-size: 13px; font-style: normal; font-weight: 500; }
+
+.db-viewer-filterbar {
+  display: flex;
+  min-height: 58px;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 18px;
+  border-bottom: 1px solid var(--db-viewer-line);
+  background: #f8fafb;
+}
+
+.db-viewer-filterbar-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--db-viewer-navy);
+  font-weight: 700;
+}
+
+.db-viewer-filter-badge {
+  display: inline-grid;
+  min-width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 999px;
+  color: #607080;
+  background: #e5eaee;
+  font-size: 12px;
+}
+
+.db-viewer-filter-badge.is-active { color: #fff; background: var(--db-viewer-teal); }
+.db-viewer-result { color: var(--db-muted); font-size: 13px; }
+.db-viewer-filter-panel { gap: 12px; padding: 16px 18px; background: #f4f8f9; }
+.db-viewer-filter-panel.is-collapsed { display: none !important; }
+.db-viewer-filter-panel .db-field > span { color: #435466; font-size: 12px; font-weight: 700; }
+.db-viewer-filter-panel .db-input,
+.db-viewer-filter-panel .db-select { min-height: 42px; background: #fff; }
+
+.db-viewer-canvas {
+  border: 0;
+  border-radius: 0;
+  background: var(--db-viewer-bg);
+}
+
+#dbViewerCanvas.db-viewer-canvas { margin: 0 !important; padding: 20px; }
+.db-public-canvas.db-viewer-canvas { margin: 0; padding: 20px; }
+
+.db-viewer-enhanced .db-widget-grid { gap: 14px; }
+.db-viewer-enhanced .db-widget {
+  --widget-accent: var(--db-viewer-cyan);
+  min-width: 0;
+  border-color: var(--db-viewer-line);
+  border-top: 3px solid var(--widget-accent);
+  box-shadow: 0 6px 18px rgba(31, 58, 74, .06);
+}
+
+.db-viewer-enhanced .db-widget header {
+  align-items: center;
+  padding: 13px 15px;
+  background: #fff;
+}
+
+.db-viewer-enhanced .db-widget-title {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.db-viewer-enhanced .db-widget-type-icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  place-items: center;
+  border-radius: 7px;
+  color: var(--widget-accent);
+  background: #edf3f5;
+}
+
+.db-viewer-enhanced .db-widget h3 {
+  overflow: hidden;
+  margin: 0;
+  color: var(--db-viewer-navy);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.db-viewer-enhanced .db-widget-kind { color: #728090; }
+.db-viewer-enhanced .db-widget-body { padding: 16px; }
+.db-viewer-enhanced .db-widget[data-widget-type="kpi"] { min-height: 190px; }
+.db-viewer-enhanced .db-widget[data-widget-type="kpi"] .db-widget-body {
+  display: flex;
+  height: 126px;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.db-viewer-enhanced .db-kpi-value {
+  margin: 0;
+  color: var(--widget-accent);
+  font-size: 40px;
+  line-height: 1.15;
+}
+
+.db-viewer-enhanced .db-kpi-caption { margin-top: 6px; font-size: 13px; }
+.db-viewer-enhanced .db-widget[data-widget-type="bar"] { --widget-accent: var(--db-viewer-cyan); }
+.db-viewer-enhanced .db-widget[data-widget-type="line"] { --widget-accent: var(--db-viewer-teal); }
+.db-viewer-enhanced .db-widget[data-widget-type="pie"] { --widget-accent: var(--db-viewer-amber); }
+.db-viewer-enhanced .db-widget[data-widget-type="table"] { --widget-accent: var(--db-viewer-navy); }
+
+.db-viewer-enhanced .db-table-tools {
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e3eaee;
+}
+
+.db-viewer-enhanced .db-table-wrap table { border-collapse: separate; border-spacing: 0; }
+.db-viewer-enhanced .db-table-wrap th { color: #32465a; background: #eaf1f4; }
+.db-viewer-enhanced .db-table-wrap tbody tr:nth-child(even) { background: #f8fafb; }
+.db-viewer-enhanced .db-table-wrap tbody tr:hover { background: #eef7f6; }
+.db-viewer-enhanced .db-table-wrap td { color: #34475a; }
+.db-viewer-enhanced .db-table-pager { padding-top: 4px; }
+
+.db-viewer-enhanced.is-presentation,
+.db-viewer-enhanced:fullscreen {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  overflow: auto;
+  border: 0;
+  border-radius: 0;
+  background: var(--db-viewer-bg);
+}
+
+.db-viewer-enhanced.is-presentation .db-viewer-commandbar,
+.db-viewer-enhanced:fullscreen .db-viewer-commandbar { position: sticky; top: 0; }
+
+.db-public-body { background: #edf2f3; }
+.db-public-hero {
+  min-height: 0;
+  padding: 18px 24px;
+  background: #0c6f78;
+  box-shadow: none;
+}
+.db-public-hero h1 { margin: 4px 0 2px; font-size: 26px; line-height: 1.2; }
+.db-public-viewer { box-shadow: 0 10px 28px rgba(30, 58, 72, .09); }
+.db-public-viewer-head { align-items: center; padding: 19px 24px; }
+.db-public-viewer-head h2 { margin: 4px 0; font-size: 28px; }
+.db-public-viewer-head > div { min-width: 0; }
+.db-viewer-head-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.db-public-meta { margin-top: 8px; }
+
+@media (max-width: 760px) {
+  .db-viewer-overview { grid-template-columns: 1fr; }
+  .db-viewer-stat { border-right: 0; border-bottom: 1px solid var(--db-viewer-line); }
+  .db-viewer-stat:last-child { border-bottom: 0; }
+  .db-viewer-filterbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+  }
+  .db-viewer-filterbar-title,
+  .db-viewer-result { grid-column: 1 / -1; }
+  .db-viewer-filterbar .db-grow { display: none; }
+  .db-viewer-result { width: auto; order: initial; }
+  .db-viewer-filterbar .db-btn { width: 100%; min-height: 44px; justify-content: center; }
+  .db-viewer-reset span { display: none; }
+  .db-public-viewer-head { align-items: stretch; }
+  .db-viewer-head-actions { justify-content: stretch; }
+  .db-viewer-head-actions .db-btn { flex: 1; justify-content: center; }
+  #dbViewerCanvas.db-viewer-canvas,
+  .db-public-canvas.db-viewer-canvas { padding: 10px; }
+  .db-viewer-enhanced .db-widget h3 { white-space: normal; }
+  .db-public-hero { min-height: 0; padding: 16px 18px; }
+  .db-public-hero h1 { font-size: 23px; }
+}
+
+@media print {
+  .db-public-hero,
+  .db-viewer-commandbar .db-btn,
+  .db-viewer-filterbar,
+  .db-viewer-filter-panel,
+  .db-public-footer-note { display: none !important; }
+  .db-public-shell,
+  .db-public-viewer { width: 100%; margin: 0; border: 0; box-shadow: none; }
+  .db-viewer-canvas { padding: 0; background: #fff; }
+  .db-widget { break-inside: avoid; box-shadow: none !important; }
+}
