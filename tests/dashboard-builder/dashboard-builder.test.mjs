@@ -49,7 +49,7 @@ test('standalone route and frontend assets are wired', () => {
   assert.match(page, /data-step="5"/);
   assert.match(page, /data-list-scope="recent"/);
   assert.match(page, /id="dbGoogleHeaderRow"/);
-  assert.match(page, /dashboard-builder\/app\.js\?v=70139/);
+  assert.match(page, /dashboard-builder\/app\.js\?v=70140/);
 });
 
 test('public Dashboard route opens the standalone read-only viewer', () => {
@@ -189,8 +189,8 @@ test('Phase 6.1-6.4 viewer UI is shared by authenticated and public dashboards',
   const viewerCss = read('assets/css/dashboard-viewer.css');
   const renderer = read('assets/js/dashboard-builder/renderer.js');
   for (const page of [builder, publicPage]) {
-    assert.match(page, /dashboard-viewer\.css\?v=70139/);
-    assert.match(page, /dashboard-builder\/viewer-ui\.js\?v=70139/);
+    assert.match(page, /dashboard-viewer\.css\?v=70140/);
+    assert.match(page, /dashboard-builder\/viewer-ui\.js\?v=70140/);
   }
   assert.match(viewerUi, /data-viewer-filter-toggle/);
   assert.match(viewerUi, /requestFullscreen/);
@@ -278,6 +278,19 @@ test('interactive charts require a real filter callback and editor has touch-saf
   assert.match(app, /moveWidgetByStep/);
 });
 
+test('Wizard step 4 widget actions bind directly and tolerate string or numeric ids', () => {
+  const renderer = read('assets/js/dashboard-builder/renderer.js');
+  const app = read('assets/js/dashboard-builder/app.js');
+  for (const callback of ['onEdit','onDuplicate','onDelete']) {
+    assert.match(renderer, new RegExp(`options\\.${callback}`));
+  }
+  assert.match(renderer, /event\.stopPropagation\(\)/);
+  assert.match(app, /function findWidgetById\(id\)/);
+  assert.match(app, /String\(widget\.id\)===String\(id\)/);
+  assert.match(app, /onEdit:editWidgetById,onDuplicate:duplicateWidgetById,onDelete:deleteWidgetById/);
+  assert.match(app, /JSON\.parse\(JSON\.stringify\(sourceWidget\)\)/);
+});
+
 test('legacy schemas stay enabled and Private Copilot applies one atomic layout update', () => {
   const app = read('assets/js/dashboard-builder/app.js');
   assert.match(app, /function enabledColumns\(\)\{return state\.schema\.filter\(column=>column\.enabled!==false\);\}/);
@@ -318,6 +331,6 @@ test('Phase 6.11 stores schedules, installs one bounded trigger and keeps the tr
   }
   const allowlist = code.slice(code.indexOf('var haosV7139PrevGetAllowedBridgeFunctions_'), code.indexOf('function dashboardBuilderGoogleSyncHealthCheckV7139'));
   assert.doesNotMatch(allowlist, /runDashboardScheduledSyncV7139/);
-  assert.match(serviceWorker, /haos-v70-139-dashboard-google-sync/);
-  assert.match(serviceWorker, /dashboard-builder\/app\.js\?v=70139/);
+  assert.match(serviceWorker, /haos-v70-140-dashboard-widget-actions/);
+  assert.match(serviceWorker, /dashboard-builder\/app\.js\?v=70140/);
 });

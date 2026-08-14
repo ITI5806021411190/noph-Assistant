@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  const VERSION = 'v70.138-dashboard-builder-stability';
+  const VERSION = 'v70.140-dashboard-widget-actions';
   const chartByBody = new WeakMap();
   const tableStateByWidget = new Map();
   const WIDTHS = [3, 4, 6, 8, 12];
@@ -260,7 +260,23 @@
       const actions=options.editor?`<div class="db-widget-actions"><button type="button" data-widget-edit="${esc(widget.id)}" title="แก้ไข"><i class="bi bi-pencil"></i></button><button type="button" data-widget-duplicate="${esc(widget.id)}" title="ทำสำเนา"><i class="bi bi-copy"></i></button><button type="button" data-widget-delete="${esc(widget.id)}" title="ลบ"><i class="bi bi-trash"></i></button></div>`:drilldown?`<div class="db-widget-actions db-widget-view-actions">${drilldown}</div>`:'';
       card.innerHTML = `<header>${editorControls}<div class="db-widget-heading"><span class="db-widget-kind">${esc(String(widget.type).toUpperCase())}</span><h3>${esc(widget.title||'Widget')}</h3></div>${actions}</header><div class="db-widget-body" data-widget-body></div>${options.editor?'<button class="db-widget-resize" type="button" data-widget-resize title="ลากเพื่อปรับขนาด" aria-label="ปรับขนาด Widget"><i class="bi bi-arrows-angle-expand"></i></button>':''}`;
       grid.appendChild(card);
-      if(options.editor){setupEditorDrag(card,widget,options);setupEditorResize(card,grid,widget,options);}
+      if(options.editor){
+        setupEditorDrag(card,widget,options);
+        setupEditorResize(card,grid,widget,options);
+        [
+          ['[data-widget-edit]',options.onEdit],
+          ['[data-widget-duplicate]',options.onDuplicate],
+          ['[data-widget-delete]',options.onDelete]
+        ].forEach(([selector,handler])=>{
+          const button=card.querySelector(selector);
+          if(!button||typeof handler!=='function')return;
+          button.addEventListener('click',event=>{
+            event.preventDefault();
+            event.stopPropagation();
+            handler(widget.id);
+          });
+        });
+      }
       const drillButton=card.querySelector('[data-widget-drilldown]');if(drillButton)drillButton.addEventListener('click',()=>options.onDrilldown({widgetId:widget.id,title:widget.title||'รายละเอียดข้อมูล',fields:(widget.fields||[]).slice(0,12)}));
       renderWidget(card,widget,visibleRows,theme,options);
     });

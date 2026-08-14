@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  const VERSION='v70.139-dashboard-google-sync';
+  const VERSION='v70.140-dashboard-widget-actions';
   const $=id=>document.getElementById(id);
   const esc=value=>window.HAOSDashboardRenderer.esc(value);
   const state={token:'',project:null,rows:[],schema:[],public:{},filters:[],crossFilters:[]};
