@@ -8,9 +8,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-  <link href="/assets/css/dashboard-builder.css?v=70138" rel="stylesheet">
-  <link href="/assets/css/dashboard-builder-enhancements.css?v=70138" rel="stylesheet">
-  <link href="/assets/css/dashboard-viewer.css?v=70138" rel="stylesheet">
+  <link href="/assets/css/dashboard-builder.css?v=70139" rel="stylesheet">
+  <link href="/assets/css/dashboard-builder-enhancements.css?v=70139" rel="stylesheet">
+  <link href="/assets/css/dashboard-viewer.css?v=70139" rel="stylesheet">
   <script>
   (function(){
     if(window.google&&google.script&&google.script.run)return;
@@ -119,7 +119,7 @@
       <div class="db-wizard-nav"><button id="dbCancelWizard" class="db-btn">ยกเลิก</button><span id="dbWizardMessage"></span><div><button id="dbPrevStep" class="db-btn" disabled>ย้อนกลับ</button> <button id="dbNextStep" class="db-btn primary">ถัดไป</button> <button id="dbSaveProject" class="db-btn green db-hidden"><i class="bi bi-save"></i> บันทึก Dashboard</button></div></div>
     </section>
 
-    <section id="dbViewerView" class="db-panel db-hidden"><div class="db-toolbar"><button id="dbBackList" class="db-btn"><i class="bi bi-arrow-left"></i> รายการ</button><div><strong id="dbViewerTitle"></strong><div id="dbViewerMeta" class="db-help"></div></div><span class="db-grow"></span><button id="dbPublicShareCurrent" class="db-btn db-hidden"><i class="bi bi-globe2"></i> ลิงก์สาธารณะ</button><button id="dbRefreshDashboard" class="db-btn" title="โหลดข้อมูลที่บันทึกล่าสุด"><i class="bi bi-arrow-clockwise"></i> รีเฟรช</button><button id="dbExportCurrent" class="db-btn"><i class="bi bi-download"></i> Export CSV</button><button id="dbEditCurrent" class="db-btn primary"><i class="bi bi-pencil"></i> แก้ไข</button></div><div id="dbViewerFilters" class="db-toolbar"></div><div id="dbViewerInteractions" class="db-interaction-bar db-hidden"></div><div id="dbViewerCanvas" class="db-dashboard" style="margin:18px"></div></section>
+    <section id="dbViewerView" class="db-panel db-hidden"><div class="db-toolbar"><button id="dbBackList" class="db-btn"><i class="bi bi-arrow-left"></i> รายการ</button><div><strong id="dbViewerTitle"></strong><div id="dbViewerMeta" class="db-help"></div></div><span class="db-grow"></span><button id="dbSyncCurrent" class="db-btn db-hidden" title="ซิงก์ข้อมูลจาก Google Sheets และตั้งเวลาซิงก์"><i class="bi bi-cloud-arrow-down"></i> ซิงก์ Google Sheet</button><button id="dbPublicShareCurrent" class="db-btn db-hidden"><i class="bi bi-globe2"></i> ลิงก์สาธารณะ</button><button id="dbRefreshDashboard" class="db-btn" title="โหลดข้อมูลที่บันทึกล่าสุด"><i class="bi bi-arrow-clockwise"></i> รีเฟรช</button><button id="dbExportCurrent" class="db-btn"><i class="bi bi-download"></i> Export CSV</button><button id="dbEditCurrent" class="db-btn primary"><i class="bi bi-pencil"></i> แก้ไข</button></div><div id="dbViewerFilters" class="db-toolbar"></div><div id="dbViewerInteractions" class="db-interaction-bar db-hidden"></div><div id="dbViewerCanvas" class="db-dashboard" style="margin:18px"></div></section>
   </main>
 
   <div id="dbWidgetModal" class="db-modal" role="dialog" aria-modal="true" aria-labelledby="dbWidgetModalTitle"><div class="db-dialog"><h2 id="dbWidgetModalTitle">ตั้งค่า Widget</h2><div class="db-grid-2"><div class="db-field" style="grid-column:1/-1"><label for="dbWidgetTitle">ชื่อ Widget</label><input id="dbWidgetTitle" class="db-input"></div><div class="db-field"><label for="dbWidgetDimension" title="Dimension คือคอลัมน์ที่ใช้แบ่งกลุ่ม เช่น เดือน หรือกลุ่มงาน">มิติข้อมูล (Dimension) <i class="bi bi-info-circle"></i></label><select id="dbWidgetDimension" class="db-select"></select></div><div class="db-field"><label for="dbWidgetMetric" title="Metric คือคอลัมน์ค่าที่ต้องการคำนวณ เช่น จำนวนเงิน หรือผลงาน">ค่าที่คำนวณ (Metric) <i class="bi bi-info-circle"></i></label><select id="dbWidgetMetric" class="db-select"></select></div><div class="db-field"><label for="dbWidgetAggregation" title="Aggregation คือวิธีรวมค่า เช่น นับ ผลรวม หรือค่าเฉลี่ย">วิธีรวมค่า (Aggregation) <i class="bi bi-info-circle"></i></label><select id="dbWidgetAggregation" class="db-select"><option value="count">นับทั้งหมด</option><option value="distinct">นับไม่ซ้ำ</option><option value="sum">ผลรวม</option><option value="avg">ค่าเฉลี่ย</option><option value="min">ค่าน้อยสุด</option><option value="max">ค่าสูงสุด</option></select></div><div class="db-field"><label for="dbWidgetWidth">ความกว้าง</label><select id="dbWidgetWidth" class="db-select"><option value="3">3/12</option><option value="4">4/12</option><option value="6" selected>6/12</option><option value="8">8/12</option><option value="12">12/12</option></select></div><div class="db-field"><label for="dbWidgetHeight">ความสูง</label><select id="dbWidgetHeight" class="db-select"><option value="240">กะทัดรัด (240 px)</option><option value="320" selected>มาตรฐาน (320 px)</option><option value="440">สูง (440 px)</option><option value="600">รายงาน (600 px)</option></select></div></div><div class="db-dialog-actions"><button class="db-btn" data-close-modal="dbWidgetModal">ยกเลิก</button><button id="dbConfirmWidget" class="db-btn primary">บันทึก Widget</button></div></div></div>
@@ -149,7 +149,29 @@
     </div>
   </div>
 
+  <div id="dbSyncModal" class="db-modal" role="dialog" aria-modal="true" aria-labelledby="dbSyncTitle">
+    <div class="db-dialog db-sync-dialog">
+      <div class="db-section-title"><div><h2 id="dbSyncTitle"><i class="bi bi-arrow-repeat"></i> Google Sheet Data Sync</h2><div class="db-help">ซิงก์ข้อมูลต้นทางโดยคง Layout, Widget, ตัวกรอง และสิทธิ์เดิมไว้</div></div><button class="db-btn" type="button" data-close-modal="dbSyncModal" title="ปิด"><i class="bi bi-x-lg"></i></button></div>
+      <div id="dbSyncSource" class="db-sync-source"></div>
+      <div class="db-warning"><i class="bi bi-shield-check"></i> ระบบจะตรวจหัวคอลัมน์ก่อน สร้างชุดข้อมูลใหม่ให้ครบ แล้วจึงสลับ Dashboard ไปใช้ข้อมูลใหม่ หากผิดพลาดข้อมูลชุดเดิมยังคงใช้งานได้</div>
+      <div class="db-sync-grid">
+        <section class="db-sync-settings">
+          <h3><i class="bi bi-clock-history"></i> Scheduled Sync</h3>
+          <label class="db-switch-row"><span><strong>เปิดซิงก์อัตโนมัติ</strong><small>ตรวจงานทุก 15 นาที และซิงก์เมื่อถึงเวลาของ Dashboard นี้</small></span><input id="dbSyncEnabled" type="checkbox"></label>
+          <div class="db-field"><label for="dbSyncInterval">รอบการซิงก์</label><select id="dbSyncInterval" class="db-select"><option value="15">ทุก 15 นาที</option><option value="30">ทุก 30 นาที</option><option value="60">ทุก 1 ชั่วโมง</option><option value="360">ทุก 6 ชั่วโมง</option><option value="1440">ทุกวัน</option></select></div>
+          <label class="db-check-label"><input id="dbSyncNotifyFailure" type="checkbox" checked> แจ้งเจ้าของ Dashboard เมื่อซิงก์ล้มเหลว</label>
+          <div id="dbSyncStatus" class="db-sync-status">กำลังโหลดสถานะ...</div>
+        </section>
+        <section class="db-sync-history-section">
+          <h3><i class="bi bi-list-check"></i> ประวัติ 10 ครั้งล่าสุด</h3>
+          <div id="dbSyncHistory" class="db-sync-history"></div>
+        </section>
+      </div>
+      <div class="db-dialog-actions"><button id="dbSyncRunNow" class="db-btn primary" type="button"><i class="bi bi-cloud-download"></i> ซิงก์ตอนนี้</button><span class="db-grow"></span><button id="dbSyncSave" class="db-btn green" type="button"><i class="bi bi-save"></i> บันทึกการตั้งเวลา</button></div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-  <script src="/assets/js/dashboard-builder/data-connectors.js?v=70138"></script><script src="/assets/js/dashboard-builder/renderer.js?v=70138"></script><script src="/assets/js/dashboard-builder/app.js?v=70138"></script><script src="/assets/js/dashboard-builder/viewer-ui.js?v=70138"></script>
+  <script src="/assets/js/dashboard-builder/data-connectors.js?v=70139"></script><script src="/assets/js/dashboard-builder/renderer.js?v=70139"></script><script src="/assets/js/dashboard-builder/app.js?v=70139"></script><script src="/assets/js/dashboard-builder/viewer-ui.js?v=70139"></script>
 </body>
 </html>

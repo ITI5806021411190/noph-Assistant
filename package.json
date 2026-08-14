@@ -1,6 +1,6 @@
 {
   "name": "health-assistant-os",
-  "version": "70.138.0",
+  "version": "70.139.0",
   "private": true,
   "type": "module",
   "dependencies": {

@@ -327,3 +327,29 @@ textarea:focus-visible {
   .db-drilldown-dialog { height: 100vh; max-height: 100vh; border-radius: 0; }
   .db-drilldown-tools { flex-direction: column; }
 }
+
+/* Google Sheet Data Sync v70.139 */
+.db-sync-dialog { width: min(1040px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow: auto; }
+.db-sync-source { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 18px; align-items: center; padding: 14px 16px; margin: 14px 0; border: 1px solid #bae6fd; border-left: 5px solid #0ea5e9; border-radius: 8px; background: #f0f9ff; overflow-wrap: anywhere; }
+.db-sync-source strong, .db-sync-source small { display: block; }
+.db-sync-source small { margin-top: 3px; color: #64748b; }
+.db-sync-grid { display: grid; grid-template-columns: minmax(280px, .8fr) minmax(420px, 1.2fr); gap: 18px; margin-top: 16px; }
+.db-sync-settings, .db-sync-history-section { padding: 16px; border: 1px solid #dbe4ef; border-radius: 8px; background: #fff; }
+.db-sync-settings h3, .db-sync-history-section h3 { margin: 0 0 14px; font-size: 1rem; }
+.db-sync-status { margin-top: 14px; padding: 12px; border: 1px solid #dbeafe; border-radius: 8px; background: #f8fbff; color: #475569; line-height: 1.65; }
+.db-sync-status.success { border-color: #86efac; background: #f0fdf4; color: #166534; }
+.db-sync-status.failed { border-color: #fecaca; background: #fff1f2; color: #b91c1c; }
+.db-sync-status.running { border-color: #bae6fd; background: #f0f9ff; color: #0369a1; }
+.db-sync-history { display: grid; gap: 8px; max-height: 330px; overflow: auto; }
+.db-sync-history-item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: start; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; }
+.db-sync-history-item i { margin-top: 2px; color: #0284c7; }
+.db-sync-history-item.failed i { color: #dc2626; }
+.db-sync-history-item strong, .db-sync-history-item small { display: block; }
+.db-sync-history-item small { margin-top: 2px; color: #64748b; }
+.db-sync-history-item time { color: #64748b; font-size: .82rem; white-space: nowrap; }
+
+@media (max-width: 820px) {
+  .db-sync-grid, .db-sync-source { grid-template-columns: 1fr; }
+  .db-sync-history-item { grid-template-columns: auto minmax(0, 1fr); }
+  .db-sync-history-item time { grid-column: 2; white-space: normal; }
+}

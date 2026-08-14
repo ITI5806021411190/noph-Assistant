@@ -132,7 +132,7 @@ Integration files changed: `Code.gs.txt`, `index.html`, `vercel.json`, `sw.js` a
 ## Known MVP constraints
 
 - Authenticated viewing still follows the permissions above. Phase 6 optionally adds signed read-only public links with a column whitelist, PIN, expiry, export control and revoke/regenerate actions; see `docs/DASHBOARD_BUILDER_PUBLIC_SHARING.md`.
-- Scheduled refresh, external REST/database connectors and direct Microsoft Access import are not implemented.
+- Google Sheets manual refresh and scheduled refresh are available from v70.139. External REST/database connectors and direct Microsoft Access import are not implemented.
 - Dashboard PDF/image export and server-side chart rendering are not implemented. Table data can be exported safely to CSV.
 - Upload parsing runs in the browser; the 15 MB and 20,000-row limits protect browser and Google Sheets performance.
 - Google Sheets access follows the Apps Script deployer account, not a separate per-user Google OAuth connection.
