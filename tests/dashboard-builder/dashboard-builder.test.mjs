@@ -49,7 +49,7 @@ test('standalone route and frontend assets are wired', () => {
   assert.match(page, /data-step="5"/);
   assert.match(page, /data-list-scope="recent"/);
   assert.match(page, /id="dbGoogleHeaderRow"/);
-  assert.match(page, /dashboard-builder\/app\.js\?v=70140/);
+  assert.match(page, /dashboard-builder\/app\.js\?v=70141/);
 });
 
 test('public Dashboard route opens the standalone read-only viewer', () => {
@@ -189,8 +189,8 @@ test('Phase 6.1-6.4 viewer UI is shared by authenticated and public dashboards',
   const viewerCss = read('assets/css/dashboard-viewer.css');
   const renderer = read('assets/js/dashboard-builder/renderer.js');
   for (const page of [builder, publicPage]) {
-    assert.match(page, /dashboard-viewer\.css\?v=70140/);
-    assert.match(page, /dashboard-builder\/viewer-ui\.js\?v=70140/);
+    assert.match(page, /dashboard-viewer\.css\?v=70141/);
+    assert.match(page, /dashboard-builder\/viewer-ui\.js\?v=70141/);
   }
   assert.match(viewerUi, /data-viewer-filter-toggle/);
   assert.match(viewerUi, /requestFullscreen/);
@@ -291,6 +291,15 @@ test('Wizard step 4 widget actions bind directly and tolerate string or numeric 
   assert.match(app, /JSON\.parse\(JSON\.stringify\(sourceWidget\)\)/);
 });
 
+test('Wizard step 4 keeps controls, actions and titles in separate rows on narrow widgets', () => {
+  const css = read('assets/css/dashboard-builder-enhancements.css');
+  assert.match(css, /#dbEditorCanvas \.db-widget header/);
+  assert.match(css, /grid-template-areas:\s*"tools actions"\s*"heading heading"/);
+  assert.match(css, /#dbEditorCanvas \.db-widget-heading \{ grid-area: heading/);
+  assert.match(css, /#dbEditorCanvas \.db-widget-actions \{ grid-area: actions/);
+  assert.match(css, /#dbEditorCanvas \.db-widget\[data-widget-width="3"\] \[data-widget-size-label\]/);
+});
+
 test('legacy schemas stay enabled and Private Copilot applies one atomic layout update', () => {
   const app = read('assets/js/dashboard-builder/app.js');
   assert.match(app, /function enabledColumns\(\)\{return state\.schema\.filter\(column=>column\.enabled!==false\);\}/);
@@ -331,6 +340,6 @@ test('Phase 6.11 stores schedules, installs one bounded trigger and keeps the tr
   }
   const allowlist = code.slice(code.indexOf('var haosV7139PrevGetAllowedBridgeFunctions_'), code.indexOf('function dashboardBuilderGoogleSyncHealthCheckV7139'));
   assert.doesNotMatch(allowlist, /runDashboardScheduledSyncV7139/);
-  assert.match(serviceWorker, /haos-v70-140-dashboard-widget-actions/);
-  assert.match(serviceWorker, /dashboard-builder\/app\.js\?v=70140/);
+  assert.match(serviceWorker, /haos-v70-141-dashboard-editor-layout/);
+  assert.match(serviceWorker, /dashboard-builder\/app\.js\?v=70141/);
 });

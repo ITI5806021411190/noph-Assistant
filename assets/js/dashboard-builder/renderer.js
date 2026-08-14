@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  const VERSION = 'v70.140-dashboard-widget-actions';
+  const VERSION = 'v70.141-dashboard-editor-layout';
   const chartByBody = new WeakMap();
   const tableStateByWidget = new Map();
   const WIDTHS = [3, 4, 6, 8, 12];

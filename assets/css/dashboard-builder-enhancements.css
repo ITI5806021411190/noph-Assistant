@@ -277,6 +277,25 @@ textarea:focus-visible {
 .db-widget-resize { position: absolute; right: 5px; bottom: 5px; display: grid; width: 30px; height: 30px; place-items: center; border: 0; color: var(--db-widget-muted); background: transparent; cursor: nwse-resize; }
 .db-widget-resize:hover { color: var(--db-blue); background: #eaf3ff; }
 
+/* Wizard step 4: keep editor controls and widget titles in stable rows. */
+#dbEditorCanvas .db-widget { display: flex; flex-direction: column; }
+#dbEditorCanvas .db-widget header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "tools actions"
+    "heading heading";
+  align-items: center;
+  gap: 8px 10px;
+}
+#dbEditorCanvas .db-widget-editor-tools { grid-area: tools; min-width: 0; overflow: hidden; }
+#dbEditorCanvas .db-widget-heading { grid-area: heading; width: 100%; }
+#dbEditorCanvas .db-widget-heading h3 { margin: 2px 0 0; line-height: 1.4; overflow-wrap: anywhere; }
+#dbEditorCanvas .db-widget-actions { grid-area: actions; align-self: start; justify-self: end; flex: 0 0 auto; }
+#dbEditorCanvas .db-widget-body,
+#dbEditorCanvas .db-widget[data-widget-type="table"] .db-widget-body { height: auto; flex: 1; min-height: 0; }
+#dbEditorCanvas .db-widget[data-widget-width="3"] [data-widget-size-label] { display: none; }
+
 @media (max-width: 760px) {
   .db-theme-picker { grid-template-columns: 1fr; }
   .db-widget-editor-tools span { display: none; }

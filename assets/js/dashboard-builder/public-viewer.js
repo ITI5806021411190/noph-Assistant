@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  const VERSION='v70.140-dashboard-widget-actions';
+  const VERSION='v70.141-dashboard-editor-layout';
   const $=id=>document.getElementById(id);
   const esc=value=>window.HAOSDashboardRenderer.esc(value);
   const state={token:'',project:null,rows:[],schema:[],public:{},filters:[],crossFilters:[]};
