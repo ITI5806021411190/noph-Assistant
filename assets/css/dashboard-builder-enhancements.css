@@ -268,6 +268,9 @@ textarea:focus-visible {
 .db-widget-editor-tools { display: flex; flex: 0 0 auto; align-items: center; gap: 5px; color: var(--db-widget-muted); font-size: 10px; }
 .db-widget-drag { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid var(--db-widget-line); border-radius: 6px; color: var(--db-widget-muted); background: var(--db-widget-bg); cursor: grab; }
 .db-widget-drag:active { cursor: grabbing; }
+.db-widget-order { display: grid; width: 30px; height: 30px; place-items: center; border: 1px solid var(--db-widget-line); border-radius: 6px; color: var(--db-widget-muted); background: var(--db-widget-bg); }
+.db-widget-order:hover,
+.db-widget-order:focus-visible { color: var(--db-blue); border-color: var(--db-blue); outline: none; }
 .db-widget.is-dragging { opacity: .5; transform: scale(.985); }
 .db-widget.is-drop-target { outline: 3px solid rgba(22,119,255,.35); outline-offset: 2px; }
 .db-widget.is-resizing { user-select: none; box-shadow: 0 0 0 3px rgba(22,119,255,.24); }
@@ -280,7 +283,7 @@ textarea:focus-visible {
   .db-widget-types { grid-template-columns: 1fr 1fr; }
 }
 
-/* Dashboard Builder v70.137: templates, smart layout and private Copilot. */
+/* Dashboard Builder v70.138: stable lifecycle, touch-safe ordering and private Copilot. */
 .db-smart-layout-actions,
 .db-device-preview { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px; }
 .db-smart-layout-actions button,

@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard Builder v70.138 Regression Harness</title>
+  <link rel="stylesheet" href="/assets/css/dashboard-builder.css?v=70138">
+  <link rel="stylesheet" href="/assets/css/dashboard-builder-enhancements.css?v=70138">
+  <link rel="stylesheet" href="/assets/css/dashboard-viewer.css?v=70138">
+  <style>
+    body { margin: 0; background: #eef6f8; color: #172033; }
+    .harness-status { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 16px; background: #fff; border-bottom: 1px solid #d9e5ea; }
+    .harness-status output { padding: 6px 10px; border: 1px solid #c7dce5; border-radius: 6px; background: #f8fcfd; }
+    .harness-status output.pass { border-color: #36a269; color: #08733d; }
+  </style>
+</head>
+<body>
+  <div class="harness-status" aria-label="ผลทดสอบ">
+    <button class="db-btn" type="button" id="rerender">Render ซ้ำ</button>
+    <output id="renderCount">render: 0</output>
+    <output id="destroyCount">destroy: 0</output>
+    <output id="widgetCount">widgets: 0</output>
+    <output id="tableState">table state: waiting</output>
+  </div>
+  <main class="db-shell">
+    <section id="dbViewerView" class="db-panel">
+      <header class="db-toolbar">
+        <div><strong>Dashboard Builder Regression</strong><div>ทดสอบ Phase 6.1, 6.2, 6.3, 6.4, 6.6 และ 6.9</div></div>
+      </header>
+      <div id="dbViewerFilters">
+        <label>กลุ่มงาน
+          <select class="db-select" data-view-filter="department">
+            <option value="">ทั้งหมด</option>
+            <option value="สุขภาพดิจิทัล">สุขภาพดิจิทัล</option>
+            <option value="ส่งเสริมสุขภาพ">ส่งเสริมสุขภาพ</option>
+          </select>
+        </label>
+      </div>
+      <div id="dbViewerCanvas" class="db-dashboard"></div>
+    </section>
+  </main>
+
+  <script>
+    window.__harnessChartCreated = 0;
+    window.__harnessChartDestroyed = 0;
+    window.Chart = class HarnessChart {
+      constructor(canvas, config) {
+        this.canvas = canvas;
+        this.config = config;
+        window.__harnessChartCreated += 1;
+        canvas.width = 640;
+        canvas.height = 240;
+        const context = canvas.getContext('2d');
+        context.fillStyle = '#f4fbfd';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        const values = config.data.datasets[0].data || [];
+        values.forEach((value, index) => {
+          context.fillStyle = ['#1677ff', '#0aa577', '#f59e0b', '#ef4444'][index % 4];
+          context.fillRect(32 + index * 110, 210 - Math.min(180, Number(value) * 12), 72, Math.min(180, Number(value) * 12));
+        });
+      }
+      destroy() {
+        window.__harnessChartDestroyed += 1;
+        document.getElementById('destroyCount').textContent = `destroy: ${window.__harnessChartDestroyed}`;
+      }
+    };
+  </script>
+  <script src="/assets/js/dashboard-builder/renderer.js?v=70138"></script>
+  <script src="/assets/js/dashboard-builder/viewer-ui.js?v=70138"></script>
+  <script>
+    const rows = [
+      {department:'สุขภาพดิจิทัล', status:'เสร็จแล้ว', amount:12, owner:'วรวงศ์'},
+      {department:'สุขภาพดิจิทัล', status:'กำลังทำ', amount:8, owner:'สิริเศรษฐ์'},
+      {department:'ส่งเสริมสุขภาพ', status:'เสร็จแล้ว', amount:16, owner:'รุ้งโรจน์'},
+      {department:'ส่งเสริมสุขภาพ', status:'รอดำเนินการ', amount:5, owner:'พัทธีรา'}
+    ];
+    const project = {
+      title: 'Dashboard ทดสอบ',
+      config: {
+        theme: 'executive',
+        density: 'comfortable',
+        filters: [{field:'department', type:'dropdown', title:'กลุ่มงาน'}],
+        widgets: [
+          {id:'kpi-total', type:'kpi', title:'จำนวนรายการ', aggregation:'count', width:3, height:240, order:0},
+          {id:'bar-department', type:'bar', title:'จำนวนตามกลุ่มงาน', dimension:'department', aggregation:'count', width:6, height:320, order:1},
+          {id:'line-status', type:'line', title:'ยอดตามสถานะ', dimension:'status', metric:'amount', aggregation:'sum', width:6, height:320, order:2},
+          {id:'table-detail', type:'table', title:'รายละเอียด', fields:['department','status','amount','owner'], width:12, height:440, order:3, limit:20}
+        ]
+      }
+    };
+    const canvas = document.getElementById('dbViewerCanvas');
+    let renderCount = 0;
+    function filters() {
+      const value = document.querySelector('[data-view-filter="department"]').value;
+      return value ? [{field:'department', value}] : [];
+    }
+    function render() {
+      HAOSDashboardRenderer.render(canvas, project, rows, {
+        filters: filters(),
+        interactive: {crossFilter:true, drilldown:true},
+        onChartFilter(detail) {
+          document.querySelector('[data-view-filter="department"]').value = detail.field === 'department' ? detail.value : '';
+          render();
+        },
+        onDrilldown() {}
+      });
+    }
+    canvas.addEventListener('haos:dashboard-rendered', () => {
+      renderCount += 1;
+      document.getElementById('renderCount').textContent = `render: ${renderCount}`;
+      const count = canvas.querySelectorAll('.db-widget').length;
+      const widgetOutput = document.getElementById('widgetCount');
+      widgetOutput.textContent = `widgets: ${count}`;
+      widgetOutput.classList.toggle('pass', count === 4);
+      requestAnimationFrame(() => {
+        const search = canvas.querySelector('[data-table-search]');
+        document.getElementById('tableState').textContent = `table state: ${search && search.value ? search.value : 'empty'}`;
+      });
+    });
+    document.querySelector('[data-view-filter="department"]').addEventListener('input', render);
+    document.querySelector('[data-view-filter="department"]').addEventListener('change', render);
+    document.getElementById('rerender').addEventListener('click', render);
+    render();
+    setTimeout(() => {
+      const search = canvas.querySelector('[data-table-search]');
+      search.value = 'วรวงศ์';
+      search.dispatchEvent(new Event('input', {bubbles:true}));
+      render();
+      document.getElementById('tableState').classList.toggle('pass', canvas.querySelector('[data-table-search]').value === 'วรวงศ์');
+    }, 30);
+  </script>
+</body>
+</html>

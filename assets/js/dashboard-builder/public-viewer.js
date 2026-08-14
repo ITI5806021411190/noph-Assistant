@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  const VERSION='v70.137-dashboard-interactive-copilot';
+  const VERSION='v70.138-dashboard-builder-stability';
   const $=id=>document.getElementById(id);
   const esc=value=>window.HAOSDashboardRenderer.esc(value);
   const state={token:'',project:null,rows:[],schema:[],public:{},filters:[],crossFilters:[]};

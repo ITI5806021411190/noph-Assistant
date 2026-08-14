@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  const VERSION = 'v70.137-dashboard-interactive-copilot';
+  const VERSION = 'v70.138-dashboard-builder-stability';
   let drilldownState={rows:[],fields:[],title:'',exportName:'dashboard-detail'};
 
   function el(tag, className, html) {
@@ -25,6 +25,15 @@
       if (hasValue) active.add(String(key));
     });
     return active.size;
+  }
+
+  function canvasDetail(canvas) {
+    return {
+      totalRows: Number(canvas.dataset.totalRows || 0),
+      visibleRows: Number(canvas.dataset.visibleRows || 0),
+      widgetCount: Number(canvas.dataset.widgetCount || 0),
+      activeFilters: Number(canvas.dataset.activeFilterCount || 0)
+    };
   }
 
   function clearFilters(panel) {
@@ -175,16 +184,8 @@
 
     toggle.addEventListener('click', () => setFiltersVisible(filters.classList.contains('is-collapsed')));
     reset.addEventListener('click', () => clearFilters(filters));
-    filters.addEventListener('input', () => update({
-      totalRows: Number(canvas.dataset.totalRows || 0),
-      visibleRows: Number(canvas.dataset.visibleRows || 0),
-      widgetCount: Number(canvas.dataset.widgetCount || 0)
-    }));
-    filters.addEventListener('change', () => update({
-      totalRows: Number(canvas.dataset.totalRows || 0),
-      visibleRows: Number(canvas.dataset.visibleRows || 0),
-      widgetCount: Number(canvas.dataset.widgetCount || 0)
-    }));
+    filters.addEventListener('input', () => update(canvasDetail(canvas)));
+    filters.addEventListener('change', () => update(canvasDetail(canvas)));
     canvas.addEventListener('haos:dashboard-rendered', event => update(event.detail));
 
     fullscreen.addEventListener('click', () => root.classList.contains('is-presentation') ? exitPresentation() : enterPresentation());
@@ -212,7 +213,7 @@
     new MutationObserver(decorateWidgets).observe(canvas, {childList:true, subtree:true});
     syncFilterAvailability();
     decorateWidgets();
-    update({});
+    update(canvasDetail(canvas));
     return {update, setFiltersVisible, clearFilters:() => clearFilters(filters)};
   }
 

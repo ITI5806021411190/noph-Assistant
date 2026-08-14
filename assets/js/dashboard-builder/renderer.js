@@ -1,7 +1,8 @@
 (function () {
   'use strict';
-  const VERSION = 'v70.137-dashboard-interactive-copilot';
+  const VERSION = 'v70.138-dashboard-builder-stability';
   const chartByBody = new WeakMap();
+  const tableStateByWidget = new Map();
   const WIDTHS = [3, 4, 6, 8, 12];
   const THEMES = {
     haos: {accent:'#1483a3', line:'#087d78', palette:['#1677ff','#0aa577','#f59e0b','#ef4444','#8b5cf6','#0891b2','#ec4899','#64748b'], grid:'rgba(92,112,128,.14)', text:'#34475a'},
@@ -30,6 +31,15 @@
     container.dataset.widgetCount = String(detail.widgetCount);
     container.dataset.activeFilters = String(detail.activeFilters);
     container.dispatchEvent(new CustomEvent('haos:dashboard-rendered', {detail, bubbles:true}));
+  }
+
+  function destroyCharts(container) {
+    container.querySelectorAll('[data-widget-body]').forEach(body => {
+      const chart = chartByBody.get(body);
+      if (!chart) return;
+      try { chart.destroy(); } catch (_error) {}
+      chartByBody.delete(body);
+    });
   }
 
   function aggregate(rows, field, method) {
@@ -90,8 +100,11 @@
 
   function renderTableWidget(body, widget, rows) {
     const fields = (widget.fields && widget.fields.length ? widget.fields : Object.keys(rows[0] || {})).slice(0, 12);
-    const tableState = {query:'',sortField:'',sortDirection:1,page:1,pageSize:Number(widget.limit || 20)};
+    const stateKey = String(widget.id || widget.title || 'dashboard-table');
+    const tableState = tableStateByWidget.get(stateKey) || {query:'',sortField:'',sortDirection:1,page:1,pageSize:Number(widget.limit || 20)};
+    tableStateByWidget.set(stateKey, tableState);
     body.innerHTML = `<div class="db-table-tools"><input class="db-input" data-table-search placeholder="ค้นหาในตาราง" aria-label="ค้นหาในตาราง"><select class="db-select" data-table-size aria-label="จำนวนแถวต่อหน้า"><option value="10">10 แถว</option><option value="20">20 แถว</option><option value="50">50 แถว</option><option value="100">100 แถว</option></select><button class="db-btn" type="button" data-table-export title="ส่งออกข้อมูลที่ผ่านตัวกรอง"><i class="bi bi-download"></i> CSV</button></div><div class="db-table-wrap" data-table-wrap></div><div class="db-table-pager" data-table-pager></div>`;
+    body.querySelector('[data-table-search]').value = tableState.query;
     body.querySelector('[data-table-size]').value = String(tableState.pageSize);
     const draw = () => {
       const query = tableState.query.toLowerCase();
@@ -132,6 +145,7 @@
       return;
     }
     if (widget.type === 'table') { renderTableWidget(body, widget, rows); return; }
+    if (!widget.dimension) { body.innerHTML = '<div class="db-empty-inline">กรุณาเลือกคอลัมน์สำหรับแบ่งกลุ่มข้อมูล</div>'; return; }
     const grouped = group(rows, widget.dimension, widget.metric, widget.aggregation);
     body.innerHTML = '<canvas aria-label="กราฟ Dashboard"></canvas>';
     if (!window.Chart) { body.innerHTML = '<div class="db-empty-inline">ยังโหลดเครื่องมือกราฟไม่สำเร็จ</div>'; return; }
@@ -142,7 +156,7 @@
     const multiColor = definition.type === 'doughnut' || definition.type === 'polarArea';
     const dataset = {label:widget.title || 'ข้อมูล',data:grouped.map(item=>item.value),backgroundColor:multiColor?colors.palette:(definition.type==='bar'?colors.accent:(definition.fill?`${colors.line}33`:`${colors.line}1f`)),borderColor:multiColor?colors.palette:colors.line,borderWidth:2,borderRadius:definition.type==='bar'?5:0,tension:.28,fill:definition.fill};
     const scales = radial ? {r:{beginAtZero:true,grid:{color:colors.grid},angleLines:{color:colors.grid},pointLabels:{color:colors.text}}} : definition.type === 'doughnut' ? {} : {x:{grid:{display:false},ticks:{color:colors.text}},y:{beginAtZero:true,grid:{color:colors.grid},ticks:{color:colors.text}}};
-    const interactive=options&&!options.editor&&options.interactive&&options.interactive.crossFilter!==false&&widget.dimension;
+    const interactive=options&&!options.editor&&options.interactive&&options.interactive.crossFilter!==false&&widget.dimension&&typeof options.onChartFilter==='function';
     if(interactive)body.classList.add('is-chart-interactive');
     chartByBody.set(body, new Chart(body.querySelector('canvas'), {type:definition.type,data:{labels:grouped.map(item=>item.label),datasets:[dataset]},options:{responsive:true,maintainAspectRatio:false,indexAxis:definition.indexAxis,onClick:interactive?function(_event,elements){if(!elements.length)return;const item=grouped[elements[0].index];if(!item)return;const detail={field:widget.dimension,value:item.label,widgetId:widget.id,title:widget.title};if(options.onChartFilter)options.onChartFilter(detail);}:undefined,plugins:{legend:{display:definition.legend,position:'bottom',labels:{color:colors.text}}},scales}}));
   }
@@ -181,7 +195,11 @@
       const unit = Math.max(1, (gridRect.width - gap * 11) / 12);
       let width = nearestWidth(Number(widget.width || 6));
       let height = clamp(widget.height || defaultHeight(widget.type), 220, 720);
+      let finished = false;
       card.classList.add('is-resizing');
+      if (handle.setPointerCapture) {
+        try { handle.setPointerCapture(event.pointerId); } catch (_error) {}
+      }
       const move = moveEvent => {
         const targetColumns = (startRect.width + (moveEvent.clientX - startX) + gap) / (unit + gap);
         if (window.innerWidth > 640) width = nearestWidth(targetColumns);
@@ -192,12 +210,17 @@
         if (label) label.textContent = `${width}/12 • ${height}px`;
       };
       const end = () => {
+        if (finished) return;
+        finished = true;
         card.classList.remove('is-resizing');
         window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', end);
+        window.removeEventListener('pointercancel', end);
         options.onResize(widget.id, {width, height});
       };
       window.addEventListener('pointermove', move);
-      window.addEventListener('pointerup', end, {once:true});
+      window.addEventListener('pointerup', end);
+      window.addEventListener('pointercancel', end);
     });
   }
 
@@ -210,20 +233,29 @@
     container.dataset.dashboardTheme = theme;
     container.dataset.dashboardDensity = density;
     container.dataset.layoutVersion = String(config.layoutVersion || 1);
-    emitRendered(container, {
+    const renderDetail = {
       totalRows: (rows || []).length,
       visibleRows: visibleRows.length,
       widgetCount: (config.widgets || []).length,
       activeFilters: activeFilterCount(options.filters || [])
-    });
+    };
+    container.dataset.totalRows = String(renderDetail.totalRows);
+    container.dataset.visibleRows = String(renderDetail.visibleRows);
+    container.dataset.widgetCount = String(renderDetail.widgetCount);
+    container.dataset.activeFilterCount = String(renderDetail.activeFilters);
+    destroyCharts(container);
     container.innerHTML = '';
-    if (!config.widgets || !config.widgets.length) { container.innerHTML = '<div class="db-empty"><strong>Dashboard ยังไม่มี Widget</strong><span>เปิดโหมดแก้ไขแล้วเพิ่ม KPI, กราฟ หรือตาราง</span></div>'; return; }
+    if (!config.widgets || !config.widgets.length) {
+      container.innerHTML = '<div class="db-empty"><strong>Dashboard ยังไม่มี Widget</strong><span>เปิดโหมดแก้ไขแล้วเพิ่ม KPI, กราฟ หรือตาราง</span></div>';
+      emitRendered(container, renderDetail);
+      return;
+    }
     const grid = document.createElement('div'); grid.className = 'db-widget-grid';
     config.widgets.slice().sort((a,b)=>(a.order||0)-(b.order||0)).forEach(widget => {
       const width = nearestWidth(Number(widget.width || 6));
       const height = clamp(widget.height || defaultHeight(widget.type), 220, 720);
       const card = document.createElement('article'); card.className='db-widget'; card.dataset.widgetId=widget.id; card.dataset.widgetType=widget.type; card.dataset.widgetWidth=String(width);card.style.setProperty('--db-widget-height',`${height}px`);
-      const editorControls=options.editor?`<div class="db-widget-editor-tools"><button class="db-widget-drag" type="button" data-widget-drag title="ลากเพื่อย้ายตำแหน่ง" aria-label="ลากเพื่อย้าย ${esc(widget.title||'Widget')}"><i class="bi bi-grip-vertical"></i></button><span data-widget-size-label>${width}/12 • ${height}px</span></div>`:'';
+      const editorControls=options.editor?`<div class="db-widget-editor-tools"><button class="db-widget-drag" type="button" data-widget-drag title="ลากเพื่อย้ายตำแหน่ง" aria-label="ลากเพื่อย้าย ${esc(widget.title||'Widget')}"><i class="bi bi-grip-vertical"></i></button><button class="db-widget-order" type="button" data-widget-move-step="-1" data-widget-id="${esc(widget.id)}" title="เลื่อนไปก่อนหน้า" aria-label="เลื่อน ${esc(widget.title||'Widget')} ไปก่อนหน้า"><i class="bi bi-arrow-left"></i></button><button class="db-widget-order" type="button" data-widget-move-step="1" data-widget-id="${esc(widget.id)}" title="เลื่อนไปถัดไป" aria-label="เลื่อน ${esc(widget.title||'Widget')} ไปถัดไป"><i class="bi bi-arrow-right"></i></button><span data-widget-size-label>${width}/12 • ${height}px</span></div>`:'';
       const drilldown=!options.editor&&options.interactive&&options.interactive.drilldown!==false&&options.onDrilldown?`<button type="button" data-widget-drilldown title="ดูข้อมูลเบื้องหลัง"><i class="bi bi-search"></i></button>`:'';
       const actions=options.editor?`<div class="db-widget-actions"><button type="button" data-widget-edit="${esc(widget.id)}" title="แก้ไข"><i class="bi bi-pencil"></i></button><button type="button" data-widget-duplicate="${esc(widget.id)}" title="ทำสำเนา"><i class="bi bi-copy"></i></button><button type="button" data-widget-delete="${esc(widget.id)}" title="ลบ"><i class="bi bi-trash"></i></button></div>`:drilldown?`<div class="db-widget-actions db-widget-view-actions">${drilldown}</div>`:'';
       card.innerHTML = `<header>${editorControls}<div class="db-widget-heading"><span class="db-widget-kind">${esc(String(widget.type).toUpperCase())}</span><h3>${esc(widget.title||'Widget')}</h3></div>${actions}</header><div class="db-widget-body" data-widget-body></div>${options.editor?'<button class="db-widget-resize" type="button" data-widget-resize title="ลากเพื่อปรับขนาด" aria-label="ปรับขนาด Widget"><i class="bi bi-arrows-angle-expand"></i></button>':''}`;
@@ -233,6 +265,7 @@
       renderWidget(card,widget,visibleRows,theme,options);
     });
     container.appendChild(grid);
+    emitRendered(container, renderDetail);
   }
   window.HAOSDashboardRenderer={render,aggregate,group,filteredRows,activeFilterCount,esc,csvCell,downloadCsv,chartDefinition,version:VERSION};
 })();

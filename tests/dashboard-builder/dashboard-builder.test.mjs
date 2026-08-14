@@ -49,7 +49,7 @@ test('standalone route and frontend assets are wired', () => {
   assert.match(page, /data-step="5"/);
   assert.match(page, /data-list-scope="recent"/);
   assert.match(page, /id="dbGoogleHeaderRow"/);
-  assert.match(page, /dashboard-builder\/app\.js\?v=70137/);
+  assert.match(page, /dashboard-builder\/app\.js\?v=70138/);
 });
 
 test('public Dashboard route opens the standalone read-only viewer', () => {
@@ -189,8 +189,8 @@ test('Phase 6.1-6.4 viewer UI is shared by authenticated and public dashboards',
   const viewerCss = read('assets/css/dashboard-viewer.css');
   const renderer = read('assets/js/dashboard-builder/renderer.js');
   for (const page of [builder, publicPage]) {
-    assert.match(page, /dashboard-viewer\.css\?v=70137/);
-    assert.match(page, /dashboard-builder\/viewer-ui\.js\?v=70137/);
+    assert.match(page, /dashboard-viewer\.css\?v=70138/);
+    assert.match(page, /dashboard-builder\/viewer-ui\.js\?v=70138/);
   }
   assert.match(viewerUi, /data-viewer-filter-toggle/);
   assert.match(viewerUi, /requestFullscreen/);
@@ -254,4 +254,35 @@ test('public Dashboard payload preserves compatible layout and density metadata'
   assert.match(code, /layoutVersion:Number\(config\.layoutVersion\|\|1\)/);
   assert.match(code, /density:config\.density===['"]compact['"]\?['"]compact['"]:['"]comfortable['"]/);
   assert.match(code, /horizontalBar, line, area, pie, radar, polarArea/);
+});
+
+test('renderer completes DOM replacement before announcing the new dashboard state', () => {
+  const source = read('assets/js/dashboard-builder/renderer.js');
+  const destroyAt = source.indexOf('destroyCharts(container);');
+  const clearAt = source.indexOf("container.innerHTML = '';");
+  const appendAt = source.indexOf('container.appendChild(grid);');
+  const finalEmitAt = source.lastIndexOf('emitRendered(container, renderDetail);');
+  assert.ok(destroyAt >= 0 && destroyAt < clearAt, 'old charts must be destroyed before clearing the DOM');
+  assert.ok(appendAt >= 0 && appendAt < finalEmitAt, 'render event must fire after the new widget grid exists');
+  assert.match(source, /container\.dataset\.totalRows = String\(renderDetail\.totalRows\)/);
+  const viewerSource = read('assets/js/dashboard-builder/viewer-ui.js');
+  assert.match(viewerSource, /update\(canvasDetail\(canvas\)\);/);
+});
+
+test('interactive charts require a real filter callback and editor has touch-safe ordering', () => {
+  const renderer = read('assets/js/dashboard-builder/renderer.js');
+  const app = read('assets/js/dashboard-builder/app.js');
+  assert.match(renderer, /typeof options\.onChartFilter===['"]function['"]/);
+  assert.match(renderer, /data-widget-move-step/);
+  assert.match(renderer, /pointercancel/);
+  assert.match(app, /moveWidgetByStep/);
+});
+
+test('legacy schemas stay enabled and Private Copilot applies one atomic layout update', () => {
+  const app = read('assets/js/dashboard-builder/app.js');
+  assert.match(app, /function enabledColumns\(\)\{return state\.schema\.filter\(column=>column\.enabled!==false\);\}/);
+  assert.match(app, /column\.enabled!==false\?'checked'/);
+  const copilot = app.slice(app.indexOf('function runPrivateCopilot'), app.indexOf('async function boot'));
+  assert.match(copilot, /applyLayout\(config/);
+  assert.doesNotMatch(copilot, /smartLayout\(/);
 });
