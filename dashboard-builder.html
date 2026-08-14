@@ -8,9 +8,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-  <link href="/assets/css/dashboard-builder.css?v=70135" rel="stylesheet">
-  <link href="/assets/css/dashboard-builder-enhancements.css?v=70135" rel="stylesheet">
-  <link href="/assets/css/dashboard-viewer.css?v=70135" rel="stylesheet">
+  <link href="/assets/css/dashboard-builder.css?v=70137" rel="stylesheet">
+  <link href="/assets/css/dashboard-builder-enhancements.css?v=70137" rel="stylesheet">
+  <link href="/assets/css/dashboard-viewer.css?v=70137" rel="stylesheet">
   <script>
   (function(){
     if(window.google&&google.script&&google.script.run)return;
@@ -52,16 +52,77 @@
           <div class="db-source-pane" data-source-pane="access"><div class="db-empty"><i class="bi bi-database-exclamation" style="font-size:40px"></i><strong>ยังไม่รองรับ Microsoft Access โดยตรง</strong><span>กรุณา Export ตารางจาก Access เป็น CSV หรือ XLSX แล้วนำเข้าผ่านเมนูแรก</span></div></div>
         </section>
         <section class="db-step" data-step="3"><div class="db-section-title"><div><h2>ตรวจสอบและจัดโครงสร้างข้อมูล</h2><div id="dbDataSummary" class="db-help">ยังไม่มีข้อมูล</div></div></div><div id="dbSchemaWrap" class="db-preview-wrap"></div><h3>ตัวอย่างข้อมูล (สูงสุด 500 แถว)</h3><div id="dbPreviewWrap" class="db-preview-wrap"></div></section>
-        <section class="db-step" data-step="4"><div class="db-editor-layout"><aside class="db-editor-side"><h3>เพิ่ม Widget</h3><div class="db-widget-types"><button data-add-widget="kpi">KPI</button><button data-add-widget="bar">Bar Chart</button><button data-add-widget="line">Line Chart</button><button data-add-widget="pie">Pie / Donut</button><button data-add-widget="table">ตารางข้อมูล</button><button id="dbAiSuggestBtn">AI แนะนำ</button></div><hr><h3>ตัวกรอง Dashboard</h3><div class="db-field"><label for="dbFilterField">คอลัมน์</label><select id="dbFilterField" class="db-select"></select></div><div class="db-field"><label for="dbFilterType">รูปแบบ</label><select id="dbFilterType" class="db-select"><option value="search">ค้นหาข้อความ</option><option value="dropdown">Dropdown</option><option value="multi">เลือกหลายค่า</option><option value="date">ช่วงวันที่</option><option value="number">ช่วงตัวเลข</option></select></div><button id="dbAddFilterBtn" class="db-btn" style="width:100%;margin-top:10px"><i class="bi bi-funnel"></i> เพิ่มตัวกรอง</button><div id="dbEditorFilterList" style="display:grid;gap:7px;margin-top:10px"></div><hr><button id="dbResetLayoutBtn" class="db-btn danger" style="width:100%"><i class="bi bi-arrow-counterclockwise"></i> รีเซ็ต Layout</button><p class="db-help">ลาก Widget เพื่อสลับลำดับ และกำหนดความกว้างในหน้าต่างแก้ไข Widget</p></aside><div><div class="db-section-title"><div><h2>ตัวอย่าง Dashboard</h2><div class="db-help">หน้าดูจริงใช้ renderer ชุดเดียวกับหน้านี้</div></div><button id="dbPreviewBtn" class="db-btn"><i class="bi bi-eye"></i> พรีวิว</button></div><div id="dbEditorCanvas" class="db-dashboard"></div></div></div></section>
+        <section class="db-step" data-step="4">
+          <div class="db-editor-layout">
+            <aside class="db-editor-side">
+              <section class="db-editor-group" aria-labelledby="dbThemeHeading">
+                <h3 id="dbThemeHeading"><i class="bi bi-palette"></i> รูปแบบ Dashboard</h3>
+                <div id="dbThemePicker" class="db-theme-picker" role="radiogroup" aria-label="เลือกธีม Dashboard">
+                  <button type="button" data-dashboard-theme="haos" aria-pressed="true"><span class="db-theme-swatch haos"></span><span><strong>HAOS</strong><small>สดใส ใช้งานทั่วไป</small></span></button>
+                  <button type="button" data-dashboard-theme="executive" aria-pressed="false"><span class="db-theme-swatch executive"></span><span><strong>Executive</strong><small>ผู้บริหารและนำเสนอ</small></span></button>
+                  <button type="button" data-dashboard-theme="civic" aria-pressed="false"><span class="db-theme-swatch civic"></span><span><strong>Civic</strong><small>รายงานหน่วยงาน</small></span></button>
+                  <button type="button" data-dashboard-theme="midnight" aria-pressed="false"><span class="db-theme-swatch midnight"></span><span><strong>Midnight</strong><small>จอประชุมโทนเข้ม</small></span></button>
+                </div>
+                <div id="dbDensityControl" class="db-density-control" aria-label="ความหนาแน่นของ Dashboard">
+                  <button type="button" data-dashboard-density="comfortable" aria-pressed="true"><i class="bi bi-arrows-expand-vertical"></i> โปร่ง</button>
+                  <button type="button" data-dashboard-density="compact" aria-pressed="false"><i class="bi bi-view-stacked"></i> กระชับ</button>
+                </div>
+              </section>
+              <hr>
+              <section class="db-editor-group" aria-labelledby="dbTemplateHeading">
+                <h3 id="dbTemplateHeading"><i class="bi bi-layout-text-window-reverse"></i> แม่แบบและ Smart Layout</h3>
+                <div class="db-field"><label for="dbSmartTemplate">แม่แบบพร้อมใช้</label><select id="dbSmartTemplate" class="db-select"><option value="executive">Executive Brief</option><option value="operations">Operations Monitor</option><option value="story">Data Story</option><option value="compact">Compact Overview</option></select></div>
+                <button id="dbApplyTemplateBtn" class="db-btn" type="button" style="width:100%"><i class="bi bi-magic"></i> ใช้แม่แบบ</button>
+                <div class="db-smart-layout-actions" role="group" aria-label="จัด Layout อัตโนมัติ"><button type="button" data-smart-layout="balanced" title="จัดสมดุล"><i class="bi bi-grid-3x3-gap"></i></button><button type="button" data-smart-layout="focus" title="เน้นกราฟหลัก"><i class="bi bi-layout-sidebar-inset"></i></button><button type="button" data-smart-layout="compact" title="จัดแบบกระชับ"><i class="bi bi-view-list"></i></button></div>
+                <div class="db-device-preview" role="group" aria-label="พรีวิวอุปกรณ์"><button type="button" data-preview-device="desktop" class="active" title="Desktop"><i class="bi bi-display"></i></button><button type="button" data-preview-device="tablet" title="Tablet"><i class="bi bi-tablet"></i></button><button type="button" data-preview-device="mobile" title="Mobile"><i class="bi bi-phone"></i></button></div>
+              </section>
+              <hr>
+              <section class="db-copilot" aria-labelledby="dbCopilotHeading">
+                <h3 id="dbCopilotHeading"><i class="bi bi-stars"></i> AI Dashboard Copilot</h3>
+                <textarea id="dbCopilotPrompt" class="db-textarea" rows="3" maxlength="1200" placeholder="เช่น สร้างมุมมองผู้บริหาร เน้นแนวโน้มและงานที่ต้องเร่งดำเนินการ"></textarea>
+                <div class="db-copilot-prompts"><button type="button" data-copilot-prompt="จัด Dashboard สำหรับผู้บริหาร เน้น KPI และแนวโน้ม">สำหรับผู้บริหาร</button><button type="button" data-copilot-prompt="ตรวจ Dashboard และปรับกราฟให้เหมาะกับข้อมูล">เลือกกราฟให้เหมาะ</button><button type="button" data-copilot-prompt="จัด Layout ให้อ่านง่ายบนจอประชุม">จอประชุม</button></div>
+                <button id="dbCopilotRunBtn" class="db-btn primary" type="button" style="width:100%"><i class="bi bi-send"></i> ให้ Copilot ปรับ Dashboard</button>
+                <div id="dbCopilotResult" class="db-help" aria-live="polite">Private Copilot วิเคราะห์บนเบราว์เซอร์ ไม่ส่งข้อมูลหรือชื่อคอลัมน์ออกภายนอก</div>
+              </section>
+              <hr>
+              <h3><i class="bi bi-plus-square"></i> เพิ่ม Widget</h3>
+              <div class="db-widget-types">
+                <button type="button" data-add-widget="kpi"><i class="bi bi-speedometer2"></i><span>KPI</span></button>
+                <button type="button" data-add-widget="bar"><i class="bi bi-bar-chart"></i><span>กราฟแท่ง</span></button>
+                <button type="button" data-add-widget="horizontalBar"><i class="bi bi-bar-chart-steps"></i><span>แท่งแนวนอน</span></button>
+                <button type="button" data-add-widget="line"><i class="bi bi-graph-up"></i><span>กราฟเส้น</span></button>
+                <button type="button" data-add-widget="area"><i class="bi bi-graph-up-arrow"></i><span>กราฟพื้นที่</span></button>
+                <button type="button" data-add-widget="pie"><i class="bi bi-pie-chart"></i><span>วงกลม / Donut</span></button>
+                <button type="button" data-add-widget="radar"><i class="bi bi-bullseye"></i><span>Radar</span></button>
+                <button type="button" data-add-widget="polarArea"><i class="bi bi-circle-half"></i><span>Polar Area</span></button>
+                <button type="button" data-add-widget="table"><i class="bi bi-table"></i><span>ตารางข้อมูล</span></button>
+                <button type="button" id="dbAiSuggestBtn"><i class="bi bi-stars"></i><span>AI แนะนำ</span></button>
+              </div>
+              <hr>
+              <h3>ตัวกรอง Dashboard</h3>
+              <div class="db-field"><label for="dbFilterField">คอลัมน์</label><select id="dbFilterField" class="db-select"></select></div>
+              <div class="db-field"><label for="dbFilterType">รูปแบบ</label><select id="dbFilterType" class="db-select"><option value="search">ค้นหาข้อความ</option><option value="dropdown">Dropdown</option><option value="multi">เลือกหลายค่า</option><option value="date">ช่วงวันที่</option><option value="number">ช่วงตัวเลข</option></select></div>
+              <button id="dbAddFilterBtn" class="db-btn" style="width:100%;margin-top:10px"><i class="bi bi-funnel"></i> เพิ่มตัวกรอง</button>
+              <div id="dbEditorFilterList" style="display:grid;gap:7px;margin-top:10px"></div>
+              <hr>
+              <button id="dbResetLayoutBtn" class="db-btn danger" style="width:100%"><i class="bi bi-arrow-counterclockwise"></i> รีเซ็ต Layout</button>
+              <p class="db-help">จับไอคอนลูกศรที่หัว Widget เพื่อลากสลับตำแหน่ง และลากมุมขวาล่างเพื่อปรับความกว้างหรือความสูง</p>
+            </aside>
+            <div id="dbEditorStage" data-preview-device="desktop">
+              <div class="db-section-title"><div><h2>ตัวอย่าง Dashboard</h2><div id="dbLayoutStatus" class="db-help">ลาก วาง และปรับขนาดได้ทันที</div></div><button id="dbPreviewBtn" class="db-btn"><i class="bi bi-eye"></i> พรีวิว</button></div>
+              <div id="dbEditorCanvas" class="db-dashboard"></div>
+            </div>
+          </div>
+        </section>
         <section class="db-step" data-step="5"><div class="db-section-title"><div><h2>บันทึกและกำหนดสิทธิ์</h2><div class="db-help">ระบบตรวจสิทธิ์จาก backend ทุกครั้ง ไม่ได้ซ่อนเฉพาะปุ่ม</div></div></div><div class="db-grid-2"><div class="db-field"><label for="dbVisibility">การมองเห็น</label><select id="dbVisibility" class="db-select"><option value="private">ส่วนตัว</option><option value="group">กลุ่มงาน</option><option value="shared">ผู้ใช้ที่ระบุ</option><option value="org">ทั้งหน่วยงาน</option></select></div><div class="db-field"><label for="dbSharedUsers">แชร์ให้ผู้ใช้ (เบอร์โทรคั่นด้วย ,)</label><input id="dbSharedUsers" class="db-input" list="dbUserOptions" placeholder="08xxxxxxxx, 09xxxxxxxx"></div><div class="db-field"><label for="dbEditors">ผู้แก้ไข (เบอร์โทรคั่นด้วย ,)</label><input id="dbEditors" class="db-input" list="dbUserOptions"></div><div class="db-field"><label>ข้อมูลที่จะบันทึก</label><div id="dbSaveSummary" class="db-status">ยังไม่มีข้อมูล</div></div></div><datalist id="dbUserOptions"></datalist><div class="db-warning"><i class="bi bi-globe2"></i> หลังบันทึก Dashboard แล้ว เจ้าของสามารถเปิดลิงก์สาธารณะ เลือกคอลัมน์ ตั้ง PIN วันหมดอายุ และสิทธิ์ Export ได้จากหน้ารายการหรือหน้าดู Dashboard</div></section>
       </div>
       <div class="db-wizard-nav"><button id="dbCancelWizard" class="db-btn">ยกเลิก</button><span id="dbWizardMessage"></span><div><button id="dbPrevStep" class="db-btn" disabled>ย้อนกลับ</button> <button id="dbNextStep" class="db-btn primary">ถัดไป</button> <button id="dbSaveProject" class="db-btn green db-hidden"><i class="bi bi-save"></i> บันทึก Dashboard</button></div></div>
     </section>
 
-    <section id="dbViewerView" class="db-panel db-hidden"><div class="db-toolbar"><button id="dbBackList" class="db-btn"><i class="bi bi-arrow-left"></i> รายการ</button><div><strong id="dbViewerTitle"></strong><div id="dbViewerMeta" class="db-help"></div></div><span class="db-grow"></span><button id="dbPublicShareCurrent" class="db-btn db-hidden"><i class="bi bi-globe2"></i> ลิงก์สาธารณะ</button><button id="dbRefreshDashboard" class="db-btn" title="โหลดข้อมูลที่บันทึกล่าสุด"><i class="bi bi-arrow-clockwise"></i> รีเฟรช</button><button id="dbExportCurrent" class="db-btn"><i class="bi bi-download"></i> Export CSV</button><button id="dbEditCurrent" class="db-btn primary"><i class="bi bi-pencil"></i> แก้ไข</button></div><div id="dbViewerFilters" class="db-toolbar"></div><div id="dbViewerCanvas" class="db-dashboard" style="margin:18px"></div></section>
+    <section id="dbViewerView" class="db-panel db-hidden"><div class="db-toolbar"><button id="dbBackList" class="db-btn"><i class="bi bi-arrow-left"></i> รายการ</button><div><strong id="dbViewerTitle"></strong><div id="dbViewerMeta" class="db-help"></div></div><span class="db-grow"></span><button id="dbPublicShareCurrent" class="db-btn db-hidden"><i class="bi bi-globe2"></i> ลิงก์สาธารณะ</button><button id="dbRefreshDashboard" class="db-btn" title="โหลดข้อมูลที่บันทึกล่าสุด"><i class="bi bi-arrow-clockwise"></i> รีเฟรช</button><button id="dbExportCurrent" class="db-btn"><i class="bi bi-download"></i> Export CSV</button><button id="dbEditCurrent" class="db-btn primary"><i class="bi bi-pencil"></i> แก้ไข</button></div><div id="dbViewerFilters" class="db-toolbar"></div><div id="dbViewerInteractions" class="db-interaction-bar db-hidden"></div><div id="dbViewerCanvas" class="db-dashboard" style="margin:18px"></div></section>
   </main>
 
-  <div id="dbWidgetModal" class="db-modal" role="dialog" aria-modal="true" aria-labelledby="dbWidgetModalTitle"><div class="db-dialog"><h2 id="dbWidgetModalTitle">ตั้งค่า Widget</h2><div class="db-grid-2"><div class="db-field" style="grid-column:1/-1"><label for="dbWidgetTitle">ชื่อ Widget</label><input id="dbWidgetTitle" class="db-input"></div><div class="db-field"><label for="dbWidgetDimension" title="Dimension คือคอลัมน์ที่ใช้แบ่งกลุ่ม เช่น เดือน หรือกลุ่มงาน">มิติข้อมูล (Dimension) <i class="bi bi-info-circle"></i></label><select id="dbWidgetDimension" class="db-select"></select></div><div class="db-field"><label for="dbWidgetMetric" title="Metric คือคอลัมน์ค่าที่ต้องการคำนวณ เช่น จำนวนเงิน หรือผลงาน">ค่าที่คำนวณ (Metric) <i class="bi bi-info-circle"></i></label><select id="dbWidgetMetric" class="db-select"></select></div><div class="db-field"><label for="dbWidgetAggregation" title="Aggregation คือวิธีรวมค่า เช่น นับ ผลรวม หรือค่าเฉลี่ย">วิธีรวมค่า (Aggregation) <i class="bi bi-info-circle"></i></label><select id="dbWidgetAggregation" class="db-select"><option value="count">นับทั้งหมด</option><option value="distinct">นับไม่ซ้ำ</option><option value="sum">ผลรวม</option><option value="avg">ค่าเฉลี่ย</option><option value="min">ค่าน้อยสุด</option><option value="max">ค่ามากสุด</option></select></div><div class="db-field"><label for="dbWidgetWidth">ความกว้าง</label><select id="dbWidgetWidth" class="db-select"><option value="3">3/12</option><option value="4">4/12</option><option value="6" selected>6/12</option><option value="8">8/12</option><option value="12">12/12</option></select></div></div><div class="db-dialog-actions"><button class="db-btn" data-close-modal="dbWidgetModal">ยกเลิก</button><button id="dbConfirmWidget" class="db-btn primary">บันทึก Widget</button></div></div></div>
+  <div id="dbWidgetModal" class="db-modal" role="dialog" aria-modal="true" aria-labelledby="dbWidgetModalTitle"><div class="db-dialog"><h2 id="dbWidgetModalTitle">ตั้งค่า Widget</h2><div class="db-grid-2"><div class="db-field" style="grid-column:1/-1"><label for="dbWidgetTitle">ชื่อ Widget</label><input id="dbWidgetTitle" class="db-input"></div><div class="db-field"><label for="dbWidgetDimension" title="Dimension คือคอลัมน์ที่ใช้แบ่งกลุ่ม เช่น เดือน หรือกลุ่มงาน">มิติข้อมูล (Dimension) <i class="bi bi-info-circle"></i></label><select id="dbWidgetDimension" class="db-select"></select></div><div class="db-field"><label for="dbWidgetMetric" title="Metric คือคอลัมน์ค่าที่ต้องการคำนวณ เช่น จำนวนเงิน หรือผลงาน">ค่าที่คำนวณ (Metric) <i class="bi bi-info-circle"></i></label><select id="dbWidgetMetric" class="db-select"></select></div><div class="db-field"><label for="dbWidgetAggregation" title="Aggregation คือวิธีรวมค่า เช่น นับ ผลรวม หรือค่าเฉลี่ย">วิธีรวมค่า (Aggregation) <i class="bi bi-info-circle"></i></label><select id="dbWidgetAggregation" class="db-select"><option value="count">นับทั้งหมด</option><option value="distinct">นับไม่ซ้ำ</option><option value="sum">ผลรวม</option><option value="avg">ค่าเฉลี่ย</option><option value="min">ค่าน้อยสุด</option><option value="max">ค่าสูงสุด</option></select></div><div class="db-field"><label for="dbWidgetWidth">ความกว้าง</label><select id="dbWidgetWidth" class="db-select"><option value="3">3/12</option><option value="4">4/12</option><option value="6" selected>6/12</option><option value="8">8/12</option><option value="12">12/12</option></select></div><div class="db-field"><label for="dbWidgetHeight">ความสูง</label><select id="dbWidgetHeight" class="db-select"><option value="240">กะทัดรัด (240 px)</option><option value="320" selected>มาตรฐาน (320 px)</option><option value="440">สูง (440 px)</option><option value="600">รายงาน (600 px)</option></select></div></div><div class="db-dialog-actions"><button class="db-btn" data-close-modal="dbWidgetModal">ยกเลิก</button><button id="dbConfirmWidget" class="db-btn primary">บันทึก Widget</button></div></div></div>
 
   <div id="dbPublicShareModal" class="db-modal" role="dialog" aria-modal="true" aria-labelledby="dbPublicShareTitle">
     <div class="db-dialog db-public-share-dialog">
@@ -89,6 +150,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-  <script src="/assets/js/dashboard-builder/data-connectors.js?v=70135"></script><script src="/assets/js/dashboard-builder/renderer.js?v=70135"></script><script src="/assets/js/dashboard-builder/app.js?v=70135"></script><script src="/assets/js/dashboard-builder/viewer-ui.js?v=70135"></script>
+  <script src="/assets/js/dashboard-builder/data-connectors.js?v=70137"></script><script src="/assets/js/dashboard-builder/renderer.js?v=70137"></script><script src="/assets/js/dashboard-builder/app.js?v=70137"></script><script src="/assets/js/dashboard-builder/viewer-ui.js?v=70137"></script>
 </body>
 </html>

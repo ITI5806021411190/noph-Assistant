@@ -1,8 +1,19 @@
 (function () {
   'use strict';
+  const VERSION = 'v70.137-dashboard-interactive-copilot';
   const chartByBody = new WeakMap();
+  const WIDTHS = [3, 4, 6, 8, 12];
+  const THEMES = {
+    haos: {accent:'#1483a3', line:'#087d78', palette:['#1677ff','#0aa577','#f59e0b','#ef4444','#8b5cf6','#0891b2','#ec4899','#64748b'], grid:'rgba(92,112,128,.14)', text:'#34475a'},
+    executive: {accent:'#0b6b57', line:'#b7791f', palette:['#0b6b57','#b7791f','#274c77','#7c3f58','#53868b','#5f6b7a','#9a6b2f','#2f766d'], grid:'rgba(67,79,88,.14)', text:'#263238'},
+    civic: {accent:'#176b87', line:'#a33d5d', palette:['#176b87','#16856a','#a33d5d','#d17a22','#5667a9','#68737d','#b99a28','#3196a1'], grid:'rgba(75,98,112,.14)', text:'#304657'},
+    midnight: {accent:'#38bdf8', line:'#34d399', palette:['#38bdf8','#34d399','#fbbf24','#fb7185','#a78bfa','#22d3ee','#f472b6','#94a3b8'], grid:'rgba(148,163,184,.18)', text:'#dbeafe'}
+  };
   const esc = value => String(value == null ? '' : value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[char]);
   const numeric = value => { const number = Number(String(value == null ? '' : value).replace(/,/g, '')); return Number.isFinite(number) ? number : 0; };
+  const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || min));
+  const defaultHeight = type => type === 'table' ? 440 : type === 'kpi' ? 240 : 320;
+  const nearestWidth = value => WIDTHS.reduce((best, width) => Math.abs(width - value) < Math.abs(best - value) ? width : best, 6);
 
   function activeFilterCount(filters) {
     return (filters || []).filter(filter => {
@@ -101,7 +112,19 @@
     draw();
   }
 
-  function renderWidget(card, widget, rows) {
+  function chartDefinition(widget, theme) {
+    const colors = THEMES[theme] || THEMES.haos;
+    const definition = {type:'bar', indexAxis:'x', fill:false, legend:false, colors};
+    if (widget.type === 'line') Object.assign(definition, {type:'line'});
+    if (widget.type === 'area') Object.assign(definition, {type:'line', fill:true});
+    if (widget.type === 'pie') Object.assign(definition, {type:'doughnut', legend:true});
+    if (widget.type === 'horizontalBar') Object.assign(definition, {type:'bar', indexAxis:'y'});
+    if (widget.type === 'radar') Object.assign(definition, {type:'radar', legend:true});
+    if (widget.type === 'polarArea') Object.assign(definition, {type:'polarArea', legend:true});
+    return definition;
+  }
+
+  function renderWidget(card, widget, rows, theme, options) {
     const body = card.querySelector('[data-widget-body]');
     if (widget.type === 'kpi') {
       const value = aggregate(rows, widget.metric, widget.aggregation || 'count');
@@ -113,15 +136,80 @@
     body.innerHTML = '<canvas aria-label="กราฟ Dashboard"></canvas>';
     if (!window.Chart) { body.innerHTML = '<div class="db-empty-inline">ยังโหลดเครื่องมือกราฟไม่สำเร็จ</div>'; return; }
     const old = chartByBody.get(body); if (old) old.destroy();
-    const type = widget.type === 'line' ? 'line' : widget.type === 'pie' ? 'doughnut' : 'bar';
-    const palette = ['#1677ff','#0aa577','#f59e0b','#ef4444','#8b5cf6','#0891b2','#ec4899','#64748b'];
-    chartByBody.set(body, new Chart(body.querySelector('canvas'), {type,data:{labels:grouped.map(item=>item.label),datasets:[{label:widget.title || 'ข้อมูล',data:grouped.map(item=>item.value),backgroundColor:type==='doughnut'?palette:(type==='bar'?'#1483a3':'rgba(8,125,120,.14)'),borderColor:type==='line'?'#087d78':undefined,borderWidth:2,borderRadius:type==='bar'?5:0,tension:.25,fill:type==='line'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:type==='doughnut',position:'bottom'}},scales:type==='doughnut'?{}:{x:{grid:{display:false}},y:{beginAtZero:true,grid:{color:'rgba(92,112,128,.14)'}}}}}));
+    const definition = chartDefinition(widget, theme);
+    const colors = definition.colors;
+    const radial = definition.type === 'radar' || definition.type === 'polarArea';
+    const multiColor = definition.type === 'doughnut' || definition.type === 'polarArea';
+    const dataset = {label:widget.title || 'ข้อมูล',data:grouped.map(item=>item.value),backgroundColor:multiColor?colors.palette:(definition.type==='bar'?colors.accent:(definition.fill?`${colors.line}33`:`${colors.line}1f`)),borderColor:multiColor?colors.palette:colors.line,borderWidth:2,borderRadius:definition.type==='bar'?5:0,tension:.28,fill:definition.fill};
+    const scales = radial ? {r:{beginAtZero:true,grid:{color:colors.grid},angleLines:{color:colors.grid},pointLabels:{color:colors.text}}} : definition.type === 'doughnut' ? {} : {x:{grid:{display:false},ticks:{color:colors.text}},y:{beginAtZero:true,grid:{color:colors.grid},ticks:{color:colors.text}}};
+    const interactive=options&&!options.editor&&options.interactive&&options.interactive.crossFilter!==false&&widget.dimension;
+    if(interactive)body.classList.add('is-chart-interactive');
+    chartByBody.set(body, new Chart(body.querySelector('canvas'), {type:definition.type,data:{labels:grouped.map(item=>item.label),datasets:[dataset]},options:{responsive:true,maintainAspectRatio:false,indexAxis:definition.indexAxis,onClick:interactive?function(_event,elements){if(!elements.length)return;const item=grouped[elements[0].index];if(!item)return;const detail={field:widget.dimension,value:item.label,widgetId:widget.id,title:widget.title};if(options.onChartFilter)options.onChartFilter(detail);}:undefined,plugins:{legend:{display:definition.legend,position:'bottom',labels:{color:colors.text}}},scales}}));
+  }
+
+  function setupEditorDrag(card, widget, options) {
+    const handle = card.querySelector('[data-widget-drag]');
+    if (!handle) return;
+    handle.draggable=true;
+    handle.addEventListener('dragstart', event => {
+      card.classList.add('is-dragging');
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', widget.id);
+    });
+    handle.addEventListener('dragend', () => card.classList.remove('is-dragging'));
+    card.addEventListener('dragover', event => {event.preventDefault();event.dataTransfer.dropEffect='move';card.classList.add('is-drop-target');});
+    card.addEventListener('dragleave', () => card.classList.remove('is-drop-target'));
+    card.addEventListener('drop', event => {
+      event.preventDefault();
+      card.classList.remove('is-drop-target');
+      const source = event.dataTransfer.getData('text/plain');
+      if (source && source !== widget.id && options.onMove) options.onMove(source, widget.id);
+    });
+  }
+
+  function setupEditorResize(card, grid, widget, options) {
+    const handle = card.querySelector('[data-widget-resize]');
+    if (!handle || !options.onResize) return;
+    handle.addEventListener('pointerdown', event => {
+      if (event.button !== 0) return;
+      event.preventDefault();
+      const startX = event.clientX;
+      const startY = event.clientY;
+      const startRect = card.getBoundingClientRect();
+      const gridRect = grid.getBoundingClientRect();
+      const gap = 12;
+      const unit = Math.max(1, (gridRect.width - gap * 11) / 12);
+      let width = nearestWidth(Number(widget.width || 6));
+      let height = clamp(widget.height || defaultHeight(widget.type), 220, 720);
+      card.classList.add('is-resizing');
+      const move = moveEvent => {
+        const targetColumns = (startRect.width + (moveEvent.clientX - startX) + gap) / (unit + gap);
+        if (window.innerWidth > 640) width = nearestWidth(targetColumns);
+        height = Math.round(clamp((widget.height || startRect.height) + (moveEvent.clientY - startY), 220, 720) / 20) * 20;
+        card.dataset.widgetWidth = String(width);
+        card.style.setProperty('--db-widget-height', `${height}px`);
+        const label = card.querySelector('[data-widget-size-label]');
+        if (label) label.textContent = `${width}/12 • ${height}px`;
+      };
+      const end = () => {
+        card.classList.remove('is-resizing');
+        window.removeEventListener('pointermove', move);
+        options.onResize(widget.id, {width, height});
+      };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', end, {once:true});
+    });
   }
 
   function render(container, project, rows, options) {
     options = options || {};
     const config = project.config || {widgets:[],filters:[]};
+    const theme = THEMES[config.theme] ? config.theme : 'haos';
+    const density = config.density === 'compact' ? 'compact' : 'comfortable';
     const visibleRows = filteredRows(rows || [], options.filters || []);
+    container.dataset.dashboardTheme = theme;
+    container.dataset.dashboardDensity = density;
+    container.dataset.layoutVersion = String(config.layoutVersion || 1);
     emitRendered(container, {
       totalRows: (rows || []).length,
       visibleRows: visibleRows.length,
@@ -132,12 +220,19 @@
     if (!config.widgets || !config.widgets.length) { container.innerHTML = '<div class="db-empty"><strong>Dashboard ยังไม่มี Widget</strong><span>เปิดโหมดแก้ไขแล้วเพิ่ม KPI, กราฟ หรือตาราง</span></div>'; return; }
     const grid = document.createElement('div'); grid.className = 'db-widget-grid';
     config.widgets.slice().sort((a,b)=>(a.order||0)-(b.order||0)).forEach(widget => {
-      const card = document.createElement('article'); card.className='db-widget'; card.dataset.widgetId=widget.id; card.dataset.widgetType=widget.type; card.dataset.widgetWidth=String(Math.max(3,Math.min(12,Number(widget.width||6))));
-      card.innerHTML = `<header><div><span class="db-widget-kind">${esc(String(widget.type).toUpperCase())}</span><h3>${esc(widget.title||'Widget')}</h3></div>${options.editor?`<div class="db-widget-actions"><button type="button" data-widget-edit="${esc(widget.id)}" title="แก้ไข"><i class="bi bi-pencil"></i></button><button type="button" data-widget-duplicate="${esc(widget.id)}" title="ทำสำเนา"><i class="bi bi-copy"></i></button><button type="button" data-widget-delete="${esc(widget.id)}" title="ลบ"><i class="bi bi-trash"></i></button></div>`:''}</header><div class="db-widget-body" data-widget-body></div>`;
-      if (options.editor) { card.draggable=true; card.addEventListener('dragstart',event=>event.dataTransfer.setData('text/plain',widget.id)); card.addEventListener('dragover',event=>event.preventDefault()); card.addEventListener('drop',event=>{event.preventDefault();const source=event.dataTransfer.getData('text/plain');if(source&&source!==widget.id&&options.onMove)options.onMove(source,widget.id);}); }
-      grid.appendChild(card); renderWidget(card,widget,visibleRows);
+      const width = nearestWidth(Number(widget.width || 6));
+      const height = clamp(widget.height || defaultHeight(widget.type), 220, 720);
+      const card = document.createElement('article'); card.className='db-widget'; card.dataset.widgetId=widget.id; card.dataset.widgetType=widget.type; card.dataset.widgetWidth=String(width);card.style.setProperty('--db-widget-height',`${height}px`);
+      const editorControls=options.editor?`<div class="db-widget-editor-tools"><button class="db-widget-drag" type="button" data-widget-drag title="ลากเพื่อย้ายตำแหน่ง" aria-label="ลากเพื่อย้าย ${esc(widget.title||'Widget')}"><i class="bi bi-grip-vertical"></i></button><span data-widget-size-label>${width}/12 • ${height}px</span></div>`:'';
+      const drilldown=!options.editor&&options.interactive&&options.interactive.drilldown!==false&&options.onDrilldown?`<button type="button" data-widget-drilldown title="ดูข้อมูลเบื้องหลัง"><i class="bi bi-search"></i></button>`:'';
+      const actions=options.editor?`<div class="db-widget-actions"><button type="button" data-widget-edit="${esc(widget.id)}" title="แก้ไข"><i class="bi bi-pencil"></i></button><button type="button" data-widget-duplicate="${esc(widget.id)}" title="ทำสำเนา"><i class="bi bi-copy"></i></button><button type="button" data-widget-delete="${esc(widget.id)}" title="ลบ"><i class="bi bi-trash"></i></button></div>`:drilldown?`<div class="db-widget-actions db-widget-view-actions">${drilldown}</div>`:'';
+      card.innerHTML = `<header>${editorControls}<div class="db-widget-heading"><span class="db-widget-kind">${esc(String(widget.type).toUpperCase())}</span><h3>${esc(widget.title||'Widget')}</h3></div>${actions}</header><div class="db-widget-body" data-widget-body></div>${options.editor?'<button class="db-widget-resize" type="button" data-widget-resize title="ลากเพื่อปรับขนาด" aria-label="ปรับขนาด Widget"><i class="bi bi-arrows-angle-expand"></i></button>':''}`;
+      grid.appendChild(card);
+      if(options.editor){setupEditorDrag(card,widget,options);setupEditorResize(card,grid,widget,options);}
+      const drillButton=card.querySelector('[data-widget-drilldown]');if(drillButton)drillButton.addEventListener('click',()=>options.onDrilldown({widgetId:widget.id,title:widget.title||'รายละเอียดข้อมูล',fields:(widget.fields||[]).slice(0,12)}));
+      renderWidget(card,widget,visibleRows,theme,options);
     });
     container.appendChild(grid);
   }
-  window.HAOSDashboardRenderer={render,aggregate,group,filteredRows,activeFilterCount,esc,csvCell,downloadCsv};
+  window.HAOSDashboardRenderer={render,aggregate,group,filteredRows,activeFilterCount,esc,csvCell,downloadCsv,chartDefinition,version:VERSION};
 })();

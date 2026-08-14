@@ -49,7 +49,7 @@ test('standalone route and frontend assets are wired', () => {
   assert.match(page, /data-step="5"/);
   assert.match(page, /data-list-scope="recent"/);
   assert.match(page, /id="dbGoogleHeaderRow"/);
-  assert.match(page, /dashboard-builder\/app\.js\?v=70135/);
+  assert.match(page, /dashboard-builder\/app\.js\?v=70137/);
 });
 
 test('public Dashboard route opens the standalone read-only viewer', () => {
@@ -88,6 +88,34 @@ test('dashboard renderer supports required MVP widgets', () => {
   assert.match(source, /data-table-size/);
   assert.match(source, /data-table-export/);
   assert.match(source, /data-sort-field/);
+});
+
+test('Phase 6.2 layout editor exposes themes, density, drag handles and bounded resize', () => {
+  const page = read('dashboard-builder.html');
+  const app = read('assets/js/dashboard-builder/app.js');
+  const renderer = read('assets/js/dashboard-builder/renderer.js');
+  for (const id of ['dbThemePicker','dbDensityControl','dbWidgetHeight','dbLayoutStatus']) assert.match(page, new RegExp(`id="${id}"`));
+  for (const theme of ['haos','executive','civic','midnight']) assert.match(page, new RegExp(`data-dashboard-theme="${theme}"`));
+  assert.match(app, /layoutVersion:3/);
+  assert.match(app, /onResize:\(id,size\)/);
+  assert.match(renderer, /data-widget-drag/);
+  assert.match(renderer, /data-widget-resize/);
+  assert.match(renderer, /addEventListener\('pointerdown'/);
+  assert.match(renderer, /options\.onResize\(widget\.id, \{width, height\}\)/);
+  assert.match(renderer, /clamp\(widget\.height \|\| defaultHeight\(widget\.type\), 220, 720\)/);
+});
+
+test('Phase 6.3 renderer supports executive charts and theme-aware chart definitions', () => {
+  const context = { window:{}, console, Date, Set, Map, WeakMap, Object, String, Number, Array, RegExp, Error, Intl };
+  vm.createContext(context);
+  vm.runInContext(read('assets/js/dashboard-builder/renderer.js'), context);
+  const define = context.window.HAOSDashboardRenderer.chartDefinition;
+  assert.equal(define({type:'horizontalBar'}, 'executive').type, 'bar');
+  assert.equal(define({type:'horizontalBar'}, 'executive').indexAxis, 'y');
+  assert.equal(define({type:'area'}, 'executive').fill, true);
+  assert.equal(define({type:'radar'}, 'executive').type, 'radar');
+  assert.equal(define({type:'polarArea'}, 'executive').type, 'polarArea');
+  assert.match(read('assets/css/dashboard-builder-enhancements.css'), /data-dashboard-theme="executive"/);
 });
 
 test('dashboard HTML has unique ids and app references existing controls', () => {
@@ -154,21 +182,76 @@ test('renderer filtering handles text, number, multi-select and date range', () 
   assert.equal(filter(rows,[{field:'date',type:'date',value:{from:'2026-02-01',to:'2026-02-28'}}]).length,1);
 });
 
-test('Phase 6.1 viewer UI is shared by authenticated and public dashboards', () => {
+test('Phase 6.1-6.4 viewer UI is shared by authenticated and public dashboards', () => {
   const builder = read('dashboard-builder.html');
   const publicPage = read('dashboard-public.html');
   const viewerUi = read('assets/js/dashboard-builder/viewer-ui.js');
   const viewerCss = read('assets/css/dashboard-viewer.css');
   const renderer = read('assets/js/dashboard-builder/renderer.js');
   for (const page of [builder, publicPage]) {
-    assert.match(page, /dashboard-viewer\.css\?v=70135/);
-    assert.match(page, /dashboard-builder\/viewer-ui\.js\?v=70135/);
+    assert.match(page, /dashboard-viewer\.css\?v=70137/);
+    assert.match(page, /dashboard-builder\/viewer-ui\.js\?v=70137/);
   }
   assert.match(viewerUi, /data-viewer-filter-toggle/);
   assert.match(viewerUi, /requestFullscreen/);
+  assert.match(viewerUi, /data-presentation-next/);
+  assert.match(viewerUi, /data-presentation-exit/);
+  assert.match(viewerUi, /ArrowRight/);
+  assert.match(viewerUi, /PageDown/);
   assert.match(viewerUi, /data-visible-rows/);
   assert.match(viewerCss, /\.db-viewer-overview/);
+  assert.match(viewerCss, /\.db-presentation-dock/);
+  assert.match(viewerCss, /is-presentation-focus/);
   assert.match(viewerCss, /@media print/);
   assert.match(renderer, /haos:dashboard-rendered/);
   assert.match(renderer, /activeFilterCount/);
+});
+
+test('Phase 6.4 adds cross-filter and internal drill-down without widening public access', () => {
+  const builder = read('dashboard-builder.html');
+  const publicPage = read('dashboard-public.html');
+  const app = read('assets/js/dashboard-builder/app.js');
+  const publicViewer = read('assets/js/dashboard-builder/public-viewer.js');
+  const renderer = read('assets/js/dashboard-builder/renderer.js');
+  const viewerUi = read('assets/js/dashboard-builder/viewer-ui.js');
+  assert.match(builder, /id="dbViewerInteractions"/);
+  assert.match(publicPage, /id="dbPublicViewerInteractions"/);
+  assert.match(app, /toggleCrossFilter/);
+  assert.match(app, /openInternalDrilldown/);
+  assert.match(renderer, /options\.onChartFilter/);
+  assert.match(renderer, /options\.onDrilldown/);
+  assert.match(viewerUi, /openDrilldown/);
+  assert.match(publicViewer, /drilldown:false/);
+  assert.match(publicViewer, /state\.public\.allowExport/);
+  assert.doesNotMatch(publicViewer, /openDrilldown/);
+});
+
+test('Phase 6.6 exposes templates, smart layout and responsive preview controls', () => {
+  const page = read('dashboard-builder.html');
+  const app = read('assets/js/dashboard-builder/app.js');
+  for (const id of ['dbSmartTemplate','dbApplyTemplateBtn','dbEditorStage']) assert.match(page, new RegExp(`id="${id}"`));
+  for (const template of ['executive','operations','story','compact']) assert.match(page, new RegExp(`value="${template}"`));
+  for (const layout of ['balanced','focus','compact']) assert.match(page, new RegExp(`data-smart-layout="${layout}"`));
+  for (const device of ['desktop','tablet','mobile']) assert.match(page, new RegExp(`data-preview-device="${device}"`));
+  assert.match(app, /templateConfig/);
+  assert.match(app, /smartLayout/);
+  assert.match(app, /applySmartTemplate/);
+});
+
+test('Phase 6.9 Private Copilot runs locally and does not call a new backend AI endpoint', () => {
+  const page = read('dashboard-builder.html');
+  const app = read('assets/js/dashboard-builder/app.js');
+  for (const id of ['dbCopilotPrompt','dbCopilotRunBtn','dbCopilotResult']) assert.match(page, new RegExp(`id="${id}"`));
+  assert.match(page, /ไม่ส่งข้อมูลหรือชื่อคอลัมน์ออกภายนอก/);
+  assert.match(app, /runPrivateCopilot/);
+  assert.match(app, /data-copilot-prompt/);
+  assert.doesNotMatch(app, /copilotDashboardWithAIV7137/);
+  assert.match(read('Code.gs.txt'), /parsed\.layoutVersion=3/);
+});
+
+test('public Dashboard payload preserves compatible layout and density metadata', () => {
+  const code = read('Code.gs.txt');
+  assert.match(code, /layoutVersion:Number\(config\.layoutVersion\|\|1\)/);
+  assert.match(code, /density:config\.density===['"]compact['"]\?['"]compact['"]:['"]comfortable['"]/);
+  assert.match(code, /horizontalBar, line, area, pie, radar, polarArea/);
 });

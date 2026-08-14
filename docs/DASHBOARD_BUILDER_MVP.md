@@ -16,7 +16,7 @@ Vercel rewrites these routes to `dashboard-builder.html`; direct refresh therefo
 1. Create dashboard metadata or choose a template.
 2. Import CSV, XLS, XLSX, or a Google Sheets URL. Workbooks and Google Sheets support sheet selection and a custom header row.
 3. Review inferred column types and exclude or rename columns.
-4. Build a responsive dashboard from KPI, bar, line, pie/donut, table, and filter widgets. Data tables include search, sorting, page size, pagination, and safe CSV export.
+4. Build a responsive dashboard from KPI, bar, horizontal bar, line, area, pie/donut, radar, polar area, table, and filter widgets. Widgets can be dragged, resized and rendered with HAOS, Executive, Civic, or Midnight themes. Data tables include search, sorting, page size, pagination, and safe CSV export.
 5. Set visibility to private, group, selected users, or organization, then save.
 
 Microsoft Access is intentionally not parsed in the browser. Export Access data to CSV or XLSX first.
@@ -44,25 +44,50 @@ The project configuration is JSON and has one rendering path for preview and sav
 ```json
 {
   "version": 1,
+  "layoutVersion": 3,
+  "theme": "haos|executive|civic|midnight",
+  "density": "comfortable|compact",
   "widgets": [
     {
       "id": "widget-id",
-      "type": "kpi|bar|line|pie|table|filter",
+      "type": "kpi|bar|horizontalBar|line|area|pie|radar|polarArea|table|filter",
       "title": "Widget title",
       "dimension": "column-name",
       "metric": "column-name",
       "aggregation": "sum|average|count|min|max",
-      "width": 3
+      "width": 3,
+      "height": 240
     }
   ]
 }
 ```
+
+`layoutVersion`, `theme`, `density`, `interaction`, and widget `height` are optional compatibility fields. Existing dashboards without them continue to render with safe defaults. `v70.137` normalizes the configuration to `layoutVersion: 3` and enables cross-filter and authenticated drill-down by default.
+
+## Phase 6.2-6.3 layout and presentation
+
+- Drag a widget by its grip handle. Reordering writes to the in-memory project only; normal Dashboard save/version rules remain authoritative.
+- Resize from the lower-right handle. Width snaps to 3, 4, 6, 8, or 12 columns and height is bounded to 220-720 px. The new size commits after pointer release to avoid repeated backend writes.
+- Theme and density are saved inside the Dashboard configuration JSON. They do not create or alter Google Sheet columns.
+- Presentation Mode is available in both authenticated and public viewers. It supports overview, previous/next widget, keyboard navigation (`Arrow`, `Page Up/Down`, `Home`, `Esc`) and fullscreen when the browser permits it.
+- Executive Theme changes presentation styling and chart palettes only. It never changes datasets, filters, permissions, or public-link security.
 
 Dataset metadata records the source type/name, spreadsheet and sheet details when applicable, row and chunk counts, schema JSON, creator and timestamps. Dataset rows are split into bounded JSON chunks to remain below the Google Sheets cell-size limit.
 
 ## AI assistance
 
 The AI action sends only column metadata and a small sample, then returns a proposed widget configuration. The proposal remains editable and is not saved until the user confirms the wizard. Raw full datasets are not sent by the Dashboard Builder AI action.
+
+The separate **Private Copilot** introduced in `v70.137` is a browser-only command assistant. It applies templates, layout, theme, and filter suggestions with deterministic local rules. It does not send the prompt, dataset, sample rows, or column names to an external AI service.
+
+## Phase 6.4, 6.6 and 6.9
+
+- Interactive chart clicks can add cross-filters and show removable filter chips.
+- Authenticated viewers can drill down into rows they are already authorized to view, search them, and export the drill-down result.
+- Anonymous public viewers can cross-filter permitted aggregate charts, but drill-down is disabled to preserve the public column whitelist.
+- Four ready-to-use templates and three smart-layout modes accelerate Dashboard composition.
+- Desktop, tablet, and mobile preview widths help verify layout before saving.
+- Private Copilot interprets common Thai/English Dashboard instructions locally and leaves every proposal editable before save.
 
 ## Extension points
 
