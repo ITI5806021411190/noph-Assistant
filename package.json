@@ -1,6 +1,6 @@
 {
   "name": "health-assistant-os",
-  "version": "70.141.0",
+  "version": "70.142.0",
   "private": true,
   "type": "module",
   "dependencies": {
@@ -17,6 +17,7 @@
     "test:popular-vote:rules": "firebase emulators:exec --only firestore \"node tests/popular-vote/firestore-rules.test.mjs\"",
     "test:popular-vote:storage-rules": "firebase emulators:exec --only storage \"node tests/popular-vote/storage-rules.test.mjs\"",
     "test:popular-vote": "npm run test:popular-vote:admin && npm run test:popular-vote:rules && npm run test:popular-vote:storage-rules",
-    "test:dashboard-builder": "node --test tests/dashboard-builder/dashboard-builder.test.mjs"
+    "test:dashboard-builder": "node --test tests/dashboard-builder/dashboard-builder.test.mjs",
+    "test:it-booking": "node --test tests/it-booking/performance.test.mjs"
   }
 }

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-141-dashboard-editor-layout';
+const CACHE_NAME = 'haos-v70-142-it-booking-performance';
 const CORE = [
   '/',
   '/index.html',

@@ -4341,19 +4341,35 @@ function itBookingRowToObject_(row) {
 
 function getITBookings(phone, role, department) {
   try {
+    var startedAt = Date.now();
     var sheet = getITBookingSheet_();
     var data = sheet.getDataRange().getValues();
     var targetPhone = String(phone || '').replace(/'/g, '');
     var userRole = String(role || 'User');
     var userDept = String(department || '');
+    var map = {};
+    (data[0] || []).forEach(function(header, index) { map[String(header)] = index + 1; });
+
+    // Keep the existing authorization rule, but evaluate it once instead of
+    // re-reading Users for every booking row.
+    var canSeeAll = isITServiceStaff_(targetPhone);
+    var userPositionMap = {};
+    var userSheet = getDB().getSheetByName(SHEET_USERS);
+    if (userSheet && userSheet.getLastRow() > 1) {
+      var userData = userSheet.getDataRange().getValues();
+      for (var u = 1; u < userData.length; u++) {
+        var rowPhone = String(userData[u][0] || '').replace(/'/g, '');
+        if (rowPhone) userPositionMap[rowPhone] = userData[u][3] || '';
+      }
+    }
     var out = [];
     for (var i = 1; i < data.length; i++) {
-      var item = itBookingRowToObject_(data[i]);
-      var visible = item.ownerPhone === targetPhone || isITServiceStaff_(targetPhone) || (userRole === 'Head' && item.department === userDept);
+      var item = itBookingRowToObject_(data[i], map, userPositionMap);
+      var visible = item.ownerPhone === targetPhone || canSeeAll || (userRole === 'Head' && item.department === userDept);
       if (visible) out.push(item);
     }
     out.sort(function(a,b){ return String(b.createdAt || '').localeCompare(String(a.createdAt || '')); });
-    return { success:true, data: out };
+    return { success:true, data:out, meta:{serverMs:Date.now() - startedAt, rowsScanned:Math.max(0, data.length - 1), rowsReturned:out.length} };
   } catch(e) { logError_(phone || '', 'getITBookings', e, null); return { success:false, message:e.toString(), data:[] }; }
 }
 
@@ -5658,9 +5674,11 @@ function itSetTextByHeaderV794_(sheet, rowIndex, map, name, value) {
   range.setValue(itPlainTextV794_(value));
 }
 
-function itBookingRowToObject_(row) {
-  var sheet = getITBookingSheet_();
-  var map = itBookingHeaderMapV47_(sheet);
+function itBookingRowToObject_(row, map, userPositionMap) {
+  if (!map) {
+    var sheet = getITBookingSheet_();
+    map = itBookingHeaderMapV47_(sheet);
+  }
   function fmtDateTime_(v) {
     if (!v) return '';
     var d = v instanceof Date ? v : new Date(v);
@@ -5675,7 +5693,7 @@ function itBookingRowToObject_(row) {
     meetingId: itPlainTextV794_(itGetByHeader_(row,map,'Meeting ID')), passcode: itPlainTextV794_(itGetByHeader_(row,map,'Passcode')), meetingLink: itGetByHeader_(row,map,'Meeting Link'),
     resourceId: itGetByHeader_(row,map,'Resource ID'), roomName: itGetByHeader_(row,map,'Room Name'), otherLocation: itGetByHeader_(row,map,'Other Location'),
     startTime: fmtDateTime_(start), endTime: fmtDateTime_(end), rawStartTime: start instanceof Date ? Utilities.formatDate(start, 'GMT+7', "yyyy-MM-dd'T'HH:mm") : String(start || ''), rawEndTime: end instanceof Date ? Utilities.formatDate(end, 'GMT+7', "yyyy-MM-dd'T'HH:mm") : String(end || ''),
-    ownerPhone: ownerPhone, ownerName: itGetByHeader_(row,map,'Owner Name'), ownerPosition: itGetByHeader_(row,map,'Owner Position') || getUserPositionByPhone_(ownerPhone), department: itGetByHeader_(row,map,'Department'), status: itGetByHeader_(row,map,'Status') || 'รอเจ้าหน้าที่', approverPhone: String(itGetByHeader_(row,map,'Approver Phone') || '').replace(/'/g, ''),
+    ownerPhone: ownerPhone, ownerName: itGetByHeader_(row,map,'Owner Name'), ownerPosition: itGetByHeader_(row,map,'Owner Position') || (userPositionMap ? (userPositionMap[ownerPhone] || '') : getUserPositionByPhone_(ownerPhone)), department: itGetByHeader_(row,map,'Department'), status: itGetByHeader_(row,map,'Status') || 'รอเจ้าหน้าที่', approverPhone: String(itGetByHeader_(row,map,'Approver Phone') || '').replace(/'/g, ''),
     adminRoomId: itPlainTextV794_(itGetByHeader_(row,map,'Admin Room ID')), adminMeetingId: itPlainTextV794_(itGetByHeader_(row,map,'Admin Meeting ID')), adminPasscode: itPlainTextV794_(itGetByHeader_(row,map,'Admin Passcode')), adminLink: itGetByHeader_(row,map,'Admin Link'), cancelReason: itGetByHeader_(row,map,'Cancel Reason'), signatureData: itGetByHeader_(row,map,'Signature Data'),
     createdAt: fmtDateTime_(itGetByHeader_(row,map,'Created At')), updatedAt: fmtDateTime_(itGetByHeader_(row,map,'Updated At')),
     staffName: itGetByHeader_(row,map,'Staff Name'), staffPosition: itGetByHeader_(row,map,'Staff Position'), supervisorName: itGetByHeader_(row,map,'Supervisor Name'), supervisorPosition: itGetByHeader_(row,map,'Supervisor Position'),
@@ -14131,21 +14149,41 @@ function haosV748UpdateLinkedBookingSchedule_(bookingId, mode, actorPhone) {
   }
 }
 
+// v70.142: the list view needs only pending changes for bookings that already
+// passed getITBookings authorization. Historical requests remain available
+// through getITBookingChangeRequestsV748 when an authorized manager opens them.
+function haosV7142PendingBookingChanges_(items) {
+  var visibleIds = {};
+  (items || []).forEach(function(item) { visibleIds[String(item.id)] = true; });
+  if (!Object.keys(visibleIds).length) return [];
+
+  var sheet = haosV748BookingChangeSheet_();
+  var data = sheet.getDataRange().getValues();
+  var map = {};
+  (data[0] || []).forEach(function(header, index) { map[String(header)] = index + 1; });
+  var pending = [];
+  for (var i = 1; i < data.length; i++) {
+    var req = haosV748BookingChangeObject_(data[i], map);
+    if (req.status === 'Pending' && visibleIds[String(req.bookingId)]) pending.push(req);
+  }
+  return pending;
+}
+
 var haosV748PrevGetITBookings_ = typeof getITBookings === 'function' ? getITBookings : null;
 if (haosV748PrevGetITBookings_) {
   getITBookings = function(phone, role, department) {
     var res = haosV748PrevGetITBookings_.apply(this, arguments);
     try {
       if (res && res.success) {
-        var changes = getITBookingChangeRequestsV748(phone);
+        var changes = haosV7142PendingBookingChanges_(res.data || []);
         var pendingMap = {};
-        (changes.requests || []).forEach(function(req) {
-          if (req.status === 'Pending') pendingMap[String(req.bookingId)] = req;
+        changes.forEach(function(req) {
+          pendingMap[String(req.bookingId)] = req;
         });
         (res.data || []).forEach(function(item) {
           item.pendingChangeRequest = pendingMap[String(item.id)] || null;
         });
-        res.changeRequests = changes.requests || [];
+        res.changeRequests = changes;
       }
     } catch (ignore) {}
     return res;

@@ -17514,6 +17514,7 @@ HAOS v68.6 FINISHING FIX
   };
 
   const bookingState={view:'table',filtersOpen:false,search:'',status:'',type:'',sort:'upcoming',page:1,pageSize:20};
+  let bookingLoadInFlightV7142=null;
   const pinKey='haosV748PinnedBookings';
   function getBookings(){try{if(Array.isArray(itBookingsGlobal))return itBookingsGlobal;}catch(e){} return Array.isArray(window.itBookingsGlobal)?window.itBookingsGlobal:[];}
   function setBookings(list){window.itBookingsGlobal=list||[];try{itBookingsGlobal=list||[];}catch(e){}}
@@ -17573,17 +17574,30 @@ HAOS v68.6 FINISHING FIX
   window.updateItBookingFilterV748=function(){bookingState.search=$('itBookSearchV748')?.value||'';bookingState.status=$('itBookStatusV748')?.value||'';bookingState.type=$('itBookTypeV748')?.value||'';bookingState.sort=$('itBookSortV748')?.value||'upcoming';bookingState.page=1;renderItBookings();};
   window.resetItBookingFilterV748=function(){bookingState.search='';bookingState.status='';bookingState.type='';bookingState.sort='upcoming';bookingState.page=1;['itBookSearchV748','itBookStatusV748','itBookTypeV748'].forEach(id=>{const el=$(id);if(el)el.value='';});if($('itBookSortV748'))$('itBookSortV748').value='upcoming';renderItBookings();};
   window.setItBookingPageV748=function(page){bookingState.page=Math.max(1,page);renderItBookings();};
-  window.loadItBookings=async function(){
+  window.loadItBookings=function(){
     installBookingShell();
-    const body=$('itBookingTableBody'); if(body)body.innerHTML='<tr><td colspan="6" class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm"></span> กำลังโหลด...</td></tr>';
-    try{
-      const u=currentUser();
-      const res=await gas('getITBookings',[u.phone||'',u.role||'User',u.department||'']);
-      if(!res||!res.success)throw new Error(res?.message||'โหลดข้อมูลไม่สำเร็จ');
-      setBookings(res.data||[]);
-      window.haosV748BookingChangeRequests=res.changeRequests||[];
-      renderItBookings();
-    }catch(err){if(body)body.innerHTML=`<tr><td colspan="6" class="text-center py-4 text-danger">${esc(err.message||err)}</td></tr>`;}
+    if(bookingLoadInFlightV7142)return bookingLoadInFlightV7142;
+    const body=$('itBookingTableBody'), hadCached=getBookings().length>0;
+    if(hadCached)renderItBookings();
+    else if(body)body.innerHTML='<tr><td colspan="6" class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm"></span> กำลังโหลด...</td></tr>';
+    const started=performance.now();
+    bookingLoadInFlightV7142=(async()=>{
+      try{
+        const u=currentUser();
+        const res=await gas('getITBookings',[u.phone||'',u.role||'User',u.department||'']);
+        if(!res||!res.success)throw new Error(res?.message||'โหลดข้อมูลไม่สำเร็จ');
+        setBookings(res.data||[]);
+        window.haosV748BookingChangeRequests=res.changeRequests||[];
+        renderItBookings();
+        console.info('[IT Booking] loaded', {clientMs:Math.round(performance.now()-started),serverMs:res.meta?.serverMs,rows:res.data?.length||0});
+        return res;
+      }catch(err){
+        if(!hadCached&&body)body.innerHTML=`<tr><td colspan="6" class="text-center py-4 text-danger">${esc(err.message||err)}</td></tr>`;
+        else console.warn('[IT Booking] refresh failed; keeping cached rows',err);
+        return {success:false,message:String(err?.message||err)};
+      }finally{bookingLoadInFlightV7142=null;}
+    })();
+    return bookingLoadInFlightV7142;
   };
   window.renderItBookings=function(){
     installBookingShell();
