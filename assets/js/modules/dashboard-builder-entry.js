@@ -26,7 +26,7 @@
     const row=rows.find(item=>item.querySelector('.it-service-card'))||rows[0];
     if(!row)return;
     const col=document.createElement('div');col.id='dashboardBuilderCardV7132';col.className='col-md-4';
-    col.innerHTML='<div class="card h-100 it-service-card"><div class="card-body p-4 d-flex flex-column"><div class="mb-3 d-inline-flex align-items-center justify-content-center" style="width:48px;height:48px;border-radius:8px;background:#e8f3ff;color:#1677ff;font-size:24px"><i class="bi bi-grid-1x2-fill"></i></div><h6 class="fw-bold">Dashboard Builder</h6><p class="text-muted small flex-grow-1">สร้าง Dashboard จากไฟล์ Excel, CSV หรือ Google Sheets ได้ด้วยตนเอง</p><button class="btn btn-primary btn-sm fw-bold align-self-start" type="button" onclick="openDashboardBuilderV7132()"><i class="bi bi-box-arrow-up-right"></i> เปิด Dashboard Builder</button></div></div>';
+    col.innerHTML='<div class="card h-100 it-service-card"><div class="card-body p-4 d-flex flex-column"><div class="mb-3 d-inline-flex align-items-center justify-content-center" style="width:48px;height:48px;border-radius:8px;background:#e8f3ff;color:#1677ff;font-size:24px"><i class="bi bi-grid-1x2-fill"></i></div><h6 class="fw-bold">Dashboard Builder</h6><p class="text-muted small flex-grow-1">สร้าง Dashboard จากข้อมูล HAOS, Excel, CSV หรือ Google Sheets ได้ด้วยตนเอง</p><button class="btn btn-primary btn-sm fw-bold align-self-start" type="button" onclick="openDashboardBuilderV7132()"><i class="bi bi-box-arrow-up-right"></i> เปิด Dashboard Builder</button></div></div>';
     row.appendChild(col);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();

@@ -326,7 +326,7 @@
       li.className = 'nav-item';
       li.setAttribute('role', 'presentation');
       li.innerHTML = '<button class="nav-link" id="upcoming-agenda-tab" data-bs-toggle="tab" data-bs-target="#upcoming-agenda-pane" type="button" role="tab" onclick="window.HAOSUpcomingAgenda.render()"><i class="bi bi-calendar2-check"></i> กำหนดการวันนี้และใกล้ถึง</button>';
-      scheduleTab.closest('li')?.insertAdjacentElement('afterend', li);
+      scheduleTab.closest('li')?.insertAdjacentElement('beforebegin', li);
     }
     if (content && !$('upcoming-agenda-pane')) {
       const pane = document.createElement('div');

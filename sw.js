@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-142-it-booking-performance';
+const CACHE_NAME = 'haos-v70-144-workspace-dashboard-connectors';
 const CORE = [
   '/',
   '/index.html',
@@ -43,18 +43,20 @@ const CORE = [
   '/assets/js/modules/shared-workspace-flow.js',
   '/assets/js/modules/shared-workspace-builder.js',
   '/assets/js/modules/shared-workspace-ai-designer.js',
+  '/assets/css/workspace-tab.css?v=70143',
+  '/assets/js/modules/workspace-tab.js?v=70143',
   '/assets/js/modules/help-live-chat.js?v=70109',
   '/assets/js/modules/it-asset-import.js?v=70125',
   '/assets/js/modules/jigsaw-module.js',
   '/assets/js/modules/popular-vote-module.js?v=70131',
-  '/assets/js/modules/dashboard-builder-entry.js?v=70132',
+  '/assets/js/modules/dashboard-builder-entry.js?v=70144',
   '/assets/css/dashboard-builder.css?v=70141',
   '/assets/css/dashboard-builder-enhancements.css?v=70141',
   '/assets/css/dashboard-public.css?v=70141',
   '/assets/css/dashboard-viewer.css?v=70141',
   '/assets/js/dashboard-builder/data-connectors.js?v=70141',
   '/assets/js/dashboard-builder/renderer.js?v=70141',
-  '/assets/js/dashboard-builder/app.js?v=70141',
+  '/assets/js/dashboard-builder/app.js?v=70144',
   '/assets/js/dashboard-builder/public-viewer.js?v=70141',
   '/assets/js/dashboard-builder/viewer-ui.js?v=70141',
   '/assets/css/ai-document-summary.css',

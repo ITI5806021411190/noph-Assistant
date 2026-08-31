@@ -121,6 +121,7 @@
       return '';
     }
     if (activeTarget === '#schedule-pane') return 'schedule';
+    if (activeTarget === '#workspace-pane') return 'workspaceList';
     return '';
   }
 
@@ -222,7 +223,7 @@
         if (fn) fn();
       },
       workspaceList: () => {
-        try { window.loadSharedWorkspaces && window.loadSharedWorkspaces(); } catch (_err) {}
+        try { window.openWorkspaceTabV7143 && window.openWorkspaceTabV7143({ load: true }); } catch (_err) {}
       }
     };
     const fn = openers[module];
@@ -290,9 +291,9 @@
     wrapFunction('openITRepairDashboardV702', { tabTarget: '#itservices-pane', module: 'itRepairDashboard' });
     wrapFunction('openEMeetingModuleV714', { tabTarget: '#itservices-pane', module: 'eMeeting' });
     wrapFunction('openEMeetingModuleV715', { tabTarget: '#itservices-pane', module: 'eMeeting' });
-    wrapFunction('loadSharedWorkspaces', { tabTarget: '#schedule-pane', module: 'workspaceList' });
-    wrapFunction('openWorkspaceEditor', { tabTarget: '#schedule-pane', module: 'workspaceList' });
-    wrapFunction('openWorkspaceConfigEditorV737', { tabTarget: '#schedule-pane', module: 'workspaceList' });
+    wrapFunction('loadSharedWorkspaces', { tabTarget: '#workspace-pane', module: 'workspaceList' });
+    wrapFunction('openWorkspaceEditor', { tabTarget: '#workspace-pane', module: 'workspaceList' });
+    wrapFunction('openWorkspaceConfigEditorV737', { tabTarget: '#workspace-pane', module: 'workspaceList' });
     wrapFunction('setUnifiedScheduleViewV702', mode => ({ tabTarget: '#schedule-pane', module: 'schedule', scheduleView: mode || 'list' }));
     wrapFunction('setScheduleCombinedTabV742', tab => ({ tabTarget: '#schedule-pane', module: 'schedule', scheduleTab: tab || 'main' }));
     wrapFunction('toggleDeptScheduleViewV69', mode => ({ tabTarget: '#schedule-pane', module: 'schedule', deptScheduleView: mode || 'list' }));
@@ -313,7 +314,7 @@
     else if (/openITAssetModuleV70/.test(code)) scheduleCapture({ tabTarget: '#itservices-pane', module: 'itAsset' });
     else if (/openITRepairModuleV70/.test(code)) scheduleCapture({ tabTarget: '#itservices-pane', module: 'itRepair' });
     else if (/openEMeetingModule/.test(code)) scheduleCapture({ tabTarget: '#itservices-pane', module: 'eMeeting' });
-    else if (/openWorkspace|loadSharedWorkspaces/.test(code)) scheduleCapture({ tabTarget: '#schedule-pane', module: 'workspaceList' });
+    else if (/openWorkspace|loadSharedWorkspaces/.test(code)) scheduleCapture({ tabTarget: '#workspace-pane', module: 'workspaceList' });
     else if (/setUnifiedScheduleViewV702/.test(code)) scheduleCapture({ tabTarget: '#schedule-pane', module: 'schedule' });
   }
 
@@ -328,7 +329,7 @@
 
   function formatStateLabel(state) {
     if (!state) return 'ยังไม่มีตำแหน่งล่าสุดที่บันทึกไว้';
-    const tab = state.tabTarget === '#schedule-pane' ? 'ตารางงาน & นัดหมาย' : (state.tabTarget === '#report-pane' ? 'รายงานการปฏิบัติงาน' : 'IT Services');
+    const tab = state.tabTarget === '#schedule-pane' ? 'ตารางงาน & นัดหมาย' : (state.tabTarget === '#workspace-pane' ? 'พื้นที่ทำงานร่วมกัน' : (state.tabTarget === '#report-pane' ? 'รายงานการปฏิบัติงาน' : 'IT Services'));
     const map = {
       itBooking: 'ระบบจองห้อง/Zoom',
       itMinutes: 'รายงานการประชุม',

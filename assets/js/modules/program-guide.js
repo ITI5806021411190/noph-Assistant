@@ -16,9 +16,9 @@
   };
 
   function reorderMainTabsV733(){
-    const main=$('mainTab'), it=$('itservices-tab'), schedule=$('schedule-tab'), report=$('report-tab');
+    const main=$('mainTab'), it=$('itservices-tab'), upcoming=$('upcoming-agenda-tab'), schedule=$('schedule-tab'), workspace=$('workspace-tab'), report=$('report-tab');
     if(!main||!it||!schedule||!report)return;
-    [it,schedule,report].forEach(btn=>{const li=btn.closest('li'); if(li&&li.parentElement===main)main.appendChild(li);});
+    [it,upcoming,schedule,workspace,report].filter(Boolean).forEach(btn=>{const li=btn.closest('li'); if(li&&li.parentElement===main)main.appendChild(li);});
     if(!it.dataset.haosV733ShownHook){
       it.dataset.haosV733ShownHook='1';
       it.addEventListener('shown.bs.tab',()=>setTimeout(initITIfReadyV733,120));
@@ -79,6 +79,7 @@
       {t:'จองห้องประชุม / Zoom',i:'bi-camera-video',d:'ส่งคำขอจองห้องหรือ Zoom พร้อมลายเซ็น ติดตามสถานะจาก Notification Center และให้เจ้าหน้าที่ IT อนุมัติ/จัดเตรียม Meeting ID, Passcode และ Link ได้ครบวงจร',h:['Digital form','Approval','Notification']},
       {t:'แจ้งซ่อม IT / ทรัพย์สิน / License',i:'bi-tools',d:'ผู้ใช้แจ้งซ่อมพร้อมรูปและรายละเอียดได้ ทีม IT ติดตามสถานะงานซ่อม, SLA, ทะเบียนทรัพย์สิน, Software License และการแจ้งเตือน License ใกล้หมดอายุ',h:['Helpdesk','Asset','License']},
       {t:'ตารางงาน & นัดหมาย',i:'bi-calendar2-week',d:'สร้างงานส่วนตัวหรือกลุ่มงาน ใช้มุมมองรายการ/การ์ด/ปฏิทิน กรองตามสถานะ ช่วงเวลา Priority และ Tags รวมถึงสร้าง Public Link หรือ QR สำหรับส่งต่อได้',h:['งานส่วนตัว','งานกลุ่ม','Calendar']},
+      {t:'พื้นที่ทำงานร่วมกัน',i:'bi-kanban',d:'แท็บเฉพาะสำหรับสร้างตาราง Checklist แบบฟอร์มและ Quiz กำหนดสิทธิ์ ใช้ AI ช่วยออกแบบ ดูคำตอบ และส่งออกข้อมูลได้',h:['Workspace','Form/Quiz','AI Designer']},
       {t:'e-Meeting Manage',i:'bi-easel2',d:'จัดการประชุม วาระ เอกสาร RSVP Live View สรุปมติ และงานติดตามหลังประชุม พร้อมแจ้งเตือนผู้เกี่ยวข้องผ่านระบบกลาง',h:['Agenda','RSVP','Action follow-up']},
       {t:'Notification Center',i:'bi-bell-fill',d:'รวมแจ้งเตือนจากตารางงาน การอนุมัติ จองห้อง/Zoom แจ้งซ่อม e-Meeting Help Chat และเครื่องมือระบบ พร้อมปุ่มเปิดรายการปลายทางโดยตรง',h:['แจ้งเตือนรวม','เปิดปลายทาง','อ่าน/ลบได้']},
       {t:'โปรไฟล์การทำงาน / Auto Login',i:'bi-person-vcard',d:'บัญชีเดียวมีหลายโปรไฟล์การทำงานได้ เลือก Active Profile ก่อนทำงาน เปิด/ปิดเข้าสู่ระบบอัตโนมัติ และตรวจสอบอุปกรณ์ที่จำการเข้าสู่ระบบไว้ได้จากตั้งค่าโปรไฟล์',h:['Active Profile','อุปกรณ์','Audit log']},
@@ -127,6 +128,7 @@
       ['bi-tools','แจ้งซ่อม IT / Helpdesk','แจ้งซ่อมพร้อมรูป ทีม IT เปลี่ยนสถานะ ติดตาม SLA และเปิดรายการจาก Notification Center','ใหม่'],
       ['bi-hdd-network','ทรัพย์สิน IT / License','ทะเบียน Hardware, Software License, วันหมดอายุ, Dashboard และแจ้งเตือน License ใกล้หมดอายุ','ใหม่'],
       ['bi-calendar2-week','ตารางงาน & นัดหมาย','งานส่วนตัว/กลุ่มงาน มุมมองรายการ การ์ด ปฏิทิน Tags, Priority, Public Link และ QR','หลัก'],
+      ['bi-kanban','พื้นที่ทำงานร่วมกัน','แท็บเฉพาะสำหรับตาราง Checklist แบบฟอร์ม Quiz สิทธิ์ผู้ใช้ AI Designer และการส่งออก','หลัก'],
       ['bi-easel2','e-Meeting Manage','จัดประชุม วาระ เอกสาร RSVP Live View สรุปมติ และงานติดตามจากมติ','ใหม่'],
       ['bi-bell-fill','Notification Center','รวมแจ้งเตือนทุกโมดูล พร้อมปุ่มเปิดปลายทาง อ่านทั้งหมด ลบ และตรวจ coverage สำหรับ Admin','อัปเดต'],
       ['bi-person-vcard','Active Profile','บัญชีเดียวมีหลายโปรไฟล์การทำงาน ระบบบันทึกงานและ audit log ตามโปรไฟล์ที่เลือก','ใหม่'],

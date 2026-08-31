@@ -43,13 +43,13 @@ test('standalone route and frontend assets are wired', () => {
   assert.ok(dashboardRoutes.every(item => item.destination === '/dashboard-builder'));
   assert.ok(dashboardRoutes.every(item => !item.destination.endsWith('.html')), 'cleanUrls destinations must omit .html');
   const index = read('index.html');
-  assert.match(index, /dashboard-builder-entry\.js\?v=70132/);
+  assert.match(index, /dashboard-builder-entry\.js\?v=70144/);
   const page = read('dashboard-builder.html');
   assert.match(page, /Dashboard Builder/);
   assert.match(page, /data-step="5"/);
   assert.match(page, /data-list-scope="recent"/);
   assert.match(page, /id="dbGoogleHeaderRow"/);
-  assert.match(page, /dashboard-builder\/app\.js\?v=70141/);
+  assert.match(page, /dashboard-builder\/app\.js\?v=70144/);
 });
 
 test('public Dashboard route opens the standalone read-only viewer', () => {
@@ -158,6 +158,43 @@ test('Google Sheets import supports sheet selection and custom header rows', () 
   assert.match(app, /dbGoogleHeaderRow/);
   assert.match(backend, /getSheetByName\(sheetName\)/);
   assert.match(backend, /Number\(headerRow\|\|1\)/);
+});
+
+test('HAOS connector picker exposes four permission-aware analytics sources', () => {
+  const page = read('dashboard-builder.html');
+  const app = read('assets/js/dashboard-builder/app.js');
+  const code = read('Code.gs.txt');
+  for (const id of ['dbHaosSource','dbHaosItem','dbImportHaosBtn','dbHaosStatus']) assert.match(page, new RegExp(`id="${id}"`));
+  assert.match(page, /data-source="haos"/);
+  assert.match(app, /getDashboardHaosSourcesV7144/);
+  assert.match(app, /importDashboardHaosSourceV7144/);
+  assert.match(app, /source\.dataset\.source==='haos'\)loadHaosSources\(\)/);
+  for (const source of ['schedules','workspaces','it-assets','helpdesk']) assert.match(code, new RegExp(`['"]?${source}['"]?\\s*:`));
+  assert.match(code, /privacyMode:'analytics-safe'/);
+});
+
+test('HAOS connector payload excludes direct identifiers, links and free-text details', () => {
+  const code = read('Code.gs.txt');
+  const start = code.indexOf('function haosDB7144ScheduleRows_');
+  const end = code.indexOf('function haosDB7144ReadSource_');
+  const payloadBuilders = code.slice(start, end);
+  assert.ok(start >= 0 && end > start);
+  for (const forbidden of ['requesterPhone','currentUserPhone','attachmentUrl','photoUrl','meetingLink','problemDetail','serialNumber','assetNumber']) {
+    assert.doesNotMatch(payloadBuilders, new RegExp(forbidden));
+  }
+  assert.match(payloadBuilders, /dropdown.*radio.*checkbox.*boolean/);
+  assert.match(payloadBuilders, /จำนวนคำตอบ/);
+});
+
+test('HAOS sources reuse guarded manual and scheduled Dataset switching', () => {
+  const app = read('assets/js/dashboard-builder/app.js');
+  const code = read('Code.gs.txt');
+  assert.match(app, /\['google','haos'\]\.includes/);
+  assert.match(code, /haosDB7144SourceSupported_\(context\.dataset\)/);
+  assert.match(code, /haosDB7144ReadDatasetSource_\(dataset,actor\)/);
+  assert.match(code, /เฉพาะเจ้าของ Dashboard หรือ Admin/);
+  assert.match(code, /canManageAll \|\| \(actorDepartment/);
+  assert.match(code, /atomic-dataset-switch/);
 });
 
 test('large datasets use bounded chunks and staged finalization', () => {
@@ -340,6 +377,6 @@ test('Phase 6.11 stores schedules, installs one bounded trigger and keeps the tr
   }
   const allowlist = code.slice(code.indexOf('var haosV7139PrevGetAllowedBridgeFunctions_'), code.indexOf('function dashboardBuilderGoogleSyncHealthCheckV7139'));
   assert.doesNotMatch(allowlist, /runDashboardScheduledSyncV7139/);
-  assert.match(serviceWorker, /haos-v70-142-it-booking-performance/);
-  assert.match(serviceWorker, /dashboard-builder\/app\.js\?v=70141/);
+  assert.match(serviceWorker, /haos-v70-144-workspace-dashboard-connectors/);
+  assert.match(serviceWorker, /dashboard-builder\/app\.js\?v=70144/);
 });

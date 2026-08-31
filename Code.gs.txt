@@ -17695,13 +17695,13 @@ function haosDB7139Log_(dashboardId,mode,status,previousDatasetId,newDatasetId,r
 function haosDB7139History_(dashboardId){var data=haosDB7139LogSheet_().getDataRange().getValues();var out=[];for(var i=data.length-1;i>=1&&out.length<10;i--){if(String(data[i][1])!==String(dashboardId))continue;out.push({id:String(data[i][0]||''),mode:String(data[i][2]||''),status:String(data[i][3]||''),previousDatasetId:String(data[i][4]||''),newDatasetId:String(data[i][5]||''),rowCount:Number(data[i][6]||0),durationMs:Number(data[i][7]||0),schemaChanged:haosDB7132Bool_(data[i][8]),message:String(data[i][9]||''),createdAt:haosDB7139Iso_(data[i][12])});}return out;}
 
 function haosDB7139PerformSync_(dashboardId,actor){
-  var projectSheet=haosDB7132Projects_();var projectFound=haosDB7132Find_(projectSheet,dashboardId);if(!projectFound)throw new Error('ไม่พบ Dashboard');var project=haosDB7132Project_(projectFound.values,actor);haosDB7132CanEdit_(project);var dsFound=haosDB7132Find_(haosDB7132Datasets_(),project.datasetId);if(!dsFound)throw new Error('ไม่พบ Dataset ปัจจุบัน');var dataset=haosDB7132Dataset_(dsFound.values);if(!haosDB7139GoogleSupported_(dataset))throw new Error('Dashboard นี้ไม่ได้เชื่อมกับ Google Sheets');
-  var fresh=haosDB7139ReadGoogle_(dataset);var diff=haosDB7139SchemaDiff_(dataset.schema,fresh.headers);if(!diff.compatible){var details=[];if(diff.missing.length)details.push('คอลัมน์ที่หาย: '+diff.missing.join(', '));if(diff.added.length)details.push('คอลัมน์ใหม่: '+diff.added.join(', '));throw new Error('SCHEMA_CHANGED: โครงสร้าง Google Sheet เปลี่ยน กรุณาเปิดแก้ไข Dashboard และอ่านข้อมูลใหม่ก่อนซิงก์ ('+details.join(' | ')+')');}
+  var projectSheet=haosDB7132Projects_();var projectFound=haosDB7132Find_(projectSheet,dashboardId);if(!projectFound)throw new Error('ไม่พบ Dashboard');var project=haosDB7132Project_(projectFound.values,actor);haosDB7132CanEdit_(project);var dsFound=haosDB7132Find_(haosDB7132Datasets_(),project.datasetId);if(!dsFound)throw new Error('ไม่พบ Dataset ปัจจุบัน');var dataset=haosDB7132Dataset_(dsFound.values);if(!haosDB7144SourceSupported_(dataset))throw new Error('Dashboard นี้ไม่ได้เชื่อมกับแหล่งข้อมูลที่ซิงก์ได้');if(String(dataset.type)==='haos'&&!project.isOwner&&!haosDB7132IsAdmin_(actor))throw new Error('เฉพาะเจ้าของ Dashboard หรือ Admin ที่ซิงก์ข้อมูล HAOS ได้');
+  var fresh=haosDB7144ReadDatasetSource_(dataset,actor);var diff=haosDB7139SchemaDiff_(dataset.schema,fresh.headers);if(!diff.compatible){var details=[];if(diff.missing.length)details.push('คอลัมน์ที่หาย: '+diff.missing.join(', '));if(diff.added.length)details.push('คอลัมน์ใหม่: '+diff.added.join(', '));throw new Error('SCHEMA_CHANGED: โครงสร้างแหล่งข้อมูลเปลี่ยน กรุณาเปิดแก้ไข Dashboard และอ่านข้อมูลใหม่ก่อนซิงก์ ('+details.join(' | ')+')');}
   var rows=haosDB7139ApplySchema_(fresh.rows,dataset.schema);var chunks=haosDB7139Chunks_(rows);var datasetId=haosDB7132Id_('DS');var versionId=haosDB7132Id_('DBV');var now=new Date();var version=Number(project.version||1)+1;
   try{
     if(chunks.length){var chunkRows=chunks.map(function(chunk,index){return [datasetId,index,JSON.stringify(chunk),chunk.length,now];});var chunkSheet=haosDB7132Data_();chunkSheet.getRange(chunkSheet.getLastRow()+1,1,chunkRows.length,chunkRows[0].length).setValues(chunkRows);}
-    var schemaJson=JSON.stringify((dataset.schema||[]).slice(0,200));haosDB7132Datasets_().appendRow([datasetId,project.id,'google',haosDB7132Text_(fresh.sourceName||dataset.name,220),dataset.url,fresh.sheetName,dataset.headerRow,schemaJson,rows.length,chunks.length,"'"+project.ownerPhone,now,now]);
-    haosDB7132Versions_().appendRow([versionId,project.id,version,JSON.stringify({action:'DATA_SYNC',previousDatasetId:project.datasetId,datasetId:datasetId,rowCount:rows.length,source:{type:'google',url:dataset.url,sheetName:fresh.sheetName,headerRow:dataset.headerRow}}),"'"+actor.phone,actor.name,now]);
+    var schemaJson=JSON.stringify((dataset.schema||[]).slice(0,200));haosDB7132Datasets_().appendRow([datasetId,project.id,dataset.type,haosDB7132Text_(fresh.sourceName||dataset.name,220),dataset.url,fresh.sheetName||dataset.sheetName,dataset.headerRow,schemaJson,rows.length,chunks.length,"'"+project.ownerPhone,now,now]);
+    haosDB7132Versions_().appendRow([versionId,project.id,version,JSON.stringify({action:'DATA_SYNC',previousDatasetId:project.datasetId,datasetId:datasetId,rowCount:rows.length,source:{type:dataset.type,url:dataset.url,sheetName:fresh.sheetName||dataset.sheetName,headerRow:dataset.headerRow}}),"'"+actor.phone,actor.name,now]);
     var projectRow=projectFound.values.slice();projectRow[11]=datasetId;projectRow[15]=now;projectRow[16]=version;projectRow[18]=actor.name;projectSheet.getRange(projectFound.row,1,1,projectRow.length).setValues([projectRow]);
     try{haosDB7132AuditWrite_(project.id,datasetId,'DATA_SYNC',actor,{previousDatasetId:project.datasetId,rowCount:rows.length,chunks:chunks.length,truncated:fresh.truncated});}catch(ignore){}
     return {datasetId:datasetId,previousDatasetId:project.datasetId,rowCount:rows.length,chunkCount:chunks.length,truncated:fresh.truncated};
@@ -17727,16 +17727,212 @@ function haosDB7139Execute_(dashboardId,actor,mode){
   }finally{lock.releaseLock();}
 }
 
-function getDashboardSyncSettingsV7139(token,dashboardId){try{var context=haosDB7139Context_(token,dashboardId);var supported=haosDB7139GoogleSupported_(context.dataset);return {success:true,supported:supported,source:{type:context.dataset.type,name:context.dataset.name,url:context.dataset.url,sheetName:context.dataset.sheetName,headerRow:context.dataset.headerRow,rowCount:context.dataset.rowCount},settings:haosDB7139FindSetting_(dashboardId).setting,history:haosDB7139History_(dashboardId),triggerInstalled:haosDB7139HasTrigger_(),version:'v70.139-dashboard-google-sync'};}catch(e){return {success:false,message:e.toString()};}}
-function syncDashboardGoogleSourceV7139(token,dashboardId){try{var context=haosDB7139Context_(token,dashboardId);var result=haosDB7139Execute_(dashboardId,context.actor,'manual');return {success:true,datasetId:result.datasetId,rowCount:result.rowCount,chunkCount:result.chunkCount,truncated:result.truncated,version:'v70.139-dashboard-google-sync'};}catch(e){return {success:false,message:e.toString()};}}
+function getDashboardSyncSettingsV7139(token,dashboardId){try{var context=haosDB7139Context_(token,dashboardId);var supported=haosDB7144SourceSupported_(context.dataset);return {success:true,supported:supported,source:{type:context.dataset.type,name:context.dataset.name,url:context.dataset.url,sheetName:context.dataset.sheetName,headerRow:context.dataset.headerRow,rowCount:context.dataset.rowCount},settings:haosDB7139FindSetting_(dashboardId).setting,history:haosDB7139History_(dashboardId),triggerInstalled:haosDB7139HasTrigger_(),version:'v70.144-dashboard-haos-connectors'};}catch(e){return {success:false,message:e.toString()};}}
+function syncDashboardGoogleSourceV7139(token,dashboardId){try{var context=haosDB7139Context_(token,dashboardId);var result=haosDB7139Execute_(dashboardId,context.actor,'manual');return {success:true,datasetId:result.datasetId,rowCount:result.rowCount,chunkCount:result.chunkCount,truncated:result.truncated,version:'v70.144-dashboard-data-sync'};}catch(e){return {success:false,message:e.toString()};}}
 
 function haosDB7139HasTrigger_(){try{return ScriptApp.getProjectTriggers().some(function(trigger){return trigger.getHandlerFunction()==='runDashboardScheduledSyncV7139';});}catch(e){return false;}}
 function haosDB7139AnyEnabled_(){var data=haosDB7139SettingsSheet_().getDataRange().getValues();for(var i=1;i<data.length;i++)if(haosDB7132Bool_(data[i][1]))return true;return false;}
 function haosDB7139EnsureTrigger_(){var triggers=ScriptApp.getProjectTriggers().filter(function(trigger){return trigger.getHandlerFunction()==='runDashboardScheduledSyncV7139';});var needed=haosDB7139AnyEnabled_();if(needed&&!triggers.length)ScriptApp.newTrigger('runDashboardScheduledSyncV7139').timeBased().everyMinutes(15).create();if(!needed)triggers.forEach(function(trigger){ScriptApp.deleteTrigger(trigger);});return needed;}
-function saveDashboardSyncSettingsV7139(token,dashboardId,payload){try{var context=haosDB7139Context_(token,dashboardId);if(!haosDB7139GoogleSupported_(context.dataset))throw new Error('Scheduled Sync ใช้ได้เฉพาะ Dashboard ที่เชื่อม Google Sheets');payload=payload||{};var current=haosDB7139FindSetting_(dashboardId).setting;var previous=JSON.parse(JSON.stringify(current));current.enabled=payload.enabled===true;current.intervalMinutes=haosDB7139Interval_(payload.intervalMinutes);current.notifyOnFailure=payload.notifyOnFailure!==false;current.nextSyncAt=current.enabled?new Date(new Date().getTime()+current.intervalMinutes*60000):'';current.updatedBy=context.actor.name;current.updatedAt=new Date();var saved=haosDB7139WriteSetting_(current);try{haosDB7139EnsureTrigger_();}catch(triggerError){haosDB7139WriteSetting_(previous);throw new Error('สร้าง Scheduled Trigger ไม่สำเร็จ: '+triggerError.toString());}haosDB7132AuditWrite_(dashboardId,context.project.datasetId,'SYNC_SETTINGS',context.actor,{enabled:saved.enabled,intervalMinutes:saved.intervalMinutes,notifyOnFailure:saved.notifyOnFailure});return {success:true,settings:saved,triggerInstalled:haosDB7139HasTrigger_(),version:'v70.139-dashboard-google-sync'};}catch(e){return {success:false,message:e.toString()};}}
+function saveDashboardSyncSettingsV7139(token,dashboardId,payload){try{var context=haosDB7139Context_(token,dashboardId);if(!haosDB7144SourceSupported_(context.dataset))throw new Error('Scheduled Sync ใช้ได้เฉพาะ Dashboard ที่เชื่อม Google Sheets หรือข้อมูล HAOS');if(String(context.dataset.type)==='haos'&&!context.project.isOwner&&!haosDB7132IsAdmin_(context.actor))throw new Error('เฉพาะเจ้าของ Dashboard หรือ Admin ที่ตั้งเวลาซิงก์ข้อมูล HAOS ได้');payload=payload||{};var current=haosDB7139FindSetting_(dashboardId).setting;var previous=JSON.parse(JSON.stringify(current));current.enabled=payload.enabled===true;current.intervalMinutes=haosDB7139Interval_(payload.intervalMinutes);current.notifyOnFailure=payload.notifyOnFailure!==false;current.nextSyncAt=current.enabled?new Date(new Date().getTime()+current.intervalMinutes*60000):'';current.updatedBy=context.actor.name;current.updatedAt=new Date();var saved=haosDB7139WriteSetting_(current);try{haosDB7139EnsureTrigger_();}catch(triggerError){haosDB7139WriteSetting_(previous);throw new Error('สร้าง Scheduled Trigger ไม่สำเร็จ: '+triggerError.toString());}haosDB7132AuditWrite_(dashboardId,context.project.datasetId,'SYNC_SETTINGS',context.actor,{enabled:saved.enabled,intervalMinutes:saved.intervalMinutes,notifyOnFailure:saved.notifyOnFailure,sourceType:context.dataset.type});return {success:true,settings:saved,triggerInstalled:haosDB7139HasTrigger_(),version:'v70.144-dashboard-haos-connectors'};}catch(e){return {success:false,message:e.toString()};}}
 
 function runDashboardScheduledSyncV7139(){var started=new Date().getTime();var now=new Date();var data=haosDB7139SettingsSheet_().getDataRange().getValues();var due=[];for(var i=1;i<data.length;i++){var setting=haosDB7139SettingFromRow_(data[i]);if(!setting.enabled)continue;var next=setting.nextSyncAt?new Date(setting.nextSyncAt):new Date(0);if(next.getTime()<=now.getTime())due.push(setting);}due.sort(function(a,b){return new Date(a.nextSyncAt||0)-new Date(b.nextSyncAt||0);});var summary={success:0,failed:0,skipped:Math.max(0,due.length-3)};for(var d=0;d<due.length&&d<3;d++){if(new Date().getTime()-started>270000){summary.skipped+=due.length-d;break;}var syncStarted=false;try{var projectFound=haosDB7132Find_(haosDB7132Projects_(),due[d].dashboardId);if(!projectFound)throw new Error('ไม่พบ Dashboard');var actor=haosDB7132ActorByPhone_(projectFound.values[3]);if(!actor)throw new Error('บัญชีเจ้าของ Dashboard ไม่พร้อมใช้งาน');syncStarted=true;haosDB7139Execute_(due[d].dashboardId,actor,'scheduled');summary.success++;}catch(e){summary.failed++;if(!syncStarted){var systemActor={phone:'SYSTEM',name:'Scheduled Sync'};try{haosDB7139UpdateOutcome_(due[d].dashboardId,systemActor,null,e);}catch(ignoreOutcome){}try{haosDB7139Log_(due[d].dashboardId,'scheduled','failed','','',0,new Date().getTime()-started,false,e.toString(),systemActor);}catch(ignoreLog){}}}}return summary;}
 
 var haosV7139PrevGetAllowedBridgeFunctions_ = typeof getAllowedBridgeFunctions_ === 'function' ? getAllowedBridgeFunctions_ : null;
 getAllowedBridgeFunctions_ = function(){var allowed=haosV7139PrevGetAllowedBridgeFunctions_?haosV7139PrevGetAllowedBridgeFunctions_():{};['getDashboardSyncSettingsV7139','syncDashboardGoogleSourceV7139','saveDashboardSyncSettingsV7139'].forEach(function(name){allowed[name]=true;});return allowed;};
 function dashboardBuilderGoogleSyncHealthCheckV7139(){return {success:true,version:'v70.139-dashboard-google-sync',sheets:['DashboardSyncSettings','DashboardSyncLog'],trigger:'runDashboardScheduledSyncV7139',intervals:HAOS_DB7139_INTERVALS,features:['manual-sync','scheduled-sync','schema-guard','atomic-dataset-switch','history','failure-notification']};}
+
+/* Dashboard Builder HAOS Data Connectors v70.144
+ * Analytics-safe, read-only snapshots. Direct identifiers, links, serials and
+ * free-text details are intentionally excluded from connector payloads.
+ * Rollback: see docs/ROLLBACK_V70_144_DASHBOARD_HAOS_CONNECTORS.md.
+ */
+var HAOS_DB7144_SOURCE_LABELS_ = {
+  schedules: 'ตารางงานและนัดหมาย',
+  workspaces: 'พื้นที่ทำงานร่วมกัน',
+  'it-assets': 'ทะเบียนทรัพย์สิน IT',
+  helpdesk: 'Helpdesk / แจ้งซ่อม IT'
+};
+
+function haosDB7144SafeValue_(value) {
+  if (value == null) return '';
+  if (value instanceof Date) return Utilities.formatDate(value, 'GMT+7', 'yyyy-MM-dd HH:mm:ss');
+  if (Array.isArray(value)) value = value.join(', ');
+  value = haosDB7132Text_(value, 500);
+  return /^[=+\-@]/.test(value) ? "'" + value : value;
+}
+
+function haosDB7144CleanRows_(rows) {
+  return (rows || []).slice(0, 20000).map(function(row) {
+    var clean = {};
+    Object.keys(row || {}).slice(0, 40).forEach(function(key) {
+      clean[haosDB7132Text_(key, 120)] = haosDB7144SafeValue_(row[key]);
+    });
+    return clean;
+  });
+}
+
+function haosDB7144ScheduleRows_(actor) {
+  var mine = getUserSchedules(actor.phone);
+  var department = getDepartmentSchedules(actor.phone, actor.department);
+  if (!mine || !mine.success) throw new Error(mine && mine.message || 'โหลดตารางงานส่วนตัวไม่สำเร็จ');
+  if (!department || !department.success) throw new Error(department && department.message || 'โหลดตารางงานกลุ่มงานไม่สำเร็จ');
+  var seen = {};
+  var rows = [];
+  (mine.data || []).concat(department.data || []).forEach(function(item) {
+    var id = String(item.id || '');
+    if (id && seen[id]) return;
+    if (id) seen[id] = true;
+    var start = String(item.rawStartTime || item.startTime || '');
+    rows.push({
+      'วันที่เริ่ม': start,
+      'เดือน': start ? start.substring(0, 7) : '',
+      'สถานะ': item.workStatus || item.status || '',
+      'ขอบเขต': item.scheduleScope === 'Department' ? 'กลุ่มงาน' : 'ส่วนตัว',
+      'กลุ่มงาน': item.ownerDepartment || actor.department || '',
+      'Priority': item.priority || 'ปกติ',
+      'สถานะอนุมัติ': item.approval || '',
+      'จำนวน': 1
+    });
+  });
+  return {rows:haosDB7144CleanRows_(rows), sourceName:HAOS_DB7144_SOURCE_LABELS_.schedules};
+}
+
+function haosDB7144WorkspaceCatalog_(actor) {
+  var result = getMySharedWorkspaces(actor.phone);
+  if (!result || !result.success) throw new Error(result && result.message || 'โหลดรายการพื้นที่ทำงานไม่สำเร็จ');
+  return (result.data || []).filter(function(item) {
+    return ['table', 'checklist', 'form', 'quiz'].indexOf(String(item.workspaceType || 'table')) >= 0;
+  }).map(function(item) {
+    return {id:String(item.id || ''), label:String(item.title || 'พื้นที่ทำงาน'), type:String(item.workspaceType || 'table')};
+  });
+}
+
+function haosDB7144SplitOptions_(value) {
+  if (Array.isArray(value)) return value.map(String).map(function(item) { return item.trim(); }).filter(Boolean);
+  return String(value == null ? '' : value).split(/[,|]/).map(function(item) { return item.trim(); }).filter(Boolean);
+}
+
+function haosDB7144WorkspaceRows_(actor, workspaceId) {
+  var visible = haosDB7144WorkspaceCatalog_(actor).some(function(item) { return String(item.id) === String(workspaceId); });
+  if (!visible) throw new Error('ไม่พบพื้นที่ทำงานหรือคุณไม่มีสิทธิ์ดูข้อมูล');
+  var found = findWorkspaceRow_(workspaceSetup_(), workspaceId);
+  if (!found) throw new Error('ไม่พบพื้นที่ทำงาน');
+  var workspace = workspaceToObject_(found.values);
+  if (!workspace.active || isWorkspaceExpired_(workspace.expiresAt)) throw new Error('พื้นที่ทำงานถูกปิดหรือหมดอายุแล้ว');
+  var fields = Array.isArray(workspace.fieldConfig) ? workspace.fieldConfig : [];
+  var rows = [];
+  fields.forEach(function(field, index) {
+    var type = String(field && field.type || '').toLowerCase();
+    if (['dropdown', 'radio', 'checkbox', 'boolean'].indexOf(type) < 0) return;
+    var counts = {};
+    (workspace.rows || []).forEach(function(values) {
+      var answers = type === 'checkbox' ? haosDB7144SplitOptions_((values || [])[index]) : [String((values || [])[index] == null ? '' : (values || [])[index]).trim()];
+      answers.filter(Boolean).forEach(function(answer) { counts[answer] = (counts[answer] || 0) + 1; });
+    });
+    Object.keys(counts).forEach(function(answer) {
+      rows.push({'หัวข้อ':field.label || ('หัวข้อ ' + (index + 1)), 'ตัวเลือก':answer, 'จำนวนคำตอบ':counts[answer], 'จำนวนรายการทั้งหมด':(workspace.rows || []).length, 'ประเภทพื้นที่':workspace.workspaceType || 'table'});
+    });
+  });
+  if (!rows.length) rows.push({'หัวข้อ':'ภาพรวม', 'ตัวเลือก':'ทั้งหมด', 'จำนวนคำตอบ':(workspace.rows || []).length, 'จำนวนรายการทั้งหมด':(workspace.rows || []).length, 'ประเภทพื้นที่':workspace.workspaceType || 'table'});
+  return {rows:haosDB7144CleanRows_(rows), sourceName:String(workspace.title || 'พื้นที่ทำงานร่วมกัน')};
+}
+
+function haosDB7144ITData_(actor, sourceKey) {
+  var result = getITAssetModuleDataV70(actor.phone, actor.role, actor.department);
+  if (!result || !result.success) throw new Error(result && result.message || 'โหลดข้อมูล IT ไม่สำเร็จ');
+  var canManageAll = haosDB7132IsAdmin_(actor) || haosV711ActorCanManageIT_(actor);
+  var actorDepartment = String(actor.department || '').trim();
+  var rows;
+  if (sourceKey === 'it-assets') {
+    rows = (result.assets || []).filter(function(item) {
+      return canManageAll || (actorDepartment && String(item.ownerDepartment || '').trim() === actorDepartment);
+    }).map(function(item) { return {
+      'หมวดหลัก': item.category || '',
+      'หมวดย่อย': item.smartCategory || item.manualCategory || '',
+      'ปีงบประมาณ': item.fiscalYear || '',
+      'กลุ่มงานผู้รับผิดชอบ': item.ownerDepartment || '',
+      'สถานที่ติดตั้ง': item.location || '',
+      'สถานะ': item.status || '',
+      'สภาพ': item.condition || '',
+      'จำนวน': 1
+    }; });
+  } else {
+    var now = new Date().getTime();
+    rows = (result.tickets || []).filter(function(item) {
+      return canManageAll || (actorDepartment && String(item.requesterDepartment || '').trim() === actorDepartment);
+    }).map(function(item) {
+      var due = item.slaDueAt ? new Date(item.slaDueAt).getTime() : 0;
+      var closed = /resolved|closed|เสร็จ|ปิด/i.test(String(item.status || ''));
+      return {
+        'กลุ่มงาน': item.requesterDepartment || '',
+        'หมวดปัญหา': item.problemCategory || '',
+        'Priority': item.priority || '',
+        'สถานะ': item.status || '',
+        'วันที่แจ้ง': item.reportedAt || item.createdAt || '',
+        'เดือนที่แจ้ง': String(item.reportedAt || item.createdAt || '').substring(0, 7),
+        'สถานะ SLA': due && !closed && due < now ? 'เกิน SLA' : (due ? 'อยู่ใน SLA/ปิดแล้ว' : 'ไม่กำหนด SLA'),
+        'จำนวน': 1
+      };
+    });
+  }
+  return {rows:haosDB7144CleanRows_(rows), sourceName:HAOS_DB7144_SOURCE_LABELS_[sourceKey]};
+}
+
+function haosDB7144ReadSource_(actor, sourceKey, itemId) {
+  sourceKey = String(sourceKey || '').toLowerCase();
+  if (sourceKey === 'schedules') return haosDB7144ScheduleRows_(actor);
+  if (sourceKey === 'workspaces') return haosDB7144WorkspaceRows_(actor, itemId);
+  if (sourceKey === 'it-assets' || sourceKey === 'helpdesk') return haosDB7144ITData_(actor, sourceKey);
+  throw new Error('ไม่รองรับแหล่งข้อมูล HAOS นี้');
+}
+
+function haosDB7144SourceSupported_(dataset) {
+  if (haosDB7139GoogleSupported_(dataset)) return true;
+  var match = String(dataset && dataset.url || '').match(/^haos:\/\/([a-z0-9-]+)$/i);
+  return !!(dataset && String(dataset.type) === 'haos' && match && HAOS_DB7144_SOURCE_LABELS_[match[1]]);
+}
+
+function haosDB7144ReadDatasetSource_(dataset, actor) {
+  if (haosDB7139GoogleSupported_(dataset)) return haosDB7139ReadGoogle_(dataset);
+  var match = String(dataset && dataset.url || '').match(/^haos:\/\/([a-z0-9-]+)$/i);
+  if (!match) throw new Error('แหล่งข้อมูล HAOS ไม่ถูกต้อง');
+  var result = haosDB7144ReadSource_(actor, match[1], dataset.sheetName || '');
+  result.headers = Object.keys((result.rows || [])[0] || {});
+  result.sheetName = dataset.sheetName || '';
+  result.truncated = false;
+  return result;
+}
+
+function getDashboardHaosSourcesV7144(token) {
+  try {
+    var actor = haosDB7132Session_(token);
+    return {success:true, sources:[
+      {key:'schedules', label:HAOS_DB7144_SOURCE_LABELS_.schedules, requiresItem:false, items:[]},
+      {key:'workspaces', label:HAOS_DB7144_SOURCE_LABELS_.workspaces, requiresItem:true, items:haosDB7144WorkspaceCatalog_(actor)},
+      {key:'it-assets', label:HAOS_DB7144_SOURCE_LABELS_['it-assets'], requiresItem:false, items:[]},
+      {key:'helpdesk', label:HAOS_DB7144_SOURCE_LABELS_.helpdesk, requiresItem:false, items:[]}
+    ], version:'v70.144-dashboard-haos-connectors'};
+  } catch(e) { return {success:false, message:e.toString()}; }
+}
+
+function importDashboardHaosSourceV7144(token, sourceKey, itemId) {
+  try {
+    var actor = haosDB7132Session_(token);
+    var result = haosDB7144ReadSource_(actor, sourceKey, itemId);
+    result.headers = Object.keys((result.rows || [])[0] || {});
+    try { logAudit_(actor.phone, actor.name, 'DASHBOARD_SOURCE_PREVIEW', 'DashboardBuilder', String(sourceKey || ''), 'อ่านข้อมูลสรุป HAOS สำหรับ Dashboard', null, {sourceKey:sourceKey, itemId:itemId || '', rowCount:result.rows.length}); } catch(ignore) {}
+    return {success:true, rows:result.rows, headers:result.headers, sourceName:result.sourceName, privacyMode:'analytics-safe', version:'v70.144-dashboard-haos-connectors'};
+  } catch(e) { return {success:false, message:e.toString()}; }
+}
+
+var haosV7144PrevGetAllowedBridgeFunctions_ = typeof getAllowedBridgeFunctions_ === 'function' ? getAllowedBridgeFunctions_ : null;
+getAllowedBridgeFunctions_ = function() {
+  var allowed = haosV7144PrevGetAllowedBridgeFunctions_ ? haosV7144PrevGetAllowedBridgeFunctions_() : {};
+  allowed.getDashboardHaosSourcesV7144 = true;
+  allowed.importDashboardHaosSourceV7144 = true;
+  return allowed;
+};
+
+function dashboardBuilderHaosConnectorsHealthCheckV7144() {
+  return {success:true, version:'v70.144-dashboard-haos-connectors', sources:Object.keys(HAOS_DB7144_SOURCE_LABELS_), privacyMode:'analytics-safe', features:['permission-aware','read-only','manual-sync','scheduled-sync','atomic-dataset-switch']};
+}
