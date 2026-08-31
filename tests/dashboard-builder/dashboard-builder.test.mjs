@@ -377,6 +377,6 @@ test('Phase 6.11 stores schedules, installs one bounded trigger and keeps the tr
   }
   const allowlist = code.slice(code.indexOf('var haosV7139PrevGetAllowedBridgeFunctions_'), code.indexOf('function dashboardBuilderGoogleSyncHealthCheckV7139'));
   assert.doesNotMatch(allowlist, /runDashboardScheduledSyncV7139/);
-  assert.match(serviceWorker, /haos-v70-144-workspace-dashboard-connectors/);
+  assert.match(serviceWorker, /haos-v70-145-schedule-tab-ui/);
   assert.match(serviceWorker, /dashboard-builder\/app\.js\?v=70144/);
 });

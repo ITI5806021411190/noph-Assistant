@@ -1,4 +1,4 @@
-const CACHE_NAME = 'haos-v70-144-workspace-dashboard-connectors';
+const CACHE_NAME = 'haos-v70-145-schedule-tab-ui';
 const CORE = [
   '/',
   '/index.html',
@@ -45,6 +45,8 @@ const CORE = [
   '/assets/js/modules/shared-workspace-ai-designer.js',
   '/assets/css/workspace-tab.css?v=70143',
   '/assets/js/modules/workspace-tab.js?v=70143',
+  '/assets/css/schedule-tab-ui.css?v=70145',
+  '/assets/js/modules/schedule-tab-ui.js?v=70145',
   '/assets/js/modules/help-live-chat.js?v=70109',
   '/assets/js/modules/it-asset-import.js?v=70125',
   '/assets/js/modules/jigsaw-module.js',

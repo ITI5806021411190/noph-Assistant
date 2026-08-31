@@ -1,0 +1,59 @@
+#scheduleActionBar.haos-v7145-legacy-header {
+  display: none !important;
+}
+
+#haosScheduleApprovalMountV7145 {
+  padding: 4px 18px 10px;
+  background: #fff;
+}
+
+#haosScheduleApprovalMountV7145:empty {
+  display: none;
+}
+
+#haosScheduleApprovalMountV7145 #approvalSection {
+  margin: 6px 0 0 !important;
+  border: 1px solid #fde68a !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  overflow: hidden;
+}
+
+#haosScheduleApprovalMountV7145 #approvalSection.haos-v7145-empty-approval {
+  display: none !important;
+}
+
+#haosScheduleApprovalMountV7145 #approvalSection .card-header {
+  padding: 12px 14px;
+  background: #fffbeb !important;
+  border-bottom: 1px solid #fde68a !important;
+}
+
+#haosScheduleApprovalMountV7145 #approvalSection .list-group-item {
+  padding: 12px 14px !important;
+}
+
+@media (max-width: 767px) {
+  .haos-v742-schedule-actions {
+    align-items: stretch;
+  }
+
+  .haos-v742-schedule-actions .title {
+    width: 100%;
+  }
+
+  .haos-v742-schedule-actions .tools {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .haos-v742-schedule-actions .tools .btn {
+    justify-content: center;
+    min-width: 0;
+  }
+
+  #haosScheduleApprovalMountV7145 {
+    padding: 4px 12px 8px;
+  }
+}

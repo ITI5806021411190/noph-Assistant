@@ -1,6 +1,6 @@
 {
   "name": "health-assistant-os",
-  "version": "70.144.0",
+  "version": "70.145.0",
   "private": true,
   "type": "module",
   "dependencies": {
@@ -19,6 +19,7 @@
     "test:popular-vote": "npm run test:popular-vote:admin && npm run test:popular-vote:rules && npm run test:popular-vote:storage-rules",
     "test:dashboard-builder": "node --test tests/dashboard-builder/dashboard-builder.test.mjs",
     "test:workspace-tab": "node --test tests/workspace-tab/workspace-tab.test.mjs",
+    "test:schedule-tab-ui": "node --test tests/schedule-tab-ui/schedule-tab-ui.test.mjs",
     "test:it-booking": "node --test tests/it-booking/performance.test.mjs"
   }
 }
